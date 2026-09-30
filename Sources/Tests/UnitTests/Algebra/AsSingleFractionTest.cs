@@ -33,6 +33,21 @@ namespace AngouriMath.Tests.Algebra
             => Assert.Equal(fraction, written.AsSingleFraction().Stringize());
 
         /// <summary>
+        /// Over the least common multiple of the denominators as they are written, as it is done
+        /// by hand: a factor two terms share is not multiplied in twice. Nothing is factorised to
+        /// find it, so <c>x^2 - 1</c> and <c>x + 1</c> share nothing.
+        /// </summary>
+        [Theory]
+        [InlineData("1/x + 1/x^2", "(x + 1) / x ^ 2")]
+        [InlineData("x/2 + x/4", "3 * x / 4")]
+        [InlineData("1/6 + 1/4", "5 / 12")]
+        [InlineData("1/(x + 1) + 1/(x + 1)^2", "(x + 2) / (x + 1) ^ 2")]
+        [InlineData("a/(b*c) + d/(b*e)", "(a * e + d * c) / (b * c * e)")]
+        [InlineData("1/(x^2 - 1) + 1/(x + 1)", "(x + 1 + x ^ 2 - 1) / ((x ^ 2 - 1) * (x + 1))")]
+        public void OverTheLeastCommonDenominator(string written, string fraction)
+            => Assert.Equal(fraction, written.AsSingleFraction().Stringize());
+
+        /// <summary>
         /// Dividing by a fraction moves its denominator into the numerator, where it no longer
         /// stops the answer having a value, so the answer says it is nonzero -- unless the new
         /// denominator still says so itself.
@@ -56,6 +71,7 @@ namespace AngouriMath.Tests.Algebra
         [InlineData("(x/y)^(-2)", "y")]
         [InlineData("x/(y/x)", "x")]
         [InlineData("(1/x)/(1/x)", "x")]
+        [InlineData("1/x + 1/x^2", "x")]
         public void TheDomainIsKept(string written, string atZero)
         {
             var original = written.ToEntity();
@@ -93,11 +109,14 @@ namespace AngouriMath.Tests.Algebra
         [InlineData("2/3 + x/2")]
         [InlineData("(a/b)/(c/d)")]
         [InlineData("x/(y/x)")]
+        [InlineData("1/x + 1/x^2")]
+        [InlineData("a/(b*c) + d/(b*e)")]
+        [InlineData("1/(x + 1) + 1/(x + 1)^2")]
         public void TheValueIsKept(string written)
         {
             var original = written.ToEntity();
             var fraction = original.AsSingleFraction();
-            foreach (var (name, value) in new[] { ("a", 2), ("b", -3), ("c", 5), ("d", 11), ("t", 3), ("x", 7), ("y", 13) })
+            foreach (var (name, value) in new[] { ("a", 2), ("b", -3), ("c", 5), ("d", 11), ("e", 17), ("t", 3), ("x", 7), ("y", 13) })
             {
                 original = original.Substitute(name, value);
                 fraction = fraction.Substitute(name, value);

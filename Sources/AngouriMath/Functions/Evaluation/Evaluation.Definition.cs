@@ -513,7 +513,9 @@ namespace AngouriMath
         /// nothing divided inside either, as <c>a + b/c</c> is written <c>(a c + b)/c</c>. Any
         /// expression, functions included, and nothing cancelled or multiplied out, so the factors
         /// of the denominator stay as they were: <c>1/(t^2 + 1) + 1/(t + 1)</c> is
-        /// <c>(2 + t + t^2) / ((t^2 + 1)(t + 1))</c>, and <c>x/x</c> stays <c>x/x</c>. A rational number
+        /// <c>(2 + t + t^2) / ((t^2 + 1)(t + 1))</c>, and <c>x/x</c> stays <c>x/x</c>. The common
+        /// denominator is the least common multiple of the denominators as they are written, so
+        /// <c>1/x + 1/x^2</c> is <c>(x + 1)/x^2</c>; nothing is factorised to find it. A rational number
         /// counts as the fraction it is written as, so <c>2/3 + x/2</c> is <c>(4 + 3x)/6</c>. An
         /// expression with no division in it comes back as it was. Dividing by a fraction moves
         /// its denominator into the numerator, and the expression has no value where that

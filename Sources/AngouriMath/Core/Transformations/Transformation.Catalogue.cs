@@ -210,7 +210,7 @@ namespace AngouriMath.Core.Transformations
                     ? new Entity.Divf(Entity.Number.Integer.Create(value.Numerator), Entity.Number.Integer.Create(value.Denominator))
                     : node);
                 var carried = new List<Entity>();
-                var (numerator, denominator) = Functions.SingleQuotient.Of(written, carried);
+                var (numerator, denominator) = Functions.SingleQuotient.OverLeastCommonDenominator(written, carried);
                 if (denominator == Entity.Number.Integer.One && carried.Count == 0)
                     return input;
                 var top = Functions.Simplificator.SimplifyChildren(numerator);
