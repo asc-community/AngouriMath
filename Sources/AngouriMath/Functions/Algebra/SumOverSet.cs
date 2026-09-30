@@ -28,10 +28,12 @@ namespace AngouriMath.Functions
     /// </para>
     /// <para>
     /// The sum over the roots of a polynomial is the case the node exists for:
-    /// <c>sum(f(w), w in { w : p(w) = 0 })</c>. Where the solver writes every root in closed form
-    /// the roots are added; <i>every</i> is checked, by counting the distinct roots it gave
-    /// against the degree of the square-free part of <c>p</c>, which is how many distinct roots
-    /// <c>p</c> has. A root set the solver answers only in part is left as written, since a sum
+    /// <c>sum(f(w), w in { w : p(w) = 0 })</c>. Where every root is rational, a root of a
+    /// quadratic or a root of a binomial, the solver writes them and they are added; <i>every</i>
+    /// is checked, by counting the distinct roots it gave against the degree of the square-free
+    /// part of <c>p</c>, which is how many distinct roots <c>p</c> has. The roots of an
+    /// irreducible cubic or quartic are not written out in radicals, which read no more simply
+    /// than the sum. A root set the solver answers only in part is left as written, since a sum
     /// that misses a term is a wrong answer. Evaluated to a number, the roots the solver cannot
     /// write are found to the working precision, all of them or none, by
     /// <see cref="Algebra.NumericalSolving.DurandKerner"/>. And a sum over a set that is not finite -- an
@@ -49,8 +51,10 @@ namespace AngouriMath.Functions
         {
             if (var is not Variable x || over.InnerSimplified is not Set set)
                 return null;
-            if ((Members(set) ?? (isExact ? null : NumericMembers(set))) is not { } members
-                || members.Count > Summationf.MaxExpandedTerms)
+            // A numeric value needs the roots as numbers, and those do not need the solver: asking
+            // it first would be a solve per evaluation, and a check evaluates at many points.
+            var members = isExact ? Members(set) : NumericMembers(set) ?? Members(set);
+            if (members is null || members.Count > Summationf.MaxExpandedTerms)
                 return null;
             Entity? sum = null;
             foreach (var member in members)
@@ -123,9 +127,13 @@ namespace AngouriMath.Functions
         /// once, where the solver writes all of them; <see langword="null"/> otherwise.
         /// </summary>
         /// <remarks>
-        /// The solver is asked only where it can write every root -- each irreducible factor of
-        /// degree at most four, or a binomial -- since past that there is nothing it could write,
-        /// and asking would cost a search every time a simplification meets the sum.
+        /// Only roots that read as simply as the sum does are written out: rational ones, the
+        /// roots of a quadratic, and the roots of a binomial. The roots of an irreducible cubic or
+        /// quartic in radicals are no simpler than the sum over them, and for a real polynomial
+        /// with three real roots Cardano's formula writes them with complex radicals, so that sum
+        /// is kept as it is; its value is still found numerically. The solver is not asked for
+        /// anything past that, which also spares a search every time a simplification meets the
+        /// sum.
         /// </remarks>
         private static IReadOnlyList<Entity>? Roots(Entity polynomial, Variable w)
         {
@@ -134,8 +142,8 @@ namespace AngouriMath.Functions
             var expected = 0;
             foreach (var part in parts)
                 expected += part.Factor.Degree;
-            if (expected > 4 && !(PolynomialFactorization.FactorComplete(polynomial, w) is { } factored
-                    && factored.Parts.All(static part => part.Factor.Degree <= 4 || IsBinomial(part.Factor))))
+            if (expected > 2 && !(PolynomialFactorization.FactorComplete(polynomial, w) is { } factored
+                    && factored.Parts.All(static part => part.Factor.Degree <= 2 || IsBinomial(part.Factor))))
                 return null;
             if (polynomial.SolveEquation(w) is not FiniteSet solutions
                 || Distinct(solutions.Elements.Select(static root => root.InnerSimplified)) is not { } roots)
@@ -157,7 +165,11 @@ namespace AngouriMath.Functions
                 _ => null,
             };
 
-        private static IReadOnlyList<Entity>? NumericRoots(Entity polynomial, Variable w)
+        /// <summary>
+        /// The roots of <paramref name="polynomial"/> in <paramref name="w"/> to the working
+        /// precision, each once, all of them or <see langword="null"/>.
+        /// </summary>
+        internal static IReadOnlyList<Entity>? NumericRoots(Entity polynomial, Variable w)
         {
             if (SquareFreeParts(polynomial, w) is not { } parts)
                 return null;
@@ -186,7 +198,7 @@ namespace AngouriMath.Functions
         /// through evaluation would refuse the polynomial -- in the setting numerical checks
         /// run in.
         /// </remarks>
-        private static IReadOnlyList<SquareFreeDecomposition.SquareFreePart>? SquareFreeParts(Entity polynomial, Variable w)
+        internal static IReadOnlyList<SquareFreeDecomposition.SquareFreePart>? SquareFreeParts(Entity polynomial, Variable w)
         {
             if (MultivariatePolynomial.TryParse(polynomial, new Dictionary<Variable, int> { [w] = 0 }) is not { } parsed)
                 return null;

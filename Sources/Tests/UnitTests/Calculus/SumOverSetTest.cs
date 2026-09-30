@@ -68,6 +68,9 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("sum(x, x in [0; 1])")]
         [InlineData("sum(k, k in ZZ)")]
         [InlineData("sum(w, w in { w : w^5 + w + 3 = 0 })")]
+        // An irreducible cubic: Cardano would write its roots in complex radicals, which read no
+        // more simply than the sum.
+        [InlineData("sum(w^2, w in { w : w^3 + w + 1 = 0 })")]
         public void WhatItCannotListIsLeftAsWritten(string sum)
             => Assert.IsType<SumOverSetf>(sum.ToEntity().InnerSimplified);
 
@@ -81,6 +84,8 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("sum(w, w in { w : w^5 + w + 3 = 0 })", "0")]
         [InlineData("sum(1/w, w in { w : w^5 + w + 3 = 0 })", "-1/3")]
         [InlineData("sum(w^5, w in { w : w^5 + w + 3 = 0 })", "-15")]
+        // The cubic kept as a sum still has its value: the squares of its roots add to -2.
+        [InlineData("sum(w^2, w in { w : w^3 + w + 1 = 0 })", "-2")]
         public void NumericallyOverRootsTheSolverCannotWrite(string sum, string exact)
         {
             AssertClose(exact.ToEntity().Evaled, sum.ToEntity().Evaled);

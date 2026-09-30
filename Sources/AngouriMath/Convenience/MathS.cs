@@ -7487,7 +7487,9 @@ namespace AngouriMath
         /// <param name="over">The set.</param>
         /// <returns>
         /// The terms added up where the set is finite and its members are known: a listed set of
-        /// numbers, or the roots of a polynomial that the solver writes in full. Evaluated to a
+        /// numbers, or roots of a polynomial that are rational, roots of a quadratic or roots of a
+        /// binomial -- those of an irreducible cubic or quartic are kept as the sum, radicals
+        /// reading no more simply than it. Evaluated to a
         /// number, the roots it cannot write are found numerically, all of them or none. Left as
         /// written otherwise: a set with a symbol among its members, which may coincide, or a set
         /// that is not finite.

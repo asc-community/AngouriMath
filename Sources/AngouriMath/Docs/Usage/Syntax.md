@@ -492,8 +492,10 @@ must be a concrete integer of at least one, `factorial` having no value at the n
 counted once, added up. `sum(x^2, x in {1, 2, 3})` is `14`. A sum over the roots of a polynomial is a
 sum over its set of roots, `sum(w^2, w in { w : w^3 - 2w + 1 = 0 })`, which is `4`, and it needs no
 index and no order, a set having neither. The terms are added up where the set is finite and its
-members are known: a listed set of numbers, or roots the solver writes in full, which is checked by
-counting them against the polynomial's number of distinct roots. A set whose members might coincide,
+members are known: a listed set of numbers, or roots that are rational, roots of a quadratic or roots
+of a binomial, which is checked by counting them against the polynomial's number of distinct roots.
+The roots of an irreducible cubic or quartic are not written out in radicals, which read no more
+simply than the sum. A set whose members might coincide,
 such as `{ a, b }`, and a set that is not finite are left as written. Evaluated to a number, roots
 the solver cannot write are found numerically, all of them to the working precision or none, so
 `sum(w^5, w in { w : w^5 + w + 3 = 0 })` evaluates to `-15`.

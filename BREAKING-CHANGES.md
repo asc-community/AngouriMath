@@ -1619,9 +1619,11 @@ polynomial is a sum over its set of roots, `sum(f(w), w in { w : p(w) = 0 })`, w
 order.
 
 The terms are added up where the set is finite and its members are known: a listed set of numbers,
-distinct by value, and the roots of a polynomial where the solver writes all of them. That is
-checked by counting them against the degree of the square-free part, so a root the solver missed
-leaves the sum as written rather than one term short. Evaluated to a number, the roots it cannot
+distinct by value, and the roots of a polynomial where every one is rational, a root of a quadratic
+or a root of a binomial. That is checked by counting them against the degree of the square-free
+part, so a root the solver missed leaves the sum as written rather than one term short. The roots of
+an irreducible cubic or quartic are not written out in radicals, which read no more simply than the
+sum. Evaluated to a number, the roots it cannot
 write are found to the working precision by the Durand–Kerner iteration, all of them or none. A set
 with a symbol among its members, whose members may coincide, and a set that is not finite are left
 as written. [#1285](https://github.com/asc-community/AngouriMath/issues/1285). Both columns
