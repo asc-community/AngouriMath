@@ -429,5 +429,27 @@ namespace AngouriMath.Tests.Core
             Assert.True(quotient.RealPart.EDecimal.Subtract(D(qr)).Abs().CompareTo(D(qr).Abs().Multiply(tolerance).Add(EDecimal.Create(1, -180))) <= 0, $"real part {quotient.RealPart} for {qr}");
             Assert.True(quotient.ImaginaryPart.EDecimal.Subtract(D(qi)).Abs().CompareTo(D(qi).Abs().Multiply(tolerance).Add(EDecimal.Create(1, -180))) <= 0, $"imaginary part {quotient.ImaginaryPart} for {qi}");
         }
+
+        /// <summary>
+        /// The modulus is made under the downcasting setting in force. It turned the downcasting on
+        /// for itself, so with it off <c>|75 + 316.22776601683796i|</c>, which is <c>325 + 2.6e-17</c>,
+        /// came back as 325. With it on, 325 is the setting's own rounding.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1615">#1615</a>
+        /// </summary>
+        [Fact]
+        public void AModulusIsMadeUnderTheDowncastingInForce()
+        {
+            // sqrt(75^2 + 316.22776601683796^2), from mpmath at 150 digits.
+            var expected = EDecimal.FromString("325.0000000000000260767357490722475692366964200883807015522337353559864579715873660423128636761679756827129766030459244723400170041");
+            using (MathS.Settings.DowncastingEnabled.Set(false))
+            {
+                var modulus = Complex.Create(EDecimal.FromInt32(75), EDecimal.FromString("316.22776601683796")).Abs();
+                Assert.True(modulus.EDecimal.Subtract(expected).Abs().CompareTo(EDecimal.Create(1, -90)) < 0, $"{modulus}");
+                var evaluated = "abs(75 + 316.22776601683796i)".ToEntity().EvalNumerical();
+                Assert.True(evaluated.RealPart.EDecimal.Subtract(expected).Abs().CompareTo(EDecimal.Create(1, -90)) < 0, $"{evaluated}");
+            }
+            using (MathS.Settings.DowncastingEnabled.Set(true))
+                Assert.Equal(Integer.Create(325), Complex.Create(EDecimal.FromInt32(75), EDecimal.FromString("316.22776601683796")).Abs());
+        }
     }
 }
