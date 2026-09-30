@@ -34,6 +34,11 @@ namespace AngouriMath.Functions
     /// distribution and is integrated at once, and was declined for want of it.
     /// </para>
     /// <para>
+    /// <b>The public entry</b> is <see cref="Entity.AsSingleFraction"/>, through
+    /// <see cref="AngouriMath.Core.Transformations.Transformation.AsSingleFraction"/>, which also
+    /// reads a rational number as the fraction it is written as and tidies each half.
+    /// </para>
+    /// <para>
     /// <b>No cancellation.</b> The two halves are returned as built, with no common factor taken
     /// out: <c>x/x</c> comes back as <c>(x, x)</c> and not as <c>(1, 1)</c>. Cancelling needs a
     /// gcd, which needs to know what the expression is a polynomial <em>in</em>, and this runs
