@@ -214,19 +214,66 @@ namespace AngouriMath
             }
             else
             {
-                // The Sylvester matrix: m rows of p's coefficients, n of q's, highest first.
+                // Past a linear, only with rational coefficients, where the resultant is a number
+                // and only whether it is zero matters: the Sylvester matrix in whole numbers, its
+                // determinant by Bareiss's elimination. A symbolic q of higher degree is left to
+                // forall. The determinant of a matrix of entities would reach GenericTensor, whose
+                // operations native AOT cannot compile, from a property every node has.
+                var denominators = EInteger.One;
+                var rational = new ERational[m + 1];
+                for (var power = 0; power <= m; power++)
+                {
+                    if (Q(power).Evaled is not Number.Rational coefficient)
+                        return null;
+                    rational[power] = coefficient.ERational;
+                    denominators = denominators.Divide(denominators.Gcd(rational[power].Denominator)).Multiply(rational[power].Denominator);
+                }
                 var size = n + m;
-                var sylvester = new Entity[size, size];
+                var sylvester = new EInteger[size, size];
                 for (var row = 0; row < size; row++)
                     for (var column = 0; column < size; column++)
-                        sylvester[row, column] = row < m
-                            ? (column - row >= 0 && column - row <= n ? P(n - (column - row)) : Number.Integer.Zero)
-                            : (column - (row - m) >= 0 && column - (row - m) <= m ? Q(m - (column - (row - m))) : Number.Integer.Zero);
-                if (MathS.Matrix(sylvester).Determinant is not { } determinant)
-                    return null;
-                resultant = determinant;
+                    {
+                        sylvester[row, column] = EInteger.Zero;
+                        if (row < m && column - row >= 0 && column - row <= n)
+                            sylvester[row, column] = p[n - (column - row)];
+                        else if (row >= m && column - (row - m) >= 0 && column - (row - m) <= m)
+                        {
+                            var q = rational[m - (column - (row - m))];
+                            sylvester[row, column] = q.Numerator.Multiply(denominators.Divide(q.Denominator));
+                        }
+                    }
+                return WholeNumberDeterminant(sylvester).IsZero ? Boolean.False : Boolean.True;
             }
             return !resultant.Equalizes(Number.Integer.Zero);
+        }
+
+        /// <summary>The determinant of a square matrix of whole numbers, by Bareiss's fraction-free elimination.</summary>
+        private static EInteger WholeNumberDeterminant(EInteger[,] matrix)
+        {
+            var size = matrix.GetLength(0);
+            var a = (EInteger[,])matrix.Clone();
+            var negated = false;
+            var previous = EInteger.One;
+            for (var k = 0; k < size - 1; k++)
+            {
+                if (a[k, k].IsZero)
+                {
+                    var swap = -1;
+                    for (var i = k + 1; i < size && swap < 0; i++)
+                        if (!a[i, k].IsZero)
+                            swap = i;
+                    if (swap < 0)
+                        return EInteger.Zero;
+                    for (var j = 0; j < size; j++)
+                        (a[k, j], a[swap, j]) = (a[swap, j], a[k, j]);
+                    negated = !negated;
+                }
+                for (var i = k + 1; i < size; i++)
+                    for (var j = k + 1; j < size; j++)
+                        a[i, j] = a[i, j].Multiply(a[k, k]).Subtract(a[i, k].Multiply(a[k, j])).Divide(previous);
+                previous = a[k, k];
+            }
+            return negated ? a[size - 1, size - 1].Negate() : a[size - 1, size - 1];
         }
 
         private static IEnumerable<Entity> Conjuncts(Entity condition)
