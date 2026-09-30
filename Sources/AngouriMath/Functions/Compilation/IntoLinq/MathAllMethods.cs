@@ -248,6 +248,46 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             return 0;
         }
 
+        // The floors and the rounding, componentwise on a complex number and to even at a half,
+        // as the interpreter takes them; an integer is its own. And the extremes, which have no
+        // value for two complex numbers that differ and are not both real, since those are not
+        // ordered. https://github.com/asc-community/AngouriMath/issues/1603
+        public static System.Numerics.Complex Floor(System.Numerics.Complex a) => new(Math.Floor(a.Real), Math.Floor(a.Imaginary));
+        public static double Floor(double a) => Math.Floor(a);
+        public static float Floor(float a) => (float)Math.Floor(a);
+        public static long Floor(long a) => a;
+        public static int Floor(int a) => a;
+        public static BigInteger Floor(BigInteger a) => a;
+
+        public static System.Numerics.Complex Ceil(System.Numerics.Complex a) => new(Math.Ceiling(a.Real), Math.Ceiling(a.Imaginary));
+        public static double Ceil(double a) => Math.Ceiling(a);
+        public static float Ceil(float a) => (float)Math.Ceiling(a);
+        public static long Ceil(long a) => a;
+        public static int Ceil(int a) => a;
+        public static BigInteger Ceil(BigInteger a) => a;
+
+        public static System.Numerics.Complex Round(System.Numerics.Complex a)
+            => new(Math.Round(a.Real, MidpointRounding.ToEven), Math.Round(a.Imaginary, MidpointRounding.ToEven));
+        public static double Round(double a) => Math.Round(a, MidpointRounding.ToEven);
+        public static float Round(float a) => (float)Math.Round(a, MidpointRounding.ToEven);
+        public static long Round(long a) => a;
+        public static int Round(int a) => a;
+        public static BigInteger Round(BigInteger a) => a;
+
+        public static System.Numerics.Complex Max(System.Numerics.Complex a, System.Numerics.Complex b) => AngouriMath.Core.Compilation.RealOnly.Max(a, b);
+        public static double Max(double a, double b) => double.IsNaN(a) || double.IsNaN(b) ? double.NaN : Math.Max(a, b);
+        public static float Max(float a, float b) => float.IsNaN(a) || float.IsNaN(b) ? float.NaN : Math.Max(a, b);
+        public static long Max(long a, long b) => Math.Max(a, b);
+        public static int Max(int a, int b) => Math.Max(a, b);
+        public static BigInteger Max(BigInteger a, BigInteger b) => BigInteger.Max(a, b);
+
+        public static System.Numerics.Complex Min(System.Numerics.Complex a, System.Numerics.Complex b) => AngouriMath.Core.Compilation.RealOnly.Min(a, b);
+        public static double Min(double a, double b) => double.IsNaN(a) || double.IsNaN(b) ? double.NaN : Math.Min(a, b);
+        public static float Min(float a, float b) => float.IsNaN(a) || float.IsNaN(b) ? float.NaN : Math.Min(a, b);
+        public static long Min(long a, long b) => Math.Min(a, b);
+        public static int Min(int a, int b) => Math.Min(a, b);
+        public static BigInteger Min(BigInteger a, BigInteger b) => BigInteger.Min(a, b);
+
         /// <summary>
         /// True where <c>System.Numerics.Complex.IsNaN</c> is, spelled out because that overload is
         /// .NET 7 and later and this assembly also targets netstandard2.0. A complex number is NaN
@@ -284,6 +324,18 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             { ("Pow", 2, typeof(long)), Def<long>((a, b) => Pow(a, b)) },
             { ("Pow", 2, typeof(int)), Def<int>((a, b) => Pow(a, b)) },
             { ("Pow", 2, typeof(BigInteger)), Def<BigInteger>((a, b) => Pow(a, b)) },
+            { ("Max", 2, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>((a, b) => Max(a, b)) },
+            { ("Max", 2, typeof(double)), Def<double>((a, b) => Max(a, b)) },
+            { ("Max", 2, typeof(float)), Def<float>((a, b) => Max(a, b)) },
+            { ("Max", 2, typeof(long)), Def<long>((a, b) => Max(a, b)) },
+            { ("Max", 2, typeof(int)), Def<int>((a, b) => Max(a, b)) },
+            { ("Max", 2, typeof(BigInteger)), Def<BigInteger>((a, b) => Max(a, b)) },
+            { ("Min", 2, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>((a, b) => Min(a, b)) },
+            { ("Min", 2, typeof(double)), Def<double>((a, b) => Min(a, b)) },
+            { ("Min", 2, typeof(float)), Def<float>((a, b) => Min(a, b)) },
+            { ("Min", 2, typeof(long)), Def<long>((a, b) => Min(a, b)) },
+            { ("Min", 2, typeof(int)), Def<int>((a, b) => Min(a, b)) },
+            { ("Min", 2, typeof(BigInteger)), Def<BigInteger>((a, b) => Min(a, b)) },
             { ("Sin", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Sin(a)) },
             { ("Sin", 1, typeof(double)), Def<double>(a => Sin(a)) },
             { ("Sin", 1, typeof(float)), Def<float>(a => Sin(a)) },
@@ -368,6 +420,24 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             { ("Sgn", 1, typeof(long)), Def<long>(a => Sgn(a)) },
             { ("Sgn", 1, typeof(int)), Def<int>(a => Sgn(a)) },
             { ("Sgn", 1, typeof(BigInteger)), Def<BigInteger>(a => Sgn(a)) },
+            { ("Floor", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Floor(a)) },
+            { ("Floor", 1, typeof(double)), Def<double>(a => Floor(a)) },
+            { ("Floor", 1, typeof(float)), Def<float>(a => Floor(a)) },
+            { ("Floor", 1, typeof(long)), Def<long>(a => Floor(a)) },
+            { ("Floor", 1, typeof(int)), Def<int>(a => Floor(a)) },
+            { ("Floor", 1, typeof(BigInteger)), Def<BigInteger>(a => Floor(a)) },
+            { ("Ceil", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Ceil(a)) },
+            { ("Ceil", 1, typeof(double)), Def<double>(a => Ceil(a)) },
+            { ("Ceil", 1, typeof(float)), Def<float>(a => Ceil(a)) },
+            { ("Ceil", 1, typeof(long)), Def<long>(a => Ceil(a)) },
+            { ("Ceil", 1, typeof(int)), Def<int>(a => Ceil(a)) },
+            { ("Ceil", 1, typeof(BigInteger)), Def<BigInteger>(a => Ceil(a)) },
+            { ("Round", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Round(a)) },
+            { ("Round", 1, typeof(double)), Def<double>(a => Round(a)) },
+            { ("Round", 1, typeof(float)), Def<float>(a => Round(a)) },
+            { ("Round", 1, typeof(long)), Def<long>(a => Round(a)) },
+            { ("Round", 1, typeof(int)), Def<int>(a => Round(a)) },
+            { ("Round", 1, typeof(BigInteger)), Def<BigInteger>(a => Round(a)) },
         };
 
         // An expression tree is how C# spells "the MethodInfo of this method" without a string:

@@ -2245,19 +2245,33 @@ before: `(x^2 - 1)/(x - 1) - x - 1` is zero for every `x` but 1, where `CC` woul
 | `"sqrt(x)^2 = x".ToEntity().Solve("x")` | `{ -10, -49/5, -48/5, …, -8 - 8i, … }`, 191 numbers | `CC` |
 | `"sin(x)^2 + cos(x)^2 = 1".ToEntity().Solve("x")` | the same 191 numbers | `CC` |
 
-### An equation the numerical search cannot compile is left unsolved, not thrown out of `Solve`
+### The floors, the rounding and the extremes compile, and the solver's numerical search declines what it cannot represent
 
-`floor(x) = x/2 + 1/3` and `max(x, 0) = x` threw `UncompilableNodeException` out of `Solve`. Nothing
-analytical reads them, and the last resort, Newton's method, compiles the expression and its
-derivative, where the compiler has no form for `floor`, nor for the unevaluated
-`derivative(max(x, 0), x)`. The search now asks first whether the compiler has a form for every node,
-and declines where it has not. `SolveNt`, which asks for Newton's method by name, still throws
-([#1603](https://github.com/asc-community/AngouriMath/issues/1603)).
+`floor`, `ceil`, `round`, `max` and `min` had no compiled form, and `max` and `min` had no
+derivative. So `Compile` threw `UncompilableNodeException` on them, and so did `Solve`, whose last
+resort, Newton's method, compiles the expression and its derivative. They compile now, through
+`Compile` and `Compile<TIn, TOut>` alike, and they agree with the interpreter:
+
+- `floor`, `ceil` and `round` are taken componentwise on a complex number, and `round` rounds a half
+  to even;
+- `max` and `min` of two numbers that differ and are not both real have no value, since those are
+  not ordered;
+- `max` and `min` differentiate where their arguments are real, as `|f|` does.
+
+The search still declines what has no compiled form, so `erf(x) = x/2 + 1/7` is left unsolved. It
+now also declines a set of roots that are not isolated: where the equation holds midway between two
+of them, the points are samples of a continuum and not the set
+([#1603](https://github.com/asc-community/AngouriMath/issues/1603),
+[#1420](https://github.com/asc-community/AngouriMath/issues/1420)).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
-| `"floor(x) = x/2 + 1/3".ToEntity().Solve("x")` | `UncompilableNodeException` | `{ x : floor(x) = x / 2 + 1/3 }` |
+| `"floor(x) = x/2 + 1/3".ToEntity().Solve("x")` | `UncompilableNodeException` | `{ 1.333… }`: 4/3, by Newton's method |
+| `"max(x, 1) = 2*x".ToEntity().Solve("x")` | `UncompilableNodeException` | `{ 1/2 }` |
 | `"max(x, 0) = x".ToEntity().Solve("x")` | `UncompilableNodeException` | `{ x : max(x, 0) = x }` |
+| `"abs(x) - x = 0".ToEntity().Solve("x")` | `{ 0, 1/5, 2/5, …, 10 }`, 51 numbers | `{ x : abs(x) - x = 0 }` |
+| `"floor(x)".Compile("x")`, and `ceil`, `round`, `max`, `min` | `UncompilableNodeException` | compiled |
+| `"max(x, 1)".ToEntity().Differentiate("x")` | `derivative(max(x, 1), x)` | `(1 + sgn(x - 1)) / 2 provided not x - 1 = 0` |
 
 ### An equation the solver cannot invert is left unsolved, not answered with no roots
 

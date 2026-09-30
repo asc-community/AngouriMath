@@ -37,6 +37,9 @@ namespace AngouriMath.Core
             CALL_SIGNUM,
             CALL_ABS,
             CALL_PHI,
+            CALL_FLOOR,
+            CALL_CEIL,
+            CALL_ROUND,
 
             // 2-arg functions
             CALL_SUM = 100,
@@ -46,6 +49,8 @@ namespace AngouriMath.Core
             CALL_MOD,
             CALL_POW,
             CALL_LOG,
+            CALL_MAX,
+            CALL_MIN,
         }
         internal sealed partial record Instruction(InstructionType Type, int Reference = -1, System.Numerics.Complex Value = default)
         {
@@ -145,6 +150,33 @@ namespace AngouriMath.Core
                     case InstructionType.CALL_MOD:
                         stack.Push(Core.Compilation.RealOnly.Mod(stack.Pop(), stack.Pop()));
                         break;
+                    case InstructionType.CALL_MAX:
+                        stack.Push(Core.Compilation.RealOnly.Max(stack.Pop(), stack.Pop()));
+                        break;
+                    case InstructionType.CALL_MIN:
+                        stack.Push(Core.Compilation.RealOnly.Min(stack.Pop(), stack.Pop()));
+                        break;
+                    // Componentwise, as the interpreter takes them, and to even at a half for
+                    // the rounding.
+                    case InstructionType.CALL_FLOOR:
+                    {
+                        var z = stack.Pop();
+                        stack.Push(new System.Numerics.Complex(System.Math.Floor(z.Real), System.Math.Floor(z.Imaginary)));
+                        break;
+                    }
+                    case InstructionType.CALL_CEIL:
+                    {
+                        var z = stack.Pop();
+                        stack.Push(new System.Numerics.Complex(System.Math.Ceiling(z.Real), System.Math.Ceiling(z.Imaginary)));
+                        break;
+                    }
+                    case InstructionType.CALL_ROUND:
+                    {
+                        var z = stack.Pop();
+                        stack.Push(new System.Numerics.Complex(
+                            System.Math.Round(z.Real, System.MidpointRounding.ToEven), System.Math.Round(z.Imaginary, System.MidpointRounding.ToEven)));
+                        break;
+                    }
                     case InstructionType.CALL_POW:
                         stack.Push(System.Numerics.Complex.Pow(stack.Pop(), stack.Pop()));
                         break;

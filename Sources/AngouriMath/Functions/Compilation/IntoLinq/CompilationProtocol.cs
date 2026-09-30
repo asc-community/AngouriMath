@@ -134,6 +134,9 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 
                 Absf =>         Expression.Call(GetDef("Abs", 1, e.Type), e),
                 Signumf =>      Expression.Call(GetDef("Sgn", 1, e.Type), e),
+                Floorf =>       Expression.Call(GetDef("Floor", 1, e.Type), e),
+                Ceilf =>        Expression.Call(GetDef("Ceil", 1, e.Type), e),
+                Roundf =>       Expression.Call(GetDef("Round", 1, e.Type), e),
                 
                 Notf =>         Expression.Not(e),
                 
@@ -193,6 +196,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                     ShouldBeAtLeastDouble(left) is var newLeft
                     && ShouldBeAtLeastDouble(right) is var newRight
                     => Expression.Call(GetDef("Log", 2, newRight.Type), newLeft, newRight),
+                Maxf => Expression.Call(GetDef("Max", 2, left.Type), left, right),
+                Minf => Expression.Call(GetDef("Min", 2, left.Type), left, right),
 
                 Andf => Expression.And(left, right),
                 Orf => Expression.Or(left, right),

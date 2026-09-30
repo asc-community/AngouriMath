@@ -1470,6 +1470,7 @@ AngouriMath.Entity+Maxf.Equals(AngouriMath.Entity+Maxf) : System.Boolean
 AngouriMath.Entity+Maxf.Equals(System.Object) : System.Boolean
 AngouriMath.Entity+Maxf.GetHashCode() : System.Int32
 AngouriMath.Entity+Maxf.InitDirectChildren() : AngouriMath.Entity[]
+AngouriMath.Entity+Maxf.InnerDifferentiate(AngouriMath.Entity+Variable) : AngouriMath.Entity
 AngouriMath.Entity+Maxf.InnerSimplify(System.Boolean) : AngouriMath.Entity
 AngouriMath.Entity+Maxf.Left { } : AngouriMath.Entity
 AngouriMath.Entity+Maxf.NodeFirstChild { } : AngouriMath.Entity
@@ -1509,6 +1510,7 @@ AngouriMath.Entity+Minf.Equals(AngouriMath.Entity+Minf) : System.Boolean
 AngouriMath.Entity+Minf.Equals(System.Object) : System.Boolean
 AngouriMath.Entity+Minf.GetHashCode() : System.Int32
 AngouriMath.Entity+Minf.InitDirectChildren() : AngouriMath.Entity[]
+AngouriMath.Entity+Minf.InnerDifferentiate(AngouriMath.Entity+Variable) : AngouriMath.Entity
 AngouriMath.Entity+Minf.InnerSimplify(System.Boolean) : AngouriMath.Entity
 AngouriMath.Entity+Minf.Left { } : AngouriMath.Entity
 AngouriMath.Entity+Minf.NodeFirstChild { } : AngouriMath.Entity

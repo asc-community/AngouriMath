@@ -26,21 +26,21 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
         /// How many approximations we need to do before we reach the most precise result.
         /// </param>
         internal static HashSet<Complex> SolveNt(Entity expr, Entity.Variable v, MathS.Settings.NewtonSetting settings)
-            => Search(expr, v, settings, declineWhatDoesNotCompile: false)!;
+            => Search(expr, v, settings, forTheSolver: false)!;
 
         /// <summary>
-        /// <see cref="SolveNt(Entity, Entity.Variable, MathS.Settings.NewtonSetting)"/> for a
-        /// caller that falls back rather than fails: <see langword="null"/> where the expression
+        /// <see cref="SolveNt(Entity, Entity.Variable, MathS.Settings.NewtonSetting)"/> for the
+        /// solver's last resort, which answers a set: <see langword="null"/> where the expression
         /// or its derivative holds a node the compiler has no form for, where that method throws
-        /// <see cref="Core.Exceptions.UncompilableNodeException"/>. `floor(x)` has none, and
-        /// neither has the unevaluated `derivative(max(x, 1), x)` that `max` differentiates to,
-        /// and `Solve` threw for both from its last resort.
-        /// https://github.com/asc-community/AngouriMath/issues/1603
+        /// <see cref="Core.Exceptions.UncompilableNodeException"/> -- an unevaluated derivative,
+        /// integral or limit binds the variable and has no value at a point -- and where the
+        /// roots it finds are not isolated, so that they are samples of a continuum rather than
+        /// the set. https://github.com/asc-community/AngouriMath/issues/1603
         /// </summary>
         internal static HashSet<Complex>? TrySolveNt(Entity expr, Entity.Variable v, MathS.Settings.NewtonSetting settings)
-            => Search(expr, v, settings, declineWhatDoesNotCompile: true);
+            => Search(expr, v, settings, forTheSolver: true);
 
-        private static HashSet<Complex>? Search(Entity expr, Entity.Variable v, MathS.Settings.NewtonSetting settings, bool declineWhatDoesNotCompile)
+        private static HashSet<Complex>? Search(Entity expr, Entity.Variable v, MathS.Settings.NewtonSetting settings, bool forTheSolver)
         {
             // Perform one iteration of searching for a root with Newton-Raphson method
             static Complex NewtonIter(FastExpression f, FastExpression df, NumericsComplex value, int precision)
@@ -73,7 +73,7 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
             var res = new HashSet<Complex>();
             var derivative = WithoutConditions(expr.Differentiate(v).Simplify());
             var function = WithoutConditions(expr.Simplify());
-            if (declineWhatDoesNotCompile && !(derivative.HasCompiledForm && function.HasCompiledForm))
+            if (forTheSolver && !(derivative.HasCompiledForm && function.HasCompiledForm))
                 return null;
             var df = derivative.Compile(v);
             var f = function.Compile(v);
@@ -110,7 +110,34 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
             // the values actually handed back.
             var distinct = OnePerRoot(WithoutIterationNoise(res), f);
             distinct.RemoveWhere(root => !Satisfies(expr, v, root));
+            // A root the search finds is one of a finite set only where it is isolated. Where the
+            // equation holds midway between two of them as well, it holds along the segment, and
+            // the points the grid converged to are samples of the solutions and not the set:
+            // `abs(x) - x = 0` came back as fifty-one points of [0, 10], and `max(x, 0) = x`, once
+            // `max` compiled, did too. The solver leaves such an equation unsolved; asked for by
+            // name, the search still returns the points it found.
+            // https://github.com/asc-community/AngouriMath/issues/1420
+            if (forTheSolver && !AreIsolated(distinct, f))
+                return null;
             return distinct;
+        }
+
+        /// <summary>
+        /// Whether no two of the real <paramref name="roots"/> that are more than a thousandth
+        /// apart have the equation holding midway between them as well.
+        /// </summary>
+        private static bool AreIsolated(HashSet<Complex> roots, FastExpression f)
+        {
+            var reals = roots
+                .Where(root => root.ImaginaryPart.IsZero)
+                .Select(root => root.RealPart.EDecimal.ToDouble())
+                .OrderBy(root => root)
+                .ToList();
+            for (var i = 1; i < reals.Count; i++)
+                if (reals[i] - reals[i - 1] > 1e-3
+                    && f.Call(new NumericsComplex((reals[i - 1] + reals[i]) / 2, 0)).ToNumber().Abs() < MathS.Settings.PrecisionErrorCommon.Value)
+                    return false;
+            return true;
         }
 
         /// <summary>

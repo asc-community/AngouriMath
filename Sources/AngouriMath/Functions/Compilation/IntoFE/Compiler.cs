@@ -350,6 +350,66 @@ namespace AngouriMath
                 throw new UncompilableNodeException($"A limit cannot be compiled: `{Stringize()}`");
         }
 
+        // The floors, the rounding and the extremes, which the solver's numerical search needs
+        // compiled to run on `floor(x) = x/2 + 1/3` or `max(x, 1) = 2 x` at all.
+        // https://github.com/asc-community/AngouriMath/issues/1603
+        public partial record Floorf
+        {
+            private protected override bool CompilesItself => true;
+
+            private protected override void CompileNode(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_FLOOR));
+            }
+        }
+
+        public partial record Ceilf
+        {
+            private protected override bool CompilesItself => true;
+
+            private protected override void CompileNode(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_CEIL));
+            }
+        }
+
+        public partial record Roundf
+        {
+            private protected override bool CompilesItself => true;
+
+            private protected override void CompileNode(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_ROUND));
+            }
+        }
+
+        public partial record Maxf
+        {
+            private protected override bool CompilesItself => true;
+
+            private protected override void CompileNode(Compiler compiler)
+            {
+                Right.InnerCompile(compiler);
+                Left.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_MAX));
+            }
+        }
+
+        public partial record Minf
+        {
+            private protected override bool CompilesItself => true;
+
+            private protected override void CompileNode(Compiler compiler)
+            {
+                Right.InnerCompile(compiler);
+                Left.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_MIN));
+            }
+        }
+
         public partial record Signumf
         {
             private protected override bool CompilesItself => true;
