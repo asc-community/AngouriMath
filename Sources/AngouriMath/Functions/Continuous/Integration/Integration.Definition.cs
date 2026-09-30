@@ -446,13 +446,53 @@ namespace AngouriMath.Functions.Algebra
                 descentTruncated = true;
                 return null;
             }
-            if (descentDepth == 0)
+            if (descentDepth != 0)
+                return ComputeIndefiniteIntegralGuarded(expr, x, integrateByParts);
+            descentTruncated = false;
+            inProgress?.Clear();
+            ASumOverRootsWouldAnswer = false;
+            var answer = ComputeIndefiniteIntegralGuarded(expr, x, integrateByParts);
+            if (answer is not null || !ASumOverRootsWouldAnswer || SumsOverRootsAllowed)
+                return answer;
+            // Once more with sums over roots, and with a memo of its own, since the first pass
+            // remembered every one of those rational functions as declined. Last, and only where
+            // nothing else answered: asked with the rest, a sum over roots answered each of
+            // Jeffrey's three terms, where the whole is one arctangent the rational integrator
+            // writes when it is asked the whole.
+            // https://github.com/asc-community/AngouriMath/issues/1285
+            var (memo, stamp) = (answered, answeredUnder);
+            SumsOverRootsAllowed = true;
+            answered = null;
+            descentTruncated = false;
+            inProgress?.Clear();
+            try
             {
-                descentTruncated = false;
-                inProgress?.Clear();
+                answer = ComputeIndefiniteIntegralGuarded(expr, x, integrateByParts);
             }
-            return ComputeIndefiniteIntegralGuarded(expr, x, integrateByParts);
+            finally
+            {
+                SumsOverRootsAllowed = false;
+                (answered, answeredUnder) = (memo, stamp);
+            }
+            // In place of the decline the first pass remembered, which a question asked again
+            // would otherwise be answered with, without the rule ever being reached to say that a
+            // second pass could answer it.
+            if (answer is not null && memo is not null && stamp is not null && SettingsState.StillHolds(stamp))
+                memo[(Normalized(expr, x), x, integrateByParts, true)] = answer;
+            return answer;
         }
+
+        /// <summary>
+        /// Whether the rational integrator may answer with a sum over the roots of a factor of the
+        /// denominator: only in the second pass of a question nothing else answered.
+        /// </summary>
+        [System.ThreadStatic] internal static bool SumsOverRootsAllowed;
+
+        /// <summary>
+        /// Set where the rational integrator declined only because the residues lie in a field of
+        /// degree above two, which a sum over roots would have written.
+        /// </summary>
+        [System.ThreadStatic] internal static bool ASumOverRootsWouldAnswer;
 
         /// <summary>
         /// <see cref="ComputeIndefiniteIntegral"/> past its entry check: the cycle guard, the
