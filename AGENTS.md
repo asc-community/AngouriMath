@@ -734,6 +734,16 @@ triaged, every issue is on one, and the milestone says what kind of change it is
   A Goal with no last piece to aim at is on Guiding principles
   ([#1511](https://github.com/asc-community/AngouriMath/pull/1511#issuecomment-5858231058)).
 - A proposal without `Accepted` is on Future until it is decided: a version would decide it.
+- **A parent is never due before its children.** Milestones run through the versions in order,
+  then Future, then Guiding principles, and a parent issue's is never earlier than any child's:
+  when a child moves later than its parent, the parent moves with it
+  ([#718](https://github.com/asc-community/AngouriMath/issues/718#issuecomment-5910345918)). So
+  #233 went from `2.6.0` to `2.8` when its children #1469 and #1486 were on `2.8`, and #718, a
+  parent with no milestone, went to Future. And "under" is GitHub's sub-issue relationship, not
+  prose: an issue that belongs under another is linked in the turn it is filed, and a comment says
+  "under" only once the link is there
+  ([#718](https://github.com/asc-community/AngouriMath/issues/718#issuecomment-5910315961)) --
+  the tree is what the backlog is read by, and a word in a comment is invisible to it.
 
 An issue you open has its type and its milestone from the moment it is filed, which the reply
 that triages someone else's issue does for theirs. `gh issue create --milestone` sets the one;
@@ -741,6 +751,13 @@ the type needs a second call, since `gh issue create` has no flag for it:
 
 ```
 gh api -X PATCH repos/asc-community/AngouriMath/issues/<n> -f type=Bug   # Bug, Feature, Maintenance or Goal
+```
+
+and a sub-issue link takes the child's id rather than its number:
+
+```
+gh api -X POST repos/asc-community/AngouriMath/issues/<parent>/sub_issues \
+  -F sub_issue_id=$(gh api repos/asc-community/AngouriMath/issues/<child> --jq .id)
 ```
 
 When a PR merges, check its issue's milestone still describes where the change lands — a fix
