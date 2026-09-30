@@ -752,6 +752,20 @@ quotient or whole power with a matrix in it to GenericTensor's operation of that
 | `"[[x, 2 x], [x + 1, x^2]]".ToEntity().Compile<double, GenTensor<double, DoubleOperations>>("x")` | `UncompilableNodeException` | a delegate; at `3` the matrix `[[3, 6], [4, 9]]` |
 | `"A * B".ToEntity().Compile<GenTensor<…>, GenTensor<…>, GenTensor<…>>("A", "B")` | `UncompilableNodeException` | the matrix product |
 | `"[[1, 0]] * [[a, b], [c, d]] * [[0], [1]]".ToEntity().Compile<double, double, double, double, double>("a", "b", "c", "d")` | `2` at `(1, 2, 3, 4)` — simplified to the scalar first | unchanged |
+### `π` is `pi` and the script `ℯ` is `e`
+
+`π` (U+03C0) was a free variable, a Greek letter like any other, so `sin(π)` did not simplify; the
+script `ℯ` (U+212F) was not a letter and did not parse. Both are now spellings of the constants, as
+mathematics writes them: `π` is `pi`, one object with it, and `ℯ` is `e`. A caller who used `π` as a
+variable's name now has the constant. The Cyrillic `е` and `х` stay letters, variables that print
+like `e` and `x` ([#1260](https://github.com/asc-community/AngouriMath/issues/1260)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sin(π)".ToEntity().Simplify()` | `sin(π)` | `0` |
+| `"cos(π / 3)".ToEntity().Simplify()` | `cos(π / 3)` | `1/2` |
+| `"ln(ℯ)".ToEntity().Simplify()` | `UnhandledParseException` | `1` |
+
 ### `lcm` is a function, and a congruence is solved to a residue class
 
 `lcm(a, b, ...)` is a node, `Entity.Lcmf`, by the conventions of `gcd`: non-negative, `0` where

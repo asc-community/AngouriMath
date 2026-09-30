@@ -70,8 +70,21 @@ namespace AngouriMath
             [ConstantField] internal static readonly Constant pi = NamedConstants[nameof(pi)];
             [ConstantField] internal static readonly Constant e = NamedConstants[nameof(e)];
 
+            /// <summary>
+            /// The other spellings of a constant's name, each read as the constant itself: <c>π</c>
+            /// (U+03C0) is <c>pi</c> and the script <c>ℯ</c> (U+212F) is <c>e</c>, as mathematics
+            /// writes them. The Cyrillic <c>е</c> is not among them: it is a letter of an alphabet the
+            /// grammar admits on purpose, and reading it as a constant would be the same surprise the
+            /// other way round. https://github.com/asc-community/AngouriMath/issues/1260
+            /// </summary>
+            [ConstantField] private static readonly IReadOnlyDictionary<string, string> ConstantSpellings =
+                new Dictionary<string, string> { { "\u03C0", nameof(pi) }, { "\u212F", nameof(e) } };
+
+            /// <summary>The name a spelling stands for: <c>π</c> is <c>pi</c>, and any other name is itself.</summary>
+            private static string Spelled(string name) => ConstantSpellings.TryGetValue(name, out var constant) ? constant : name;
+
             /// <summary>Is this name one the language reads as a mathematical constant?</summary>
-            internal static bool IsConstantName(string name) => ConstantList.ContainsKey(name);
+            internal static bool IsConstantName(string name) => ConstantList.ContainsKey(Spelled(name));
 
             /// <summary>
             /// A name as the language reads it: a constant where the name is one, a variable
@@ -80,7 +93,7 @@ namespace AngouriMath
             /// <a href="https://github.com/asc-community/AngouriMath/issues/984">#984</a>
             /// </summary>
             internal static Variable CreateVariableOrConstant(string name)
-                => NamedConstants.TryGetValue(name, out var constant) ? constant : new Variable(name);
+                => NamedConstants.TryGetValue(Spelled(name), out var constant) ? constant : new Variable(name);
 
             /// <summary>
             /// Extracts this <see cref="Variable"/>'s name and index
