@@ -71,11 +71,19 @@ namespace AngouriMath
         /// <c>not x^3 + x + 1 = 0</c>, where the logarithms are singular -- since <c>p</c>'s leading
         /// coefficient is a number that is not zero. A finite range of numbers is the conjunction
         /// over it. Anything else is kept as <c>forall</c> over the range: the set, the whole
-        /// numbers from the lower bound to the upper, the interval of a definite integral. A set
-        /// builder admits the members its predicate is defined at, so its own condition on its name
-        /// is part of whom it admits rather than of where the set is defined. A limit does not need
-        /// its body defined throughout anything, and is left as it was.
+        /// numbers from the lower bound to the upper, the interval between a definite integral's
+        /// limits. A set builder admits the members its predicate is defined at, so its own
+        /// condition on its name is part of whom it admits rather than of where the set is defined.
+        /// A limit does not need its body defined throughout anything, and is left as it was.
         /// https://github.com/asc-community/AngouriMath/issues/1632
+        /// </para>
+        /// <para>
+        /// For a definite integral this is sufficient for a value and not necessary: an integral
+        /// whose integrand is undefined only at a point it still converges past, <c>ln(t)</c> over
+        /// <c>[0; 1]</c>, is read as undefined here. That is the direction in which nothing is given
+        /// a value it does not have, and a pointwise condition cannot tell a convergent improper
+        /// integral from a divergent one. The integral itself, where it is worked out, is not
+        /// affected: the derivative of <c>2 integral(x ln(t), t, 0, 1)</c> is -2.
         /// </para>
         /// </remarks>
         private static Entity ScopedToItsBinder(Entity binder, Entity condition)
@@ -92,7 +100,7 @@ namespace AngouriMath
                 Quantifier quantifier => (quantifier.Var, quantifier.Over),
                 Summationf(_, var index, var from, var to) => (index, WholeNumbersBetween(index, from, to)),
                 Productf(_, var index, var from, var to) => (index, WholeNumbersBetween(index, from, to)),
-                Integralf { Range: { } limits } integral => (integral.Var, MathS.Interval(limits.from, limits.to)),
+                Integralf { Range: { } limits } integral => (integral.Var, Between(integral.Var, limits.from, limits.to)),
                 Set.ConditionalSet(var name, _) => (name, null),
                 _ => null
             };
@@ -109,6 +117,19 @@ namespace AngouriMath
                     kept = kept is Boolean(true) ? scoped : kept & scoped;
             }
             return kept;
+        }
+
+        /// <summary>
+        /// The segment between <paramref name="from"/> and <paramref name="to"/> in either order:
+        /// an integral from 1 to 0 ranges over [0; 1], where <c>[1; 0]</c> is empty and would make
+        /// any condition over it true. Two numbers are put in order; otherwise it is written as the
+        /// set of values between the two, since <c>[a; b] \/ [b; a]</c> simplifies to <c>{ b }</c>.
+        /// </summary>
+        private static Entity Between(Entity name, Entity from, Entity to)
+        {
+            if (from is Number.Real low && to is Number.Real high)
+                return low <= high ? MathS.Interval(low, high) : MathS.Interval(high, low);
+            return new Set.ConditionalSet(name, (from <= name) & (name <= to) | (to <= name) & (name <= from));
         }
 
         /// <summary>The whole numbers from <paramref name="from"/> to <paramref name="to"/>, listed where there are a few of them.</summary>

@@ -72,7 +72,43 @@ namespace AngouriMath.Tests.Core
             var product = "0 * sum(1/(k - x), k, 1, n)".ToEntity().InnerSimplified;
             Assert.IsType<Providedf>(product);
             Assert.DoesNotContain(product.FreeVariables, v => v.Name == "k");
+            Assert.True(product.Substitute("x", 1).Substitute("n", 3).Simplify().IsNaN);
+            Assert.Equal(0, product.Substitute("x", "1/2".ToEntity()).Substitute("n", 3).Simplify());
         }
+
+        /// <summary>
+        /// A definite integral's condition holds between its limits in either order: from 1 to 0
+        /// ranges over [0; 1] as well, where <c>[1; 0]</c> is empty and would make any condition
+        /// over it true.
+        /// </summary>
+        [Theory]
+        [InlineData("integral(1/(t - x), t, 0, 1)", "1/2", false)]
+        [InlineData("integral(1/(t - x), t, 0, 1)", "2", true)]
+        [InlineData("integral(1/(t - x), t, 1, 0)", "1/2", false)]
+        [InlineData("integral(1/(t - x), t, 1, 0)", "2", true)]
+        public void AnIntegralsConditionHoldsBetweenItsLimits(string integral, string at, bool defined)
+        {
+            var condition = integral.ToEntity().DomainCondition;
+            Assert.DoesNotContain(condition.FreeVariables, v => v.Name == "t");
+            Assert.Equal(defined ? MathS.Boolean.True : MathS.Boolean.False, condition.Substitute("x", at.ToEntity()).Simplify());
+        }
+
+        /// <summary>Between symbolic limits, whichever is larger: no name of the integral's is left free.</summary>
+        [Fact]
+        public void BetweenSymbolicLimitsNoBoundNameIsLeft()
+            => Assert.DoesNotContain("integral(1/(t - x), t, a, b)".ToEntity().DomainCondition.FreeVariables, v => v.Name == "t");
+
+        /// <summary>
+        /// Sufficient for a value and not necessary: <c>ln(t)</c> over <c>[0; 1]</c> converges, to
+        /// -1, and is read as undefined, since the integrand has no value at 0; over <c>[1; 2]</c>
+        /// it is defined throughout. That is the direction in which nothing is given a value it does
+        /// not have.
+        /// </summary>
+        [Theory]
+        [InlineData("integral(ln(t), t, 0, 1)", false)]
+        [InlineData("integral(ln(t), t, 1, 2)", true)]
+        public void AnIntegralUndefinedAtAPointOfItsRangeIsReadAsUndefined(string integral, bool defined)
+            => Assert.Equal(defined ? MathS.Boolean.True : MathS.Boolean.False, integral.ToEntity().DomainCondition.Simplify());
 
         /// <summary>A few whole numbers are the conjunction over them, and none is true.</summary>
         [Theory]

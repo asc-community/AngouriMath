@@ -1668,7 +1668,11 @@ derivative of `2 sum(ln(x - w), w in { w : w^3 + w + 1 = 0 })` was `… provided
 `EvalNumerical` could not decide. The condition is required at every value the name ranges over
 now: a conjunction over a few numbers, a resultant over the roots of a polynomial, and `forall`
 over the range otherwise. It is not left out, which would give `0 * sum(1/(k - x), k, 1, n)` a value
-at `x = 1` ([#1632](https://github.com/asc-community/AngouriMath/issues/1632)).
+at `x = 1` ([#1632](https://github.com/asc-community/AngouriMath/issues/1632)). A definite integral's
+condition is required between its limits, in either order. That is sufficient for a value and not
+necessary: `ln(t)` over `[0; 1]` converges, to -1, and its condition reads it as undefined, since the
+integrand has none at 0. Nothing is given a value it does not have that way. The integral itself,
+where it is worked out, is not affected.
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
