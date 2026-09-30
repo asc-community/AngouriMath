@@ -21,6 +21,7 @@ namespace AngouriMath.Tests.Core
     /// nine, a sum of such piecewises had 3^12 cases and took 8 GB.
     /// <a href="https://github.com/asc-community/AngouriMath/issues/1414">#1414</a>
     /// </summary>
+    [Trait("Area", "Core")]
     public sealed class ContradictoryConjunctionTest
     {
         [Theory]

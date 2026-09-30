@@ -18,6 +18,7 @@ namespace AngouriMath.Tests.Core
     /// does not read, and compares in three outcomes.
     /// <a href="https://github.com/asc-community/AngouriMath/issues/1019">#1019</a>
     /// </summary>
+    [Trait("Area", "Core")]
     public sealed class IntervalEvaluationTest
     {
         [Theory]
