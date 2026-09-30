@@ -131,61 +131,12 @@ namespace AngouriMath
                 }
 
                 /// <summary>
-                /// A union of intervals and listed real numbers written as its disjoint pieces in
-                /// increasing order, which is how it reads, with a point at an open end closing it:
-                /// <c>{ 1, 2 } \/ (-oo; 1) \/ (2; +oo)</c> is <c>(-oo; 1] \/ [2; +oo)</c>. So two set
-                /// builders for one set of numbers come out the same. As it was where an end is not a
-                /// real number.
+                /// A listed set or a union of numbers as <see cref="SetOperators.CanonicalUnion"/> writes
+                /// it, which is how it reads: the listing's pieces met one by one come out in the order
+                /// they met.
                 /// </summary>
                 private static Entity? Increasing(Entity? set)
-                {
-                    var pieces = new System.Collections.Generic.List<(Entity Left, bool LeftClosed, Entity Right, bool RightClosed)>();
-                    bool Collect(Entity piece)
-                    {
-                        switch (piece)
-                        {
-                            case Unionf(var left, var right):
-                                return Collect(left) && Collect(right);
-                            case Interval(var left, var leftClosed, var right, var rightClosed) when left.Evaled is Number.Real && right.Evaled is Number.Real:
-                                pieces.Add((left, leftClosed, right, rightClosed));
-                                return true;
-                            case FiniteSet listed when listed.All(static member => member.Evaled is Number.Real):
-                                foreach (var member in listed)
-                                    pieces.Add((member, true, member, true));
-                                return true;
-                            default:
-                                return false;
-                        }
-                    }
-                    if (set is null || !Collect(set) || pieces.Count < 2)
-                        return set;
-                    static EDecimal At(Entity end) => ((Number.Real)end.Evaled).EDecimal;
-                    // By the left end, a closed end before an open one at the same point.
-                    pieces.Sort(static (a, b) => At(a.Left).CompareTo(At(b.Left)) is var byLeft and not 0 ? byLeft : b.LeftClosed.CompareTo(a.LeftClosed));
-                    var merged = new System.Collections.Generic.List<(Entity Left, bool LeftClosed, Entity Right, bool RightClosed)> { pieces[0] };
-                    foreach (var piece in pieces.Skip(1))
-                    {
-                        var last = merged[^1];
-                        var gap = At(piece.Left).CompareTo(At(last.Right));
-                        if (gap > 0 || gap == 0 && !last.RightClosed && !piece.LeftClosed)
-                        {
-                            merged.Add(piece);
-                            continue;
-                        }
-                        var further = At(piece.Right).CompareTo(At(last.Right));
-                        merged[^1] = further > 0 ? (last.Left, last.LeftClosed, piece.Right, piece.RightClosed)
-                            : further == 0 ? (last.Left, last.LeftClosed, last.Right, last.RightClosed || piece.RightClosed)
-                            : last;
-                    }
-                    // Points on their own are one listed set; each interval stands where it lies.
-                    var points = merged.Where(static piece => At(piece.Left).CompareTo(At(piece.Right)) == 0).Select(static piece => piece.Left).ToList();
-                    var intervals = merged.Where(static piece => At(piece.Left).CompareTo(At(piece.Right)) != 0)
-                        .Select(static piece => (Entity)new Interval(piece.Left, piece.LeftClosed, piece.Right, piece.RightClosed)).ToList();
-                    if (intervals.Count == 0)
-                        return new FiniteSet(points);
-                    var union = intervals.Aggregate(static (left, right) => new Unionf(left, right));
-                    return points.Count == 0 ? union : new Unionf(new FiniteSet(points), union);
-                }
+                    => set is Set numbers && SetOperators.CanonicalUnion(numbers) is { } canonical ? canonical : set;
 
                 /// <summary>The membership a set builder's predicate declares, wherever it sits among the conjuncts, and the rest.</summary>
                 private static (Set Declared, Entity Condition)? Declared(Entity predicate, Variable x)
@@ -332,6 +283,13 @@ namespace AngouriMath
                     => ExpandOnTwoArguments(Left, Right,
                         (a, b) => (a, b) switch
                         {
+                            // A union of numbers is written as its disjoint pieces in increasing order,
+                            // a point at an open end closing it: x^2 >= x is solved to
+                            // { 0, 1 } \/ (-oo; 0) \/ (1; +oo), which is (-oo; 0] \/ [1; +oo). The pieces
+                            // meet pairwise below, and pieces that are not neighbours only here.
+                            // https://github.com/asc-community/AngouriMath/issues/1409
+                            (Set unionLeft, Set unionRight) when (unionLeft is Unionf || unionRight is Unionf)
+                                && SetOperators.CanonicalUnion(new Unionf(unionLeft, unionRight)) is { } canonical => canonical,
                             (FiniteSet setLeft, Set setRight) => SetOperators.UniteFiniteSetAndSet(setLeft, setRight),
                             (Set setLeft, FiniteSet setRight) => SetOperators.UniteFiniteSetAndSet(setRight, setLeft),
                             (Interval intLeft, Interval intRight) => SetOperators.UniteIntervalAndInterval(intLeft, intRight),

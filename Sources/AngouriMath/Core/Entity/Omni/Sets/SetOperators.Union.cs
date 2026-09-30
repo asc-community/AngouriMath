@@ -12,6 +12,72 @@ namespace AngouriMath.Core.Sets
 {
     internal static partial class SetOperators
     {
+        /// <summary>
+        /// A union of numeric intervals and listed real numbers written as its disjoint pieces:
+        /// the listed numbers first, in increasing order, then the intervals in increasing order,
+        /// a point at an open end closing it and an empty interval dropped. <c>x^2 &gt;= x</c> is
+        /// solved to <c>{ 0, 1 } \/ (-oo; 0) \/ (1; +oo)</c>, which is <c>(-oo; 0] \/ [1; +oo)</c>,
+        /// and two ways of writing one set of numbers come out the same. <see langword="null"/>
+        /// where a piece is anything else, or the union is written so already.
+        /// https://github.com/asc-community/AngouriMath/issues/1409
+        /// </summary>
+        internal static Set? CanonicalUnion(Set set)
+        {
+            var pieces = new List<(Entity Left, bool LeftClosed, Entity Right, bool RightClosed)>();
+            bool Collect(Entity piece)
+            {
+                switch (piece)
+                {
+                    case Unionf(var left, var right):
+                        return Collect(left) && Collect(right);
+                    case Interval(var left, var leftClosed, var right, var rightClosed) when left.Evaled is Number.Real && right.Evaled is Number.Real:
+                        var order = At(left).CompareTo(At(right));
+                        if (order < 0 || order == 0 && leftClosed && rightClosed)
+                            pieces.Add((left, leftClosed, right, rightClosed));
+                        return true;
+                    case FiniteSet listed when listed.All(static member => member.Evaled is Number.Real):
+                        foreach (var member in listed)
+                            pieces.Add((member, true, member, true));
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+            if (!Collect(set))
+                return null;
+            // By the left end, a closed end before an open one at the same point.
+            pieces.Sort(static (a, b) => At(a.Left).CompareTo(At(b.Left)) is var byLeft and not 0 ? byLeft : b.LeftClosed.CompareTo(a.LeftClosed));
+            var merged = new List<(Entity Left, bool LeftClosed, Entity Right, bool RightClosed)>();
+            foreach (var piece in pieces)
+            {
+                if (merged.Count == 0)
+                {
+                    merged.Add(piece);
+                    continue;
+                }
+                var last = merged[^1];
+                var gap = At(piece.Left).CompareTo(At(last.Right));
+                if (gap > 0 || gap == 0 && !last.RightClosed && !piece.LeftClosed)
+                {
+                    merged.Add(piece);
+                    continue;
+                }
+                var further = At(piece.Right).CompareTo(At(last.Right));
+                merged[^1] = further > 0 ? (last.Left, last.LeftClosed, piece.Right, piece.RightClosed)
+                    : further == 0 ? (last.Left, last.LeftClosed, last.Right, last.RightClosed || piece.RightClosed)
+                    : last;
+            }
+            var points = merged.Where(static piece => At(piece.Left).CompareTo(At(piece.Right)) == 0).Select(static piece => piece.Left).ToList();
+            var intervals = merged.Where(static piece => At(piece.Left).CompareTo(At(piece.Right)) != 0)
+                .Select(static piece => (Set)new Interval(piece.Left, piece.LeftClosed, piece.Right, piece.RightClosed)).ToList();
+            Set canonical = intervals.Count == 0 ? new FiniteSet(points)
+                : (points.Count == 0 ? intervals : intervals.Prepend(new FiniteSet(points)))
+                    .Aggregate(static (left, right) => new Unionf(left, right));
+            return canonical == set ? null : canonical;
+        }
+
+        private static PeterO.Numbers.EDecimal At(Entity end) => ((Number.Real)end.Evaled).EDecimal;
+
         internal static Set UniteFiniteSetAndSet(FiniteSet finite, Set set)
         {
             if (set is FiniteSet another)

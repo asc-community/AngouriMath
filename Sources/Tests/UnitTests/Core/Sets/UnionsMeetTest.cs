@@ -26,5 +26,23 @@ namespace AngouriMath.Tests.Core.Sets
         [InlineData("((0; (5 - sqrt(21))/2) \\/ ((5 + sqrt(21))/2; +oo)) /\\ ({ (3 - sqrt(5))/2 } \\/ [(3 - sqrt(5))/2; (3 + sqrt(5))/2])", "{ }")]
         public void PieceByPiece(string meeting, string expected)
             => Assert.Equal(expected.ToEntity().InnerSimplified, meeting.ToEntity().InnerSimplified);
+
+        /// <summary>
+        /// A union of numbers is written as its disjoint pieces, the listed numbers first and the
+        /// intervals in increasing order, a point at an open end closing it and an empty interval
+        /// dropped, however it was grouped: two ways of writing one set come out the same.
+        /// </summary>
+        [Theory]
+        [InlineData("{ 0, 1 } \\/ (-oo; 0) \\/ (1; +oo)", "(-oo; 0] \\/ [1; +oo)")]
+        [InlineData("(2; 3) \\/ (0; 1) \\/ { 5 }", "{ 5 } \\/ (0; 1) \\/ (2; 3)")]
+        [InlineData("(0; 2) \\/ ((1; 3) \\/ (5; 6))", "(0; 3) \\/ (5; 6)")]
+        [InlineData("(3; 3) \\/ ((0; 1) \\/ { 7 })", "{ 7 } \\/ (0; 1)")]
+        public void AUnionOfNumbersIsWrittenAsItsPieces(string written, string pieces)
+            => Assert.Equal(pieces.ToEntity().InnerSimplified, written.ToEntity().InnerSimplified);
+
+        /// <summary>What the inequality solver answers comes out as its pieces too.</summary>
+        [Fact]
+        public void ASolvedInequalityIsItsPieces()
+            => Assert.Equal("(-oo; 0] \\/ [1; +oo)".ToEntity().InnerSimplified, "x^2 >= x".ToEntity().Solve("x"));
     }
 }

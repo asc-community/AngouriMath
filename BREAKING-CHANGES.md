@@ -960,6 +960,20 @@ piece by piece. So Sullivan and Mackey's Prob 4.11.22 is decided both ways: for 
 | `"((0; 1) \/ (3; 5)) /\ ((-1; 2) \/ (4; 6))".ToEntity().Evaled` | left as written | `(0; 1) \/ (4; 5)` |
 | `forall x in RR : x > 0 implies ((x^2 - 4)/(x^2 + 1) > 1 - 1/x implies (x^2 + 4)/(x^2 + 1) < 1 + 1/x)` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
 
+### A union of numbers is written as its pieces
+
+A union of numeric intervals and listed real numbers is written as its disjoint pieces: the listed
+numbers first, then the intervals in increasing order, a point at an open end closing it and an
+empty interval dropped. Pieces met pairwise before, and only when they were neighbours, so the
+inequality solver's answer to `x^2 >= x` kept its roots beside the open intervals they close. Two
+ways of writing one set of numbers now come out the same
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2 >= x".Solve("x")` | `{ 0, 1 } \/ (-oo; 0) \/ (1; +oo)` | `(-oo; 0] \/ [1; +oo)` |
+| `"(0; 2) \/ ((1; 3) \/ (5; 6))".ToEntity().Evaled` | `(0; 2) \/ (1; 3) \/ (5; 6)` | `(0; 3) \/ (5; 6)` |
+
 ### The size of an infinite set is an aleph, and sizes compare
 
 `card` of an infinite set is an aleph, `aleph(k)`, or a power of 2 of one: `card(ZZ)`, `card(QQ)`
