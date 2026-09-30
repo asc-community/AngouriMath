@@ -17,7 +17,7 @@ namespace AngouriMath.Functions
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This is what other systems call <c>together</c> or <c>ratsimp</c>, and it is deliberately
+    /// This is writing an expression as a single fraction, and it is deliberately
     /// <b>not</b> part of <see cref="Entity.Simplify(int)"/>. Putting a sum over a common
     /// denominator makes some expressions worse — <c>1/x + 1/y</c> is easier to read than
     /// <c>(x + y)/(x*y)</c> — which is why every system that has it keeps it as an operation you
@@ -49,7 +49,7 @@ namespace AngouriMath.Functions
     /// <b>It always terminates and never grows without bound</b>, because it recurses only into
     /// the operands of the node it is given and each recursion is on a strictly smaller tree. What
     /// it can do is make the tree bigger — combining a sum of <c>n</c> quotients multiplies the
-    /// denominators — so <see cref="Of"/> is a transformation to ask for rather than one to apply
+    /// denominators — so <see cref="Of(Entity)"/> is a transformation to ask for rather than one to apply
     /// on the way past.
     /// </para>
     /// </remarks>
@@ -60,35 +60,45 @@ namespace AngouriMath.Functions
         /// expression that had no division in it, which is the signal that nothing was combined.
         /// </summary>
         internal static (Entity Numerator, Entity Denominator) Of(Entity expr)
+            => Of(expr, carried: null);
+
+        /// <summary>
+        /// As <see cref="Of(Entity)"/>, adding to <paramref name="carried"/> each denominator
+        /// that turning a quotient over moves into the numerator. The expression is undefined
+        /// where one of those is zero, and the single quotient need not be: <c>1/(1/x)</c> is
+        /// <c>(x, 1)</c>, which has a value at zero.
+        /// </summary>
+        internal static (Entity Numerator, Entity Denominator) Of(Entity expr, List<Entity>? carried)
         {
             switch (expr)
             {
                 case Divf(var dividend, var divisor):
                 {
-                    var (an, ad) = Of(dividend);
-                    var (bn, bd) = Of(divisor);
+                    var (an, ad) = Of(dividend, carried);
+                    var (bn, bd) = Of(divisor, carried);
                     // (an/ad) / (bn/bd) = (an * bd) / (ad * bn)
+                    Carry(bd, carried);
                     return (Times(an, bd), Times(ad, bn));
                 }
 
                 case Mulf(var left, var right):
                 {
-                    var (an, ad) = Of(left);
-                    var (bn, bd) = Of(right);
+                    var (an, ad) = Of(left, carried);
+                    var (bn, bd) = Of(right, carried);
                     return (Times(an, bn), Times(ad, bd));
                 }
 
                 case Sumf(var augend, var addend):
                 {
-                    var (an, ad) = Of(augend);
-                    var (bn, bd) = Of(addend);
+                    var (an, ad) = Of(augend, carried);
+                    var (bn, bd) = Of(addend, carried);
                     return (Plus(Times(an, bd), Times(bn, ad)), Times(ad, bd));
                 }
 
                 case Minusf(var minuend, var subtrahend):
                 {
-                    var (an, ad) = Of(minuend);
-                    var (bn, bd) = Of(subtrahend);
+                    var (an, ad) = Of(minuend, carried);
+                    var (bn, bd) = Of(subtrahend, carried);
                     return (Minus(Times(an, bd), Times(bn, ad)), Times(ad, bd));
                 }
 
@@ -97,9 +107,11 @@ namespace AngouriMath.Functions
                 // (a/b)^(1/2) is not sqrt(a)/sqrt(b) on the branch cut.
                 case Powf(var @base, Integer power):
                 {
-                    var (bn, bd) = Of(@base);
+                    var (bn, bd) = Of(@base, carried);
                     if (bd == Integer.One && power.EInteger.Sign >= 0)
                         return (expr, Integer.One);
+                    if (power.EInteger.Sign < 0)
+                        Carry(bd, carried);
                     // The first power is the base itself: `A^(-1)` is `1/A`, not `1^1/A^1`,
                     // which nothing reading the factors of the denominator took for `A`.
                     if (power.EInteger.Equals(EInteger.FromInt32(-1)))
@@ -112,6 +124,12 @@ namespace AngouriMath.Functions
                 default:
                     return (expr, Integer.One);
             }
+        }
+
+        private static void Carry(Entity denominator, List<Entity>? carried)
+        {
+            if (carried is not null && denominator != Integer.One)
+                carried.Add(denominator);
         }
 
         /// <summary>

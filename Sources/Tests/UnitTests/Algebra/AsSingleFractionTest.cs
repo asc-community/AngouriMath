@@ -29,9 +29,46 @@ namespace AngouriMath.Tests.Algebra
         [InlineData("sin(x) + 1/cos(x)", "(1 + cos(x) * sin(x)) / cos(x)")]
         [InlineData("2/3 + x/2", "(4 + 3 * x) / 6")]
         [InlineData("x^(-2) + 1", "(x ^ 2 + 1) / x ^ 2")]
-        [InlineData("(a/b)/(c/d)", "a * d / (b * c)")]
         public void WrittenAsOneFraction(string written, string fraction)
             => Assert.Equal(fraction, written.AsSingleFraction().Stringize());
+
+        /// <summary>
+        /// Dividing by a fraction moves its denominator into the numerator, where it no longer
+        /// stops the answer having a value, so the answer says it is nonzero -- unless the new
+        /// denominator still says so itself.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(1/x)", "x provided not x = 0")]
+        [InlineData("(a/b)/(c/d)", "a * d / (b * c) provided not d = 0")]
+        [InlineData("(x/y)^(-2)", "y ^ 2 / x ^ 2 provided not y = 0")]
+        [InlineData("(1/x)/(1/x)", "x / x")]
+        public void TurningAFractionOverSaysItsDenominatorIsNonzero(string written, string fraction)
+            => Assert.Equal(fraction, written.AsSingleFraction().Stringize());
+
+        /// <summary>
+        /// Undefined where the expression is: at zero for the variable named, and one for every
+        /// other, each of these has no value, and neither has its single fraction.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(1/x)", "x")]
+        [InlineData("(a/b)/(c/d)", "d")]
+        [InlineData("(1/x)^(-1)", "x")]
+        [InlineData("(x/y)^(-2)", "y")]
+        [InlineData("x/(y/x)", "x")]
+        [InlineData("(1/x)/(1/x)", "x")]
+        public void TheDomainIsKept(string written, string atZero)
+        {
+            var original = written.ToEntity();
+            var fraction = original.AsSingleFraction();
+            foreach (var variable in original.Vars)
+            {
+                Entity value = variable.Name == atZero ? 0 : 1;
+                original = original.Substitute(variable, value);
+                fraction = fraction.Substitute(variable, value);
+            }
+            Assert.Equal(MathS.NaN, original.Evaled);
+            Assert.Equal(MathS.NaN, fraction.Evaled);
+        }
 
         /// <summary>Nothing cancels, and a function's argument is not gathered.</summary>
         [Theory]
@@ -54,11 +91,13 @@ namespace AngouriMath.Tests.Algebra
         [InlineData("1/(t^2+1) + 1/(t+1)")]
         [InlineData("sin(x) + 1/cos(x)")]
         [InlineData("2/3 + x/2")]
+        [InlineData("(a/b)/(c/d)")]
+        [InlineData("x/(y/x)")]
         public void TheValueIsKept(string written)
         {
             var original = written.ToEntity();
             var fraction = original.AsSingleFraction();
-            foreach (var (name, value) in new[] { ("a", 2), ("b", -3), ("c", 5), ("t", 3), ("x", 7) })
+            foreach (var (name, value) in new[] { ("a", 2), ("b", -3), ("c", 5), ("d", 11), ("t", 3), ("x", 7), ("y", 13) })
             {
                 original = original.Substitute(name, value);
                 fraction = fraction.Substitute(name, value);

@@ -515,7 +515,9 @@ namespace AngouriMath
         /// of the denominator stay as they were: <c>1/(t^2 + 1) + 1/(t + 1)</c> is
         /// <c>(2 + t + t^2) / ((t^2 + 1)(t + 1))</c>, and <c>x/x</c> stays <c>x/x</c>. A rational number
         /// counts as the fraction it is written as, so <c>2/3 + x/2</c> is <c>(4 + 3x)/6</c>. An
-        /// expression with no division in it comes back as it was.
+        /// expression with no division in it comes back as it was. Dividing by a fraction moves
+        /// its denominator into the numerator, and the expression has no value where that
+        /// denominator is zero, so the answer says so: <c>1/(1/x)</c> is <c>x provided not x = 0</c>.
         /// </summary>
         /// <remarks>
         /// <see cref="Simplify(int)"/> never does this, since one fraction is not always the
