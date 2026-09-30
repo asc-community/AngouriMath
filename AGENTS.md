@@ -738,10 +738,11 @@ triaged, every issue is on one, and the milestone says what kind of change it is
   then Future, then Guiding principles, and a parent issue's is never earlier than any child's:
   when a child moves later than its parent, the parent moves with it
   ([#718](https://github.com/asc-community/AngouriMath/issues/718#issuecomment-5910345918)). The
-  other way round, children being worked on now are on the next minor, and they pull their parent
-  forward with them rather than leaving it where the plan once was
-  ([#718](https://github.com/asc-community/AngouriMath/issues/718#issuecomment-5910745181)); a
-  parent with no last piece to aim at, #718 itself, is on Guiding principles. And "under" is
+  rule runs one way. Bringing work *earlier* is a scheduling decision, not a consequence of it:
+  the integration work under #233 goes to `2.6.0` because calculus comes first, being the
+  door to university mathematics and beyond
+  ([#1626](https://github.com/asc-community/AngouriMath/pull/1626#issuecomment-5911144638)), and
+  #718, a parent with no last piece to aim at, is on Guiding principles. And "under" is
   GitHub's sub-issue relationship, not prose: an issue that belongs under another is linked in the
   turn it is filed, and a comment says "under" only once the link is there
   ([#718](https://github.com/asc-community/AngouriMath/issues/718#issuecomment-5910315961)) --
