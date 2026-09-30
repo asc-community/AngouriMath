@@ -7,6 +7,7 @@
 
 using AngouriMath.Core.Transformations;
 using HonkSharp.Laziness;
+using PeterO.Numbers;
 
 namespace AngouriMath
 {
@@ -41,14 +42,184 @@ namespace AngouriMath
         /// - Singularities and poles (points where a function is undefined)
         /// - Piecewise continuity (tracking where discontinuities occur)
         /// </remarks>
-        public Entity DomainCondition => domainCondition.GetValue(static @this => @this.DirectChildren.Aggregate(@this.IntrinsicCondition, (accum, curr) =>
+        public Entity DomainCondition => domainCondition.GetValue(static @this => ScopedToItsBinder(@this, @this.DirectChildren.Aggregate(@this.IntrinsicCondition, (accum, curr) =>
             (accum, curr.DomainCondition) switch {
                 (Boolean(true), Boolean(true)) => Boolean.True,
                 (var l, Boolean(true)) => l,
                 (Boolean(true), var r) => r,
                 (var l, var r) => l & r,
-            }), this).InnerSimplified;
+            })), this).InnerSimplified;
         private LazyPropertyA<Entity> domainCondition;
+
+        /// <summary>
+        /// <paramref name="condition"/> with each conjunct that mentions a name
+        /// <paramref name="binder"/> binds read the way the binder reads it: required at every
+        /// value the name ranges over. What a sum's body says about its index is a condition
+        /// inside the sum, and outside the sum that name is free, or another expression's.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>0 * f</c> keeps the condition <c>f</c> is defined under, so the product rule carried
+        /// <c>not x - w = 0</c> out of <c>sum(ln(x - w), w in { w : w^3 + w + 1 = 0 })</c> with
+        /// <c>w</c> free in it, and the derivative could not be evaluated. Leaving the conjunct out
+        /// would have made <c>0 * sum(1/(k - x), k, 1, n)</c> a plain 0 at <c>x = 1</c>, where the
+        /// sum has no value.
+        /// </para>
+        /// <para>
+        /// Over the roots of a polynomial <c>p</c> with rational coefficients, "<c>q(w) != 0</c> at
+        /// every root" is <c>Res_w(p, q) != 0</c>, which mentions the other names alone -- here
+        /// <c>not x^3 + x + 1 = 0</c>, where the logarithms are singular -- since <c>p</c>'s leading
+        /// coefficient is a number that is not zero. A finite range of numbers is the conjunction
+        /// over it. Anything else is kept as <c>forall</c> over the range: the set, the whole
+        /// numbers from the lower bound to the upper, the interval of a definite integral. A set
+        /// builder admits the members its predicate is defined at, so its own condition on its name
+        /// is part of whom it admits rather than of where the set is defined. A limit does not need
+        /// its body defined throughout anything, and is left as it was.
+        /// https://github.com/asc-community/AngouriMath/issues/1632
+        /// </para>
+        /// </remarks>
+        private static Entity ScopedToItsBinder(Entity binder, Entity condition)
+        {
+            if (condition is Boolean)
+                return condition;
+            (Entity Name, Entity? Range)? scope = binder switch
+            {
+                SumOverSetf(_, var name, var over) => (name, over),
+                Maximumf(_, var name, var over) => (name, over),
+                Minimumf(_, var name, var over) => (name, over),
+                Argmaxf(_, var name, var over) => (name, over),
+                Argminf(_, var name, var over) => (name, over),
+                Quantifier quantifier => (quantifier.Var, quantifier.Over),
+                Summationf(_, var index, var from, var to) => (index, WholeNumbersBetween(index, from, to)),
+                Productf(_, var index, var from, var to) => (index, WholeNumbersBetween(index, from, to)),
+                Integralf { Range: { } limits } integral => (integral.Var, MathS.Interval(limits.from, limits.to)),
+                Set.ConditionalSet(var name, _) => (name, null),
+                _ => null
+            };
+            if (scope is not var (bound, range))
+                return condition;
+            var names = bound.VarsAndConsts;
+            Entity kept = Boolean.True;
+            foreach (var conjunct in Conjuncts(condition))
+            {
+                var scoped = !conjunct.FreeVariables.Any(names.Contains) ? conjunct
+                    : range is null ? null
+                    : OverTheRange(conjunct, bound, range);
+                if (scoped is not null)
+                    kept = kept is Boolean(true) ? scoped : kept & scoped;
+            }
+            return kept;
+        }
+
+        /// <summary>The whole numbers from <paramref name="from"/> to <paramref name="to"/>, listed where there are a few of them.</summary>
+        private static Entity WholeNumbersBetween(Entity index, Entity from, Entity to)
+        {
+            if (from is Number.Integer low && to is Number.Integer high
+                && high.EInteger.Subtract(low.EInteger).CompareTo(16) < 0)
+            {
+                var members = new List<Entity>();
+                for (var k = low.EInteger; k.CompareTo(high.EInteger) <= 0; k = k.Add(1))
+                    members.Add(Number.Integer.Create(k));
+                return new Set.FiniteSet(members);
+            }
+            return new Set.ConditionalSet(index, index.In(MathS.Sets.Z) & (from <= index) & (index <= to));
+        }
+
+        /// <summary><paramref name="conjunct"/> required at every value <paramref name="bound"/> takes in <paramref name="range"/>.</summary>
+        private static Entity OverTheRange(Entity conjunct, Entity bound, Entity range)
+        {
+            if (bound is Variable name)
+            {
+                if (range is Set.ConditionalSet { Var: Variable root, Predicate: Equalsf(var left, var right) }
+                    && AtEveryRoot(conjunct, name, (left - right).Substitute(root, name)) is { } exact)
+                    return exact;
+                if (range is Set.FiniteSet finite)
+                {
+                    Entity each = Boolean.True;
+                    foreach (var member in finite.Elements)
+                    {
+                        var at = conjunct.Substitute(name, member);
+                        each = each is Boolean(true) ? at : each & at;
+                    }
+                    return each;
+                }
+            }
+            return new Forallf(bound, range, conjunct);
+        }
+
+        /// <summary>
+        /// <c>not Res_w(p, q) = 0</c> for a conjunct <c>not g = h</c> whose <c>q = g - h</c> is a
+        /// polynomial in <paramref name="name"/>: true exactly where <c>q</c> is not zero at any
+        /// root of <paramref name="polynomial"/>, whose coefficients must be rational. Null for any
+        /// other conjunct or polynomial.
+        /// </summary>
+        private static Entity? AtEveryRoot(Entity conjunct, Variable name, Entity polynomial)
+        {
+            if (conjunct is not Notf(Equalsf(var g, var h))
+                || Functions.SumOverSet.SquareFreeParts(polynomial, name) is not { } parts
+                || !Functions.TreeAnalyzer.TryGetPolynomial(g - h, name, out var terms))
+                return null;
+            // The roots once each: the product of the square-free parts.
+            var p = Functions.IntegerPolynomial.Create(new[] { EInteger.One });
+            foreach (var part in parts)
+                if (p.Multiply(part.Factor) is { } product)
+                    p = product;
+                else
+                    return null;
+            var n = p.Degree;
+            var m = 0;
+            foreach (var power in terms.Keys)
+            {
+                if (power.Sign < 0 || !power.CanFitInInt32())
+                    return null;
+                m = System.Math.Max(m, power.ToInt32Unchecked());
+            }
+            if (m == 0 || n < 1)
+                return null;
+            Entity Q(int power) => terms.TryGetValue(EInteger.FromInt32(power), out var c) ? c : Number.Integer.Zero;
+            Entity P(int power) => Number.Integer.Create(p[power]);
+            Entity resultant;
+            if (m == 1)
+            {
+                // a^n p(-b/a), written without dividing by a: sum of p_k (-b)^k a^(n - k). The
+                // zeroth and first powers are written as themselves, since a power 0 of a base
+                // that might be zero is 1 only where it is not, and that condition is not this one.
+                var (a, b) = (Q(1), Q(0));
+                static Entity Power(Entity @base, int exponent)
+                    => exponent == 0 ? Number.Integer.One : exponent == 1 ? @base : MathS.Pow(@base, exponent);
+                resultant = Number.Integer.Zero;
+                for (var k = 0; k <= n; k++)
+                    resultant += P(k) * Power(-b, k) * Power(a, n - k);
+            }
+            else
+            {
+                // The Sylvester matrix: m rows of p's coefficients, n of q's, highest first.
+                var size = n + m;
+                var sylvester = new Entity[size, size];
+                for (var row = 0; row < size; row++)
+                    for (var column = 0; column < size; column++)
+                        sylvester[row, column] = row < m
+                            ? (column - row >= 0 && column - row <= n ? P(n - (column - row)) : Number.Integer.Zero)
+                            : (column - (row - m) >= 0 && column - (row - m) <= m ? Q(m - (column - (row - m))) : Number.Integer.Zero);
+                if (MathS.Matrix(sylvester).Determinant is not { } determinant)
+                    return null;
+                resultant = determinant;
+            }
+            return !resultant.Equalizes(Number.Integer.Zero);
+        }
+
+        private static IEnumerable<Entity> Conjuncts(Entity condition)
+        {
+            if (condition is Andf(var left, var right))
+            {
+                foreach (var conjunct in Conjuncts(left))
+                    yield return conjunct;
+                foreach (var conjunct in Conjuncts(right))
+                    yield return conjunct;
+            }
+            else
+                yield return condition;
+        }
         
         /// <summary>
         /// Returns the intrinsic condition under which this specific operation is defined, 
