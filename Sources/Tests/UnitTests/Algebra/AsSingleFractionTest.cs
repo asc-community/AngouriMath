@@ -39,11 +39,11 @@ namespace AngouriMath.Tests.Algebra
         /// </summary>
         [Theory]
         [InlineData("1/x + 1/x^2", "(x + 1) / x ^ 2")]
-        [InlineData("x/2 + x/4", "3 * x / 4")]
+        [InlineData("x/2 + x/4", "x * 3 / 4")]
         [InlineData("1/6 + 1/4", "5 / 12")]
         [InlineData("1/(x + 1) + 1/(x + 1)^2", "(x + 2) / (x + 1) ^ 2")]
-        [InlineData("a/(b*c) + d/(b*e)", "(a * e + d * c) / (b * c * e)")]
-        [InlineData("1/(x^2 - 1) + 1/(x + 1)", "(x + 1 + x ^ 2 - 1) / ((x ^ 2 - 1) * (x + 1))")]
+        [InlineData("a/(b*c) + d/(b*e)", "(a * e + c * d) / (b * c * e)")]
+        [InlineData("1/(x^2 - 1) + 1/(x + 1)", "(x + x ^ 2) / ((x ^ 2 - 1) * (x + 1))")]
         public void OverTheLeastCommonDenominator(string written, string fraction)
             => Assert.Equal(fraction, written.AsSingleFraction().Stringize());
 

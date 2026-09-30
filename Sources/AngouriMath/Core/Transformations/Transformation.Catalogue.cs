@@ -213,8 +213,8 @@ namespace AngouriMath.Core.Transformations
                 var (numerator, denominator) = Functions.SingleQuotient.OverLeastCommonDenominator(written, carried);
                 if (denominator == Entity.Number.Integer.One && carried.Count == 0)
                     return input;
-                var top = Functions.Simplificator.SimplifyChildren(numerator);
-                var bottom = Functions.Simplificator.SimplifyChildren(denominator);
+                var top = Tidied(numerator);
+                var bottom = Tidied(denominator);
                 var fraction = bottom == Entity.Number.Integer.One ? top : new Entity.Divf(top, bottom);
 
                 // Only what the new denominator does not already exclude: in (1/x)/(1/x), which
@@ -222,7 +222,7 @@ namespace AngouriMath.Core.Transformations
                 var nonzero = new List<Entity>();
                 foreach (var factor in carried)
                 {
-                    var tidied = Functions.Simplificator.SimplifyChildren(factor);
+                    var tidied = Tidied(factor);
                     if (!AlreadyNonzero(tidied, bottom) && !nonzero.Contains(tidied))
                         nonzero.Add(tidied);
                 }
@@ -233,6 +233,11 @@ namespace AngouriMath.Core.Transformations
                     condition &= !nonzero[i].EqualTo(0);
                 return new Entity.Providedf(fraction, condition);
             }
+
+            // Simplify's tidying pass, and the neatening it ends on, which writes `x^2 + -1` as
+            // `x^2 - 1`.
+            private static Entity Tidied(Entity half)
+                => Functions.Simplificator.SimplifyChildren(half).Rewrite(RewriteRules.NumericNeat);
 
             // Whether `denominator` being nonzero already says `factor` is: a nonzero number
             // always is, and otherwise each factor of `factor` has to be one of the
