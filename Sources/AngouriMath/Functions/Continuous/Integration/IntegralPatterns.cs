@@ -759,11 +759,42 @@ namespace AngouriMath.Functions.Algebra
                 ? numerator * x / MathS.Sqrt(c)
                 : 2 * numerator * MathS.Sqrt(b * x + c) / b;
 
-            return MathS.Piecewise([
-                new Entity.Providedf(linearCase, a.EqualTo(0)),
-                new Entity.Providedf(arcsinCase, a < 0),
-                new Entity.Providedf(logarithmCase, a > 0)
-            ]);
+            var arms = new List<Entity.Providedf> { new Entity.Providedf(linearCase, a.EqualTo(0)) };
+            if (ArmOffTheRealLine(logarithmCase, a, b, c) is { } offTheRealLine)
+                arms.Add(offTheRealLine);
+            arms.Add(new Entity.Providedf(arcsinCase, a < 0));
+            arms.Add(new Entity.Providedf(logarithmCase, a > 0));
+            return MathS.Piecewise(arms);
+        }
+
+        /// <summary>
+        /// The arm that a piecewise on a sign owes a quadratic off the real line, answered by
+        /// <paramref name="form"/> wherever one of <paramref name="coefficients"/> is not real;
+        /// <see langword="null"/> where none of them holds the imaginary unit, and the sign arms
+        /// are left to decide.
+        /// </summary>
+        /// <remarks>
+        /// The sign arms choose between forms by which is real where the integrand is, and off
+        /// the real line that has nothing to go on. <c>i &lt; 0</c> and <c>i &gt; 0</c> are each
+        /// NaN, the complex numbers not being ordered, and a piecewise with no arm that holds is
+        /// NaN with them: <c>1/(x^2 + i)</c> and <c>1/sqrt(i x^2 + 1)</c> answered <c>NaN + C</c>,
+        /// and <c>1/sqrt(i a x^2 + 1)</c> a piecewise that is NaN for every real <c>a</c> but zero.
+        /// Nor is a real sign any help where the rest of the quadratic is not real: with
+        /// <c>E = b^2 - 4ac</c> the arcsine differentiates back to <c>1/sqrt(Q)</c> only where
+        /// <c>sqrt(E) sqrt(Q/E)</c> is <c>sqrt(Q)</c>, and <c>1/sqrt(-x^2 + (1 + i) x + 1)</c>
+        /// came back as minus its integrand below -2. The arctangent and the logarithm use nothing about their root but
+        /// <c>sqrt(q)^2 = q</c>, and are antiderivatives off the real line as well.
+        /// https://github.com/asc-community/AngouriMath/issues/1598
+        /// </remarks>
+        private static Entity.Providedf? ArmOffTheRealLine(Entity form, params Entity[] coefficients)
+        {
+            Entity? offTheRealLine = null;
+            foreach (var coefficient in coefficients)
+                if (coefficient.InnerSimplified.Nodes.Any(node => node is Entity.Number.Complex number && !number.ImaginaryPart.EDecimal.IsZero))
+                    offTheRealLine = offTheRealLine is null
+                        ? !coefficient.In(AngouriMath.Core.Domain.Real)
+                        : offTheRealLine | !coefficient.In(AngouriMath.Core.Domain.Real);
+            return offTheRealLine is null ? null : new Entity.Providedf(form, offTheRealLine);
         }
 
         /// <summary>
@@ -885,6 +916,8 @@ namespace AngouriMath.Functions.Algebra
             var cases = new List<Entity.Providedf>();
             if (!denominatorVanishesWithoutA)
                 cases.Add(new Entity.Providedf(linearCase, a.EqualTo(0)));
+            if (ArmOffTheRealLine(arctanCase, discriminant) is { } offTheRealLine)
+                cases.Add(offTheRealLine);
             cases.Add(new Entity.Providedf(arctanCase, discriminant > 0));
             cases.Add(new Entity.Providedf(perfectSquareCase, discriminant.EqualTo(0)));
             cases.Add(new Entity.Providedf(lnCase, discriminant < 0));
@@ -959,12 +992,17 @@ namespace AngouriMath.Functions.Algebra
                 : 2 * MathS.Arctan(derivative / sqrtDiscriminant) / sqrtDiscriminant;
             Entity firstPowerLog = withoutTheFirstPower ? Entity.Number.Integer.Zero
                 : AntiderivativeLog((derivative - sqrtNegDiscriminant) / (derivative + sqrtNegDiscriminant)) / sqrtNegDiscriminant;
-            return MathS.Piecewise([
+            var arms = new List<Entity.Providedf>
+            {
                 new Entity.Providedf(linearCase, a.EqualTo(0)),
-                new Entity.Providedf(perfectSquareCase, discriminant.EqualTo(0)),
-                new Entity.Providedf(Reduce(firstPowerArctan), discriminant > 0),
-                new Entity.Providedf(Reduce(firstPowerLog), discriminant < 0)
-            ]).InnerSimplified;
+                new Entity.Providedf(perfectSquareCase, discriminant.EqualTo(0))
+            };
+            var arctanArm = Reduce(firstPowerArctan);
+            if (ArmOffTheRealLine(arctanArm, discriminant) is { } offTheRealLine)
+                arms.Add(offTheRealLine);
+            arms.Add(new Entity.Providedf(arctanArm, discriminant > 0));
+            arms.Add(new Entity.Providedf(Reduce(firstPowerLog), discriminant < 0));
+            return MathS.Piecewise(arms).InnerSimplified;
 
             Entity Reduce(Entity firstPower)
             {
