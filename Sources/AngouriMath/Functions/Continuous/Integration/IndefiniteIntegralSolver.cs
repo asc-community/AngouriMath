@@ -1595,6 +1595,13 @@ namespace AngouriMath.Functions.Algebra
         /// gives an antiderivative holding <c>x*atan(x)</c> again, which is where the search went
         /// instead and why it was left unevaluated.
         /// </para>
+        /// <para>
+        /// The special functions belong here for the same reason, since each has an elementary
+        /// derivative: <c>x Ei(b x)</c> leaves <c>x e^(b x)/2</c> after one step, and
+        /// <c>x^2 Si(b x)</c> leaves <c>x^2 sin(b x)/3</c>, where integrating the special function
+        /// first gives an antiderivative that holds it again.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         private static bool IsDifferentiatedBeforeAPolynomial(Entity factor)
@@ -1603,6 +1610,8 @@ namespace AngouriMath.Functions.Algebra
                 Logf or Entity.Arcsinf or Entity.Arccosf
                     or Entity.Arctanf or Entity.Arccotanf
                     or Entity.Arcsecantf or Entity.Arccosecantf => true,
+                Entity.Erff or Entity.Erfcf or Entity.Erfif or Entity.Eif or Entity.Lif
+                    or Entity.Sif or Entity.Cif or Entity.Shif or Entity.Chif => true,
                 // And a whole power of one, which is the same function for this purpose:
                 // differentiating ln(x)^2 gives 2ln(x)/x, whose x cancels against the integrated
                 // polynomial exactly as ln(x)'s does, leaving x*ln(x) -- one step simpler, and
@@ -1615,6 +1624,31 @@ namespace AngouriMath.Functions.Algebra
                     => IsDifferentiatedBeforeAPolynomial(repeated),
                 _ => false
             };
+
+        /// <summary>
+        /// Whether <paramref name="factor"/> is a special function of an argument linear in
+        /// <paramref name="x"/>, other than the logarithmic integral: differentiated beside a
+        /// power of <c>x</c>, it leaves that power times <c>sin(u)</c>, <c>e^u</c> or the like,
+        /// which parts against the power answer in as many steps as its degree.
+        /// </summary>
+        /// <remarks>
+        /// Not <c>li</c>: its derivative <c>1/ln(u)</c> leaves <c>x^m/ln(a + b x)</c>, which the
+        /// exponential integral's rule answers, and parts there would integrate the reciprocal of
+        /// the logarithm back into <c>li</c>.
+        /// </remarks>
+        private static bool IsASpecialFunctionOfALinear(Entity factor, Variable x)
+            => (factor switch
+            {
+                Entity.Erff(var u) => u,
+                Entity.Erfcf(var u) => u,
+                Entity.Erfif(var u) => u,
+                Entity.Eif(var u) => u,
+                Entity.Sif(var u) => u,
+                Entity.Cif(var u) => u,
+                Entity.Shif(var u) => u,
+                Entity.Chif(var u) => u,
+                _ => null
+            }) is { } argument && TreeAnalyzer.TryGetPolyLinear(argument, x, out _, out _);
 
         internal static Entity? SolveIntegratingByParts(Entity expr, Entity.Variable x)
         {
@@ -1735,8 +1769,19 @@ namespace AngouriMath.Functions.Algebra
                 // is the runaway the node bound exists for: measured at thirty seconds for a
                 // decline, where the node bound alone declined it in one.
                 var remainingPower = HighestDifferentiatedPower(remaining);
+                // And after a special function of a linear argument, whose derivative leaves the
+                // power of x beside sin(u), e^u and the like: `x Si(b x)` leaves `x sin(b x)/2`,
+                // which parts against the power answer in as many steps as its degree. It has
+                // more nodes than `x Si(b x)` and no factor left to differentiate, so the measure
+                // alone declined it, and with it every power of x beside Si or Ci.
+                //
+                // Only against a polynomial, which is what makes the next steps a descent on its
+                // degree. Allowed against anything, it took erf(b x)^2, whose second step is
+                // against x e^(-b^2 x^2), from a decline in a third of a second to a timeout.
+                // https://github.com/asc-community/AngouriMath/issues/1501
                 var partsOnTheRemainder = remaining.Nodes.Count() < wholeSize
-                    || (remainingPower >= 1 && remainingPower < wholePower);
+                    || (remainingPower >= 1 && remainingPower < wholePower)
+                    || IsASpecialFunctionOfALinear(v, x) && MathS.TryPolynomial(u, x, out _);
                 // Spelled as the product its own next step reads, where there is one. `Simplify`
                 // writes `2 arctan(x)/(1 + x^2) * x^2/2` as `arctan(x) x^2/(x^2 + 1)`, a
                 // quotient, and this rule runs on a product. `x*arctan(x)^2` is answered by

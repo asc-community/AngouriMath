@@ -2178,6 +2178,20 @@ multiple of it, `(d - c^2 d x^2)^(3/2)`, is written over it the same way, with
 Rubi's 5.1.4, 5.1.5, 5.2.4 and 5.2.5, all 504 problems that count: 405 to 463, no row lost, 77
 timeouts to 19.
 
+### The special functions are integrated by parts, and so is what leads to one
+
+Integration by parts differentiates each of the nine special functions now, where it meets one
+beside a power of `x`, as it does a logarithm or an inverse trigonometric function: each has an
+elementary derivative. `Ei`, `li`, `Si`, `Ci`, `Shi` and `Chi` of a linear argument are integrated
+alone, against 1, as `erf` already was
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)). An integrand holding one of
+these functions had no reading in 2.5.0, which the entries for the functions themselves record. An
+elementary integrand whose antiderivative is reached through one is answered where it was not:
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a+b*ln(c*x^n))/(x^2*(d+e*ln(f*x^m)))".Integrate("x")`, Rubi's 3.1.5 row 213 | `integral(...)` | an antiderivative in `Ei`, provided `f > 0` and `e^d f^e > 0` |
+
 ### An inverse trigonometric function below the bar is integrated to the sine and cosine integrals
 
 `1/arcsin(x)` was left unintegrated. Under the substitution that undoes the inverse function,
