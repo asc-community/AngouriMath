@@ -529,7 +529,11 @@ namespace AngouriMath.Functions
             // answered it in `a^63 b^10` and did not evaluate within its budget; this way it
             // is a line of arctangents and logarithms.
             // https://github.com/asc-community/AngouriMath/issues/718
-            if (factors.Any(f => IsLinear(f.Factor, x))
+            // And quadratics alone, with no linear among them, the same way where a symbolic
+            // one is repeated: each by its residues, where the system takes the symbols through
+            // every row. https://github.com/asc-community/AngouriMath/issues/718
+            if ((factors.Any(f => IsLinear(f.Factor, x))
+                 || factors.Any(f => f.Factor is Powf(var repeated, Integer { EInteger.Sign: > 0 } times) && times != Integer.One && repeated.Vars.Any(v => v != x)))
                 && (numerator + denominator).Vars.Any(v => v != x)
                 && TrySplitOverSymbolicLinearFactors(numerator, denominator, constant, factors, x, out decomposition))
                 return true;
@@ -878,8 +882,7 @@ namespace AngouriMath.Functions
                         return false;
                     product = Multiplied(product, otherCoefficients);
                 }
-                if (ResidueModuloTheQuadratic(PolynomialFromCoefficients(product), s, t, x) is not { } firstResidue
-                    || InverseModuloTheQuadratic(firstResidue, s, t) is not { } firstInverse)
+                if (InverseModuloTheQuadratic(ResidueModuloTheQuadratic(product, s, t), s, t) is not { } firstInverse)
                     return false;
                 Entity[] inverse = { firstInverse.Item1, firstInverse.Item2 };
                 for (var round = 1; round < multiplicity; round++)
@@ -920,17 +923,6 @@ namespace AngouriMath.Functions
                 }
             }
 
-            Entity PolynomialFromCoefficients(Entity[] coefficients)
-            {
-                Entity polynomial = Integer.Zero;
-                for (var k = 0; k < coefficients.Length; k++)
-                {
-                    if (coefficients[k] == Integer.Zero)
-                        continue;
-                    polynomial += k == 0 ? coefficients[k] : k == 1 ? coefficients[k] * x : coefficients[k] * MathS.Pow(x, k);
-                }
-                return polynomial;
-            }
             if (!HoldsAtSampledPoints(numerator / denominator, sum / constant, x))
                 return false;
             decomposition = sum / constant;
@@ -960,25 +952,27 @@ namespace AngouriMath.Functions
         }
 
         /// <summary>
-        /// <paramref name="polynomial"/> reduced modulo the monic quadratic
-        /// <c>x^2 + s x + t</c>, as the pair <c>(p, q)</c> of <c>p + q x</c>, each in lowest
-        /// terms over the symbols; null where it does not read as a polynomial in
-        /// <paramref name="x"/>.
+        /// The polynomial with <paramref name="coefficients"/>, lowest power first, reduced modulo
+        /// the monic quadratic <c>x^2 + s x + t</c>, as the pair <c>(p, q)</c> of <c>p + q x</c>,
+        /// each in lowest terms over the symbols.
         /// </summary>
-        private static (Entity, Entity)? ResidueModuloTheQuadratic(Entity polynomial, Entity s, Entity t, Variable x)
+        /// <remarks>
+        /// From the coefficients, which the caller has, rather than from the polynomial written out
+        /// and read back: a coefficient with a symbol over its square, `(4 b^2 - 2 a^2)/a^2` in the
+        /// square of `x^2 - 2 b/a x - 1`, expands to an `a^0` guarded by a condition, which the
+        /// reader does not read, and the split declined every quadratic block beside that square:
+        /// `2 (1 - t^2)^5/((1 + t^2)^4 (a - a t^2 + 2 b t)^2)` went to the Hermite reduction and did
+        /// not return in 20 s.
+        /// </remarks>
+        private static (Entity, Entity) ResidueModuloTheQuadratic(Entity[] coefficients, Entity s, Entity t)
         {
-            if (!TreeAnalyzer.TryGetPolynomial(polynomial, x, out var read) || read.Count == 0)
-                return null;
-            var degree = read.Keys.Max()!;
-            if (!degree.CanFitInInt32() || read.Keys.Any(power => power.Sign < 0))
-                return null;
             // Horner's scheme, with `x^2` written as `-s x - t` at each step.
             (Entity, Entity) residue = (Integer.Zero, Integer.Zero);
-            for (var power = degree.ToInt32Unchecked(); power >= 0; power--)
+            for (var power = coefficients.Length - 1; power >= 0; power--)
             {
                 residue = ProductModuloTheQuadratic(residue, (Integer.Zero, Integer.One), s, t);
-                if (read.TryGetValue(EInteger.FromInt32(power), out var coefficient))
-                    residue = (InLowestTermsOverTheSymbols(residue.Item1 + coefficient), residue.Item2);
+                if (coefficients[power] != Integer.Zero)
+                    residue = (InLowestTermsOverTheSymbols(residue.Item1 + coefficients[power]), residue.Item2);
             }
             return residue;
         }

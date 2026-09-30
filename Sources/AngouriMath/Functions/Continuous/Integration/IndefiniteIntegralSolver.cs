@@ -673,9 +673,12 @@ namespace AngouriMath.Functions.Algebra
             // kilobytes long that way -- and before a respelling sends the quotient round
             // the chain, where the substitution search answers `x^2/((a + b x)(c + d x)(f + g x)^2)`
             // as a page of piecewise.
-            if (Mulf.LinearChildren(denominator).Any(f => f.ContainsNode(x) && f is Powf(_, Number.Integer { EInteger.Sign: > 0 } e) && e != Number.Integer.One)
-                && IsAProductOfSymbolicLinearFactors(denominator, x)
-                && Functions.PartialFractions.TrySplitOverWrittenFactors(numerator, denominator, x, out var overSymbolicLinears)
+            // A rational factor that splits, written in its linear factors where a symbolic one
+            // stands beside it, so that the split below finds them.
+            var withItsLinearsWritten = WithRationalFactorsSplitBesideASymbolicOne(denominator, x) ?? denominator;
+            if (Mulf.LinearChildren(withItsLinearsWritten).Any(f => f.ContainsNode(x) && f is Powf(_, Number.Integer { EInteger.Sign: > 0 } e) && e != Number.Integer.One)
+                && IsAProductOfSymbolicLinearFactors(withItsLinearsWritten, x, aLinearAmongThem: !HoldsARepeatedSymbolicFactor(withItsLinearsWritten, x))
+                && Functions.PartialFractions.TrySplitOverWrittenFactors(numerator, withItsLinearsWritten, x, out var overSymbolicLinears)
                 && IntegratedTermByTerm(overSymbolicLinears, x, integrateByParts) is { } overTheLinears)
                 return overTheLinears;
 
@@ -1021,7 +1024,13 @@ namespace AngouriMath.Functions.Algebra
                     Entity? monic = null;
                     foreach (var pair in read.OrderBy(pair => pair.Key))
                     {
-                        Entity coefficient = pair.Key.Equals(top) ? Number.Integer.One : (pair.Value / leading).InnerSimplified;
+                        // In lowest terms over the symbols: the coefficient is read as `a` and the
+                        // leading one as `1 * a * 1^2`, and the quotient of the two spellings is
+                        // `a/a`, which the simplifier keeps -- it is `a^0` by the time the chain reads
+                        // it, and `a^0 + 2 b/a x + x^2`, the monic form of `a x^2 + 2 b x + a`, was a
+                        // quadratic the split over linear factors could not read.
+                        Entity coefficient = pair.Key.Equals(top) ? Number.Integer.One
+                            : Functions.PartialFractions.InLowestTermsOverTheSymbols(pair.Value / leading);
                         var degree = pair.Key.ToInt32Checked();
                         Entity term = degree == 0 ? coefficient
                             : coefficient == Number.Integer.One ? (degree == 1 ? x : MathS.Pow(x, degree))
@@ -9861,6 +9870,53 @@ namespace AngouriMath.Functions.Algebra
             return changed ? product : null;
         }
 
+        /// <summary>
+        /// <paramref name="denominator"/> with every written factor that has rational coefficients
+        /// and splits over the rationals written in its factors, where another written factor
+        /// has a symbol in a coefficient; <see langword="null"/> where there is no such factor
+        /// beside a symbolic one.
+        /// </summary>
+        /// <remarks>
+        /// The split over symbolic linear factors reads the linears it finds written, and the
+        /// refactoring over the rationals reads a denominator only when all of it is rational.
+        /// The half-angle tangent writes `sec(x)^4/(a + b sin(x))^2` as
+        /// `2 (1 + t^2)^5/((1 - t^2)^4 (a t^2 + 2 b t + a)^2)`, where `1 - t^2` is a quadratic to
+        /// the one and the symbols beside it close the other, and the Hermite reduction took it:
+        /// for `1/((1 - t^2)^3 (a t^2 + 2 b t + a)^2)` its one solve answered with coefficients over
+        /// a polynomial of degree 48 in `a` and `b`, 514,694 characters to the first term, and did
+        /// not return in 20 s. Written in its linears it is under a second.
+        /// </remarks>
+        private static Entity? WithRationalFactorsSplitBesideASymbolicOne(Entity denominator, Entity.Variable x)
+        {
+            var besideASymbol = false;
+            var split = false;
+            Entity product = Number.Integer.One;
+            void Times(Entity factor) => product = product == Number.Integer.One ? factor : product * factor;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                var (@base, power) = factor is Powf(var b, Number.Integer e) && e.EInteger.Sign > 0 && e.EInteger.CanFitInInt32()
+                    ? (b, e.EInteger.ToInt32Unchecked())
+                    : (factor, 1);
+                if (!factor.ContainsNode(x) || @base.Vars.Any(v => v != x)
+                    || Functions.PolynomialFactorization.FactorComplete(@base, x) is not { } factorization
+                    || factorization.Parts.Count == 1 && factorization.Parts[0].Multiplicity == 1)
+                {
+                    besideASymbol |= factor.ContainsNode(x) && @base.Vars.Any(v => v != x);
+                    Times(factor);
+                    continue;
+                }
+                if (factorization.Constant.CompareTo(ERational.One) != 0)
+                    Times(MathS.Pow(Number.Rational.Create(factorization.Constant), power));
+                foreach (var part in factorization.Parts)
+                {
+                    var multiplicity = part.Multiplicity * power;
+                    Times(multiplicity == 1 ? part.Factor.ToEntity(x) : MathS.Pow(part.Factor.ToEntity(x), multiplicity));
+                }
+                split = true;
+            }
+            return besideASymbol && split ? product : null;
+        }
+
         private static Entity? TryWriteInIrreducibleFactors(Entity denominator, Entity.Variable x)
         {
             // Only where the written bases, each taken once, share a factor among them or
@@ -14300,8 +14356,9 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// Whether <paramref name="denominator"/> is written as a product of two or more
-        /// distinct factors in <paramref name="x"/>, at least one of them linear, each linear
-        /// or quadratic and to a whole power, with a symbol in a coefficient somewhere.
+        /// distinct factors in <paramref name="x"/>, each linear or quadratic and to a whole
+        /// power, with a symbol in a coefficient somewhere -- and at least one of them linear,
+        /// unless <paramref name="aLinearAmongThem"/> is false.
         /// </summary>
         /// <remarks>
         /// A quadratic beside the linears is allowed since the decomposition takes the linear
@@ -14311,8 +14368,16 @@ namespace AngouriMath.Functions.Algebra
         /// tangent with a power of a linear in it -- went to the Hermite reduction below,
         /// which answered in <c>a^63 b^10</c>.
         /// https://github.com/asc-community/AngouriMath/issues/718
+        /// The partial fractions ask it without a linear where a symbolic factor is repeated:
+        /// quadratics alone are split by their residues just the same, and the half-angle
+        /// tangent's <c>2 (1 - t^2)^6/((1 + t^2)^5 (a t^2 + 2 b t + a)^2)</c>, which is Rubi's
+        /// <c>cos(x)^6/(a + b sin(x))^2</c>, has none. Where only a rational factor is repeated
+        /// the Hermite reduction answers shorter: <c>sin(x)^2/(a + b cos(x))</c> by residues was
+        /// 1864 characters for its 1109. The substitution search asks it with one, declining
+        /// only what the split surely takes: over two symbolic quadratics <c>u = x^2</c> is often
+        /// the shorter answer.
         /// </remarks>
-        private static bool IsAProductOfSymbolicLinearFactors(Entity denominator, Entity.Variable x)
+        private static bool IsAProductOfSymbolicLinearFactors(Entity denominator, Entity.Variable x, bool aLinearAmongThem = true)
         {
             var linears = 0;
             var quadratics = 0;
@@ -14338,8 +14403,17 @@ namespace AngouriMath.Functions.Algebra
                     return false;
                 symbolic |= read.Values.Any(coefficient => coefficient.Vars.Any());
             }
-            return linears >= 1 && linears + quadratics >= 2 && symbolic;
+            return (linears >= 1 || !aLinearAmongThem) && linears + quadratics >= 2 && symbolic;
         }
+
+        /// <summary>
+        /// Whether a written factor of <paramref name="denominator"/> with a symbol in it stands
+        /// to a whole power of two or more: where the Hermite reduction's one solve takes those
+        /// symbols through every row, and a split by residues does not.
+        /// </summary>
+        private static bool HoldsARepeatedSymbolicFactor(Entity denominator, Entity.Variable x)
+            => Mulf.LinearChildren(denominator).Any(factor => factor is Powf(var @base, Number.Integer { EInteger.Sign: > 0 } power)
+                && power != Number.Integer.One && @base.ContainsNode(x) && @base.Vars.Any(v => v != x));
 
         /// <summary>
         /// Whether both read as polynomials in <paramref name="x"/> with the numerator's
