@@ -136,18 +136,16 @@ namespace AngouriMath
                         * => ans = (a + ib) * (c - id) / (c2 + d2)
                         */
                         var conj = b.Conjugate;
-                        // With the downcasting off, the modulus as it is. Abs() turns the downcasting
-                        // on to answer a Real, and so read a modulus within its tolerance of a small
-                        // rational as that rational: 75 + 316.22776601683796i, whose modulus is
-                        // 325 - 3e-16, was divided as if by one of 325. A relative 2e-18 is nothing to
-                        // one quotient. It put a factorial out by 24 orders of magnitude, whose series
-                        // of such quotients cancels its terms almost entirely. With the downcasting on,
-                        // that reading is the setting's own, and it keeps the quotients of a divisor
-                        // like 1 + i sqrt(3) exact. https://github.com/asc-community/AngouriMath/issues/1614
-                        var bAbs = MathS.Settings.DowncastingEnabled
-                            ? b.Abs().EDecimal
-                            : (b.RealPart.EDecimal * b.RealPart.EDecimal + b.ImaginaryPart.EDecimal * b.ImaginaryPart.EDecimal)
-                                .SqrtByIntegerRoot(MathS.Settings.DecimalPrecisionContext);
+                        // The modulus under the downcasting setting in force, which Abs() now keeps.
+                        // With it off, the modulus as it is: 75 + 316.22776601683796i, whose modulus
+                        // is 325 + 2.6e-17, was divided as if by one of 325. A relative 8e-20 is
+                        // nothing to one quotient, and it put a factorial 24 orders of magnitude out,
+                        // whose series of such quotients cancels its terms almost entirely. With it on,
+                        // the rounding is the setting's own, and it keeps the quotients of a divisor
+                        // like 1 + i sqrt(3) exact.
+                        // https://github.com/asc-community/AngouriMath/issues/1614
+                        // https://github.com/asc-community/AngouriMath/issues/1615
+                        var bAbs = b.Abs().EDecimal;
                         // The squared modulus of a divisor of 3 * 10^125 is 10^251 and its
                         // reciprocal is under the context's exponent floor, so the quotient
                         // came out zero where it was 6 * 10^-7 -- a right antiderivative's

@@ -130,11 +130,13 @@ zero it now takes the reflection formula, `x! = pi x/(sin(pi x) (-x)!)`. Its wor
 bounded the exponent where the caller's did, so an intermediate outside that range lost its digits
 though the value fit. And the complex division read a divisor's modulus through `Abs()`, which
 turns the downcasting on, so even with it off a modulus within its tolerance of a small rational
-was that rational: `75 + 316.22776601683796i`, whose modulus is `325 - 3e-16`, divided as by 325.
+was that rational: `75 + 316.22776601683796i`, whose modulus is `325 + 2.6e-17`, divided as by 325.
 The factorial's series, which runs with the downcasting off, cancels such quotients almost
-entirely, which made `(316.22776601683796i)!` 24 orders of magnitude out. With the downcasting off
-the division now takes the modulus as it is; with it on, the rounding is the setting's own and
-stays ([#1614](https://github.com/asc-community/AngouriMath/issues/1614)).
+entirely, which made `(316.22776601683796i)!` 24 orders of magnitude out. `Abs()` now makes the
+modulus under the downcasting setting in force, so with it off the modulus is as it is, and so is
+the division's; with it on, the rounding is the setting's own and stays
+([#1614](https://github.com/asc-community/AngouriMath/issues/1614),
+[#1615](https://github.com/asc-community/AngouriMath/issues/1615)).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
@@ -143,6 +145,7 @@ stays ([#1614](https://github.com/asc-community/AngouriMath/issues/1614)).
 | `"1/(75 + 316.22776601683796i)"`, downcasting off | `0.00071005917159763313609… - 0.00299387234098781500591…i` | `0.00071005917159763302214990… - 0.00299387234098781452548…i` |
 | `"(-38.0785)!"` at 30 digits, downcasting off | `-3.13914586443552289958547548164E-35` | `7.03406751543900910211608330734E-43` |
 | `"(-60.5)!"` at 30 digits, downcasting off | `5.86118478907722232671451280188E-81` | `2.93059239453861116335725639905E-81` |
+| `"abs(75 + 316.22776601683796i)"`, downcasting off | `325` | `325.000000000000026076735749…` |
 
 ### A quotient of polynomials is split into coprime blocks before a root is peeled off
 

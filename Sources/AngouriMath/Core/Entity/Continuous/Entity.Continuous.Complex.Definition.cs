@@ -105,12 +105,16 @@ namespace AngouriMath
                 /// Returns the absolute value of this complex number, to be precise,
                 /// if this = a + ib, this.Abs() -> sqrt(a^2 + b^2)
                 /// </returns>
+                /// <remarks>
+                /// Made under the downcasting setting in force, as any other number is. It turned the
+                /// downcasting on to answer a <see cref="Real"/>, so with it off a modulus within its
+                /// tolerance of a small rational came back as that rational: the modulus of
+                /// <c>75 + 316.22776601683796i</c>, <c>325 + 2.6e-17</c>, was 325.
+                /// https://github.com/asc-community/AngouriMath/issues/1615
+                /// </remarks>
                 public new virtual Real Abs()
-                    => // we need forcing downcasting so that we could
-                       // downcast to a Real
-                        MathS.Settings.DowncastingEnabled.As(true,
-                        () => Sqrt(RealPart.EDecimal * RealPart.EDecimal + ImaginaryPart.EDecimal * ImaginaryPart.EDecimal).Downcast<Real>()
-                        );
+                    => Real.Create((RealPart.EDecimal * RealPart.EDecimal + ImaginaryPart.EDecimal * ImaginaryPart.EDecimal)
+                        .SqrtByIntegerRoot(MathS.Settings.DecimalPrecisionContext));
 
                 /// <summary>
                 /// The phase of a complex number (aka angle)

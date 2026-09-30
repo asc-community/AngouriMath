@@ -59,7 +59,7 @@ namespace AngouriMath.Tests.Core
         /// <summary>
         /// <c>(316.22776601683796i)!</c> was <c>1e-190</c>, where it is <c>8e-215</c>. One of its
         /// series' quotients divides by <c>75 + 316.22776601683796i</c>, whose modulus is
-        /// <c>325 - 3e-16</c>, and the division read that modulus as 325.
+        /// <c>325 + 2.6e-17</c>, and the division read that modulus as 325.
         /// </summary>
         [Fact]
         public void WhereADivisorsModulusIsNearlyWhole()
