@@ -290,24 +290,24 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 
         // The special functions, in double precision as the kernels define them.
         // https://github.com/asc-community/AngouriMath/issues/1607
-        public static System.Numerics.Complex Erf(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Erf(a);
-        public static double Erf(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Erf(a);
-        public static System.Numerics.Complex Erfc(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Erfc(a);
-        public static double Erfc(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Erfc(a);
-        public static System.Numerics.Complex Erfi(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Erfi(a);
-        public static double Erfi(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Erfi(a);
-        public static System.Numerics.Complex Ei(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Ei(a);
-        public static double Ei(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Ei(a);
-        public static System.Numerics.Complex Li(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Li(a);
-        public static double Li(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Li(a);
-        public static System.Numerics.Complex Si(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Si(a);
-        public static double Si(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Si(a);
-        public static System.Numerics.Complex Ci(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Ci(a);
-        public static double Ci(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Ci(a);
-        public static System.Numerics.Complex Shi(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Shi(a);
-        public static double Shi(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Shi(a);
-        public static System.Numerics.Complex Chi(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Chi(a);
-        public static double Chi(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Chi(a);
+        public static System.Numerics.Complex Erf(System.Numerics.Complex a) => AngouriMath.Numerics.SpecialFunctions.Erf(a);
+        public static double Erf(double a) => AngouriMath.Numerics.SpecialFunctions.Erf(a);
+        public static System.Numerics.Complex Erfc(System.Numerics.Complex a) => AngouriMath.Numerics.SpecialFunctions.Erfc(a);
+        public static double Erfc(double a) => AngouriMath.Numerics.SpecialFunctions.Erfc(a);
+        public static System.Numerics.Complex Erfi(System.Numerics.Complex a) => AngouriMath.Numerics.SpecialFunctions.Erfi(a);
+        public static double Erfi(double a) => AngouriMath.Numerics.SpecialFunctions.Erfi(a);
+        public static System.Numerics.Complex Ei(System.Numerics.Complex a) => AngouriMath.Numerics.SpecialFunctions.Ei(a);
+        public static double Ei(double a) => AngouriMath.Numerics.SpecialFunctions.Ei(a);
+        public static System.Numerics.Complex Li(System.Numerics.Complex a) => AngouriMath.Numerics.SpecialFunctions.Li(a);
+        public static double Li(double a) => AngouriMath.Numerics.SpecialFunctions.Li(a);
+        public static System.Numerics.Complex Si(System.Numerics.Complex a) => AngouriMath.Numerics.SpecialFunctions.Si(a);
+        public static double Si(double a) => AngouriMath.Numerics.SpecialFunctions.Si(a);
+        public static System.Numerics.Complex Ci(System.Numerics.Complex a) => AngouriMath.Numerics.SpecialFunctions.Ci(a);
+        public static double Ci(double a) => AngouriMath.Numerics.SpecialFunctions.Ci(a);
+        public static System.Numerics.Complex Shi(System.Numerics.Complex a) => AngouriMath.Numerics.SpecialFunctions.Shi(a);
+        public static double Shi(double a) => AngouriMath.Numerics.SpecialFunctions.Shi(a);
+        public static System.Numerics.Complex Chi(System.Numerics.Complex a) => AngouriMath.Numerics.SpecialFunctions.Chi(a);
+        public static double Chi(double a) => AngouriMath.Numerics.SpecialFunctions.Chi(a);
 
         /// <summary>
         /// True where <c>System.Numerics.Complex.IsNaN</c> is, spelled out because that overload is

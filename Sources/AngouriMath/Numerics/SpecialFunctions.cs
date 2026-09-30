@@ -8,11 +8,12 @@
 using System;
 using NumericsComplex = System.Numerics.Complex;
 
-namespace AngouriMath.Core.Compilation
+namespace AngouriMath.Numerics
 {
     /// <summary>
-    /// The special functions in double precision, for both compilers: <c>erf</c>, <c>erfc</c>,
-    /// <c>erfi</c>, <c>Ei</c>, <c>li</c>, <c>Si</c>, <c>Ci</c>, <c>Shi</c> and <c>Chi</c>.
+    /// The special functions in double precision: <c>erf</c>, <c>erfc</c>, <c>erfi</c>, <c>Ei</c>,
+    /// <c>li</c>, <c>Si</c>, <c>Ci</c>, <c>Shi</c> and <c>Chi</c>. Both compilers call them, and they
+    /// sit beside the numerical evaluation so that its fast tier can take them up too.
     /// The interpreter's kernels, <see cref="Entity.Number.Erf(Entity.Number.Complex)"/> and the
     /// others, work in arbitrary precision. At 20 digits they take 0.7 to 5.5 ms a call. Newton's
     /// method makes thousands of calls. These take a microsecond or two.
@@ -54,7 +55,7 @@ namespace AngouriMath.Core.Compilation
 
         private static bool IsNaN(NumericsComplex z) => double.IsNaN(z.Real) || double.IsNaN(z.Imaginary);
         private static bool IsInfinite(NumericsComplex z) => double.IsInfinity(z.Real) || double.IsInfinity(z.Imaginary);
-        [ConstantField] private static readonly NumericsComplex NaN = new(double.NaN, double.NaN);
+        [AngouriMath.Core.ConstantField] private static readonly NumericsComplex NaN = new(double.NaN, double.NaN);
 
         public static NumericsComplex Erf(NumericsComplex z)
         {
@@ -140,7 +141,7 @@ namespace AngouriMath.Core.Compilation
         }
 
         private const int WeidemanTerms = 40;
-        [ConstantField] private static readonly double WeidemanL = Math.Sqrt(WeidemanTerms / Math.Sqrt(2));
+        [AngouriMath.Core.ConstantField] private static readonly double WeidemanL = Math.Sqrt(WeidemanTerms / Math.Sqrt(2));
 
         /// <summary>
         /// The polynomial's coefficients, <c>a_n = 1/(4N) sum_k f(t_k) cos(pi n k/(2N))</c> over
@@ -148,7 +149,7 @@ namespace AngouriMath.Core.Compilation
         /// the discrete Fourier transform Weideman takes, written out, since <c>f</c> is even.
         /// Index 0 is unused.
         /// </summary>
-        [ConstantField] private static readonly double[] weideman = WeidemanCoefficients();
+        [AngouriMath.Core.ConstantField] private static readonly double[] weideman = WeidemanCoefficients();
 
         private static double[] WeidemanCoefficients()
         {

@@ -194,8 +194,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         // The special functions, in double precision as the kernels define them.
         // https://github.com/asc-community/AngouriMath/issues/1607
 <# foreach (var name in special) { #>
-        public static System.Numerics.Complex <#= name #>(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.<#= name #>(a);
-        public static double <#= name #>(double a) => AngouriMath.Core.Compilation.SpecialFunctions.<#= name #>(a);
+        public static System.Numerics.Complex <#= name #>(System.Numerics.Complex a) => AngouriMath.Numerics.SpecialFunctions.<#= name #>(a);
+        public static double <#= name #>(double a) => AngouriMath.Numerics.SpecialFunctions.<#= name #>(a);
 <# } #>
 
         /// <summary>
