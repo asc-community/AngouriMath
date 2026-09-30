@@ -845,6 +845,27 @@ and `13` is not, every `n` from `24` is `4 a + 9 b` and `23` is not
 | `exists a in ZZ* : exists b in ZZ* : 13 = 3 a + 8 b` | `UnhandledParseException` (left as written when quantifiers arrived) | `False` |
 | `forall n in ZZ : n >= 14 implies (exists a in ZZ* : exists b in ZZ* : n = 3 a + 8 b)` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
 
+### An equation in a remainder is solved to its whole family
+
+`f mod a = r` has one solution per period, and the solver had no way to write that. On 2.5.0
+`(x mod 4) + 1 = 3` answered `{ }` -- no solution, for an equation with infinitely many. Where
+the numeric fallback reached it, it answered with the few solutions it found in its window:
+`(2x + 1) mod 4 = 3` was `{ -5, -3, -1, 1, 3, 5 }`, and 7 is a solution as well. The remainder
+is now inverted the way the trigonometric functions are, with a whole parameter: `f = r + a n`
+where `r` is a value the floored remainder takes -- `[0, a)` for a positive `a`, `(a, 0]` for a
+negative one -- and no solution where it is not. A divisor or value that is not a number is left
+unsolved.
+[#1629](https://github.com/asc-community/AngouriMath/issues/1629), Algebrite's issue 87 from
+[#180](https://github.com/asc-community/AngouriMath/issues/180). Both columns measured on a build,
+`v2.5.0` against this change.
+
+| `"….".ToEntity().Solve("x")` of | Was (2.5.0) | Is |
+|---|---|---|
+| `(x mod 4) + 1 = 3` | `{ }` | `{ 2 + 4 * n_1 }` |
+| `(2x + 1) mod 4 = 3` | `{ -5, -3, -1, 1, 3, 5 }`, six of infinitely many | `{ (3 + 4 * n_1 - 1) / 2 }`, every odd number |
+| `x mod (-4) = -1` | `{ }` | `{ -1 + 4 * n_1 }` |
+| `x mod 4 = 5` | `{ }` | `{ }` (unchanged: modulo 4 the remainder never takes 5) |
+
 ### The modulus of a whole number is a whole number
 
 With the facts in scope making `s` a whole number, `|s| in ZZ` and `|s| in ZZ*` are `True`, and
@@ -2411,18 +2432,19 @@ now has no value, as the interpreter's has none.
 ### An equation the solver cannot invert is left unsolved, not answered with no roots
 
 `x! = 6` was answered `{ }`, a claim that it has no roots, and it has 3. The solver isolates `x`
-by inverting the function around it, and for a factorial, a binomial coefficient, `mod`, `gcd`,
-`lcm`, `min`, `max`, `phi`, `prime`, the valuation, a sum, a product, a limit, a set with `x`
-inside it and a few more, the inversion had no way to write the preimage and returned none. Such
-an equation is now left unsolved, as the set of `x` for which it holds, the way a statement
-the solver has no arm for already was. Roots found beside it are kept. A value these functions
-provably never take still has no roots: the factorial is the gamma function one along, which
-has no zeros, so `x! = 0` is still `{ }`, and so is `arcsin(x) = 5`.
+by inverting the function around it, and for a factorial, a binomial coefficient, `mod` by a
+divisor that is not a number, `gcd`, `lcm`, `min`, `max`, `phi`, `prime`, the valuation, a sum,
+a product, a limit, a set with `x` inside it and a few more, the inversion had no way to write
+the preimage and returned none. Such an equation is now left unsolved, as the set of `x` for
+which it holds, the way a statement the solver has no arm for already was. Roots found beside it
+are kept. A value these functions provably never take still has no roots: the factorial is the
+gamma function one along, which has no zeros, so `x! = 0` is still `{ }`, and so is
+`arcsin(x) = 5`.
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
 | `"x! = 6".Solve("x")` | `{ }` | `{ x : x! = 6 }` |
-| `"x mod 3 = 1".Solve("x")` | `{ }` | `{ x : x mod 3 = 1 }` |
+| `"x mod a = 1".Solve("x")` | `{ }` | `{ x : x mod a = 1 }` |
 | `"gcd(x, 4) = 2".Solve("x")` | `{ }` | `{ x : gcd(x, 4) = 2 }` |
 | `"max(x, 1) = 3".Solve("x")` | `{ }` | `{ x : max(x, 1) = 3 }` |
 | `"phi(x) = 4".Solve("x")` | `{ }` | `{ x : phi(x) = 4 }` |
