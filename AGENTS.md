@@ -394,6 +394,17 @@ Two objects with the same notation and different operations are different nodes,
 is designed later (the pair, with points, in v3: [#1237](https://github.com/asc-community/AngouriMath/issues/1237),
 [#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
 
+**A name, like a behaviour, is chosen and not copied.** That another system has a name or a
+behaviour is not a reason to adopt it. The operation that writes an expression as one quotient was
+proposed as `Together` because Mathematica and SymPy call it that, and the maintainer asked whether
+mathematicians use the word or it is engineers' jargon: it is jargon, a mathematician says *write it
+as a single fraction*, and the operation is `AsSingleFraction`
+([#1239](https://github.com/asc-community/AngouriMath/issues/1239)). **Before proposing a public
+name, say what a textbook calls the operation and name what the result is; cite another system
+only as corroboration.** The same holds for logic: a rule, a convention or a default taken over from
+SymPy or Mathematica is checked against the mathematics, its definition and its hypotheses, before
+it is adopted, and the reason written down for it is the mathematical one.
+
 ### A reference is read for everything it says, with patience
 
 A book, a paper or a corpus handed to you as a goal is not a list of features to add, and reading
