@@ -1,0 +1,99 @@
+//
+// Copyright (c) 2019-2026 Angouri.
+// AngouriMath is licensed under MIT.
+// Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+// Website: https://am.angouri.org.
+//
+
+using System;
+using System.Linq;
+using AngouriMath.Extensions;
+using Xunit;
+
+namespace AngouriMath.Tests.Calculus
+{
+    /// <summary>
+    /// The special functions integrated by parts: each has an elementary derivative, so against a
+    /// power of <c>x</c> it is the factor differentiated, and alone it is integrated against 1.
+    /// The rows are Rubi's, from its files 8.1, 8.3, 8.4 and 8.5.
+    /// https://github.com/asc-community/AngouriMath/issues/1501
+    /// </summary>
+    [Trait("Area", "Calculus")]
+    public sealed class SpecialFunctionsByPartsTest
+    {
+        /// <summary>Off 0, where the negative powers are undefined.</summary>
+        private static readonly double[] Points = { -1.7, -0.6, 0.35, 0.9, 1.45 };
+
+        /// <summary>
+        /// Integrates, pins the parameters, and compares the derivative of the answer with the
+        /// integrand at <see cref="Points"/>. The parameters are pinned after integrating, so the
+        /// rule is asked the symbolic question.
+        /// </summary>
+        private static void DifferentiatesBack(string integrand, params (string Name, string Value)[] pins)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Entity Pinned(Entity e) => pins.Aggregate(e, (current, pin) => current.Substitute(pin.Name, pin.Value.ToEntity()));
+            var derivative = Pinned(integral.Substitute("C", 0)).Differentiate("x");
+            var original = Pinned(integrand.ToEntity());
+            foreach (var at in Points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart) + Math.Abs((double)want.ImaginaryPart));
+                Assert.True(difference / scale < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
+
+        private static readonly (string, string)[] Parameters = { ("a", "2/5"), ("b", "13/10"), ("c", "7/10"), ("d", "19/10") };
+
+        /// <summary>
+        /// Alone, against 1: <c>int Ei(u) = u Ei(u) - e^u</c> and its kin, each over the rate.
+        /// </summary>
+        [Theory]
+        [InlineData("Ei(b*x)")]
+        [InlineData("Ei(a + b*x)")]
+        [InlineData("Si(b*x)")]
+        [InlineData("Si(a + b*x)")]
+        [InlineData("Ci(b*x)")]
+        [InlineData("Shi(a + b*x)")]
+        [InlineData("Chi(b*x)")]
+        public void ASpecialFunctionAloneIsByPartsAgainstOne(string integrand)
+            => DifferentiatesBack(integrand, Parameters);
+
+        /// <summary>
+        /// The logarithmic integral, where its argument stays above 0 at every point: <c>a = 3</c>
+        /// keeps <c>a + b x</c> between 0.79 and 4.9.
+        /// </summary>
+        [Theory]
+        [InlineData("li(a + b*x)")]
+        [InlineData("x*li(a + b*x)")]
+        public void TheLogarithmicIntegralIsByParts(string integrand)
+            => DifferentiatesBack(integrand, ("a", "3"), ("b", "13/10"));
+
+        /// <summary>
+        /// Against a power of <c>x</c>, the special function is the factor differentiated: what is
+        /// left is the power times <c>e^(-u^2)</c>, <c>e^u/u</c>, <c>sin(u)/u</c> and the like.
+        /// </summary>
+        [Theory]
+        [InlineData("x^3*erf(b*x)")]
+        [InlineData("x^2*erf(b*x)")]
+        [InlineData("x*erf(b*x)")]
+        [InlineData("erf(b*x)/x^2")]
+        [InlineData("erf(b*x)/x^3")]
+        [InlineData("(c + d*x)^2*erfc(a + b*x)")]
+        [InlineData("x*erfi(b*x)")]
+        [InlineData("x^2*Ei(b*x)")]
+        [InlineData("x*Ei(a + b*x)")]
+        [InlineData("Ei(b*x)/x^2")]
+        [InlineData("x*Si(b*x)")]
+        [InlineData("x^2*Ci(b*x)")]
+        [InlineData("Si(b*x)/x^2")]
+        [InlineData("x*Shi(b*x)")]
+        [InlineData("x^3*Chi(b*x)")]
+        public void APowerTimesASpecialFunctionIsByParts(string integrand)
+            => DifferentiatesBack(integrand, Parameters);
+    }
+}

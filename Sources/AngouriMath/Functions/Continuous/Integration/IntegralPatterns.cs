@@ -61,6 +61,12 @@ namespace AngouriMath.Functions.Algebra
             Entity.Erff(var arg) => arg,
             Entity.Erfcf(var arg) => arg,
             Entity.Erfif(var arg) => arg,
+            Entity.Eif(var arg) => arg,
+            Entity.Lif(var arg) => arg,
+            Entity.Sif(var arg) => arg,
+            Entity.Cif(var arg) => arg,
+            Entity.Shif(var arg) => arg,
+            Entity.Chif(var arg) => arg,
             Entity.Arcsinf(var arg) => arg,
             Entity.Arccosf(var arg) => arg,
             Entity.Arctanf(var arg) => arg,
@@ -343,6 +349,36 @@ namespace AngouriMath.Functions.Algebra
             Entity.Erfif(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
                     (arg * MathS.Erfi(arg) - MathS.Pow(MathS.e, MathS.Sqr(arg)) / MathS.Sqrt(MathS.pi)) / a,
+
+            // And the exponential, logarithmic, trigonometric and hyperbolic integrals, by parts
+            // against 1 the same way: each derivative is elementary and cancels the u the
+            // integrated 1 leaves beside it. int Ei(u) = u Ei(u) - e^u, int li(u) = u li(u) -
+            // Ei(2 ln u), int Si(u) = u Si(u) + cos(u), int Ci(u) = u Ci(u) - sin(u),
+            // int Shi(u) = u Shi(u) - cosh(u) and int Chi(u) = u Chi(u) - sinh(u).
+            // https://github.com/asc-community/AngouriMath/issues/1501
+            Entity.Eif(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    (arg * MathS.Ei(arg) - MathS.Pow(MathS.e, arg)) / a,
+
+            Entity.Lif(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    (arg * MathS.Li(arg) - MathS.Ei(2 * MathS.Ln(arg))) / a,
+
+            Entity.Sif(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    (arg * MathS.Si(arg) + MathS.Cos(arg)) / a,
+
+            Entity.Cif(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    (arg * MathS.Ci(arg) - MathS.Sin(arg)) / a,
+
+            Entity.Shif(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    (arg * MathS.Shi(arg) - MathS.Hyperbolic.Cosh(arg)) / a,
+
+            Entity.Chif(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    (arg * MathS.Chi(arg) - MathS.Hyperbolic.Sinh(arg)) / a,
 
             Entity.Absf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) => // ∫ |ax + b| dx = sgn(ax + b) * (ax + b)^2 / (2a)
