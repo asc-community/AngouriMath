@@ -31,7 +31,7 @@ namespace AngouriMath
                         return RealPart.Latexize();
                     else if (RealPart is Integer(0))
                         return RenderNum(ImaginaryPart) + @"\mathrm{i}"; // Display i upright per ISO 80000-2.
-                    var (im, sign) = ImaginaryPart > 0 ? (ImaginaryPart, "+") : (-ImaginaryPart, "-");
+                    var (im, sign) = ImaginaryPart > 0 ? (ImaginaryPart, "+") : (NegatedAsItIs(ImaginaryPart), "-");
                     return RealPart.Latexize() + " " + sign + " " +
                         (im == 1 ? "" : im.Latexize(ImaginaryPart is Rational and not Integer)) + @"\mathrm{i}";
                 }

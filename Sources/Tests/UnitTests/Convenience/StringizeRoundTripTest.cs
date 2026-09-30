@@ -387,5 +387,34 @@ namespace AngouriMath.Tests.Common
         [InlineData("integral(domain(x, ZZ), x)")]
         [InlineData("{ domain(x, ZZ) : x > 0 }")]
         public void ANarrowedCodomainRoundTrips(string source) => AssertRoundTrip(source);
+
+        /// <summary>
+        /// A number prints as it is, whatever the downcasting setting when it is printed. A
+        /// negative imaginary part was negated to be printed, which made a new number under the
+        /// setting in force, so a number made with downcasting off printed as another one once it
+        /// was back on: <c>1 - 0.333...i</c> as <c>1 - 1/3i</c>, which reads back as <c>1 + i/3</c>,
+        /// and the imaginary part of <c>erfc(16 - 0.5i)</c> as 0.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1610">#1610</a>
+        /// </summary>
+        [Theory]
+        [InlineData("1", "-0.3333333333333333333333333333333333333333")]
+        [InlineData("2", "-0.5000000000000000000000000000001")]
+        [InlineData("-2.8337075375928474951E-113", "-9.4899608506981397569E-114")]
+        public void ANumberMadeWithoutDowncastingPrintsAsItIs(string real, string imaginary)
+        {
+            Entity.Number.Complex number;
+            using (MathS.Settings.DowncastingEnabled.Set(false))
+                number = Entity.Number.Complex.Create(PeterO.Numbers.EDecimal.FromString(real), PeterO.Numbers.EDecimal.FromString(imaginary));
+            var printed = number.Stringize();
+            var latex = number.Latexize();
+            using (MathS.Settings.DowncastingEnabled.Set(false))
+            {
+                var read = MathS.FromString(printed, useCache: false).EvalNumerical();
+                Assert.True(read.RealPart.EDecimal.CompareTo(number.RealPart.EDecimal) == 0
+                    && read.ImaginaryPart.EDecimal.CompareTo(number.ImaginaryPart.EDecimal) == 0,
+                    $"{printed} reads back as {read}");
+            }
+            Assert.Contains(PeterO.Numbers.EDecimal.FromString(imaginary).Negate() + @"\mathrm{i}", latex);
+        }
     }
 }
