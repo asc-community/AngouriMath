@@ -1699,6 +1699,31 @@ where it is worked out, is not affected.
 | `"sum(1/(k - x), k, 1, n)".ToEntity().DomainCondition` | `not k - x = 0` | `forall k in { k : k in ZZ and 1 <= k and k <= n } : not k - x = 0` |
 | `"integral(1/(t - x), t, 0, 1)".ToEntity().DomainCondition` | `not t - x = 0` | `forall t in [0; 1] : not t - x = 0` |
 
+### A rational function whose residues are of degree three or more is integrated over its poles
+
+**Wider.** The logarithmic part of a rational integral is a logarithm at each pole, weighted by the
+residue there. Where the residues are rational or roots of a quadratic they were written out, as
+logarithms and arctangents. Where they lie in a field of degree three or more, the rational
+integrator declined, and `1/(x^3 + x + 1)` was left unevaluated. It is written now as a sum over the
+poles, `sum(A(r)/D'(r) ln(x - r), r in { r : E(r) = 0 })`, with the node above: `E` is the factor
+of the denominator whose poles have those residues, the gcd of `D` and `D'^n R(A/D')` over the
+rationals. The integrand of [#1285](https://github.com/asc-community/AngouriMath/issues/1285),
+`sqrt(x)/(1 + x + x^4)`, is `2u^2/(1 + u^2 + u^8)` under `u = sqrt(x)`, and is answered through it.
+
+**Only where nothing else answers.** The integral is asked again with sums over roots allowed once
+the whole of it has come back unevaluated, so an integrand another rule writes in closed form keeps
+that form. Asked with the other rules, the sum answered each of Jeffrey's three terms of
+`(-1 + 4 cos(x) + 5 cos(x)^2)/(-1 - 4 cos(x) - 3 cos(x)^2 + 4 cos(x)^3)` with a sum over the roots of
+a sextic, where the whole is one arctangent. A denominator with a symbol among its coefficients is
+still declined. Both columns measured on a build, `v2.5.0` against this change.
+
+| | Was (2.5.0) | Is |
+|---|---|---|
+| `"1/(x^3 + x + 1)".Integrate("x")` | `integral(1 / (x ^ 3 + x + 1), x)` | `sum(1 / (3 * r ^ 2 + 1) * ln(x - r), r in { r : r ^ 3 + r + 1 = 0 }) + C` |
+| `"sqrt(x)/(1 + x + x^4)".Integrate("x")` | `integral(sqrt(x) / (1 + x + x ^ 4), x)` | `sum(2 * r ^ 2 / (8 * r ^ 7 + 2 * r) * ln(x ^ (1/2) - r), r in { r : r ^ 8 + r ^ 2 + 1 = 0 }) + C` |
+| `"1/(1 - x^4 + x^8)".Integrate("x")` | `integral(1 / (1 - x ^ 4 + x ^ 8), x)` | `sum(1 / (8 * r ^ 7 + (-4) * r ^ 3) * ln(x - r), r in { r : r ^ 8 + -r ^ 4 + 1 = 0 }) + C` |
+| `"1/(x^4 + a*x + 1)".Integrate("x")` | `integral(1 / (x ^ 4 + a * x + 1), x)` | the same |
+
 ### `(a + b asech(c x))/(d + e x)^2` is integrated, and a root written apart with `|x|` no longer needs a parity
 
 Rubi's 7.5.1 with a symbolic linear below the bar ran for ten minutes without an answer. By
