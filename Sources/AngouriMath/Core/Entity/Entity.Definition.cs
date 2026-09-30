@@ -509,7 +509,23 @@ namespace AngouriMath
         /// sin(x) + cos(x + 2): 7
         /// </code>
         /// </example>
-        public int Complexity => complexity.GetValue(static @this => 1 + @this.DirectChildren.Sum(x => x.Complexity), this);
+        /// <remarks>
+        /// Saturated at <see cref="int.MaxValue"/>: a subtree counts once for every place it is
+        /// used, so an expression built by sharing can be larger than that as a tree while being
+        /// small in memory, and a caller asking whether it is too large to go on with is owed an
+        /// answer rather than an <see cref="System.OverflowException"/>.
+        /// https://github.com/asc-community/AngouriMath/issues/1600
+        /// </remarks>
+        public int Complexity => complexity.GetValue(static @this =>
+        {
+            // By index: a foreach over the interface allocates an enumerator for every node counted.
+            var children = @this.DirectChildren;
+            long total = 1;
+            for (var i = 0; i < children.Count; i++)
+                if ((total += children[i].Complexity) >= int.MaxValue)
+                    return int.MaxValue;
+            return (int)total;
+        }, this);
         private LazyPropertyA<int> complexity;
 
         /// <summary>
