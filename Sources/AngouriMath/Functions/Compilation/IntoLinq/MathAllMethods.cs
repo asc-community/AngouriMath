@@ -288,6 +288,27 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         public static int Min(int a, int b) => Math.Min(a, b);
         public static BigInteger Min(BigInteger a, BigInteger b) => BigInteger.Min(a, b);
 
+        // The special functions, in double precision as the kernels define them.
+        // https://github.com/asc-community/AngouriMath/issues/1607
+        public static System.Numerics.Complex Erf(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Erf(a);
+        public static double Erf(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Erf(a);
+        public static System.Numerics.Complex Erfc(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Erfc(a);
+        public static double Erfc(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Erfc(a);
+        public static System.Numerics.Complex Erfi(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Erfi(a);
+        public static double Erfi(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Erfi(a);
+        public static System.Numerics.Complex Ei(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Ei(a);
+        public static double Ei(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Ei(a);
+        public static System.Numerics.Complex Li(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Li(a);
+        public static double Li(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Li(a);
+        public static System.Numerics.Complex Si(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Si(a);
+        public static double Si(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Si(a);
+        public static System.Numerics.Complex Ci(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Ci(a);
+        public static double Ci(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Ci(a);
+        public static System.Numerics.Complex Shi(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Shi(a);
+        public static double Shi(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Shi(a);
+        public static System.Numerics.Complex Chi(System.Numerics.Complex a) => AngouriMath.Core.Compilation.SpecialFunctions.Chi(a);
+        public static double Chi(double a) => AngouriMath.Core.Compilation.SpecialFunctions.Chi(a);
+
         /// <summary>
         /// True where <c>System.Numerics.Complex.IsNaN</c> is, spelled out because that overload is
         /// .NET 7 and later and this assembly also targets netstandard2.0. A complex number is NaN
@@ -438,6 +459,24 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             { ("Round", 1, typeof(long)), Def<long>(a => Round(a)) },
             { ("Round", 1, typeof(int)), Def<int>(a => Round(a)) },
             { ("Round", 1, typeof(BigInteger)), Def<BigInteger>(a => Round(a)) },
+            { ("Erf", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Erf(a)) },
+            { ("Erf", 1, typeof(double)), Def<double>(a => Erf(a)) },
+            { ("Erfc", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Erfc(a)) },
+            { ("Erfc", 1, typeof(double)), Def<double>(a => Erfc(a)) },
+            { ("Erfi", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Erfi(a)) },
+            { ("Erfi", 1, typeof(double)), Def<double>(a => Erfi(a)) },
+            { ("Ei", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Ei(a)) },
+            { ("Ei", 1, typeof(double)), Def<double>(a => Ei(a)) },
+            { ("Li", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Li(a)) },
+            { ("Li", 1, typeof(double)), Def<double>(a => Li(a)) },
+            { ("Si", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Si(a)) },
+            { ("Si", 1, typeof(double)), Def<double>(a => Si(a)) },
+            { ("Ci", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Ci(a)) },
+            { ("Ci", 1, typeof(double)), Def<double>(a => Ci(a)) },
+            { ("Shi", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Shi(a)) },
+            { ("Shi", 1, typeof(double)), Def<double>(a => Shi(a)) },
+            { ("Chi", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Chi(a)) },
+            { ("Chi", 1, typeof(double)), Def<double>(a => Chi(a)) },
         };
 
         // An expression tree is how C# spells "the MethodInfo of this method" without a string:

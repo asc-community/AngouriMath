@@ -137,6 +137,18 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 Floorf =>       Expression.Call(GetDef("Floor", 1, e.Type), e),
                 Ceilf =>        Expression.Call(GetDef("Ceil", 1, e.Type), e),
                 Roundf =>       Expression.Call(GetDef("Round", 1, e.Type), e),
+
+                // The special functions, widened to double first as the trigonometry is.
+                // https://github.com/asc-community/AngouriMath/issues/1607
+                Erff  when ShouldBeAtLeastDouble(e) is var newE => Expression.Call(GetDef("Erf", 1, newE.Type), newE),
+                Erfcf when ShouldBeAtLeastDouble(e) is var newE => Expression.Call(GetDef("Erfc", 1, newE.Type), newE),
+                Erfif when ShouldBeAtLeastDouble(e) is var newE => Expression.Call(GetDef("Erfi", 1, newE.Type), newE),
+                Eif   when ShouldBeAtLeastDouble(e) is var newE => Expression.Call(GetDef("Ei", 1, newE.Type), newE),
+                Lif   when ShouldBeAtLeastDouble(e) is var newE => Expression.Call(GetDef("Li", 1, newE.Type), newE),
+                Sif   when ShouldBeAtLeastDouble(e) is var newE => Expression.Call(GetDef("Si", 1, newE.Type), newE),
+                Cif   when ShouldBeAtLeastDouble(e) is var newE => Expression.Call(GetDef("Ci", 1, newE.Type), newE),
+                Shif  when ShouldBeAtLeastDouble(e) is var newE => Expression.Call(GetDef("Shi", 1, newE.Type), newE),
+                Chif  when ShouldBeAtLeastDouble(e) is var newE => Expression.Call(GetDef("Chi", 1, newE.Type), newE),
                 
                 Notf =>         Expression.Not(e),
                 
