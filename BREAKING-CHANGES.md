@@ -2663,6 +2663,25 @@ arctangent, arccotangent or arccosecant whose argument diverges, which is now an
 | `integral(1/(2 + cos(x)), x, 0, pi)` | `integral(1 / (2 + cos(x)), x, 0, pi)` | `sqrt(3) * pi / 3` |
 | `limitleft(arctan(tan(x / 2)), x, pi)` | `limitleft(arctan(tan(x / 2)), x, pi)` | `pi / 2` |
 
+### A limit at infinity whose terms cancel around a slowly varying factor is answered
+
+`lim e^x (exp(1/x + e^(-x)) - exp(1/x))` as `x → ∞` is the example Gonnet and Gruntz introduce
+their algorithm with, and the implementation left it as written. The algorithm's steps were right,
+and the series engine then read a leading term where there is none. It took a constant term off by
+subtracting it, and divided a leading coefficient by itself, which left `1/x - 1/x` and `x/x - 1` at
+`w^0`; it also did not know `e^(1/x) - e^(1/x)` for zero. The constant term is now removed exactly,
+the normalised leading coefficient is `1` exactly, and the zero test collects like terms and reads a
+conditional zero -- `0 provided not x = 0` -- as zero.
+[#353](https://github.com/asc-community/AngouriMath/issues/353). Both columns measured on a build,
+`v2.5.0` against this change.
+
+| `"….".ToEntity().Limit("x", "+oo")` of | Was (2.5.0) | Is |
+|---|---|---|
+| `e ^ x * (e ^ (1/x + e ^ (-x)) - e ^ (1/x))` | left as written | `1` |
+| `e ^ x * (e ^ (2/x + e ^ (-x)) - e ^ (2/x))` | left as written | `1` |
+| `e ^ (2 * x) * (e ^ (1/x + e ^ (-2 * x)) - e ^ (1/x))` | left as written | `1` |
+| `e ^ (x + e ^ (-x)) - e ^ x` | `1` | the same |
+
 ### With the downcasting off, integration and limits compute on exact numbers
 
 With `DowncastingEnabled` off, `1/(1 + c^2*x^2)` integrated to `NaN + C` and `limit(sin(c*x)/x, x, 0)`
