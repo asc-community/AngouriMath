@@ -1678,6 +1678,27 @@ measured on a build, `v2.5.0` against this change.
 | `"sum(x, x in {a, b})".ToEntity().Simplify()` | the same exception | `sum(x, x in { a, b })`, since `a` and `b` may be equal |
 | `"sum(k, k, 1, 10)".ToEntity().Simplify()` | `55` | the same |
 
+### A condition on a name a binder binds stays in the binder
+
+**Fix.** `DomainCondition` conjoined every child's condition, a binder's body included, so a
+summation's, a product's or a definite integral's condition named its index as though it were free,
+and a sum over a set's did the same: the product rule leaves `0 * sum(...)`, which keeps it, and the
+derivative of `2 sum(ln(x - w), w in { w : w^3 + w + 1 = 0 })` was `… provided not x - w = 0`, which
+`EvalNumerical` could not decide. The condition is required at every value the name ranges over
+now: a conjunction over a few numbers, a resultant over the roots of a polynomial, and `forall`
+over the range otherwise. It is not left out, which would give `0 * sum(1/(k - x), k, 1, n)` a value
+at `x = 1` ([#1632](https://github.com/asc-community/AngouriMath/issues/1632)). A definite integral's
+condition is required between its limits, in either order. That is sufficient for a value and not
+necessary: `ln(t)` over `[0; 1]` converges, to -1, and its condition reads it as undefined, since the
+integrand has none at 0. Nothing is given a value it does not have that way. The integral itself,
+where it is worked out, is not affected.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sum(1/(k - x), k, 1, 3)".ToEntity().DomainCondition` | `not k - x = 0` | `not 1 - x = 0 and not 2 - x = 0 and not 3 - x = 0` |
+| `"sum(1/(k - x), k, 1, n)".ToEntity().DomainCondition` | `not k - x = 0` | `forall k in { k : k in ZZ and 1 <= k and k <= n } : not k - x = 0` |
+| `"integral(1/(t - x), t, 0, 1)".ToEntity().DomainCondition` | `not t - x = 0` | `forall t in [0; 1] : not t - x = 0` |
+
 ### `(a + b asech(c x))/(d + e x)^2` is integrated, and a root written apart with `|x|` no longer needs a parity
 
 Rubi's 7.5.1 with a symbolic linear below the bar ran for ten minutes without an answer. By
