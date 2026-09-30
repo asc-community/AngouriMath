@@ -18,9 +18,10 @@ namespace AngouriMath.Tests.Algebra
     /// or the unevaluated <c>derivative(max(x, 1), x)</c> that <c>max</c> differentiated to -- the
     /// solver threw <see cref="UncompilableNodeException"/> out of the public method, in 2.5.0 as on
     /// master. The floors, the rounding and the extremes compile now, and <c>max</c> and <c>min</c>
-    /// differentiate; what still has no compiled form is declined, and so is a set of roots that
-    /// are not isolated.
+    /// differentiate, and so do the special functions; what still has no compiled form is declined,
+    /// and so is a set of roots that are not isolated.
     /// <a href="https://github.com/asc-community/AngouriMath/issues/1603">#1603</a>
+    /// <a href="https://github.com/asc-community/AngouriMath/issues/1607">#1607</a>
     /// </summary>
     [Trait("Area", "Algebra")]
     public sealed class NewtonFallbackTest
@@ -44,12 +45,35 @@ namespace AngouriMath.Tests.Algebra
                 Assert.Contains(expected, e => System.Math.Abs(e - root.EvalNumerical().RealPart.EDecimal.ToDouble()) < 1e-9);
         }
 
-        /// <summary>No analytical route answers these, and the compiler still has no form for them.</summary>
+        /// <summary>
+        /// No analytical route answers these, and the compiler has no form for the binomial
+        /// coefficient or for <c>gcd</c>, nor for their unevaluated derivatives.
+        /// </summary>
         [Theory]
-        [InlineData("erf(x) = x/2 + 1/7")]
-        [InlineData("Si(x) = x/2 + 1/7")]
+        [InlineData("binomial(x, 3/2) = x/2")]
+        [InlineData("gcd(x, 6) = x/2")]
         public void AnEquationTheCompilerHasNoFormForIsLeftUnsolved(string equation)
             => Assert.IsType<Entity.Set.ConditionalSet>(equation.ToEntity().Solve("x"));
+
+        /// <summary>
+        /// The special functions compile, so the search reaches these. Among the roots it finds off
+        /// the real line are the three real ones, each checked against mpmath. Every root it gives
+        /// holds, to the precision of the double it was found in.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1607">#1607</a>
+        /// </summary>
+        [Theory]
+        [InlineData("erf(x) - x/2 - 1/7", new[] { -2.2832295840505545496, 0.23498157773996424592, 1.6791581585243440031 })]
+        [InlineData("Si(x) - x/2 - 1/7", new[] { -3.8544741217072080362, 0.28837215854663464706, 3.3983595626337253252 })]
+        public void TheSpecialFunctionsAreSearched(string expression, double[] realRoots)
+        {
+            var roots = Assert.IsType<Entity.Set.FiniteSet>((expression + " = 0").ToEntity().Solve("x"));
+            foreach (var expected in realRoots)
+                Assert.Contains(roots, root => root.EvalNumerical() is var value
+                    && System.Math.Abs(value.ImaginaryPart.EDecimal.ToDouble()) < 1e-12
+                    && System.Math.Abs(value.RealPart.EDecimal.ToDouble() - expected) < 1e-9);
+            foreach (var root in roots)
+                Assert.True(expression.ToEntity().Substitute("x", root).EvalNumerical().Abs() < 1e-9, $"{root} is not a root");
+        }
 
         /// <summary>
         /// Each holds on the whole of [0, +oo), and the search's grid converged to fifty-one points
@@ -74,7 +98,7 @@ namespace AngouriMath.Tests.Algebra
         /// </summary>
         [Fact]
         public void NewtonsMethodAskedByNameStillSaysWhy()
-            => Assert.Throws<UncompilableNodeException>(() => "erf(x) - x/2 - 1/7".ToEntity().SolveNt("x"));
+            => Assert.Throws<UncompilableNodeException>(() => "binomial(x, 3/2) - x/2".ToEntity().SolveNt("x"));
 
         /// <summary>
         /// The compiled floors, rounding and extremes against the interpreter, off the real line

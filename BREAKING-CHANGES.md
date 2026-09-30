@@ -2339,9 +2339,9 @@ resort, Newton's method, compiles the expression and its derivative. They compil
   not ordered;
 - `max` and `min` differentiate where their arguments are real, as `|f|` does.
 
-The search still declines what has no compiled form, so `erf(x) = x/2 + 1/7` is left unsolved. It
-now also declines a set of roots that are not isolated: where the equation holds midway between two
-of them, the points are samples of a continuum and not the set
+The search still declines what has no compiled form, so `binomial(x, 3/2) = x/2` is left unsolved.
+It now also declines a set of roots that are not isolated: where the equation holds midway between
+two of them, the points are samples of a continuum and not the set
 ([#1603](https://github.com/asc-community/AngouriMath/issues/1603),
 [#1420](https://github.com/asc-community/AngouriMath/issues/1420)).
 
@@ -2410,7 +2410,10 @@ e^(-t^2) dt`, its complement `erfc(z) = 1 - erf(z)` and the imaginary error func
 `erfi(z) = -i erf(i z)` are nodes (`MathS.Erf`, `MathS.Erfc`, `MathS.Erfi`), the first of #1501's
 special functions. Each is differentiated, printed in LaTeX as `\operatorname{erf}` and so on, and
 evaluated to the working precision anywhere in the complex plane (`Entity.Number.Erf`, `Erfc`,
-`Erfi`). An equation in one of them is left unsolved rather than answered with no roots. `erf`
+`Erfi`). They compile, through `Compile` and `Compile<TIn, TOut>`, in double precision
+([#1607](https://github.com/asc-community/AngouriMath/issues/1607)). So an equation the solver's
+numerical search reaches, `erf(x) = x/2 + 1/7`, is answered with the roots it finds, while one that
+isolates `erf`, `erf(x) = 1/2`, is left unsolved rather than answered with no roots. `erf`
 was refused by name, but `erfc` and `erfi` were not, so each was read as a product with an
 undeclared variable.
 
@@ -2421,6 +2424,8 @@ undeclared variable.
 | `"erfi(x)"` | `erfi * x` | `erfi(x)` |
 | `"erfc(1)".Simplify()` | `erfc` | `erfc(1)`, and `0.157299207050285…` evaluated |
 | `"erf(x)".Differentiate("x")` | `UnrecognizedFunctionParseException` | `2 / sqrt(pi) * e ^ (-x ^ 2)` |
+| `"erf(x)".Compile("x")`, and `erfc`, `erfi` | `UnrecognizedFunctionParseException`; for `erfc` and `erfi`, `UncompilableNodeException`: not among the variables | compiled |
+| `"erf(x) = x/2 + 1/7".ToEntity().Solve("x")` | `UnrecognizedFunctionParseException` | its roots near `-2.283`, `0.235` and `1.679`, and more off the real line |
 
 ### `Ei` and `li` are functions
 
@@ -2440,6 +2445,7 @@ with an undeclared variable
 | `"li(2)".Simplify()` | `2 * li` | `li(2)`, and `1.045163780117492…` evaluated |
 | `"Ei(1)".Simplify()` | `Ei` | `Ei(1)`, and `1.895117816355936…` evaluated |
 | `"Ei(x)".Differentiate("x")` | `Ei` | `e ^ x / x` |
+| `"Ei(x)".Compile("x")`, and `li` | `UncompilableNodeException`: `Ei` is not among the variables | compiled ([#1607](https://github.com/asc-community/AngouriMath/issues/1607)) |
 
 ### The exponential and logarithmic integrals are integrated to
 
@@ -2478,6 +2484,7 @@ was refused, so each was read as a product with an undeclared variable
 | `"Ci(2)".Simplify()` | `2 * Ci` | `Ci(2)`, and `0.4229808287748649…` evaluated |
 | `"Chi(1)".Simplify()` | `Chi` | `Chi(1)`, and `0.8378669409802082…` evaluated |
 | `"Si(x)".Differentiate("x")` | `Si` | `sin(x) / x` |
+| `"Si(x)".Compile("x")`, and `Ci`, `Shi`, `Chi` | `UncompilableNodeException`: `Si` is not among the variables | compiled ([#1607](https://github.com/asc-community/AngouriMath/issues/1607)) |
 
 ### A quadratic below a sine or a cosine is split over its two roots
 

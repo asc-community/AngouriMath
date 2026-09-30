@@ -40,6 +40,15 @@ namespace AngouriMath.Core
             CALL_FLOOR,
             CALL_CEIL,
             CALL_ROUND,
+            CALL_ERF,
+            CALL_ERFC,
+            CALL_ERFI,
+            CALL_EI,
+            CALL_LI,
+            CALL_SI,
+            CALL_CI,
+            CALL_SHI,
+            CALL_CHI,
 
             // 2-arg functions
             CALL_SUM = 100,
@@ -218,6 +227,35 @@ namespace AngouriMath.Core
                         break;
                     case InstructionType.CALL_ARCCOSECANT:
                         stack.Push(Core.Compilation.ComplexBranches.Arccosecant(stack.Pop()));
+                        break;
+                    // In double precision, as the kernels define them.
+                    // https://github.com/asc-community/AngouriMath/issues/1607
+                    case InstructionType.CALL_ERF:
+                        stack.Push(AngouriMath.Numerics.SpecialFunctions.Erf(stack.Pop()));
+                        break;
+                    case InstructionType.CALL_ERFC:
+                        stack.Push(AngouriMath.Numerics.SpecialFunctions.Erfc(stack.Pop()));
+                        break;
+                    case InstructionType.CALL_ERFI:
+                        stack.Push(AngouriMath.Numerics.SpecialFunctions.Erfi(stack.Pop()));
+                        break;
+                    case InstructionType.CALL_EI:
+                        stack.Push(AngouriMath.Numerics.SpecialFunctions.Ei(stack.Pop()));
+                        break;
+                    case InstructionType.CALL_LI:
+                        stack.Push(AngouriMath.Numerics.SpecialFunctions.Li(stack.Pop()));
+                        break;
+                    case InstructionType.CALL_SI:
+                        stack.Push(AngouriMath.Numerics.SpecialFunctions.Si(stack.Pop()));
+                        break;
+                    case InstructionType.CALL_CI:
+                        stack.Push(AngouriMath.Numerics.SpecialFunctions.Ci(stack.Pop()));
+                        break;
+                    case InstructionType.CALL_SHI:
+                        stack.Push(AngouriMath.Numerics.SpecialFunctions.Shi(stack.Pop()));
+                        break;
+                    case InstructionType.CALL_CHI:
+                        stack.Push(AngouriMath.Numerics.SpecialFunctions.Chi(stack.Pop()));
                         break;
                     case InstructionType.CALL_FACTORIAL:
                         // https://stackoverflow.com/a/15454784/5429648
