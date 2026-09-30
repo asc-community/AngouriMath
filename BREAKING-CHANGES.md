@@ -2245,6 +2245,20 @@ before: `(x^2 - 1)/(x - 1) - x - 1` is zero for every `x` but 1, where `CC` woul
 | `"sqrt(x)^2 = x".ToEntity().Solve("x")` | `{ -10, -49/5, -48/5, …, -8 - 8i, … }`, 191 numbers | `CC` |
 | `"sin(x)^2 + cos(x)^2 = 1".ToEntity().Solve("x")` | the same 191 numbers | `CC` |
 
+### An equation the numerical search cannot compile is left unsolved, not thrown out of `Solve`
+
+`floor(x) = x/2 + 1/3` and `max(x, 0) = x` threw `UncompilableNodeException` out of `Solve`. Nothing
+analytical reads them, and the last resort, Newton's method, compiles the expression and its
+derivative, where the compiler has no form for `floor`, nor for the unevaluated
+`derivative(max(x, 0), x)`. The search now asks first whether the compiler has a form for every node,
+and declines where it has not. `SolveNt`, which asks for Newton's method by name, still throws
+([#1603](https://github.com/asc-community/AngouriMath/issues/1603)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"floor(x) = x/2 + 1/3".ToEntity().Solve("x")` | `UncompilableNodeException` | `{ x : floor(x) = x / 2 + 1/3 }` |
+| `"max(x, 0) = x".ToEntity().Solve("x")` | `UncompilableNodeException` | `{ x : max(x, 0) = x }` |
+
 ### An equation the solver cannot invert is left unsolved, not answered with no roots
 
 `x! = 6` was answered `{ }`, a claim that it has no roots, and it has 3. The solver isolates `x`

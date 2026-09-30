@@ -13,6 +13,22 @@ namespace AngouriMath
 {
     partial record Entity
     {
+        /// <summary>
+        /// Whether this node, its children aside, has a compiled form: false by default, as
+        /// <see cref="CompileNode"/>'s default is to throw, and true beside every override that
+        /// compiles rather than throws.
+        /// </summary>
+        private protected virtual bool CompilesItself => false;
+
+        /// <summary>
+        /// Whether the compiler has a form for every node of this expression, so that a caller
+        /// that would fall back rather than fail can ask first instead of catching
+        /// <see cref="UncompilableNodeException"/>. The variables are not checked against a
+        /// list: which ones an expression is compiled over is the caller's to say.
+        /// https://github.com/asc-community/AngouriMath/issues/1603
+        /// </summary>
+        internal bool HasCompiledForm => CompilesItself && DirectChildren.All(child => child.HasCompiledForm);
+
         private protected virtual void CompileNode(Compiler compiler)
             => throw new UncompilableNodeException(
                 $"`{Stringize()}`, a node of type {GetType()}, does not support compilation. "
@@ -38,12 +54,16 @@ namespace AngouriMath
 
         public partial record Number
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler) =>
                 compiler.Instructions.Add(new(InstructionType.PUSH_CONST, Value: ((Complex)this).ToNumerics()));
         }
 
         public partial record Variable
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler) =>
                 compiler.Instructions.Add(new(InstructionType.PUSH_VAR,
                     compiler.VarNamespace.TryGetValue(this, out var slot)
@@ -65,6 +85,8 @@ namespace AngouriMath
 
         public partial record Constant
         {
+            private protected override bool CompilesItself => true;
+
             // A constant is its value. The named ones are substituted by value before
             // compiling; the base of ln and exp is Euler's number standing in the operator's
             // definition, which substitution leaves alone (#994), so it arrives here.
@@ -82,6 +104,8 @@ namespace AngouriMath
         // Note: We pop values when executing instructions, so we add instructions in reverse child order
         public partial record Sumf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Addend.InnerCompile(compiler);
@@ -92,6 +116,8 @@ namespace AngouriMath
 
         public partial record Minusf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Subtrahend.InnerCompile(compiler);
@@ -102,6 +128,8 @@ namespace AngouriMath
 
         public partial record Mulf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Multiplicand.InnerCompile(compiler);
@@ -112,6 +140,8 @@ namespace AngouriMath
 
         public partial record Divf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Divisor.InnerCompile(compiler);
@@ -122,6 +152,8 @@ namespace AngouriMath
 
         public partial record Modf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Divisor.InnerCompile(compiler);
@@ -132,6 +164,8 @@ namespace AngouriMath
 
         public partial record Powf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Exponent.InnerCompile(compiler);
@@ -142,6 +176,8 @@ namespace AngouriMath
 
         public partial record Sinf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Argument.InnerCompile(compiler);
@@ -151,6 +187,8 @@ namespace AngouriMath
 
         public partial record Cosf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Argument.InnerCompile(compiler);
@@ -160,6 +198,8 @@ namespace AngouriMath
 
         public partial record Secantf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Argument.InnerCompile(compiler);
@@ -169,6 +209,8 @@ namespace AngouriMath
 
         public partial record Cosecantf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Argument.InnerCompile(compiler);
@@ -178,6 +220,8 @@ namespace AngouriMath
 
         public partial record Tanf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Argument.InnerCompile(compiler);
@@ -187,6 +231,8 @@ namespace AngouriMath
 
         public partial record Cotanf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Argument.InnerCompile(compiler);
@@ -196,6 +242,8 @@ namespace AngouriMath
 
         public partial record Logf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 // Unlike AngouriMath which accepts Base as the first parameter,
@@ -209,6 +257,8 @@ namespace AngouriMath
 
         public partial record Arcsinf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Argument.InnerCompile(compiler);
@@ -218,6 +268,8 @@ namespace AngouriMath
 
         public partial record Arccosf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Argument.InnerCompile(compiler);
@@ -227,6 +279,8 @@ namespace AngouriMath
 
         public partial record Arctanf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Argument.InnerCompile(compiler);
@@ -236,6 +290,8 @@ namespace AngouriMath
 
         public partial record Arccotanf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Argument.InnerCompile(compiler);
@@ -245,6 +301,8 @@ namespace AngouriMath
 
         public partial record Arcsecantf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Argument.InnerCompile(compiler);
@@ -254,6 +312,8 @@ namespace AngouriMath
 
         public partial record Arccosecantf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Argument.InnerCompile(compiler);
@@ -263,6 +323,8 @@ namespace AngouriMath
 
         public partial record Factorialf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Argument.InnerCompile(compiler);
@@ -290,6 +352,8 @@ namespace AngouriMath
 
         public partial record Signumf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Argument.InnerCompile(compiler);
@@ -299,6 +363,8 @@ namespace AngouriMath
 
         public partial record Absf
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Argument.InnerCompile(compiler);
@@ -308,6 +374,8 @@ namespace AngouriMath
 
         public partial record Phif
         {
+            private protected override bool CompilesItself => true;
+
             private protected override void CompileNode(Compiler compiler)
             {
                 Argument.InnerCompile(compiler);

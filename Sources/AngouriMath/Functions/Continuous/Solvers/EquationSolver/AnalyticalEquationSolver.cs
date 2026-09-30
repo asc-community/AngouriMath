@@ -385,9 +385,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // nothing to find: Newton's method is started from finitely many points inside
             // a bounded region, so an empty result is a fact about the search rather than
             // about the equation. Where it does find roots the answer is theirs, unchanged.
+            // And one the compiler has no form for -- `floor(x)`, or the derivative `max(x, 1)`
+            // has -- is not the search's to run, and is left unsolved rather than thrown out of
+            // `Solve`. https://github.com/asc-community/AngouriMath/issues/1603
             if (MathS.Settings.AllowNewton && expr.Vars.Count == 1)
-                return expr.SolveNt(x).Select(ent => TryDowncast(expr, x, ent)).ToSet()
-                    is FiniteSet { IsSetEmpty: false } found ? found : Unsolved(expr, x);
+                return NumericalSolving.NewtonSolver.TrySolveNt(expr, x, MathS.Settings.NewtonSolver) is { } roots
+                       && roots.Select(ent => TryDowncast(expr, x, ent)).ToSet() is FiniteSet { IsSetEmpty: false } found
+                    ? found : Unsolved(expr, x);
 
             return Unsolved(expr, x);
         }

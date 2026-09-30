@@ -26,6 +26,21 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
         /// How many approximations we need to do before we reach the most precise result.
         /// </param>
         internal static HashSet<Complex> SolveNt(Entity expr, Entity.Variable v, MathS.Settings.NewtonSetting settings)
+            => Search(expr, v, settings, declineWhatDoesNotCompile: false)!;
+
+        /// <summary>
+        /// <see cref="SolveNt(Entity, Entity.Variable, MathS.Settings.NewtonSetting)"/> for a
+        /// caller that falls back rather than fails: <see langword="null"/> where the expression
+        /// or its derivative holds a node the compiler has no form for, where that method throws
+        /// <see cref="Core.Exceptions.UncompilableNodeException"/>. `floor(x)` has none, and
+        /// neither has the unevaluated `derivative(max(x, 1), x)` that `max` differentiates to,
+        /// and `Solve` threw for both from its last resort.
+        /// https://github.com/asc-community/AngouriMath/issues/1603
+        /// </summary>
+        internal static HashSet<Complex>? TrySolveNt(Entity expr, Entity.Variable v, MathS.Settings.NewtonSetting settings)
+            => Search(expr, v, settings, declineWhatDoesNotCompile: true);
+
+        private static HashSet<Complex>? Search(Entity expr, Entity.Variable v, MathS.Settings.NewtonSetting settings, bool declineWhatDoesNotCompile)
         {
             // Perform one iteration of searching for a root with Newton-Raphson method
             static Complex NewtonIter(FastExpression f, FastExpression df, NumericsComplex value, int precision)
@@ -56,8 +71,12 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
 
             using var _ = MathS.Settings.FloatToRationalIterCount.Set(0);
             var res = new HashSet<Complex>();
-            var df = WithoutConditions(expr.Differentiate(v).Simplify()).Compile(v);
-            var f = WithoutConditions(expr.Simplify()).Compile(v);
+            var derivative = WithoutConditions(expr.Differentiate(v).Simplify());
+            var function = WithoutConditions(expr.Simplify());
+            if (declineWhatDoesNotCompile && !(derivative.HasCompiledForm && function.HasCompiledForm))
+                return null;
+            var df = derivative.Compile(v);
+            var f = function.Compile(v);
             void IterateFrom(NumericsComplex start)
             {
                 var root = NewtonIter(f, df, start, settings.Precision);
