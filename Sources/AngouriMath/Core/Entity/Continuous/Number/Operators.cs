@@ -136,7 +136,18 @@ namespace AngouriMath
                         * => ans = (a + ib) * (c - id) / (c2 + d2)
                         */
                         var conj = b.Conjugate;
-                        var bAbs = b.Abs().EDecimal;
+                        // With the downcasting off, the modulus as it is. Abs() turns the downcasting
+                        // on to answer a Real, and so read a modulus within its tolerance of a small
+                        // rational as that rational: 75 + 316.22776601683796i, whose modulus is
+                        // 325 - 3e-16, was divided as if by one of 325. A relative 2e-18 is nothing to
+                        // one quotient. It put a factorial out by 24 orders of magnitude, whose series
+                        // of such quotients cancels its terms almost entirely. With the downcasting on,
+                        // that reading is the setting's own, and it keeps the quotients of a divisor
+                        // like 1 + i sqrt(3) exact. https://github.com/asc-community/AngouriMath/issues/1614
+                        var bAbs = MathS.Settings.DowncastingEnabled
+                            ? b.Abs().EDecimal
+                            : (b.RealPart.EDecimal * b.RealPart.EDecimal + b.ImaginaryPart.EDecimal * b.ImaginaryPart.EDecimal)
+                                .SqrtByIntegerRoot(MathS.Settings.DecimalPrecisionContext);
                         // The squared modulus of a divisor of 3 * 10^125 is 10^251 and its
                         // reciprocal is under the context's exponent floor, so the quotient
                         // came out zero where it was 6 * 10^-7 -- a right antiderivative's
@@ -942,26 +953,41 @@ namespace AngouriMath
 
                 if (!mathContext.Precision.CanFitInInt32())
                     throw new CannotEvalException($"The precision of the {nameof(mathContext)} is outside the int32 range");
+                // With no imaginary part it is a real number, and its poles are the real line's.
+                if (x.ImaginaryPart.EDecimal.IsZero)
+                    return x.RealPart.EDecimal.Factorial(mathContext);
 
+                var precision = mathContext.Precision.ToInt32Checked();
+                var working = InternalAMExtensions.FactorialWorkingContext(precision);
                 using var _ = MathS.Settings.DowncastingEnabled.Set(false);
-                using var __ = MathS.Settings.DecimalPrecisionContext.Set(mathContext.WithBigPrecision(mathContext.Precision << 1));
-                // https://en.wikipedia.org/wiki/Spouge%27s_approximation
-                int a = mathContext.Precision.ToInt32Checked() * 13 / 10;
-
-                var constants = InternalAMExtensions.GetSpougeFactorialConstants(a);
-
-                var negative = false;
-                var factor = Complex.Create(constants[0], 0);
-                for (int k = 1; k < a; k++)
-                {
-                    factor += constants[k] / (x + k);
-                    negative = !negative;
-                }
-
-                var result = Pow(x + a, x + 0.5m) * Exp(-x - a) * factor;
+                // Twice the digits, and no bound on the exponent, which the caller's context put on
+                // every intermediate: up the imaginary axis the value falls as e^(-pi |y|/2), and
+                // near that context's floor (280i)! lost its imaginary part and (316i)! came out 1e-190,
+                // where it is 8e-215. Left of zero the reflection formula, as on the real line.
+                // https://github.com/asc-community/AngouriMath/issues/1614
+                using var __ = MathS.Settings.DecimalPrecisionContext.Set(working);
+                var result = x.RealPart.EDecimal.IsNegative
+                    ? Real.Create(InternalAMExtensions.ConstantCache.Lookup(working).Pi) * x
+                        / (Sin(Real.Create(InternalAMExtensions.ConstantCache.Lookup(working).Pi) * x) * SpougeFactorial(-x, precision))
+                    : SpougeFactorial(x, precision);
 
                 return Complex.Create(result.RealPart.EDecimal.RoundToPrecision(mathContext),
                                         result.ImaginaryPart.EDecimal.RoundToPrecision(mathContext));
+            }
+
+            /// <summary>
+            /// <c>x!</c> by Spouge's approximation, for <c>Re x &gt;= 0</c>, in the working context
+            /// in force, before any rounding back.
+            /// https://en.wikipedia.org/wiki/Spouge%27s_approximation
+            /// </summary>
+            private static Complex SpougeFactorial(Complex x, int precision)
+            {
+                var a = precision * 13 / 10;
+                var constants = InternalAMExtensions.GetSpougeFactorialConstants(a);
+                var factor = Complex.Create(constants[0], 0);
+                for (int k = 1; k < a; k++)
+                    factor += constants[k] / (x + k);
+                return Pow(x + a, x + 0.5m) * Exp(-x - a) * factor;
             }
 
             /// <summary>

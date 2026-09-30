@@ -121,6 +121,29 @@ the working digits, or `MathS.Settings.PrecisionErrorZeroRange` where a caller h
 still that integer, so `e^(-123.456)` is 0 as it was.
 [#1338](https://github.com/asc-community/AngouriMath/issues/1338).
 
+### The factorial far from zero, and a quotient by a number whose modulus is nearly whole
+
+The numerical factorial is Spouge's approximation, and it holds right of zero. Used left of zero it
+lost its digits as the argument neared `-a`, where `a` is a tenth over the precision's digits. Past
+`-a` it had none: at 30 digits `(-38.0785)!` came out `-3.1e-35`, where it is `7.03e-43`. Left of
+zero it now takes the reflection formula, `x! = pi x/(sin(pi x) (-x)!)`. Its working context also
+bounded the exponent where the caller's did, so an intermediate outside that range lost its digits
+though the value fit. And the complex division read a divisor's modulus through `Abs()`, which
+turns the downcasting on, so even with it off a modulus within its tolerance of a small rational
+was that rational: `75 + 316.22776601683796i`, whose modulus is `325 - 3e-16`, divided as by 325.
+The factorial's series, which runs with the downcasting off, cancels such quotients almost
+entirely, which made `(316.22776601683796i)!` 24 orders of magnitude out. With the downcasting off
+the division now takes the modulus as it is; with it on, the rounding is the setting's own and
+stays ([#1614](https://github.com/asc-community/AngouriMath/issues/1614)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(400.5)!".EvalNumerical()` | `+oo` | `1.2818906666758219960…E+870` |
+| `"(316.22776601683796i)!".EvalNumerical()` | `7.23303935E-191 + 2.200942072E-190i` | `0`: the value, `-8.33E-215 - 7.33E-216i`, is below the default precision's floor |
+| `"1/(75 + 316.22776601683796i)"`, downcasting off | `0.00071005917159763313609… - 0.00299387234098781500591…i` | `0.00071005917159763302214990… - 0.00299387234098781452548…i` |
+| `"(-38.0785)!"` at 30 digits, downcasting off | `-3.13914586443552289958547548164E-35` | `7.03406751543900910211608330734E-43` |
+| `"(-60.5)!"` at 30 digits, downcasting off | `5.86118478907722232671451280188E-81` | `2.93059239453861116335725639905E-81` |
+
 ### A quotient of polynomials is split into coprime blocks before a root is peeled off
 
 `SolveByPartialFractions` tried `TrySplitOffRationalRoot` before `TrySplitIntoCoprimeParts`. Both
