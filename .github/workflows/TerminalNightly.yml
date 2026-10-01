@@ -14,6 +14,8 @@ on:
       - '.github/workflows/TerminalNightly.yml'
       - 'Sources/Terminal/AngouriMath.Terminal/publish.sh'
       - 'Sources/Terminal/AngouriMath.Terminal/pack-deb-linux.sh'
+      - 'Sources/Terminal/AngouriMath.Terminal/amcli.1'
+      - 'Sources/Terminal/AngouriMath.Terminal/amcli.bash'
   workflow_dispatch:
     inputs:
       version:

@@ -1,0 +1,79 @@
+.TH AMCLI 1 "" "AngouriMath" "User Commands"
+.SH NAME
+amcli \- the AngouriMath terminal, and commands that answer once
+.SH SYNOPSIS
+.B amcli
+.br
+.B amcli
+.I command
+.RI [ argument ...]
+.SH DESCRIPTION
+With no arguments,
+.B amcli
+opens the AngouriMath terminal: an F# prompt with AngouriMath loaded.
+.PP
+With a command,
+.B amcli
+answers once and exits, without starting F#, so that it can sit in a pipe or a script.
+An argument written as
+.BR _ ,
+or left out, is read from standard input.
+.SH COMMANDS
+.TP
+.BI eval " expr"
+Evaluates
+.I expr
+to a number, a boolean, or a + bi. A rational is written as a decimal.
+.TP
+.BI simp " expr"
+Simplifies
+.IR expr .
+.TP
+.BI fsimp " expr"
+Simplifies
+.I expr
+quickly: the normalisation, without the search.
+.TP
+.BI diff " var expr"
+Differentiates
+.I expr
+over
+.IR var .
+.TP
+.BI solve " var statement"
+Solves
+.I statement
+over
+.IR var ,
+one root per line when there are finitely many.
+.TP
+.BI sub " var value expr"
+Substitutes
+.I value
+for
+.I var
+in
+.IR expr .
+.TP
+.BI latex " expr"
+Writes
+.I expr
+as LaTeX.
+.TP
+.B help
+Lists the commands.
+.SH EXIT STATUS
+0 for an answer; 1 when the input does not parse or cannot be answered; 2 for a command that
+does not exist or is missing an argument.
+.SH EXAMPLES
+.nf
+$ amcli simp "sin(x)^2 + cos(x)^2"
+1
+$ amcli solve x "x^2 \- 1 = 0"
+1
+\-1
+$ echo "1 + x^2" | amcli diff x
+2 * x
+.fi
+.SH SEE ALSO
+https://am.angouri.org
