@@ -2315,6 +2315,26 @@ no integrand without one changes: Rubi's independent suites and a sample of its 
 | `"Ei(b*x)^2".Integrate("x")` | `Ei * (b * x) ^ 3 / 3 / b + C`, with `Ei` a variable | an antiderivative in `Ei(b x)` and `Ei(2 b x)` |
 | `"x*erf(b*x)^2".Integrate("x")` | `UnrecognizedFunctionParseException`: there is no function `erf` | an antiderivative in `erf(b x)` |
 
+### An exponential or a hyperbolic function over several linears is split into partial fractions over them
+
+`e^x/(x (x + 1))` was left unevaluated, where `e^x/x` and `e^x/(x + 1)` were each answered with
+the exponential integral: the rule for an exponential of a linear over a power of a linear read
+one linear below the bar, and the rule for `sinh` and `cosh` did the same. The quotient is split
+into partial fractions over its linears now, as the rule for a sine or a cosine already split it,
+and each term is the one-linear question: `e^x/(x (x + 1))` is `Ei(x) - Ei(x + 1)/e`. It is also
+what by parts leaves of `Ei(a + b x)/x^2`, `e^(a + b x)/((a + b x) x)`
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)). The rule for a sine or a cosine
+declined a polynomial over linears with a symbol among their coefficients, `x sin(x)/((c + d x)(x - 2))`,
+for dividing a fraction that was proper already; neither rule divides one now. Both columns
+measured on a build, `v2.5.0` against this change.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^x/(x*(x+1))".Integrate("x")` | `integral(e ^ x / (x * (x + 1)), x)` | `Ei(x) + -1 / e * Ei(x + 1) + C` |
+| `"sinh(x)/(x*(x+1))".Integrate("x")` | `integral((e ^ x - e ^ (-x)) / 2 / (x * (x + 1)), x)` | `1/2 * (2 * Shi(x) + ((-1) / e + e) * Chi(x + 1) + ((-1) / e - e) * Shi(x + 1)) + C` |
+| `"x^3*e^(2*x)/((x+1)*(x-2))".Integrate("x")` | `integral(x ^ 3 * e ^ (2 * x) / ((x + 1) * (x - 2)), x)` | `e ^ (2 * x) * (-1/4 + 1/2 * x) + e ^ (2 * x) / 2 + 1/3 * e ^ (-2) * Ei(2 * (x + 1)) + 8/3 * e ^ 4 * Ei(2 * (x - 2)) + C` |
+| `"x*sin(x)/((c+d*x)*(x-2))".Integrate("x")` | `integral(x * sin(x) / ((c + d * x) * (x - 2)), x)` | in `Si` and `Ci` of `(c + d x)/d` and `x - 2` |
+
 ### An inverse trigonometric function below the bar is integrated to the sine and cosine integrals
 
 `1/arcsin(x)` was left unintegrated. Under the substitution that undoes the inverse function,

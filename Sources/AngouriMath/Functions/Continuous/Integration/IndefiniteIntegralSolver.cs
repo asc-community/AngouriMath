@@ -3859,6 +3859,102 @@ namespace AngouriMath.Functions.Algebra
             }
         }
 
+        /// <summary>
+        /// An exponential of a linear, or a sum of them -- which is how <c>sinh</c> and <c>cosh</c>
+        /// arrive -- times a polynomial, over two or more linears each to a whole power: split into
+        /// partial fractions over the linears, and each term the one-linear question of
+        /// <see cref="SolveAnExponentialOfALinearOverAPowerOfALinear"/> and
+        /// <see cref="SolveAHyperbolicOfALinearOverAPowerOfALinear"/>. <c>e^x/(x (x + 1))</c> is
+        /// <c>e^x/x - e^x/(x + 1)</c>, which is <c>Ei(x) - Ei(x + 1)/e</c>; the trigonometric rule
+        /// splits the same way (<see cref="OverAPowerOfALinear"/>). It is also what by parts leaves
+        /// of <c>Ei(a + b x)/x^2</c>, <c>e^(a + b x)/((a + b x) x)</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </summary>
+        internal static Entity? SolveAnExponentialOverSeveralLinears(Entity expr, Entity.Variable x)
+        {
+            if (expr is not (Divf or Mulf) || AnExponentialOfALinear(expr, x) is null && !HasASumOfExponentials(expr, x))
+                return null;
+            Entity constant = Number.Integer.One;
+            var linears = new List<(Entity Linear, int Power)>();
+            Entity? polynomial = null;
+            Entity? exponentials = null;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                var (@base, exponent) = factor is Powf(var raised, Number.Integer whole) && whole.EInteger.CanFitInInt32() && !whole.EInteger.IsZero
+                    ? (raised, whole.EInteger.ToInt32Checked()) : (factor, 1);
+                if (underneath)
+                    exponent = -exponent;
+                if (exponent < 0 && TreeAnalyzer.TryGetPolyLinear(@base, x, out var slopeOfIt, out _) && !TreeAnalyzer.IsZero(slopeOfIt))
+                {
+                    var at = linears.FindIndex(pair => pair.Linear == @base);
+                    if (at < 0)
+                        linears.Add((@base, -exponent));
+                    else
+                        linears[at] = (@base, linears[at].Power - exponent);
+                    continue;
+                }
+                if (underneath)
+                    return null;
+                if (factor.Nodes.Any(node => node is Powf(var b, var e) && !b.ContainsNode(x) && e.ContainsNode(x)))
+                {
+                    exponentials = exponentials is null ? factor : exponentials * factor;
+                    continue;
+                }
+                if (TreeAnalyzer.TryGetPolynomial(factor, x, out var monomials) && monomials.Keys.All(degree => degree.Sign >= 0 && degree.CompareTo(EInteger.FromInt32(12)) <= 0))
+                {
+                    polynomial = polynomial is null ? factor : polynomial * factor;
+                    continue;
+                }
+                return null;
+            }
+            if (exponentials is null || linears.Count < 2 || linears.Count > 4 || linears.Sum(pair => pair.Power) > 12)
+                return null;
+            // Over each linear by partial fractions, the polynomial part first, since the split is
+            // of a proper fraction -- as the trigonometric rule does it. Only where the fraction is
+            // not proper already: divided, `x` over `(c + d x)(x - 2)` came back as a quotient and a
+            // remainder `2 provided not c + d x = 0`, which nothing splits.
+            var denominator = linears.Aggregate((Entity)Number.Integer.One, (product, pair) => product * MathS.Pow(pair.Linear, pair.Power));
+            Entity numerator = polynomial ?? Number.Integer.One;
+            var terms = new List<Entity>();
+            if (numerator.ContainsNode(x)
+                && TreeAnalyzer.TryGetPolynomial(numerator, x, out var monomialsAbove)
+                && monomialsAbove.Keys.Any(degree => degree.CompareTo(EInteger.FromInt32(linears.Sum(pair => pair.Power))) >= 0)
+                && TreeAnalyzer.PolynomialLongDivision(numerator, denominator, genericCase: true, inTermsOf: x) is var (quotient, remainder))
+            {
+                if (!TreeAnalyzer.IsZero(quotient))
+                    terms.Add(quotient);
+                numerator = remainder is Divf(var left, _) ? left : (numerator - quotient * denominator).Expand().InnerSimplified;
+            }
+            if (!TreeAnalyzer.IsZero(numerator))
+            {
+                if (!Functions.PartialFractions.TrySplitOverWrittenFactors(numerator, denominator, x, out var decomposition))
+                    return null;
+                var fractions = decomposition.InnerSimplified;
+                if (fractions is Divf(var over, var by) && !by.ContainsNode(x))
+                    fractions = Sumf.LinearChildren(over).Aggregate((Entity)Number.Integer.Zero, (all, one) => all + one / by);
+                terms.AddRange(Sumf.LinearChildren(fractions));
+            }
+            Entity sum = Number.Integer.Zero;
+            foreach (var term in terms)
+            {
+                // Each term as the quotient the one-linear rules read, or, with no linear left, the
+                // elementary product of a polynomial and the exponentials.
+                var (above, linear, power) = OverOneLinear(term, x);
+                var question = linear is null ? above * exponentials : above * exponentials / MathS.Pow(linear, power);
+                if ((SolveAnExponentialOfALinearOverAPowerOfALinear(question, x)
+                        ?? SolveAHyperbolicOfALinearOverAPowerOfALinear(question, x)
+                        ?? Integration.ComputeIndefiniteIntegral(question, x, false)) is not { } integral)
+                    return null;
+                sum += integral;
+            }
+            return Functions.PartialFractions.Bare((constant * sum).InnerSimplified);
+        }
+
         /// <summary>Whether a factor of <paramref name="expr"/> is a sum with an exponential of the variable in it.</summary>
         private static bool HasASumOfExponentials(Entity expr, Entity.Variable x) => expr switch
         {
@@ -4542,11 +4638,15 @@ namespace AngouriMath.Functions.Algebra
                     ? Functions.PartialFractions.Bare((constant * one).InnerSimplified)
                     : null;
             // Over each linear by partial fractions, and each term the one-linear question; the
-            // polynomial part first, since the split is of a proper fraction.
+            // polynomial part first, since the split is of a proper fraction -- and only where it is
+            // not proper already, as in SolveAnExponentialOverSeveralLinears.
             var denominator = linears.Aggregate((Entity)Number.Integer.One, (product, pair) => product * MathS.Pow(pair.Linear, pair.Power));
             Entity numerator = polynomial ?? Number.Integer.One;
             var terms = new List<Entity>();
-            if (numerator.ContainsNode(x) && TreeAnalyzer.PolynomialLongDivision(numerator, denominator, genericCase: true, inTermsOf: x) is var (quotient, remainder))
+            if (numerator.ContainsNode(x)
+                && TreeAnalyzer.TryGetPolynomial(numerator, x, out var monomialsAbove)
+                && monomialsAbove.Keys.Any(degree => degree.CompareTo(EInteger.FromInt32(linears.Sum(pair => pair.Power))) >= 0)
+                && TreeAnalyzer.PolynomialLongDivision(numerator, denominator, genericCase: true, inTermsOf: x) is var (quotient, remainder))
             {
                 if (!TreeAnalyzer.IsZero(quotient))
                     terms.Add(quotient);
