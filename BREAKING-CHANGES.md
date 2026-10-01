@@ -2315,6 +2315,26 @@ no integrand without one changes: Rubi's independent suites and a sample of its 
 | `"Ei(b*x)^2".Integrate("x")` | `Ei * (b * x) ^ 3 / 3 / b + C`, with `Ei` a variable | an antiderivative in `Ei(b x)` and `Ei(2 b x)` |
 | `"x*erf(b*x)^2".Integrate("x")` | `UnrecognizedFunctionParseException`: there is no function `erf` | an antiderivative in `erf(b x)` |
 
+### A constant of integration is matched to a linear divisor with a symbol in it
+
+By parts against a polynomial chooses the polynomial's antiderivative so that what the other
+factor's derivative divides by divides it too, and that was done only where the division left a
+number over. `a + b x` leaves a symbol: `x^2/2` over `a + b x` leaves `a^2/(2 b^2)`, so the
+remainder of `x Shi(a + b x)^2` kept `x^2/(a + b x)` and nothing read it. The antiderivative less
+its value at `-a/b` is taken now, written as `a + b x` times the quotient, so that the linear
+cancels in the remainder ([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+`x Shi(a + b x)^2`, `x Chi(a + b x)^2` and `x Ei(a + b x)^2` are answered. An integrand holding one of
+these functions had no reading in 2.5.0, which the entries for the functions themselves record, and
+no integrand without one changes: Rubi's independent suites and a sample of its families 1 to 7
+are answered alone as they were. Where by parts already answered a special function of `a + b x`
+beside a power of `x`, the answer is written with the same constant: `x Ei(a + b x)` now reads
+`Ei(a + b x) (a + b x)(x/(2b) - a/(2b^2)) - ...`, the same function as before.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x*Shi(a+b*x)^2".Integrate("x")` | `a ^ 2 * Shi * x ^ 2 / 2 + a * b * 2 * Shi * x ^ 3 / 3 + b ^ 2 * Shi * x ^ 4 / 4 + C`, with `Shi` a variable | an antiderivative in `Shi(a + b x)` and `Ei(2 (a + b x))`, `Ei(-2 (a + b x))` |
+| `"x*Ei(a+b*x)^2".Integrate("x")` | `a ^ 2 * Ei * x ^ 2 / 2 + a * b * 2 * Ei * x ^ 3 / 3 + b ^ 2 * Ei * x ^ 4 / 4 + C`, with `Ei` a variable | an antiderivative in `Ei(a + b x)` and `Ei(2 (a + b x))` |
+
 ### An exponential or a hyperbolic function over several linears is split into partial fractions over them
 
 `e^x/(x (x + 1))` was left unevaluated, where `e^x/x` and `e^x/(x + 1)` were each answered with

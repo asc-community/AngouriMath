@@ -1691,6 +1691,19 @@ namespace AngouriMath.Functions.Algebra
                     && Functions.SingleQuotient.Of(leftOver) is var (leftOverTop, _) && !leftOverTop.ContainsNode(x)
                     && leftOverTop.Evaled is Number.Complex { IsZero: false } constant)
                     return (antiderivative + (-constant).Evaled).InnerSimplified;
+                // A linear divisor with a symbol in it, `a + b x`, leaves a symbol over, which the
+                // case above does not read: the antiderivative less its value at the root, -a/b, is
+                // divisible by the linear, and it is written as the linear times the quotient, so
+                // that the linear the derivative divides by cancels as written. `x Shi(a + b x)^2`
+                // is two rounds of parts that way, where with `x^2/2` the remainder kept
+                // `x^2/(a + b x)` and nothing read it.
+                // https://github.com/asc-community/AngouriMath/issues/1501
+                if (TreeAnalyzer.TryGetPolyLinear(divisors[0], x, out var slope, out var offset) && !TreeAnalyzer.IsZero(slope)
+                    && antiderivative.Substitute(x, (-offset / slope).InnerSimplified).InnerSimplified is var atTheRoot
+                    && !atTheRoot.ContainsNode(x) && !TreeAnalyzer.IsZero(atTheRoot)
+                    && TreeAnalyzer.PolynomialLongDivision((antiderivative - atTheRoot).Expand().InnerSimplified, divisors[0], genericCase: true, inTermsOf: x) is var (quotient, _)
+                    && !quotient.ContainsNode(MathS.NaN))
+                    return divisors[0] * Functions.PartialFractions.Bare(quotient);
                 return antiderivative;
             }
 
