@@ -133,5 +133,16 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("Chi(b*x)^2")]
         public void ASquareIsTwoRoundsOfParts(string integrand)
             => DifferentiatesBack(integrand, Parameters);
+
+        /// <summary>
+        /// Of <c>a + b x</c>, the first round against <c>x</c> takes <c>x^2/2</c> less its value at
+        /// <c>-a/b</c>, written as <c>a + b x</c> times the quotient, so the linear the derivative
+        /// divides by cancels and what is left is the case above.
+        /// </summary>
+        [Theory]
+        [InlineData("x*Shi(a + b*x)^2")]
+        [InlineData("x*Ei(a + b*x)^2")]
+        public void ASquareOfAShiftedArgumentIsTwoRoundsOfParts(string integrand)
+            => DifferentiatesBack(integrand, Parameters);
     }
 }
