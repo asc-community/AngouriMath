@@ -2278,6 +2278,21 @@ elementary integrand whose antiderivative is reached through one is answered whe
 |---|---|---|
 | `"(a+b*ln(c*x^n))/(x^2*(d+e*ln(f*x^m)))".Integrate("x")`, Rubi's 3.1.5 row 213 | `integral(...)` | an antiderivative in `Ei`, provided `f > 0` and `e^d f^e > 0` |
 
+### A negative power of the variable is not a polynomial to integration by parts
+
+`MathS.TryPolynomial` reads `x^(-1)` as a monomial of degree -1, and integration by parts against a
+polynomial differentiated it until it reached `0`, which a negative power never does:
+`e^(2x) x^(-1)` ran the process out of memory, where `e^(2x)/x` is `Ei(2x)`
+([#1646](https://github.com/asc-community/AngouriMath/issues/1646)). By parts takes a polynomial
+with no negative degree now, and past it, the power is the factor differentiated, which leaves the
+quotient the exponential integral rules read. Only what ran away or ran out of time changes: Rubi's
+independent suites and its families 2, 4 and 8 are answered as they were.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(2*x)*x^(-1)".Integrate("x")` | out of memory: `OutOfMemoryException` under a 2 GB heap | `1 / x * e ^ (2 * x) / 2 - -1/2 * (-1 / x * e ^ (2 * x) + 2 * Ei(2 * x)) + C`, which is `Ei(2 * x) + C` |
+| `"e^x*x^(-2)".Integrate("x")` | `integral(e ^ x * x ^ (-2), x)` | `e ^ x * -1 / x - -Ei(x) + C` |
+
 ### A special function beside its derivative is a substitution
 
 `e^(c - b^2 x^2) erf(b x)^n`, `Ei(b x) e^(b x)/x` and `Si(b x) sin(b x)/x` are each a power of a

@@ -1818,7 +1818,7 @@ namespace AngouriMath.Functions.Algebra
                 // https://github.com/asc-community/AngouriMath/issues/1501
                 var partsOnTheRemainder = remaining.Nodes.Count() < wholeSize
                     || (remainingPower >= 1 && remainingPower < wholePower)
-                    || IsASpecialFunctionOfALinear(v, x) && MathS.TryPolynomial(u, x, out _)
+                    || IsASpecialFunctionOfALinear(v, x) && ThePolynomialIn(u, x) is not null
                     // And where what was integrated beside it was a polynomial times an
                     // elementary function, whose integral the polynomial's parts wrote: the
                     // remainder is then the special function's derivative times polynomials and
@@ -1905,8 +1905,8 @@ namespace AngouriMath.Functions.Algebra
                     && TryIntegrateByPartsOnce(g, f, x, wholeSize, wholePower) is { } logFirstG) return logFirstG;
 
                 // Case 1: One term is polynomial - use recursive polynomial integration by parts
-                if (MathS.TryPolynomial(f, x, out var fPoly)) return IntegrateByPartsPolynomial(fPoly, g, x);
-                if (MathS.TryPolynomial(g, x, out var gPoly)) return IntegrateByPartsPolynomial(gPoly, f, x);
+                if (ThePolynomialIn(f, x) is { } fPoly) return IntegrateByPartsPolynomial(fPoly, g, x);
+                if (ThePolynomialIn(g, x) is { } gPoly) return IntegrateByPartsPolynomial(gPoly, f, x);
 
                 // Case 2: Neither is polynomial - try single-step integration by parts
                 // This handles cases like ln(abs(x)) × ln(abs(x))
@@ -5073,8 +5073,8 @@ namespace AngouriMath.Functions.Algebra
             // a cosine or a sine above it and is read as one.
             if (cosines < 0 || sines < 0 || cosines + sines > MaximumTrigonometricPower)
                 return false;
-            if (!MathS.TryPolynomial(polynomialPart, x, out var asPolynomial)
-                && polynomialPart.ContainsNode(x))
+            var asPolynomial = ThePolynomialIn(polynomialPart, x);
+            if (asPolynomial is null && polynomialPart.ContainsNode(x))
                 return false;
 
             polynomial = polynomialPart.ContainsNode(x) ? asPolynomial! : polynomialPart;
@@ -20399,6 +20399,20 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <paramref name="expr"/> as a polynomial in <paramref name="x"/>, none of whose degrees is
+        /// negative, or <see langword="null"/>. <see cref="MathS.TryPolynomial"/> reads <c>x^(-1)</c>
+        /// as a monomial as well, and integration by parts against a polynomial differentiates it
+        /// until it vanishes, which a negative power never does: each derivative of <c>x^(-1)</c> was
+        /// a larger tree than the last, and <c>e^(2x) x^(-1)</c> ran the process out of memory, where
+        /// <c>e^(2x)/x</c> is <c>Ei(2x)</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1646
+        /// </summary>
+        private static Entity? ThePolynomialIn(Entity expr, Variable x)
+            => TreeAnalyzer.TryGetPolynomial(expr, x, out var monomials) && monomials.Keys.All(degree => degree.Sign >= 0)
+                ? Simplificator.BuildPoly(monomials, x)
+                : null;
+
+        /// <summary>
         /// The factors of <paramref name="expr"/> that are polynomials in <paramref name="x"/> of
         /// positive degree, against the rest: <c>x sin(b x)</c> is <c>x</c> and <c>sin(b x)</c>.
         /// Both halves <see langword="null"/> where either would be empty.
@@ -20408,7 +20422,7 @@ namespace AngouriMath.Functions.Algebra
             Entity? polynomial = null;
             Entity? rest = null;
             foreach (var factor in Mulf.LinearChildren(expr))
-                if (factor.ContainsNode(x) && MathS.TryPolynomial(factor, x, out _))
+                if (factor.ContainsNode(x) && ThePolynomialIn(factor, x) is not null)
                     polynomial = polynomial is null ? factor : polynomial * factor;
                 else
                     rest = rest is null ? factor : rest * factor;
