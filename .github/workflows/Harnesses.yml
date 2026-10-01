@@ -43,6 +43,8 @@ jobs:
         dotnet build -c Release Sources/Tests/Harnesses/RootCheck
         dotnet build -c Release Sources/Tests/Harnesses/CasBench
         dotnet build -c Release Sources/Tests/Harnesses/PropCheck
+        dotnet build -c Release Sources/Tests/Harnesses/SimpSweep
+        dotnet build -c Release Sources/Tests/Harnesses/RuleCheck
 
     # One step each, every one run whatever the one before did, so a red run names the harness.
     - name: BoundCheck
@@ -60,9 +62,46 @@ jobs:
       if: success() || failure()
       run: dotnet Sources/Tests/Harnesses/PropCheck/bin/Release/net10.0/propcheck.dll
 
+    - name: SimpSweep
+      if: success() || failure()
+      run: dotnet Sources/Tests/Harnesses/SimpSweep/bin/Release/net10.0/simpsweep.dll
+
+    - name: RuleCheck
+      if: success() || failure()
+      run: dotnet Sources/Tests/Harnesses/RuleCheck/bin/Release/net10.0/rulecheck.dll
+
     - name: Reports
       if: always()
       uses: actions/upload-artifact@v6
       with:
         name: harness-reports
+        path: harness-reports
+
+  # A job of its own: one child process per case is minutes rather than seconds, and running it
+  # beside the others keeps them quick.
+  CrashCheck:
+    runs-on: ubuntu-latest
+    env:
+      HARNESS_REPORTS: ${{ github.workspace }}/harness-reports
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: '10.x'
+        dotnet-quality: 'preview'
+
+    - name: Build
+      run: dotnet build -c Release Sources/Tests/Harnesses/CrashCheck
+
+    - name: CrashCheck
+      run: dotnet Sources/Tests/Harnesses/CrashCheck/bin/Release/net10.0/crashcheck.dll
+
+    - name: Report
+      if: always()
+      uses: actions/upload-artifact@v6
+      with:
+        name: crashcheck-report
         path: harness-reports

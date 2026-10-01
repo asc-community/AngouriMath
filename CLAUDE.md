@@ -19,11 +19,11 @@ nothing else is read:
    [`Contributing/SimplificationContract.md`](Sources/AngouriMath/Docs/Contributing/SimplificationContract.md).
    A rule states the assumptions under which it holds, or it is asserting there are none.
 
-Four measurement harnesses live in `Sources/Tests/Harnesses` and run in CI on every change to the
-library: the boundary checker, root completeness, the self-verifying solver corpus and the property
-checker. Each fails on a defect; its README says which. The rest are still in the analysis workspace
-one directory up (`work/`): simplification sweeps, a crash harness that survives a stack overflow,
-and a checker for the documentation's code samples. Run them before claiming anything is
+Seven measurement harnesses live in `Sources/Tests/Harnesses` and run in CI on every change to the
+library: the boundary checker, root completeness, the self-verifying solver corpus, the property
+checker, the simplification sweep, the rule-set checker, and a crash harness that survives a stack
+overflow. Each fails on a defect; its README says which. The rest are still in the analysis workspace
+one directory up (`work/`), among them a checker for the documentation's code samples. Run them before claiming anything is
 fixed.
 
 There is also a *gate*, which is not a harness:
