@@ -1679,6 +1679,18 @@ namespace AngouriMath.Functions.Algebra
             // divisor, where the division leaves a constant.
             static Entity WithTheConstantMatchedTo(Entity antiderivative, Entity derivativeOfV, Variable x)
             {
+                // A logarithm of x, against a logarithm of a multiple of x below the bar: ln(c x) is
+                // as much an antiderivative of 1/x as ln(x) is, and taken so, the logarithm the
+                // derivative divides by cancels. li(b x)/x is li(b x) ln(b x) - b x, where with ln(x)
+                // the remainder was ln(x)/ln(b x), which nothing read.
+                // https://github.com/asc-community/AngouriMath/issues/1501
+                if (TheLogarithmOfTheVariable(antiderivative, x) is (var logarithmCoefficient, true)
+                    && Sumf.LinearChildren(Functions.PartialFractions.Bare(derivativeOfV))
+                        .SelectMany(term => Mulf.LinearChildren(Functions.SingleQuotient.Of(term).Denominator))
+                        .FirstOrDefault(factor => factor is Logf(var logBase, var argument) && logBase == MathS.e
+                            && TreeAnalyzer.TryGetPolyLinear(argument, x, out var multiple, out var offset)
+                            && TreeAnalyzer.IsZero(offset) && !TreeAnalyzer.IsZero(multiple)) is { } logarithmBelow)
+                    return logarithmCoefficient * logarithmBelow;
                 if (!TreeAnalyzer.TryGetPolynomial(antiderivative, x, out _))
                     return antiderivative;
                 var divisors = Sumf.LinearChildren(Functions.PartialFractions.Bare(derivativeOfV))
@@ -20365,6 +20377,25 @@ namespace AngouriMath.Functions.Algebra
             return TreeAnalyzer.IsZero(offset)
                 || special is not (Entity.Erff or Entity.Erfcf or Entity.Erfif)
                 || u == special;
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> as a constant times <c>ln(x)</c>, the coefficient and
+        /// <see langword="true"/>, or <see langword="false"/> where it is not one.
+        /// </summary>
+        private static (Entity Coefficient, bool IsOne) TheLogarithmOfTheVariable(Entity expr, Variable x)
+        {
+            static bool IsTheLogarithm(Entity factor, Variable x) => factor is Logf(var logBase, var argument) && logBase == MathS.e && argument == x;
+            if (IsTheLogarithm(expr, x))
+                return (Number.Integer.One, true);
+            if (expr is Mulf(var left, var right))
+            {
+                if (IsTheLogarithm(right, x) && !left.ContainsNode(x))
+                    return (left, true);
+                if (IsTheLogarithm(left, x) && !right.ContainsNode(x))
+                    return (right, true);
+            }
+            return (Number.Integer.Zero, false);
         }
 
         /// <summary>
