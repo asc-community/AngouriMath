@@ -1,0 +1,63 @@
+name: Harnesses
+
+# Generated inputs run against the library on every change to it. Each harness exits non-zero
+# on a defect -- a value Simplify changed at a boundary, a root missing from a solution set, a
+# wrong answer to a known problem -- and its report is uploaded either way. Sources/Tests/Harnesses/README.md
+# says what each asks. https://github.com/asc-community/AngouriMath/issues/1256
+#
+# Path filters are globs relative to the repository root, with no leading "./": CSharpTest.yml
+# says what a leading "./" once cost.
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'Sources/AngouriMath/**'
+      - 'Sources/Tests/Harnesses/**'
+      - '.github/workflows/Harnesses.yml'
+  pull_request:
+    paths:
+      - 'Sources/AngouriMath/**'
+      - 'Sources/Tests/Harnesses/**'
+      - '.github/workflows/Harnesses.yml'
+  workflow_dispatch:
+
+jobs:
+  Harnesses:
+    runs-on: ubuntu-latest
+    env:
+      HARNESS_REPORTS: ${{ github.workspace }}/harness-reports
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: '10.x'
+        dotnet-quality: 'preview'
+
+    - name: Build
+      run: |
+        dotnet build -c Release Sources/Tests/Harnesses/BoundCheck
+        dotnet build -c Release Sources/Tests/Harnesses/RootCheck
+        dotnet build -c Release Sources/Tests/Harnesses/CasBench
+
+    # One step each, every one run whatever the one before did, so a red run names the harness.
+    - name: BoundCheck
+      run: dotnet Sources/Tests/Harnesses/BoundCheck/bin/Release/net10.0/boundcheck.dll
+
+    - name: RootCheck
+      if: success() || failure()
+      run: dotnet Sources/Tests/Harnesses/RootCheck/bin/Release/net10.0/rootcheck.dll
+
+    - name: CasBench
+      if: success() || failure()
+      run: dotnet Sources/Tests/Harnesses/CasBench/bin/Release/net10.0/casbench.dll
+
+    - name: Reports
+      if: always()
+      uses: actions/upload-artifact@v6
+      with:
+        name: harness-reports
+        path: harness-reports

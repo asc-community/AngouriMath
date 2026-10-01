@@ -1,0 +1,4 @@
+# The reports the harnesses write when run by hand. CI uploads them instead.
+boundcheck.md
+rootcheck.md
+coverage.md
