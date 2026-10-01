@@ -220,8 +220,8 @@ static class RootCheck
         var bad = Cases.Where(c => c.Verdict != "ok").ToList();
         var report = new StringBuilder();
         report.AppendLine("# Root completeness check");
-        // Names the build, not the branch: a report read as the library's behaviour when it
-        // was generated from an unmerged tree has cost this workspace a morning before.
+        // Names the build, not the branch: a report describes the build it measured, which
+        // need not be master's.
         report.AppendLine();
         report.AppendLine($"Measured against `{Harness.Measured.Commit()}`.");
         report.AppendLine();
@@ -250,9 +250,7 @@ static class RootCheck
         else
             report.AppendLine("No case is short of a root, and no root that comes back fails its equation.");
 
-        // Beside the other reports rather than in the current directory, so that running
-        // this from the workspace root and from work/rootcheck cannot leave two copies of
-        // different ages -- the same reason casbench resolves its path this way.
+        // Where Harness.Reports says, whichever directory the run was started from.
         var path = Harness.Reports.PathFor("rootcheck.md");
         System.IO.File.WriteAllText(path, report.ToString());
         Console.Error.WriteLine($"\nwrote {path}");
