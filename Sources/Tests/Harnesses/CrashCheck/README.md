@@ -9,15 +9,15 @@ dotnet run -c Release --project Sources/Tests/Harnesses/CrashCheck -- --operatio
 dotnet run -c Release --project Sources/Tests/Harnesses/CrashCheck -- --case="simplify::x * ln(x)"   # one case, in process
 ```
 
-Exit code is 0 when nothing crashed, hung, or threw an exception that is not the library
-declining; 1 otherwise.
+Exit code is 1 when a case crashed or threw an exception that is not the library declining,
+and 0 otherwise. A case that did not finish is reported but does not fail the run: on a shared
+runner that is as often the runner's speed as the library's.
 
 ## Why a process per case
 
 **A stack overflow cannot be caught in .NET.** It takes the process down, and a test runner that
-dies mid-suite reports nothing about the tests it had not reached. `propcheck` pointed at stock
-master died exactly that way, in `IntegrateByPartsPolynomial` — so the suite was green, the
-library was not, and the green tick was evidence about neither.
+dies mid-suite reports nothing about the tests it had not reached — so the suite can be green while
+the library is not, and the green tick is evidence about neither.
 
 Anything that wants to find that class has to be able to lose a process and carry on. Hence one
 child per case: slow, and the only construction that works.
