@@ -30,13 +30,17 @@ namespace AngouriMath.Tests.Calculus
         /// rule is asked the symbolic question.
         /// </summary>
         private static void DifferentiatesBack(string integrand, params (string Name, string Value)[] pins)
+            => DifferentiatesBackAt(Points, integrand, pins);
+
+        /// <summary><see cref="DifferentiatesBack"/> at <paramref name="points"/>.</summary>
+        private static void DifferentiatesBackAt(double[] points, string integrand, params (string Name, string Value)[] pins)
         {
             var integral = integrand.ToEntity().Integrate("x");
             Assert.DoesNotContain("integral(", integral.Stringize());
             Entity Pinned(Entity e) => pins.Aggregate(e, (current, pin) => current.Substitute(pin.Name, pin.Value.ToEntity()));
             var derivative = Pinned(integral.Substitute("C", 0)).Differentiate("x");
             var original = Pinned(integrand.ToEntity());
-            foreach (var at in Points)
+            foreach (var at in points)
             {
                 var got = derivative.Substitute("x", at).EvalNumerical();
                 var want = original.Substitute("x", at).EvalNumerical();
@@ -72,6 +76,16 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x*li(a + b*x)")]
         public void TheLogarithmicIntegralIsByParts(string integrand)
             => DifferentiatesBack(integrand, ("a", "3"), ("b", "13/10"));
+
+        /// <summary>
+        /// Over <c>x</c>, the antiderivative of <c>1/x</c> is taken as <c>ln(b x)</c>, the logarithm the
+        /// derivative of <c>li(b x)</c> divides by, and the remainder is <c>b</c>:
+        /// <c>li(b x) ln(b x) - b x</c>. At positive <c>x</c>, where <c>li(b x)</c> is real, and off
+        /// <c>x = 1/b</c>, where <c>ln(b x)</c> is 0.
+        /// </summary>
+        [Fact]
+        public void TheLogarithmicIntegralOverXIsOneRoundOfParts()
+            => DifferentiatesBackAt(new[] { 0.35, 1.45, 2.3 }, "li(b*x)/x", ("b", "13/10"));
 
         /// <summary>
         /// Against a power of <c>x</c>, the special function is the factor differentiated: what is

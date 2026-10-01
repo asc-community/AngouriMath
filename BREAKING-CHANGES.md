@@ -2353,6 +2353,19 @@ a sample of its families 1 to 7 are answered alone as they were.
 | `"x^2*Ei(a+b*x)^2".Integrate("x")` | `a ^ 2 * Ei * x ^ 3 / 3 + a * b * 2 * Ei * x ^ 4 / 4 + b ^ 2 * Ei * x ^ 5 / 5 + C`, with `Ei` a variable | an antiderivative in `Ei(a + b x)` and `Ei(2 (a + b x))` |
 | `"erf(a+b*x)^2".Integrate("x")` | `UnrecognizedFunctionParseException`: there is no function `erf` | an antiderivative in `erf` |
 
+### A logarithm of `x` is matched to a logarithm of a multiple of `x` below the bar
+
+By parts on `li(b x)/x` takes the antiderivative of `1/x`, and with `ln(x)` the remainder was
+`b ln(x)/ln(b x)`, which nothing read. `ln(b x)` is as much an antiderivative of `1/x`, and taken so,
+the logarithm the derivative of `li(b x)` divides by cancels: `li(b x)/x` is `li(b x) ln(b x) - b x`
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)). `li` had no reading in 2.5.0,
+which its own entry records, and no integrand without it changes: Rubi's independent suites, its
+family 3 at twenty a file and a sample of the others are answered alone as they were.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"li(b*x)/x".Integrate("x")` | `li * b * x + C`, with `li` a variable | `li(b * x) * ln(b * x) - b * x + C` |
+
 ### An exponential or a hyperbolic function over several linears is split into partial fractions over them
 
 `e^x/(x (x + 1))` was left unevaluated, where `e^x/x` and `e^x/(x + 1)` were each answered with
