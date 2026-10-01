@@ -6759,7 +6759,10 @@ namespace AngouriMath.Functions.Algebra
             if (inT.ContainsNode(x))
                 return null;
             var mPlusOne = (m + Number.Integer.One).InnerSimplified;
-            var integrand = (MathS.Pow(MathS.e, (mPlusOne / n).InnerSimplified * t) * inT).InnerSimplified;
+            // One quotient, as the logarithm substitution writes its own: `e^((m + 2) t)/t` is the
+            // exponential integral, and as a product with `t^(-1)` it went to integration by parts.
+            // https://github.com/asc-community/AngouriMath/issues/1646
+            var integrand = Functions.SingleQuotient.Combine(inT * MathS.Pow(MathS.e, (mPlusOne / n).InnerSimplified * t)).InnerSimplified;
             if (integrand is Providedf(var bare, _))
                 integrand = bare;
             if (Integration.ComputeIndefiniteIntegral(integrand, t, integrateByParts) is not { } inTIntegral)

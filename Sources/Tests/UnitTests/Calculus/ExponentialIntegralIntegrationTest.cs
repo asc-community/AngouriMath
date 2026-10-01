@@ -131,6 +131,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("(1 + x)/ln(x)")]
         [InlineData("x^2/ln(c*(d + k*x^3)^n)")]
         [InlineData("x^8/ln(c*(d + k*x^3)^n)^2")]
+        [InlineData("(k*x)^m*x/ln(b*x)")]
         public void APowerOverAPowerOfALogarithm(string integrand)
             => DifferentiatesBack(integrand, PastOne, Pins);
 

@@ -88,6 +88,15 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBackAt(new[] { 0.35, 1.45, 2.3 }, "li(b*x)/x", ("b", "13/10"));
 
         /// <summary>
+        /// Beside a power of a monomial, the remainder is <c>b (d x)^m x/((m + 1) ln(b x))</c>, a power
+        /// of <c>x</c> over a logarithm of a monomial, which is <c>Ei((m + 2) ln(b x))</c> times a
+        /// locally constant factor. Rubi's 8.3 row 269.
+        /// </summary>
+        [Fact]
+        public void TheLogarithmicIntegralBesideAPowerOfAMonomial()
+            => DifferentiatesBackAt(new[] { 0.35, 1.45, 2.3 }, "(d*x)^m*li(b*x)", ("b", "13/10"), ("d", "19/10"), ("m", "1/2"));
+
+        /// <summary>
         /// Against a power of <c>x</c>, the special function is the factor differentiated: what is
         /// left is the power times <c>e^(-u^2)</c>, <c>e^u/u</c>, <c>sin(u)/u</c> and the like.
         /// </summary>
