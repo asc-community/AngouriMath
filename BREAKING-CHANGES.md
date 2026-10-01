@@ -2391,7 +2391,8 @@ times `sin(d (a + b ln(c x^n)))/(a + b ln(c x^n))`. Two rules were missing on th
   under `t = ln(c x^n)`, with `x^(m + 1)` written as `K e^((m + 1) t/n)` and
   `K = x^(m + 1) (c x^n)^(-(m + 1)/n)`, whose derivative is 0 wherever it is defined. That is an
   antiderivative wherever the integrand is real. For an even `n` that includes negative `x`, where
-  `ln(c x^n)` is not `ln(c) + n ln(x)`.
+  `ln(c x^n)` is not `ln(c) + n ln(x)`. By parts leaves `(d x)^m x/ln(b x)` of `(d x)^m li(b x)`,
+  and this rule answers it with `Ei((m + 2) ln(b x))`.
 - **An exponential beside a sine or cosine, over linears.** Each sine and cosine is written as
   exponentials, and each term is the exponential integral of a complex argument. The two conjugate
   terms add up to a real value.
