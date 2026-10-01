@@ -237,7 +237,7 @@ from. A change of *form* is therefore not a failure and only a change of *value*
 lets the corpus stay useful while printed output moves.
 
 **It is a gate and not a harness.** It is small and takes about a second, because everything in the
-suite is paid for on every commit. The harnesses in `work/` are where a measurement generates its own
+suite is paid for on every commit. The harnesses in `Sources/Tests/Harnesses` are where a measurement generates its own
 inputs, takes minutes, and gets read by a person; the two are not substitutes, and a finding from a
 harness that is worth keeping belongs in the corpus as a new problem.
 
@@ -858,7 +858,7 @@ whatever else it delivered:
 3. **Correctness coverage grows with the surface.** Each new layer adds ways to be wrong that the one
    below could not express.
 
-So the release checklist is: the suite and the harnesses in `work/` green, a `BREAKING-CHANGES.md`
+So the release checklist is: the suite and the harnesses in `Sources/Tests/Harnesses` green, a `BREAKING-CHANGES.md`
 entry for every changed answer measured on real builds, **a performance column measured against the
 previous one on the same machine**, a version number that does not contradict #746, **the
 integration work of [#718](https://github.com/asc-community/AngouriMath/issues/718) properly done
