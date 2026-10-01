@@ -1722,6 +1722,19 @@ namespace AngouriMath.Functions.Algebra
                 // a coefficient's sign whose conditions are decided, `0 = 0`, and a remainder
                 // holding that piecewise is read by nothing.
                 var integralOfU = Integration.ComputeIndefiniteIntegral(u, x, false)?.InnerSimplified;
+                // Beside a special function of a linear argument, a polynomial times something
+                // else is integrated by the polynomial's parts, which end in as many steps as its
+                // degree: `x sin(b x)` beside `Si(b x)`, which nothing answers with parts off.
+                // https://github.com/asc-community/AngouriMath/issues/1501
+                var besideASpecialFunction = IsASpecialFunctionOfALinearOrAPowerOfOne(v, x);
+                var byThePolynomialsParts = false;
+                if (integralOfU is null && besideASpecialFunction
+                    && ThePolynomialFactor(u, x) is var (polynomialBeside, restBeside)
+                    && polynomialBeside is not null && restBeside is not null)
+                {
+                    integralOfU = IntegrateByPartsPolynomial(polynomialBeside, restBeside, x)?.InnerSimplified;
+                    byThePolynomialsParts = integralOfU is not null;
+                }
                 if (integralOfU is null) return null;
 
                 // Differentiate v
@@ -1780,7 +1793,12 @@ namespace AngouriMath.Functions.Algebra
                 // https://github.com/asc-community/AngouriMath/issues/1501
                 var partsOnTheRemainder = remaining.Nodes.Count() < wholeSize
                     || (remainingPower >= 1 && remainingPower < wholePower)
-                    || IsASpecialFunctionOfALinear(v, x) && MathS.TryPolynomial(u, x, out _);
+                    || IsASpecialFunctionOfALinear(v, x) && MathS.TryPolynomial(u, x, out _)
+                    // And where what was integrated beside it was a polynomial times an
+                    // elementary function, whose integral the polynomial's parts wrote: the
+                    // remainder is then the special function's derivative times polynomials and
+                    // elementary functions, and parts on it descend on their degrees.
+                    || byThePolynomialsParts;
                 // Spelled as the product its own next step reads, where there is one. `Simplify`
                 // writes `2 arctan(x)/(1 + x^2) * x^2/2` as `arctan(x) x^2/(x^2 + 1)`, a
                 // quotient, and this rule runs on a product. `x*arctan(x)^2` is answered by
@@ -1804,6 +1822,46 @@ namespace AngouriMath.Functions.Algebra
                 // search above it carry on, thirty seconds where the gate leaves it at one.
                 var remainingIntegral = (Integration.AnsweringTheQuestionAsked ? SolveByEulerSubstitution(remaining, x) : null)
                     ?? Integration.ComputeIndefiniteIntegral(remaining, x, partsOnTheRemainder);
+                // After a special function, or a power of one, the remainder is its derivative
+                // times what was integrated, written as one product over a sum: for `Ei(b x)^2`,
+                // `(b x Ei(b x) - e^(b x)) e^(b x)/(b x)`, which no rule reads, where its two
+                // terms are `e^(b x) Ei(b x)` and `e^(2 b x)/(b x)`, each answered when asked.
+                // So its terms are asked, each as a question of its own. From the top only,
+                // which is where that asking reaches, and once: a term asked so is at the top
+                // itself, and its own remainder asked the same way would lift the search again,
+                // each level with the depth reset. And of a multiple of x only: of `a + b x`, the
+                // remainder is over the linear, and its terms are the exponentials a hyperbolic
+                // function is written as, each a harder question than the whole -- the decline of
+                // `x Shi(a + b x)^2` went from a second to past twenty asking them.
+                // https://github.com/asc-community/AngouriMath/issues/1501
+                if (remainingIntegral is null && besideASpecialFunction && OfAMultipleOfTheVariable(v, x)
+                    && Integration.AnsweringTheQuestionAsked && !askingTheTermsOfARemainder)
+                {
+                    var terms = remaining is Divf(var remainingAbove, var remainingBelow)
+                        ? DistributedOverTheSum(remainingAbove).Select(term => term / remainingBelow).ToList()
+                        : DistributedOverTheSum(remaining);
+                    askingTheTermsOfARemainder = true;
+                    try
+                    {
+                        foreach (var term in terms)
+                        {
+                            if ((Integration.ComputeIndefiniteIntegral(term, x, integrateByParts: true)
+                                    ?? Integration.ComputeAsAQuestionOfItsOwn(term, x, integrateByParts: true)) is not { } termIntegral)
+                            {
+                                remainingIntegral = null;
+                                break;
+                            }
+                            remainingIntegral = remainingIntegral is null ? termIntegral : remainingIntegral + termIntegral;
+                        }
+                    }
+                    finally
+                    {
+                        askingTheTermsOfARemainder = false;
+                    }
+                }
+                else if (remainingIntegral is null && besideASpecialFunction && OfAMultipleOfTheVariable(v, x)
+                    && Integration.AnsweringTheQuestionAsked)
+                    Integration.DeclinedForItsScope();
                 if (remainingIntegral is null) return null;
 
                 return v * integralOfU - remainingIntegral;
@@ -20155,9 +20213,48 @@ namespace AngouriMath.Functions.Algebra
         /// <a href="https://github.com/asc-community/AngouriMath/issues/1501">#1501</a>: the error
         /// functions and the exponential, logarithmic, sine, cosine and hyperbolic integrals.
         /// </summary>
+        /// <summary>
+        /// Set while the terms of a remainder after a special function are asked as questions of
+        /// their own, so that the asking is not nested; see <c>TryIntegrateByPartsOnce</c>.
+        /// </summary>
+        [System.ThreadStatic] private static bool askingTheTermsOfARemainder;
+
         private static bool IsASpecialFunction(Entity node)
             => node is Entity.Erff or Entity.Erfcf or Entity.Erfif or Entity.Eif or Entity.Lif
                 or Entity.Sif or Entity.Cif or Entity.Shif or Entity.Chif;
+
+        /// <summary>
+        /// A special function of a linear argument, as <see cref="IsASpecialFunctionOfALinear"/>
+        /// reads one, or a positive whole power of one: <c>Si(b x)^2</c>.
+        /// </summary>
+        private static bool IsASpecialFunctionOfALinearOrAPowerOfOne(Entity factor, Variable x)
+            => IsASpecialFunctionOfALinear(factor, x)
+                || factor is Powf(var @base, Number.Integer power) && power.EInteger.Sign > 0 && IsASpecialFunctionOfALinear(@base, x);
+
+        /// <summary>
+        /// Whether the special function in <paramref name="factor"/>, or in the base of its power,
+        /// is of a multiple of <paramref name="x"/>, <c>b x</c>, with no offset.
+        /// </summary>
+        private static bool OfAMultipleOfTheVariable(Entity factor, Variable x)
+            => (factor is Powf(var @base, _) ? @base : factor).DirectChildren.FirstOrDefault() is { } argument
+                && TreeAnalyzer.TryGetPolyLinear(argument, x, out _, out var offset) && TreeAnalyzer.IsZero(offset);
+
+        /// <summary>
+        /// The factors of <paramref name="expr"/> that are polynomials in <paramref name="x"/> of
+        /// positive degree, against the rest: <c>x sin(b x)</c> is <c>x</c> and <c>sin(b x)</c>.
+        /// Both halves <see langword="null"/> where either would be empty.
+        /// </summary>
+        private static (Entity? Polynomial, Entity? Others) ThePolynomialFactor(Entity expr, Variable x)
+        {
+            Entity? polynomial = null;
+            Entity? rest = null;
+            foreach (var factor in Mulf.LinearChildren(expr))
+                if (factor.ContainsNode(x) && MathS.TryPolynomial(factor, x, out _))
+                    polynomial = polynomial is null ? factor : polynomial * factor;
+                else
+                    rest = rest is null ? factor : rest * factor;
+            return polynomial is null || rest is null || !rest.ContainsNode(x) ? (null, null) : (polynomial, rest);
+        }
 
         /// <summary>
         /// Whether <paramref name="expr"/> has what the derivative of the special function

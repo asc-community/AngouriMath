@@ -413,6 +413,13 @@ namespace AngouriMath.Functions.Algebra
         [System.ThreadStatic] private static bool descentTruncated;
 
         /// <summary>
+        /// Marks what is being worked out as declined for the scope it was asked in rather than
+        /// for its mathematics, as running out of descent is, so that the decline is not
+        /// remembered: the same question asked where that scope does not bind may be answered.
+        /// </summary>
+        internal static void DeclinedForItsScope() => descentTruncated = true;
+
+        /// <summary>
         /// The integrals this thread is part-way through, so that asking for one again while it is
         /// still being worked out is recognised as a cycle rather than followed round again.
         /// </summary>
