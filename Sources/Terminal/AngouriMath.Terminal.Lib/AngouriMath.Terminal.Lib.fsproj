@@ -10,6 +10,7 @@
     <Compile Include="AssemblyLoadBuilder.fs" />
     <Compile Include="FSharpInteractive.fs" />
     <Compile Include="PreRunCode.fs" />
+    <Compile Include="OneShot.fs" />
   </ItemGroup>
 
   <PropertyGroup>

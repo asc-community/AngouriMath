@@ -5,7 +5,14 @@ open AngouriMath.Terminal.Lib.Consts
 open UserInterface
 open Spectre.Console
 open AngouriMath.Terminal.Lib.AssemblyLoadBuilder
+open AngouriMath.Terminal.Lib
 
+
+// A command on the command line answers once and exits. This comes before anything below touches
+// the console, which a pipe does not have.
+match Environment.GetCommandLineArgs() |> List.ofArray |> List.tail with
+| [] -> ()
+| args -> exit (OneShot.run args Console.In Console.Out Console.Error)
 
 // All other platforms do not support setting custom window width
 if System.OperatingSystem.IsWindows() then
