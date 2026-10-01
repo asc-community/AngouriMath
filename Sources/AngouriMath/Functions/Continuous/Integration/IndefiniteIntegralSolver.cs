@@ -18624,6 +18624,189 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <paramref name="integrandInU"/> with the part of it still in <paramref name="x"/> written
+        /// in <paramref name="uSub"/>, where that part is a constant times a power of the candidate
+        /// <paramref name="u"/>, from <c>-2</c> to <c>2</c>; or <see langword="null"/>.
+        /// </summary>
+        /// <remarks>
+        /// What the two are made of, compared without evaluating, and then the ratio at three points,
+        /// every other symbol pinned, screen each power cheaply, and only one that passes is worked
+        /// out: over one bar, with a negative fractional power written as a quotient by the
+        /// positive one, which it is on every branch, and simplified. That is what puts the
+        /// derivative of <c>sqrt(1 - a x)/sqrt(1 + a x)</c>, a sum of two quotients of roots, over
+        /// one bar, and takes what is left beside <c>u^(-1)</c> to <c>-1/(2 a)</c>. A constant that
+        /// keeps an x is no constant, and the candidate stays refused.
+        /// </remarks>
+        private static Entity? WithTheCandidatesPowerLeftInX(Entity integrandInU, Entity u, Variable uSub, Entity.Variable x)
+        {
+            // Not for a linear candidate: what is left of x beside `u = f x` is always a power of u,
+            // and taking the change of scale here asks the same question again in u, ahead of the
+            // rules that answer it. `(c + d x)^2/(a + i a tan(e + f x))^3` is answered in 33 s,
+            // and with the change of scale taken here, not in 70. A quadratic is another matter:
+            // beside `u = a + b x + c x^2`, what `F^(1/u) (b + 2 c x)/u^2` leaves is `1/u^2`
+            // spelled otherwise, and read as one it is `-F^(1/u)/ln(F)` at once.
+            if (IsWrittenAsAPolynomial(u, x) && TreeAnalyzer.TryGetPolynomial(u, x, out var asAPolynomial)
+                && asAPolynomial.Keys.Max()!.CompareTo(EInteger.One) <= 0)
+                return null;
+            Entity inX = Number.Integer.One;
+            Entity rest = Number.Integer.One;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(integrandInU))
+                if (factor.ContainsNode(x))
+                {
+                    if (factor.ContainsNode(uSub))
+                        return null;
+                    inX = underneath ? inX / factor : inX * factor;
+                }
+                else
+                    rest = underneath ? rest / factor : rest * factor;
+            // A constant times a power of the candidate is made of what the candidate is made of:
+            // its functions of x, its radicands, the bases of its powers with x in the exponent.
+            // Checked first, since it costs no evaluation: a decline spends a thousand candidates
+            // here, and a polynomial left beside `erfc(a + b x)` is none of them.
+            if (!TheBuildingBlocks(inX, x).SetEquals(TheBuildingBlocks(u, x)))
+                return null;
+            foreach (var power in ThePowersTheRatioAgreesFor(inX, u, x))
+            {
+                var ofTheCandidate = MathS.Pow(u, power);
+                var overRoots = (inX / ofTheCandidate).Replace(node =>
+                    node is Powf(var radicand, Number.Rational { IsNegative: true } negative) && negative is not Number.Integer
+                        ? Number.Integer.One / MathS.Pow(radicand, -negative)
+                        : node);
+                var constant = Functions.PartialFractions.Bare(Functions.SingleQuotient.Combine(overRoots).Simplify());
+                // Where the simplification leaves x, over one bar the two halves may be polynomials
+                // in x, one a constant multiple of the other: `f (d^2 - e^2 x^2)` over
+                // `2 d e f (d^2 - e^2 x^2)` is `1/(2 d e)`.
+                if (constant.ContainsNode(x)
+                    && Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(constant)) is var (above, below)
+                    && TheConstantRatioOf(above, below, x) is { } ratio)
+                    constant = ratio;
+                if (constant.ContainsNode(x) || constant.Nodes.Any(node => node == MathS.NaN)
+                    || constant.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                // One quotient, which is what the rules for `F^(k u)/u` read.
+                return Functions.SingleQuotient.Combine(rest * constant * MathS.Pow(uSub, power)).InnerSimplified;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// <paramref name="above"/>/<paramref name="below"/>, two polynomials in <paramref name="x"/>,
+        /// as a constant, or <see langword="null"/> where one is not a constant multiple of the
+        /// other. Read off the coefficients, expanded so that a term such as <c>f (d e - d e) x</c>
+        /// the simplification leaves standing is not counted: with leading coefficients <c>p</c> and
+        /// <c>q</c>, every pair <c>a_k</c>, <c>b_k</c> has <c>a_k q - b_k p</c> expand to zero, which
+        /// asks no division by a symbol, and the ratio is <c>p/q</c> in lowest terms. The
+        /// simplifier would not cancel <c>e^5 f/e^3</c> against <c>e^2 f</c>, for want of knowing
+        /// <c>e</c> is not zero.
+        /// </summary>
+        private static Entity? TheConstantRatioOf(Entity above, Entity below, Entity.Variable x)
+        {
+            if (!TreeAnalyzer.TryGetPolynomial(Functions.PartialFractions.Bare(above.Expand()), x, out var top)
+                || !TreeAnalyzer.TryGetPolynomial(Functions.PartialFractions.Bare(below.Expand()), x, out var bottom))
+                return null;
+            static bool IsZero(Entity coefficient)
+                => Functions.PartialFractions.Bare(coefficient.Expand()) is var expanded
+                   && (expanded == Number.Integer.Zero || expanded.Evaled is Number.Complex { IsZero: true });
+            var topTerms = top.Where(term => !IsZero(term.Value)).ToDictionary(term => term.Key, term => term.Value);
+            var bottomTerms = bottom.Where(term => !IsZero(term.Value)).ToDictionary(term => term.Key, term => term.Value);
+            if (bottomTerms.Count == 0 || topTerms.Count != bottomTerms.Count || topTerms.Keys.Any(degree => !bottomTerms.ContainsKey(degree))
+                || topTerms.Values.Concat(bottomTerms.Values).Any(coefficient => coefficient.ContainsNode(x)))
+                return null;
+            var degree = bottomTerms.Keys.Max()!;
+            var (p, q) = (topTerms[degree], bottomTerms[degree]);
+            foreach (var term in bottomTerms)
+                if (!IsZero(topTerms[term.Key] * q - term.Value * p))
+                    return null;
+            return Functions.PartialFractions.InLowestTermsOverTheSymbols(p / q);
+        }
+
+        /// <summary>
+        /// The powers <c>k</c>, of <c>-1</c>, <c>1</c>, <c>-2</c> and <c>2</c>, for which
+        /// <paramref name="expr"/>/<paramref name="candidate"/>^k is one nonzero number at three
+        /// points, every other symbol pinned, agreeing to nine digits relative to its size. Each side
+        /// is evaluated once a point. A point where either cannot be evaluated admits no power: the
+        /// screen is all that keeps <see cref="WithTheCandidatesPowerLeftInX"/> from simplifying. And
+        /// no ratio near zero, where two tiny values agree to any absolute tolerance:
+        /// <c>x erfc(a + b x)^2</c> is 1e-9 at one pinned point and 1e-28 at the next.
+        /// </summary>
+        private static IEnumerable<int> ThePowersTheRatioAgreesFor(Entity expr, Entity candidate, Entity.Variable x)
+        {
+            var pinned = new Dictionary<Variable, Entity>();
+            var values = new[] { 1.37, 0.61, 2.23, 1.91, 0.83, 1.13 };
+            var index = 0;
+            foreach (var symbol in expr.Vars.Concat(candidate.Vars).Distinct())
+                if (symbol != x)
+                    pinned[symbol] = values[index++ % values.Length];
+            Number.Complex? At(Entity function, double point)
+            {
+                var value = function.Substitute(x, point);
+                foreach (var pair in pinned)
+                    value = value.Substitute(pair.Key, pair.Value);
+                return value.Evaled is Number.Complex { IsNaN: false } number && number.IsFinite && !number.IsZero ? number : null;
+            }
+            var powers = new List<int> { -1, 1, -2, 2 };
+            var first = new Dictionary<int, Number.Complex>();
+            foreach (var point in new[] { 0.37, 1.71, -0.83 })
+            {
+                if (At(expr, point) is not { } above || At(candidate, point) is not { } below)
+                    return System.Array.Empty<int>();
+                foreach (var power in powers.ToList())
+                {
+                    var ofTheCandidate = power switch { -1 => 1 / below, 1 => below, -2 => 1 / (below * below), _ => below * below };
+                    var ratio = (Number.Complex)(above / ofTheCandidate);
+                    var size = ((Number.Real)ratio.Abs()).EDecimal.ToDouble();
+                    if (!(size > 1e-12 && size < 1e12)
+                        || first.TryGetValue(power, out var earlier) && ((Number.Real)(ratio - earlier).Abs()).EDecimal.ToDouble() > 1e-9 * size)
+                        powers.Remove(power);
+                    else if (!first.ContainsKey(power))
+                        first[power] = ratio;
+                }
+                if (powers.Count == 0)
+                    break;
+            }
+            return powers;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="expr"/> is written as a polynomial in <paramref name="x"/>: x in
+        /// sums, products and whole powers that are not negative only, and nowhere below a bar.
+        /// Read off the tree, with nothing expanded, since the substitution search asks it of every
+        /// candidate.
+        /// </summary>
+        private static bool IsWrittenAsAPolynomial(Entity expr, Entity.Variable x)
+            => expr.ContainsNode(x) && expr.Nodes.All(node => !node.ContainsNode(x)
+                || node is Variable or Sumf or Minusf or Mulf
+                || node is Powf(_, Number.Integer { EInteger.Sign: >= 0 })
+                || node is Divf(_, var below) && !below.ContainsNode(x));
+
+        /// <summary>
+        /// What <paramref name="expr"/> is made of in <paramref name="x"/> beyond sums, products,
+        /// quotients and whole powers: each function of x, each root's radicand, and the base of
+        /// each power with x in its exponent.
+        /// </summary>
+        private static HashSet<Entity> TheBuildingBlocks(Entity expr, Entity.Variable x)
+        {
+            var blocks = new HashSet<Entity>();
+            foreach (var node in expr.Nodes)
+                switch (node)
+                {
+                    case Variable or Number or Sumf or Minusf or Mulf or Divf:
+                        break;
+                    case Powf(_, var exponent) when !exponent.ContainsNode(x) && exponent is Number.Integer:
+                        break;
+                    case Powf(var @base, _):
+                        if (node.ContainsNode(x))
+                            blocks.Add(@base);
+                        break;
+                    default:
+                        if (node.ContainsNode(x))
+                            blocks.Add(node);
+                        break;
+                }
+            return blocks;
+        }
+
+        /// <summary>
         /// Whether <paramref name="expr"/>/<paramref name="reference"/> takes the same value at two
         /// points, every other symbol pinned to a fixed value -- a necessary condition for a
         /// constant ratio, and a cheap one. Where either side cannot be evaluated the question is
@@ -20032,6 +20215,14 @@ namespace AngouriMath.Functions.Algebra
                             integrandInU = SimplifiedWithoutTheImaginaryUnit(inTheCandidate, expr);
                         }
                     }
+                    // The candidate itself, left over in x as a power of it: under
+                    // `u = sqrt(1 - a x)/sqrt(1 + a x)` the quotient of `F^(k u)/(1 - a^2 x^2)` by
+                    // du/dx is `F^(k u)` times `-sqrt(1 + a x)/(a sqrt(1 - a x))`, which is
+                    // `-1/(a u)` and holds no u as written, and the candidate was refused where the
+                    // integral is `-Ei(k ln(F) u)/a`, Rubi's 2.3.
+                    // https://github.com/asc-community/AngouriMath/issues/718
+                    if (integrandInU.ContainsNode(x) && WithTheCandidatesPowerLeftInX(integrandInU, u, uSub, x) is { } inPowersOfTheCandidate)
+                        integrandInU = inPowersOfTheCandidate;
                     if (u is Sinf or Cosf && integrandInU.ContainsNode(x))
                         firstPass[u] = integrandInU;
                 }

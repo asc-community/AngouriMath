@@ -105,6 +105,23 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, AroundZero, Pins);
 
         /// <summary>
+        /// Under a substitution, what is left in x is a power of the candidate: under
+        /// <c>u = sqrt(1 - a x)/sqrt(1 + a x)</c>, <c>F^(k u)/(1 - a^2 x^2)</c> is
+        /// <c>-F^(k u)/(a u)</c>, and under <c>u = c/(a + b x)</c>, <c>F^u</c> is
+        /// <c>-c F^u/(b u^2)</c>; and beside a quadratic <c>u</c>, what is left of
+        /// <c>F^(1/u) u'/u^2</c> is <c>1/u^2</c> written otherwise. Rubi's 2.3. Every point is where
+        /// <c>|a x| &lt; 1</c>, off <c>a + b x = 0</c>, and the integrand is real.
+        /// </summary>
+        [Theory]
+        [InlineData("F^(sqrt(1 - a*x)/sqrt(1 + a*x))/(1 - a^2*x^2)")]
+        [InlineData("F^(2*sqrt(1 - a*x)/sqrt(1 + a*x))/(1 - a^2*x^2)")]
+        [InlineData("F^(3*sqrt(1 - a*x)/sqrt(1 + a*x))/(1 - a^2*x^2)")]
+        [InlineData("F^(c/(a + b*x))")]
+        [InlineData("F^(1/(a + b*x + c*x^2))*(b + 2*c*x)/(a + b*x + c*x^2)^2")]
+        public void WhatIsLeftInXIsAPowerOfTheCandidate(string integrand)
+            => DifferentiatesBack(integrand, AroundZero, Pins);
+
+        /// <summary>
         /// The Gaussian's odd negative moments end at <c>int e^(A x^2)/x = Ei(A x^2)/2</c>, and
         /// <c>x e^(-1/x^2)</c> is one of them under <c>u = 1/x</c>.
         /// </summary>

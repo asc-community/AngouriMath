@@ -171,5 +171,18 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("erf(a + b*x)^2")]
         public void ASquareOfAShiftedArgumentIsTwoRoundsOfParts(string integrand)
             => DifferentiatesBack(integrand, Parameters);
+
+        /// <summary>
+        /// Beside a linear, the square of a complementary error function of <c>a + b x</c> is not
+        /// answered yet, and what is asserted is the value of any answer given in its place. Under
+        /// <c>u = erfc(a + b x)</c> what is left in x is a polynomial, which is no power of u, however
+        /// small <c>erfc</c> is at the points that screen it.
+        /// </summary>
+        [Fact]
+        public void ASquareOfAShiftedComplementaryErrorFunctionBesideALinearHasNoWrongAnswer()
+        {
+            if (!"(c + d*x)*erfc(a + b*x)^2".ToEntity().Integrate("x").Stringize().Contains("integral("))
+                DifferentiatesBack("(c + d*x)*erfc(a + b*x)^2", Parameters);
+        }
     }
 }
