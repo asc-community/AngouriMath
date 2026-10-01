@@ -232,9 +232,13 @@ namespace AngouriMath.Functions.Algebra
                 power = inverted ? -n.EInteger.ToInt32Checked() : n.EInteger.ToInt32Checked();
                 return true;
             }
-            if (!inverted && gaussian is null && factor is Entity.Powf(var @base, _) exponential && !@base.ContainsNode(x))
+            // Below the bar too, as the exponential of the negated exponent: `1/(e^(b^2 x^2) x^2)` is
+            // `e^(-b^2 x^2)/x^2`, and it is how by parts writes the factor beside `erf(b x)` in
+            // `erf(b x)/(e^(b^2 x^2) x^2)`, which was declined for want of its integral.
+            // https://github.com/asc-community/AngouriMath/issues/1501
+            if (gaussian is null && factor is Entity.Powf(var @base, var exponent) exponential && !@base.ContainsNode(x))
             {
-                gaussian = exponential;
+                gaussian = inverted ? new Entity.Powf(@base, -exponent) : exponential;
                 return true;
             }
             // A sum, or a whole power of one, taken as it is: read as a polynomial only once a

@@ -654,6 +654,25 @@ reached 3^12 cases and 8 GB inside integration by parts
 | `(x < 0 and x = 0).Simplify()` | `False provided x in RR` | `False` — the condition was over-strong, one conjunct is false wherever `x` is |
 | `(x > 0 and x > 0).Evaled` | `x > 0` | `x > 0` (unchanged) |
 
+### A union with an empty interval is the other set
+
+**Wrong answer fixed.** Two intervals were joined wherever one ended where the other began, before
+either was asked whether it was empty. `[1; 0]` is empty, and it ends at 0 where `[0; 1]` begins,
+so `[0; 1] \/ [1; 0]` was joined into `{ 1 }`, and `[3; 1] \/ [1; 2]` into `[3; 2]`, which is
+empty. An empty interval now adds nothing. With ends that are not numbers either interval may be
+empty -- `[a; b]` is, when `a` is above `b` -- so two such intervals are no longer joined unless an
+end is infinite, and `[a; b] \/ [b; c]`, which was `[a; c]`, is left as written.
+[#1634](https://github.com/asc-community/AngouriMath/issues/1634). Both columns measured on a
+build, `v2.5.0` against this change.
+
+| `"….".ToEntity().Simplify()` of | Was (2.5.0) | Is |
+|---|---|---|
+| `[0; 1] \/ [1; 0]` | `{ 1 }` — wrong | `[0; 1]` |
+| `[3; 1] \/ [1; 2]` | `[3; 2]`, which is empty — wrong | `[1; 2]` |
+| `[a; b] \/ [b; a]` | `{ b }` — wrong | `[a; b] \/ [b; a]` |
+| `[a; b] \/ [b; c]` | `[a; c]` — wrong where `a > b` or `b > c` | `[a; b] \/ [b; c]` |
+| `(-oo; x] \/ [x; +oo)` | `RR` | `RR` (unchanged: neither can be empty) |
+
 ### `ZZ*` and `ZZ+` are the non-negative and the positive integers
 
 `ZZ*` = `{0, 1, 2, ...}` and `ZZ+` = `{1, 2, 3, ...}` are special sets, spelled as MathWorld spells
@@ -1685,6 +1704,52 @@ measured on a build, `v2.5.0` against this change.
 | `"sum(x, x in {a, b})".ToEntity().Simplify()` | the same exception | `sum(x, x in { a, b })`, since `a` and `b` may be equal |
 | `"sum(k, k, 1, 10)".ToEntity().Simplify()` | `55` | the same |
 
+### A condition on a name a binder binds stays in the binder
+
+**Fix.** `DomainCondition` conjoined every child's condition, a binder's body included, so a
+summation's, a product's or a definite integral's condition named its index as though it were free,
+and a sum over a set's did the same: the product rule leaves `0 * sum(...)`, which keeps it, and the
+derivative of `2 sum(ln(x - w), w in { w : w^3 + w + 1 = 0 })` was `… provided not x - w = 0`, which
+`EvalNumerical` could not decide. The condition is required at every value the name ranges over
+now: a conjunction over a few numbers, a resultant over the roots of a polynomial, and `forall`
+over the range otherwise. It is not left out, which would give `0 * sum(1/(k - x), k, 1, n)` a value
+at `x = 1` ([#1632](https://github.com/asc-community/AngouriMath/issues/1632)). A definite integral's
+condition is required between its limits, in either order. That is sufficient for a value and not
+necessary: `ln(t)` over `[0; 1]` converges, to -1, and its condition reads it as undefined, since the
+integrand has none at 0. Nothing is given a value it does not have that way. The integral itself,
+where it is worked out, is not affected.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sum(1/(k - x), k, 1, 3)".ToEntity().DomainCondition` | `not k - x = 0` | `not 1 - x = 0 and not 2 - x = 0 and not 3 - x = 0` |
+| `"sum(1/(k - x), k, 1, n)".ToEntity().DomainCondition` | `not k - x = 0` | `forall k in { k : k in ZZ and 1 <= k and k <= n } : not k - x = 0` |
+| `"integral(1/(t - x), t, 0, 1)".ToEntity().DomainCondition` | `not t - x = 0` | `forall t in [0; 1] : not t - x = 0` |
+
+### A rational function whose residues are of degree three or more is integrated over its poles
+
+**Wider.** The logarithmic part of a rational integral is a logarithm at each pole, weighted by the
+residue there. Where the residues are rational or roots of a quadratic they were written out, as
+logarithms and arctangents. Where they lie in a field of degree three or more, the rational
+integrator declined, and `1/(x^3 + x + 1)` was left unevaluated. It is written now as a sum over the
+poles, `sum(A(r)/D'(r) ln(x - r), r in { r : E(r) = 0 })`, with the node above: `E` is the factor
+of the denominator whose poles have those residues, the gcd of `D` and `D'^n R(A/D')` over the
+rationals. The integrand of [#1285](https://github.com/asc-community/AngouriMath/issues/1285),
+`sqrt(x)/(1 + x + x^4)`, is `2u^2/(1 + u^2 + u^8)` under `u = sqrt(x)`, and is answered through it.
+
+**Only where nothing else answers.** The integral is asked again with sums over roots allowed once
+the whole of it has come back unevaluated, so an integrand another rule writes in closed form keeps
+that form. Asked with the other rules, the sum answered each of Jeffrey's three terms of
+`(-1 + 4 cos(x) + 5 cos(x)^2)/(-1 - 4 cos(x) - 3 cos(x)^2 + 4 cos(x)^3)` with a sum over the roots of
+a sextic, where the whole is one arctangent. A denominator with a symbol among its coefficients is
+still declined. Both columns measured on a build, `v2.5.0` against this change.
+
+| | Was (2.5.0) | Is |
+|---|---|---|
+| `"1/(x^3 + x + 1)".Integrate("x")` | `integral(1 / (x ^ 3 + x + 1), x)` | `sum(1 / (3 * r ^ 2 + 1) * ln(x - r), r in { r : r ^ 3 + r + 1 = 0 }) + C` |
+| `"sqrt(x)/(1 + x + x^4)".Integrate("x")` | `integral(sqrt(x) / (1 + x + x ^ 4), x)` | `sum(2 * r ^ 2 / (8 * r ^ 7 + 2 * r) * ln(x ^ (1/2) - r), r in { r : r ^ 8 + r ^ 2 + 1 = 0 }) + C` |
+| `"1/(1 - x^4 + x^8)".Integrate("x")` | `integral(1 / (1 - x ^ 4 + x ^ 8), x)` | `sum(1 / (8 * r ^ 7 + (-4) * r ^ 3) * ln(x - r), r in { r : r ^ 8 + -r ^ 4 + 1 = 0 }) + C` |
+| `"1/(x^4 + a*x + 1)".Integrate("x")` | `integral(1 / (x ^ 4 + a * x + 1), x)` | the same |
+
 ### `(a + b asech(c x))/(d + e x)^2` is integrated, and a root written apart with `|x|` no longer needs a parity
 
 Rubi's 7.5.1 with a symbolic linear below the bar ran for ten minutes without an answer. By
@@ -2238,6 +2303,153 @@ elementary integrand whose antiderivative is reached through one is answered whe
 | Input | Was (2.5.0) | Now |
 |---|---|---|
 | `"(a+b*ln(c*x^n))/(x^2*(d+e*ln(f*x^m)))".Integrate("x")`, Rubi's 3.1.5 row 213 | `integral(...)` | an antiderivative in `Ei`, provided `f > 0` and `e^d f^e > 0` |
+
+### A negative power of the variable is not a polynomial to integration by parts
+
+`MathS.TryPolynomial` reads `x^(-1)` as a monomial of degree -1, and integration by parts against a
+polynomial differentiated it until it reached `0`, which a negative power never does:
+`e^(2x) x^(-1)` ran the process out of memory, where `e^(2x)/x` is `Ei(2x)`
+([#1646](https://github.com/asc-community/AngouriMath/issues/1646)). By parts takes a polynomial
+with no negative degree now, and past it, the power is the factor differentiated, which leaves the
+quotient the exponential integral rules read. Only what ran away or ran out of time changes: Rubi's
+independent suites and its families 2, 4 and 8 are answered as they were.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(2*x)*x^(-1)".Integrate("x")` | out of memory: `OutOfMemoryException` under a 2 GB heap | `1 / x * e ^ (2 * x) / 2 - -1/2 * (-1 / x * e ^ (2 * x) + 2 * Ei(2 * x)) + C`, which is `Ei(2 * x) + C` |
+| `"e^x*x^(-2)".Integrate("x")` | `integral(e ^ x * x ^ (-2), x)` | `e ^ x * -1 / x - -Ei(x) + C` |
+
+### A special function beside its derivative is a substitution
+
+`e^(c - b^2 x^2) erf(b x)^n`, `Ei(b x) e^(b x)/x` and `Si(b x) sin(b x)/x` are each a power of a
+special function beside its derivative, and `u = erf(b x)`, `u = Ei(b x)` or `u = Si(b x)` writes
+them as a power of `u`. None of the nine special functions was a candidate for that substitution.
+Each is one now, as the logarithm is, wherever its derivative can be the differential
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)). An integrand holding one of
+these functions had no reading in 2.5.0, which the entries for the functions themselves record, and
+no integrand without one changes: Rubi's independent suites and a sample of its families 1 to 7,
+2726 problems, are answered alone as they were.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(c - b^2*x^2)*erf(b*x)".Integrate("x")` | `UnrecognizedFunctionParseException`: there is no function `erf` | `e ^ c * pi ^ (1/2) * erf(b * x) ^ 2 / 2 / (2 * b) + C` |
+| `"e^(b*x)*Ei(b*x)/x".Integrate("x")` | `Ei * e ^ (b * x) + C`, with `Ei` a variable | `Ei(b * x) ^ 2 / 2 + C` |
+| `"Si(b*x)*sin(b*x)/x".Integrate("x")` | `Si * -cos(b * x) + C`, with `Si` a variable | `Si(b * x) ^ 2 / 2 + C` |
+
+### A square of a special function, and one beside a power of `x` and its elementary derivative, are integrated by parts
+
+`x Si(b x) sin(b x)` was left unevaluated where `Si(b x) sin(b x)` was not: by parts it is
+`Si(b x)` against `x sin(b x)`, whose integral needs parts of its own, and the integral of that
+factor was taken with parts off. It is integrated by the polynomial's parts now, beside a special
+function of a linear argument, and what is left, `sin(b x)/x` times sines and cosines, by parts in
+turn. A square of one of `b x` is two rounds of parts, and what the first round leaves comes back
+as one product over a sum -- `(b x Ei(b x) - e^(b x)) e^(b x)/(b x)` for `Ei(b x)^2` -- that no rule
+reads whole: its terms are asked one at a time now
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)). An integrand holding one of
+these functions had no reading in 2.5.0, which the entries for the functions themselves record, and
+no integrand without one changes: Rubi's independent suites and a sample of its families 1 to 7,
+2726 problems, are answered alone as they were.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x*Si(b*x)*sin(b*x)".Integrate("x")` | a polynomial in a variable `Si` | an antiderivative in `Si(b x)`, `Ci(2 b x)` and `ln(x)` |
+| `"Ei(b*x)^2".Integrate("x")` | `Ei * (b * x) ^ 3 / 3 / b + C`, with `Ei` a variable | an antiderivative in `Ei(b x)` and `Ei(2 b x)` |
+| `"x*erf(b*x)^2".Integrate("x")` | `UnrecognizedFunctionParseException`: there is no function `erf` | an antiderivative in `erf(b x)` |
+
+### A constant of integration is matched to a linear divisor with a symbol in it
+
+By parts against a polynomial chooses the polynomial's antiderivative so that what the other
+factor's derivative divides by divides it too, and that was done only where the division left a
+number over. `a + b x` leaves a symbol: `x^2/2` over `a + b x` leaves `a^2/(2 b^2)`, so the
+remainder of `x Shi(a + b x)^2` kept `x^2/(a + b x)` and nothing read it. The antiderivative less
+its value at `-a/b` is taken now, written as `a + b x` times the quotient, so that the linear
+cancels in the remainder ([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+`x Shi(a + b x)^2`, `x Chi(a + b x)^2` and `x Ei(a + b x)^2` are answered. An integrand holding one of
+these functions had no reading in 2.5.0, which the entries for the functions themselves record, and
+no integrand without one changes: Rubi's independent suites and a sample of its families 1 to 7
+are answered alone as they were. Where by parts already answered a special function of `a + b x`
+beside a power of `x`, the answer is written with the same constant: `x Ei(a + b x)` now reads
+`Ei(a + b x) (a + b x)(x/(2b) - a/(2b^2)) - ...`, the same function as before.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x*Shi(a+b*x)^2".Integrate("x")` | `a ^ 2 * Shi * x ^ 2 / 2 + a * b * 2 * Shi * x ^ 3 / 3 + b ^ 2 * Shi * x ^ 4 / 4 + C`, with `Shi` a variable | an antiderivative in `Shi(a + b x)` and `Ei(2 (a + b x))`, `Ei(-2 (a + b x))` |
+| `"x*Ei(a+b*x)^2".Integrate("x")` | `a ^ 2 * Ei * x ^ 2 / 2 + a * b * 2 * Ei * x ^ 3 / 3 + b ^ 2 * Ei * x ^ 4 / 4 + C`, with `Ei` a variable | an antiderivative in `Ei(a + b x)` and `Ei(2 (a + b x))` |
+
+### A square of a special function of a shifted argument is integrated by parts
+
+The remainder of a special function's square was asked term by term only for an argument `b x`.
+For `a + b x`, the remainder divided by the linear until the constant of integration was matched to
+it; with that matched, the terms are the case without the offset, and the asking is offered for any
+linear argument ([#1501](https://github.com/asc-community/AngouriMath/issues/1501)). The exception
+is an error function beside anything but itself, whose derivative is a Gaussian of the shifted
+argument, so a polynomial beside it stays in every term: `(c + d x) erf(a + b x)^2` is still
+declined. An integrand holding one of these functions had no reading in 2.5.0, which the entries for
+the functions themselves record, and no integrand without one changes: Rubi's independent suites and
+a sample of its families 1 to 7 are answered alone as they were.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"Shi(a+b*x)^2".Integrate("x")` | `Shi * (a + b * x) ^ 3 / 3 / b + C`, with `Shi` a variable | an antiderivative in `Shi(a + b x)`, `Ei(2 (a + b x))` and `Ei(-2 (a + b x))` |
+| `"x^2*Ei(a+b*x)^2".Integrate("x")` | `a ^ 2 * Ei * x ^ 3 / 3 + a * b * 2 * Ei * x ^ 4 / 4 + b ^ 2 * Ei * x ^ 5 / 5 + C`, with `Ei` a variable | an antiderivative in `Ei(a + b x)` and `Ei(2 (a + b x))` |
+| `"erf(a+b*x)^2".Integrate("x")` | `UnrecognizedFunctionParseException`: there is no function `erf` | an antiderivative in `erf` |
+
+### A logarithm of `x` is matched to a logarithm of a multiple of `x` below the bar
+
+By parts on `li(b x)/x` takes the antiderivative of `1/x`, and with `ln(x)` the remainder was
+`b ln(x)/ln(b x)`, which nothing read. `ln(b x)` is as much an antiderivative of `1/x`, and taken so,
+the logarithm the derivative of `li(b x)` divides by cancels: `li(b x)/x` is `li(b x) ln(b x) - b x`
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)). `li` had no reading in 2.5.0,
+which its own entry records, and no integrand without it changes: Rubi's independent suites, its
+family 3 at twenty a file and a sample of the others are answered alone as they were.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"li(b*x)/x".Integrate("x")` | `li * b * x + C`, with `li` a variable | `li(b * x) * ln(b * x) - b * x + C` |
+
+### A special function of a logarithm of a monomial is integrated, through `Ei` of a complex argument
+
+`(e x)^m Si(d (a + b ln(c x^n)))` is by parts against `(e x)^m`, and what is left is a power of `x`
+times `sin(d (a + b ln(c x^n)))/(a + b ln(c x^n))`. Two rules were missing on the way
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)):
+
+- **A function of one logarithm of a monomial.** A power of `x` times `G(ln(c x^n))` is integrated
+  under `t = ln(c x^n)`, with `x^(m + 1)` written as `K e^((m + 1) t/n)` and
+  `K = x^(m + 1) (c x^n)^(-(m + 1)/n)`, whose derivative is 0 wherever it is defined. That is an
+  antiderivative wherever the integrand is real. For an even `n` that includes negative `x`, where
+  `ln(c x^n)` is not `ln(c) + n ln(x)`. By parts leaves `(d x)^m x/ln(b x)` of `(d x)^m li(b x)`,
+  and this rule answers it with `Ei((m + 2) ln(b x))`.
+- **An exponential beside a sine or cosine, over linears.** Each sine and cosine is written as
+  exponentials, and each term is the exponential integral of a complex argument. The two conjugate
+  terms add up to a real value.
+
+Both columns measured on a build, `v2.5.0` against this change.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(2*x)*sin(x)/x".Integrate("x")` | `integral(e ^ (2 * x) * sin(x) / x, x)` | `(-1/2 * i) * Ei((2 + i) * x) + 1/2 * i * Ei((2 - i) * x) + C` |
+| `"x*sin(ln(x))/ln(x)".Integrate("x")` | `integral(x * sin(ln(x)) / ln(x), x)` | `(-1/2 * i) * Ei((2 + i) * ln(x)) + 1/2 * i * Ei((2 - i) * ln(x)) + C` |
+| `"cos(a+b*ln(c*x^n))^2".Integrate("x")` | `integral(cos(a + b * ln(c * x ^ n)) ^ 2, x)` | an antiderivative in `sin` and `cos` of `2 (a + b ln(c x^n))`, beside `x (c x^n)^(-1/n)` |
+
+### An exponential or a hyperbolic function over several linears is split into partial fractions over them
+
+`e^x/(x (x + 1))` was left unevaluated, where `e^x/x` and `e^x/(x + 1)` were each answered with
+the exponential integral: the rule for an exponential of a linear over a power of a linear read
+one linear below the bar, and the rule for `sinh` and `cosh` did the same. The quotient is split
+into partial fractions over its linears now, as the rule for a sine or a cosine already split it,
+and each term is the one-linear question: `e^x/(x (x + 1))` is `Ei(x) - Ei(x + 1)/e`. It is also
+what by parts leaves of `Ei(a + b x)/x^2`, `e^(a + b x)/((a + b x) x)`
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)). The rule for a sine or a cosine
+declined a polynomial over linears with a symbol among their coefficients, `x sin(x)/((c + d x)(x - 2))`,
+for dividing a fraction that was proper already; neither rule divides one now. Both columns
+measured on a build, `v2.5.0` against this change.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^x/(x*(x+1))".Integrate("x")` | `integral(e ^ x / (x * (x + 1)), x)` | `Ei(x) + -1 / e * Ei(x + 1) + C` |
+| `"sinh(x)/(x*(x+1))".Integrate("x")` | `integral((e ^ x - e ^ (-x)) / 2 / (x * (x + 1)), x)` | `1/2 * (2 * Shi(x) + ((-1) / e + e) * Chi(x + 1) + ((-1) / e - e) * Shi(x + 1)) + C` |
+| `"x^3*e^(2*x)/((x+1)*(x-2))".Integrate("x")` | `integral(x ^ 3 * e ^ (2 * x) / ((x + 1) * (x - 2)), x)` | `e ^ (2 * x) * (-1/4 + 1/2 * x) + e ^ (2 * x) / 2 + 1/3 * e ^ (-2) * Ei(2 * (x + 1)) + 8/3 * e ^ 4 * Ei(2 * (x - 2)) + C` |
+| `"x*sin(x)/((c+d*x)*(x-2))".Integrate("x")` | `integral(x * sin(x) / ((c + d * x) * (x - 2)), x)` | in `Si` and `Ci` of `(c + d x)/d` and `x - 2` |
 
 ### An inverse trigonometric function below the bar is integrated to the sine and cosine integrals
 
@@ -2820,6 +3032,20 @@ since they are these exponentials
 | `"x^3*f^(c*(a + b*x)^2)".Integrate("x")` | `integral(x ^ 3 * f ^ (c * (a + b * x) ^ 2), x)` | the antiderivative |
 | `"(p + q*x)^2*f^(a + b*x + c*x^2)".Integrate("x")` | `integral((p + q * x) ^ 2 * f ^ (a + b * x + c * x ^ 2), x)` | the antiderivative |
 | `"x^2*sinh(a + b*x + c*x^2)".Integrate("x")` | `integral(x ^ 2 * (e ^ (a + b * x + c * x ^ 2) - e ^ (-(a + b * x + c * x ^ 2))) / 2, x)` | the antiderivative |
+
+### A Gaussian below the bar is read as the exponential of its negated exponent
+
+`e^(-x^2)/x^2` was integrated by the Gaussian's moments, and `1/(e^(x^2) x^2)`, the same function,
+was not: the rule for the moments took the exponential from above the bar only. By parts writes
+the factor beside `erf(b x)` in `erf(b x)/(e^(b^2 x^2) x^2)` the second way, and that integral was
+declined for want of it ([#1501](https://github.com/asc-community/AngouriMath/issues/1501)). Both
+columns measured on a build, `v2.5.0` against this change; `erf` had no reading in 2.5.0, which its
+own entry records.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(e^(x^2)*x^2)".Integrate("x")` | `integral(1 / (e ^ x ^ 2 * x ^ 2), x)` | `-1 / x * e ^ (-x ^ 2) + (-2) * pi ^ (1/2) / 2 * erf(x) + C` |
+| `"erf(b*x)/(e^(b^2*x^2)*x^2)".Integrate("x")` | `UnrecognizedFunctionParseException`: there is no function `erf` | an antiderivative in `erf` and `Ei(-2 b^2 x^2)` |
 
 ### An exponential of a polynomial beside the polynomial's derivative is integrated
 

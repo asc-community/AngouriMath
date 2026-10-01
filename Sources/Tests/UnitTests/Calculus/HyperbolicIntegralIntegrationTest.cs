@@ -68,6 +68,17 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, AroundZero, Pins);
 
         /// <summary>
+        /// And over several linears, split into partial fractions over them first, each term the
+        /// question above.
+        /// </summary>
+        [Theory]
+        [InlineData("sinh(x)/(x*(x + 1))")]
+        [InlineData("cosh(2*x)/(x*(x + 3))")]
+        [InlineData("x*sinh(a + b*x)/((c + d*x)*(x - 2))")]
+        public void ASumOfExponentialsOverSeveralLinears(string integrand)
+            => DifferentiatesBack(integrand, AroundZero, Pins);
+
+        /// <summary>
         /// An inverse hyperbolic tangent below the bar, beside a whole power of <c>1 - a^2 x^2</c>:
         /// under <c>x = tanh(u)/a</c> it is a polynomial in <c>sinh(u)</c> and <c>cosh(u)</c> over
         /// a power of <c>u</c>. The quadratic reaches the substitution divided through by its

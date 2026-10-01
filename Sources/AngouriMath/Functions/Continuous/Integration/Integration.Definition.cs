@@ -413,6 +413,13 @@ namespace AngouriMath.Functions.Algebra
         [System.ThreadStatic] private static bool descentTruncated;
 
         /// <summary>
+        /// Marks what is being worked out as declined for the scope it was asked in rather than
+        /// for its mathematics, as running out of descent is, so that the decline is not
+        /// remembered: the same question asked where that scope does not bind may be answered.
+        /// </summary>
+        internal static void DeclinedForItsScope() => descentTruncated = true;
+
+        /// <summary>
         /// The integrals this thread is part-way through, so that asking for one again while it is
         /// still being worked out is recognised as a cycle rather than followed round again.
         /// </summary>
@@ -446,13 +453,53 @@ namespace AngouriMath.Functions.Algebra
                 descentTruncated = true;
                 return null;
             }
-            if (descentDepth == 0)
+            if (descentDepth != 0)
+                return ComputeIndefiniteIntegralGuarded(expr, x, integrateByParts);
+            descentTruncated = false;
+            inProgress?.Clear();
+            ASumOverRootsWouldAnswer = false;
+            var answer = ComputeIndefiniteIntegralGuarded(expr, x, integrateByParts);
+            if (answer is not null || !ASumOverRootsWouldAnswer || SumsOverRootsAllowed)
+                return answer;
+            // Once more with sums over roots, and with a memo of its own, since the first pass
+            // remembered every one of those rational functions as declined. Last, and only where
+            // nothing else answered: asked with the rest, a sum over roots answered each of
+            // Jeffrey's three terms, where the whole is one arctangent the rational integrator
+            // writes when it is asked the whole.
+            // https://github.com/asc-community/AngouriMath/issues/1285
+            var (memo, stamp) = (answered, answeredUnder);
+            SumsOverRootsAllowed = true;
+            answered = null;
+            descentTruncated = false;
+            inProgress?.Clear();
+            try
             {
-                descentTruncated = false;
-                inProgress?.Clear();
+                answer = ComputeIndefiniteIntegralGuarded(expr, x, integrateByParts);
             }
-            return ComputeIndefiniteIntegralGuarded(expr, x, integrateByParts);
+            finally
+            {
+                SumsOverRootsAllowed = false;
+                (answered, answeredUnder) = (memo, stamp);
+            }
+            // In place of the decline the first pass remembered, which a question asked again
+            // would otherwise be answered with, without the rule ever being reached to say that a
+            // second pass could answer it.
+            if (answer is not null && memo is not null && stamp is not null && SettingsState.StillHolds(stamp))
+                memo[(Normalized(expr, x), x, integrateByParts, true)] = answer;
+            return answer;
         }
+
+        /// <summary>
+        /// Whether the rational integrator may answer with a sum over the roots of a factor of the
+        /// denominator: only in the second pass of a question nothing else answered.
+        /// </summary>
+        [System.ThreadStatic] internal static bool SumsOverRootsAllowed;
+
+        /// <summary>
+        /// Set where the rational integrator declined only because the residues lie in a field of
+        /// degree above two, which a sum over roots would have written.
+        /// </summary>
+        [System.ThreadStatic] internal static bool ASumOverRootsWouldAnswer;
 
         /// <summary>
         /// <see cref="ComputeIndefiniteIntegral"/> past its entry check: the cycle guard, the
@@ -596,6 +643,12 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveAnExponentialOfALinearOverAPowerOfALinear(expr, x)) is { }) return answer;
             // And a sum of exponentials, which is how sinh and cosh arrive, onto Shi and Chi.
             if ((answer = IndefiniteIntegralSolver.SolveAHyperbolicOfALinearOverAPowerOfALinear(expr, x)) is { }) return answer;
+            // And either over several linears, split into partial fractions over them first, as the
+            // trigonometric rule below splits.
+            if ((answer = IndefiniteIntegralSolver.SolveAnExponentialOverSeveralLinears(expr, x)) is { }) return answer;
+            // And with sines and cosines beside the exponential, written as exponentials: each term
+            // is then the exponential's, with a complex rate.
+            if ((answer = IndefiniteIntegralSolver.SolveAnExponentialTimesATrigonometricOverLinears(expr, x)) is { }) return answer;
             // Sines and cosines of a linear over a power of a linear, onto Si and Ci under u = the
             // linear, where the search would take the quotient by parts without end.
             if ((answer = IndefiniteIntegralSolver.SolveATrigonometricOfALinearOverAPowerOfALinear(expr, x)) is { }) return answer;
@@ -788,6 +841,8 @@ namespace AngouriMath.Functions.Algebra
             // is why the general substitution does not find it and why it pays: the integrator
             // answers an exponential times almost anything.
             if ((answer = IndefiniteIntegralSolver.SolveByLogarithmSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // And a power of x times a function of one logarithm of a monomial, under t = that logarithm.
+            if ((answer = IndefiniteIntegralSolver.SolveByAPowerAndALogarithmOfAMonomial(expr, x, integrateByParts)) is { }) return answer;
             // And the inverse trigonometric functions' own, beside the logarithm's and for the
             // same reason: `x = sin(u)` removes the `x` that substituting for `arcsin(x)` leaves.
             if ((answer = IndefiniteIntegralSolver.SolveByInverseTrigonometricSubstitution(expr, x, integrateByParts)) is { }) return answer;

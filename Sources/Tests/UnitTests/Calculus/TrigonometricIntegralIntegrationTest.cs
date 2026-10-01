@@ -88,6 +88,8 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("cos(2*x + 1)/((x - 1)*(x + 2)^2)")]
         [InlineData("sin(c + d*x)/(x^2*(a + b*x))")]
         [InlineData("x^3*sin(x)^2/((x + 1)*(x + 3))")]
+        [InlineData("x*sin(x)/((c + d*x)*(x - 2))")]
+        [InlineData("x*cos(a + b*x)/((c + d*x)*(x + 1))")]
         public void OverSeveralLinears(string integrand)
             => DifferentiatesBack(integrand, AroundZero, Pins);
 
