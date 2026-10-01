@@ -797,6 +797,32 @@ quotient or whole power with a matrix in it to GenericTensor's operation of that
 | `"[[x, 2 x], [x + 1, x^2]]".ToEntity().Compile<double, GenTensor<double, DoubleOperations>>("x")` | `UncompilableNodeException` | a delegate; at `3` the matrix `[[3, 6], [4, 9]]` |
 | `"A * B".ToEntity().Compile<GenTensor<…>, GenTensor<…>, GenTensor<…>>("A", "B")` | `UncompilableNodeException` | the matrix product |
 | `"[[1, 0]] * [[a, b], [c, d]] * [[0], [1]]".ToEntity().Compile<double, double, double, double, double>("a", "b", "c", "d")` | `2` at `(1, 2, 3, 4)` — simplified to the scalar first | unchanged |
+### A product is written letters before functions
+
+`Simplify` wrote `y * sin(x)` as `sin(x) * y` and `x * e^x` as `e ^ x * x`: a product came out in
+the order the simplifier sorts by, which puts a sine before every letter. By hand the number comes
+first, then the letters and their powers, then the functions: DLMF 5.5.1 is `Γ(z + 1) = z Γ(z)`,
+and ISO 80000-2 lets a function's argument go without parentheses (`sin nπ`), so a letter written
+after a function reads as part of its argument. The answer of `Simplify` is now written that way:
+the number, the letters and their powers, then everything else -- a function, an exponential such
+as `e^x` or `2^n`, a sum -- each kind in the order it had, with a leading number taken into a
+quotient over a number (`2 / s`, not `2 * 1 / s`). Only the answer is reordered: the simplifier
+still sorts a sine before a letter, because the rules that combine factors meet them as neighbours
+in that order, and `InnerSimplified` and `Differentiate` return that order as before.
+[#1628](https://github.com/asc-community/AngouriMath/issues/1628), Algebrite's issue 29 from
+[#180](https://github.com/asc-community/AngouriMath/issues/180). Both columns measured on a build,
+`v2.5.0` against this change.
+
+| `"….".ToEntity().Simplify()` of | Was (2.5.0) | Is |
+|---|---|---|
+| `sin(x) * y` | `sin(x) * y` | `y * sin(x)` |
+| `x * e ^ x` | `e ^ x * x` | `x * e ^ x` |
+| `2 * sin(x) * y` | `2 * sin(x) * y` | `2 * y * sin(x)` |
+| `a / sin(x)` | `csc(x) * a` | `a * csc(x)` |
+| `a * log(x) + y * sin(x)` | `sin(x) * y + a * log(10, x)` | `y * sin(x) + a * log(10, x)` |
+| `2 * x * sin(x) * cos(x)` | `sin(2 * x) * x` | `x * sin(2 * x)` |
+| `derivative(arcsin(2 * x), x)` | `1 / sqrt(1 - (2 * x) ^ 2) * 2` | `2 / sqrt(1 - (2 * x) ^ 2)` |
+
 ### `π` is `pi` and the script `ℯ` is `e`
 
 `π` (U+03C0) was a free variable, a Greek letter like any other, so `sin(π)` did not simplify; the
