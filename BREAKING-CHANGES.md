@@ -2295,6 +2295,26 @@ no integrand without one changes: Rubi's independent suites and a sample of its 
 | `"e^(b*x)*Ei(b*x)/x".Integrate("x")` | `Ei * e ^ (b * x) + C`, with `Ei` a variable | `Ei(b * x) ^ 2 / 2 + C` |
 | `"Si(b*x)*sin(b*x)/x".Integrate("x")` | `Si * -cos(b * x) + C`, with `Si` a variable | `Si(b * x) ^ 2 / 2 + C` |
 
+### A square of a special function, and one beside a power of `x` and its elementary derivative, are integrated by parts
+
+`x Si(b x) sin(b x)` was left unevaluated where `Si(b x) sin(b x)` was not: by parts it is
+`Si(b x)` against `x sin(b x)`, whose integral needs parts of its own, and the integral of that
+factor was taken with parts off. It is integrated by the polynomial's parts now, beside a special
+function of a linear argument, and what is left, `sin(b x)/x` times sines and cosines, by parts in
+turn. A square of one of `b x` is two rounds of parts, and what the first round leaves comes back
+as one product over a sum -- `(b x Ei(b x) - e^(b x)) e^(b x)/(b x)` for `Ei(b x)^2` -- that no rule
+reads whole: its terms are asked one at a time now
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)). An integrand holding one of
+these functions had no reading in 2.5.0, which the entries for the functions themselves record, and
+no integrand without one changes: Rubi's independent suites and a sample of its families 1 to 7,
+2726 problems, are answered alone as they were.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x*Si(b*x)*sin(b*x)".Integrate("x")` | a polynomial in a variable `Si` | an antiderivative in `Si(b x)`, `Ci(2 b x)` and `ln(x)` |
+| `"Ei(b*x)^2".Integrate("x")` | `Ei * (b * x) ^ 3 / 3 / b + C`, with `Ei` a variable | an antiderivative in `Ei(b x)` and `Ei(2 b x)` |
+| `"x*erf(b*x)^2".Integrate("x")` | `UnrecognizedFunctionParseException`: there is no function `erf` | an antiderivative in `erf(b x)` |
+
 ### An inverse trigonometric function below the bar is integrated to the sine and cosine integrals
 
 `1/arcsin(x)` was left unintegrated. Under the substitution that undoes the inverse function,

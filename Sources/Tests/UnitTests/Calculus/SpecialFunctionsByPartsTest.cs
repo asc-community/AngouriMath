@@ -95,5 +95,43 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x^3*Chi(b*x)")]
         public void APowerTimesASpecialFunctionIsByParts(string integrand)
             => DifferentiatesBack(integrand, Parameters);
+
+        /// <summary>
+        /// Beside a power of <c>x</c> times the elementary function its derivative is made of, the
+        /// special function is still the factor differentiated: <c>x sin(b x)</c> is integrated by
+        /// its polynomial's parts, and what is left, <c>sin(b x)/x</c> times that, is products of
+        /// sines and cosines over powers of <c>x</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("x*Si(b*x)*sin(b*x)")]
+        [InlineData("x^3*Si(b*x)*sin(b*x)")]
+        [InlineData("x^2*Ci(b*x)*cos(b*x)")]
+        [InlineData("x*Ci(b*x)*sin(b*x)")]
+        [InlineData("x*Si(a + b*x)*sin(a + b*x)")]
+        [InlineData("x*Si(c + d*x)*sin(a + b*x)")]
+        public void BesideAPowerAndTheElementaryFactorOfItsDerivative(string integrand)
+            => DifferentiatesBack(integrand, Parameters);
+
+        /// <summary>
+        /// A square of a special function of <c>b x</c> is two rounds of parts: the first against
+        /// the power of <c>x</c> leaves the special function once, beside its derivative, and that
+        /// is the case above or a substitution. The remainder of a round is asked term by term,
+        /// since it comes back as one product over a sum -- <c>(b x Ei(b x) - e^(b x)) e^(b x)/(b x)</c>
+        /// for <c>Ei(b x)^2</c> -- that no rule reads whole.
+        /// </summary>
+        [Theory]
+        [InlineData("Ei(b*x)^2")]
+        [InlineData("x*Ei(b*x)^2")]
+        [InlineData("x^2*Ei(b*x)^2")]
+        [InlineData("x*Si(b*x)^2")]
+        [InlineData("Ci(b*x)^2")]
+        [InlineData("x*Ci(b*x)^2")]
+        [InlineData("x^2*erf(b*x)^2")]
+        [InlineData("x*erfc(b*x)^2")]
+        [InlineData("erfi(b*x)^2/x^3")]
+        [InlineData("x*Shi(b*x)^2")]
+        [InlineData("Chi(b*x)^2")]
+        public void ASquareIsTwoRoundsOfParts(string integrand)
+            => DifferentiatesBack(integrand, Parameters);
     }
 }
