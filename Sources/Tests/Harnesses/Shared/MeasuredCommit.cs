@@ -56,6 +56,12 @@ namespace Harness
         }
 
         /// <summary>
+        /// The commit of the repository that contains <paramref name="path"/>, for a harness
+        /// that builds the library itself rather than referencing it.
+        /// </summary>
+        internal static string Commit(string path) => At(path);
+
+        /// <summary>
         /// The commit of the repository that contains <paramref name="path"/>.
         /// </summary>
         /// <remarks>
