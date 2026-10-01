@@ -16,6 +16,7 @@ Each exits non-zero when it finds a defect, or when a list of findings it keeps 
 | `PropCheck` | does each transformation satisfy a property it must: `Simplify`, `Expand` and `Factorize` keep the value, `Differentiate` agrees with a difference quotient, `Integrate` differentiates back | any property that does not hold |
 | `CanonCheck` | is there a **canonical form**: idempotence, order independence over commutative operators, and agreement between writings, for `InnerSimplified` and `Simplify` alike | a change to its findings, listed in `canoncheck-baseline.tsv` |
 | `Confluence` | where two arms of one rule set both fire at a node, do they agree, or is the order of the arms load-bearing | a change to its conflicting pairs, listed in `confluence-baseline.tsv` |
+| `DocSamples` | does every code sample in the wiki, and every annotated one on the website, compile, run, and print what its page says | a sample that does not compile, throws, or prints something else |
 
 A timeout fails none of them: a shared runner is slower than the machine a budget was set on.
 

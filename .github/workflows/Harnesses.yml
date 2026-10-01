@@ -13,11 +13,13 @@ on:
       - master
     paths:
       - 'Sources/AngouriMath/**'
+      - 'Sources/Wrappers/AngouriMath.FSharp/**'
       - 'Sources/Tests/Harnesses/**'
       - '.github/workflows/Harnesses.yml'
   pull_request:
     paths:
       - 'Sources/AngouriMath/**'
+      - 'Sources/Wrappers/AngouriMath.FSharp/**'
       - 'Sources/Tests/Harnesses/**'
       - '.github/workflows/Harnesses.yml'
   workflow_dispatch:
@@ -115,4 +117,39 @@ jobs:
       uses: actions/upload-artifact@v6
       with:
         name: crashcheck-report
+        path: harness-reports
+
+  # A job of its own: it checks the website out beside the library, clones the wiki, and builds a
+  # project per language from their samples.
+  DocSamples:
+    runs-on: ubuntu-latest
+    env:
+      HARNESS_REPORTS: ${{ github.workspace }}/harness-reports
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Check out the website
+      uses: actions/checkout@v6
+      with:
+        repository: asc-community/AngouriMathSite
+        path: site
+
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: '10.x'
+        dotnet-quality: 'preview'
+
+    - name: Build
+      run: dotnet build -c Release Sources/Tests/Harnesses/DocSamples
+
+    - name: DocSamples
+      run: dotnet Sources/Tests/Harnesses/DocSamples/bin/Release/net10.0/docsamples.dll --site=site
+
+    - name: Report
+      if: always()
+      uses: actions/upload-artifact@v6
+      with:
+        name: docsamples-report
         path: harness-reports
