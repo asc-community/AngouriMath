@@ -91,5 +91,29 @@ let ``input that does not parse fails, and says why`` () =
 let ``help lists every command`` () =
     let code, printed, _ = run [ "help" ] ""
     Assert.Equal(0, code)
-    for command in [ "eval"; "simp"; "fsimp"; "diff"; "solve"; "sub"; "latex" ] do
+    for command in [ "eval"; "simp"; "fsimp"; "diff"; "solve"; "sub"; "latex"; "info" ] do
         Assert.Contains($"amcli {command} ", printed)
+
+/// What info says about an expression's stationary points, by the second derivative test.
+[<Theory>]
+[<InlineData("x^2 - 2*x", "stationary point x = 1: a minimum, value -1")>]
+[<InlineData("2*x - x^2", "stationary point x = 1: a maximum, value 1")>]
+[<InlineData("x^3", "stationary point x = 0: a degenerate point, which the second derivative test does not decide, value 0")>]
+[<InlineData("x^2 + y^2", "stationary point (x, y) = (0, 0): a minimum, value 0")>]
+[<InlineData("-x^2 - y^2", "stationary point (x, y) = (0, 0): a maximum, value 0")>]
+[<InlineData("x^2 - y^2", "stationary point (x, y) = (0, 0): a saddle point, value 0")>]
+[<InlineData("x^3 + x", "stationary point x = sqrt(-1/3): not real")>]
+let ``info classifies each stationary point`` (expression: string) (expected: string) =
+    let code, printed, error = run [ "info"; expression ] ""
+    Assert.Equal("", error)
+    Assert.Equal(0, code)
+    Assert.Contains(expected, printed.Split('\n'))
+
+[<Fact>]
+let ``info names the variables and gives the derivative and the roots over each`` () =
+    let code, printed, _ = run [ "info"; "x^2 - 4" ] ""
+    Assert.Equal(0, code)
+    let lines = printed.Split('\n')
+    Assert.Contains("variables: x", lines)
+    Assert.Contains("derivative over x: 2 * x", lines)
+    Assert.Contains(lines, fun line -> line.StartsWith("roots over x: ") && line.Contains("-2") && line.Contains("2"))

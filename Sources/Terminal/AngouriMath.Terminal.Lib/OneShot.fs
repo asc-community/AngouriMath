@@ -26,6 +26,7 @@ amcli diff VAR EXPR          differentiates over VAR
 amcli solve VAR STATEMENT    solves over VAR, one root per line when there are finitely many
 amcli sub VAR VALUE EXPR     substitutes VALUE for VAR
 amcli latex EXPR             writes EXPR as LaTeX
+amcli info EXPR              its variables, derivatives, roots and stationary points
 amcli help                   prints this
 
 An argument written as _ is read from stdin, and so is one that is left out:
@@ -33,7 +34,7 @@ An argument written as _ is read from stdin, and so is one that is left out:
 """
 
 /// The names <c>run</c> answers. Anything else as a first argument is a usage error.
-let commands = set [ "eval"; "simp"; "fsimp"; "diff"; "solve"; "sub"; "latex"; "help"; "-h"; "--help" ]
+let commands = set [ "eval"; "simp"; "fsimp"; "diff"; "solve"; "sub"; "latex"; "info"; "help"; "-h"; "--help" ]
 
 /// The arguments still to read, falling back to a line of stdin where one is missing or is <c>_</c>.
 type private Arguments(given: string list, input: TextReader) =
@@ -46,6 +47,85 @@ type private Arguments(given: string list, input: TextReader) =
             rest <- tail
             if head = "_" then Option.ofObj (input.ReadLine()) else Some head
         | [] -> Option.ofObj (input.ReadLine())
+
+/// <summary>
+/// A real number's sign, where <paramref name="value"/> evaluates to one; otherwise None.
+/// </summary>
+let private signOf (value: Entity) =
+    match value.Evaled with
+    | :? Entity.Number.Real as real -> Some (if real.IsZero then 0 elif real.IsNegative then -1 else 1)
+    | _ -> None
+
+/// <summary>Whether <paramref name="value"/> is a number off the real line.</summary>
+let private isNotReal (value: Entity) =
+    match value.Evaled with
+    | :? Entity.Number.Real -> false
+    | :? Entity.Number.Complex -> true
+    | _ -> false
+
+/// <summary>
+/// What a stationary point is, by the second derivative test: with the Hessian's leading principal
+/// minors <c>D1 ... Dn</c>, all positive is a minimum, <c>(-1)^k Dk</c> all positive a maximum, and
+/// any other nonzero determinant a saddle point (Sylvester's criterion). A zero determinant decides
+/// nothing, and a minor that is not a real number leaves the point unclassified.
+/// </summary>
+let private kindOfStationaryPoint (hessian: int -> int -> Entity) (size: int) =
+    let minors =
+        [ for k in 1 .. size ->
+            if k = 1 then hessian 0 0
+            else (MathS.Matrix(k, k, fun row column -> hessian row column)).Determinant |> Option.ofObj |> Option.defaultValue MathS.NaN ]
+        |> List.map signOf
+    if minors |> List.exists Option.isNone then "not classified: its second derivatives there are not real numbers"
+    else
+        let signs = minors |> List.map Option.get
+        if List.last signs = 0 then "a degenerate point, which the second derivative test does not decide"
+        elif signs |> List.forall (fun sign -> sign > 0) then "a minimum"
+        elif signs |> List.mapi (fun k sign -> if k % 2 = 0 then -sign else sign) |> List.forall (fun sign -> sign > 0) then "a maximum"
+        else "a saddle point"
+
+/// <summary>
+/// The lines <c>amcli info</c> prints: the variables, the derivative and the roots over each, and
+/// the stationary points, each classified by the second derivative test.
+/// </summary>
+let private describe (expression: Entity) =
+    let variables = expression.Vars |> Seq.toList
+    let names = String.Join(", ", variables)
+    [ yield $"variables: {names}"
+      for v in variables do
+          yield $"derivative over {v}: {expression.Differentiate(v).Simplify().Stringize()}"
+      for v in variables do
+          yield $"roots over {v}: {expression.Equalizes(Entity.Number.Integer.Zero).Solve(v).Simplify().Stringize()}"
+      match variables with
+      | [] -> ()
+      | [ v ] ->
+          let first = expression.Differentiate(v).Simplify()
+          let second = first.Differentiate(v).Simplify()
+          match first.Equalizes(Entity.Number.Integer.Zero).Solve(v) with
+          | :? Entity.Set.FiniteSet as points ->
+              if points.Count = 0 then yield "stationary points: none"
+              for point in points do
+                  if isNotReal point then
+                      yield $"stationary point {v} = {point.Stringize()}: not real"
+                  else
+                      let at (e: Entity) = e.Substitute(v, point)
+                      let kind = kindOfStationaryPoint (fun _ _ -> at second) 1
+                      yield $"stationary point {v} = {point.Stringize()}: {kind}, value {(at expression).Simplify().Stringize()}"
+          | points -> yield $"stationary points: {points.Stringize()}"
+      | _ ->
+          let gradient = [ for v in variables -> expression.Differentiate(v).Simplify() ]
+          match MathS.Equations(gradient).Solve(variables |> List.toArray) with
+          | Null -> yield "stationary points: not found"
+          | NonNull solutions ->
+              for row in 0 .. solutions.RowCount - 1 do
+                  let at (e: Entity) =
+                      variables |> List.indexed |> List.fold (fun (acc: Entity) (i, v) -> acc.Substitute(v, solutions.[row, i])) e
+                  let hessian i j = at (expression.Differentiate(variables.[i]).Differentiate(variables.[j]))
+                  let point = String.Join(", ", [ for i in 0 .. variables.Length - 1 -> solutions.[row, i].Stringize() ])
+                  if [ for i in 0 .. variables.Length - 1 -> solutions.[row, i] ] |> List.exists isNotReal then
+                      yield $"stationary point ({names}) = ({point}): not real"
+                  else
+                      let kind = kindOfStationaryPoint hessian variables.Length
+                      yield $"stationary point ({names}) = ({point}): {kind}, value {(at expression).Simplify().Stringize()}" ]
 
 /// What a command printed, one line each.
 let private answer (command: string) (next: unit -> string option) : Result<string list, string> =
@@ -98,6 +178,10 @@ let private answer (command: string) (next: unit -> string option) : Result<stri
     | "latex" ->
         match expression () with
         | Some e -> Ok [ e.Latexize() ]
+        | None -> missing
+    | "info" ->
+        match expression () with
+        | Some e -> Ok (describe e)
         | None -> missing
     | _ -> Ok (usage.TrimEnd().Split('\n') |> List.ofArray)
 

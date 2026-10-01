@@ -42,8 +42,10 @@ $ echo "1 + x^2" | amcli diff x
 2 * x
 ```
 
-The commands are `eval`, `simp`, `fsimp`, `diff`, `solve`, `sub` and `latex`, and `amcli help`
-says what each takes. An argument written as `_`, or left out, is read from stdin. The exit code
+The commands are `eval`, `simp`, `fsimp`, `diff`, `solve`, `sub`, `latex` and `info`, and
+`amcli help` says what each takes. `info` describes an expression: its variables, the derivative
+and the roots over each, and its stationary points, each classified by the second derivative
+test. An argument written as `_`, or left out, is read from stdin. The exit code
 is 0 for an answer, 1 when the input does not parse or cannot be answered, and 2 for a command
 that does not exist or is missing an argument. These are the commands of the earlier standalone
 command-line tool, with the same names and argument order.
