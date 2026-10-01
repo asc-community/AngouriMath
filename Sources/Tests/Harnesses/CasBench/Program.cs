@@ -451,10 +451,7 @@ namespace CasBench
                               $"| {Esc(Trunc(r.Note, 70))} | {r.Ms} |");
             }
 
-            // Beside the repository rather than in the current directory: launching the
-            // harness from the workspace root and from work/casbench used to leave two
-            // copies of different ages, and reading the wrong one is how a run gets
-            // misreported.
+            // Where Harness.Reports says, whichever directory the run was started from.
             var path = Harness.Reports.PathFor("coverage.md");
             System.IO.File.WriteAllText(path, sb.ToString());
             Console.Error.WriteLine($"\nwrote {path}");

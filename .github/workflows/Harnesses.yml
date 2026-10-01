@@ -42,6 +42,7 @@ jobs:
         dotnet build -c Release Sources/Tests/Harnesses/BoundCheck
         dotnet build -c Release Sources/Tests/Harnesses/RootCheck
         dotnet build -c Release Sources/Tests/Harnesses/CasBench
+        dotnet build -c Release Sources/Tests/Harnesses/PropCheck
 
     # One step each, every one run whatever the one before did, so a red run names the harness.
     - name: BoundCheck
@@ -54,6 +55,10 @@ jobs:
     - name: CasBench
       if: success() || failure()
       run: dotnet Sources/Tests/Harnesses/CasBench/bin/Release/net10.0/casbench.dll
+
+    - name: PropCheck
+      if: success() || failure()
+      run: dotnet Sources/Tests/Harnesses/PropCheck/bin/Release/net10.0/propcheck.dll
 
     - name: Reports
       if: always()
