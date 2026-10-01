@@ -2381,6 +2381,30 @@ family 3 at twenty a file and a sample of the others are answered alone as they 
 |---|---|---|
 | `"li(b*x)/x".Integrate("x")` | `li * b * x + C`, with `li` a variable | `li(b * x) * ln(b * x) - b * x + C` |
 
+### A special function of a logarithm of a monomial is integrated, through `Ei` of a complex argument
+
+`(e x)^m Si(d (a + b ln(c x^n)))` is by parts against `(e x)^m`, and what is left is a power of `x`
+times `sin(d (a + b ln(c x^n)))/(a + b ln(c x^n))`. Two rules were missing on the way
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)):
+
+- **A function of one logarithm of a monomial.** A power of `x` times `G(ln(c x^n))` is integrated
+  under `t = ln(c x^n)`, with `x^(m + 1)` written as `K e^((m + 1) t/n)` and
+  `K = x^(m + 1) (c x^n)^(-(m + 1)/n)`, whose derivative is 0 wherever it is defined. That is an
+  antiderivative wherever the integrand is real. For an even `n` that includes negative `x`, where
+  `ln(c x^n)` is not `ln(c) + n ln(x)`. By parts leaves `(d x)^m x/ln(b x)` of `(d x)^m li(b x)`,
+  and this rule answers it with `Ei((m + 2) ln(b x))`.
+- **An exponential beside a sine or cosine, over linears.** Each sine and cosine is written as
+  exponentials, and each term is the exponential integral of a complex argument. The two conjugate
+  terms add up to a real value.
+
+Both columns measured on a build, `v2.5.0` against this change.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(2*x)*sin(x)/x".Integrate("x")` | `integral(e ^ (2 * x) * sin(x) / x, x)` | `(-1/2 * i) * Ei((2 + i) * x) + 1/2 * i * Ei((2 - i) * x) + C` |
+| `"x*sin(ln(x))/ln(x)".Integrate("x")` | `integral(x * sin(ln(x)) / ln(x), x)` | `(-1/2 * i) * Ei((2 + i) * ln(x)) + 1/2 * i * Ei((2 - i) * ln(x)) + C` |
+| `"cos(a+b*ln(c*x^n))^2".Integrate("x")` | `integral(cos(a + b * ln(c * x ^ n)) ^ 2, x)` | an antiderivative in `sin` and `cos` of `2 (a + b ln(c x^n))`, beside `x (c x^n)^(-1/n)` |
+
 ### An exponential or a hyperbolic function over several linears is split into partial fractions over them
 
 `e^x/(x (x + 1))` was left unevaluated, where `e^x/x` and `e^x/(x + 1)` were each answered with
