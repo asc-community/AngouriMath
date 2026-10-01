@@ -63,6 +63,20 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, AroundZero, Pins);
 
         /// <summary>
+        /// Over several linears, the quotient is split into partial fractions over them first, and
+        /// each term is the question above: <c>e^x/(x (x + 1))</c> is <c>Ei(x) - Ei(x + 1)/e</c>. The
+        /// last row is what by parts leaves of <c>Ei(a + b x)/x^2</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("e^x/(x*(x + 1))")]
+        [InlineData("e^x/(x*(x - a))")]
+        [InlineData("e^x/(x^2*(x + 1))")]
+        [InlineData("x^3*e^(2*x)/((x + 1)*(x - 2))")]
+        [InlineData("e^(a + b*x)/((a + b*x)*x)")]
+        public void AnExponentialOfALinearOverSeveralLinears(string integrand)
+            => DifferentiatesBack(integrand, AroundZero, Pins);
+
+        /// <summary>
         /// The Gaussian's odd negative moments end at <c>int e^(A x^2)/x = Ei(A x^2)/2</c>, and
         /// <c>x e^(-1/x^2)</c> is one of them under <c>u = 1/x</c>.
         /// </summary>

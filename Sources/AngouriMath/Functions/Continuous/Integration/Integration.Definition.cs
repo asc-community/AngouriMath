@@ -643,6 +643,9 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveAnExponentialOfALinearOverAPowerOfALinear(expr, x)) is { }) return answer;
             // And a sum of exponentials, which is how sinh and cosh arrive, onto Shi and Chi.
             if ((answer = IndefiniteIntegralSolver.SolveAHyperbolicOfALinearOverAPowerOfALinear(expr, x)) is { }) return answer;
+            // And either over several linears, split into partial fractions over them first, as the
+            // trigonometric rule below splits.
+            if ((answer = IndefiniteIntegralSolver.SolveAnExponentialOverSeveralLinears(expr, x)) is { }) return answer;
             // Sines and cosines of a linear over a power of a linear, onto Si and Ci under u = the
             // linear, where the search would take the quotient by parts without end.
             if ((answer = IndefiniteIntegralSolver.SolveATrigonometricOfALinearOverAPowerOfALinear(expr, x)) is { }) return answer;
