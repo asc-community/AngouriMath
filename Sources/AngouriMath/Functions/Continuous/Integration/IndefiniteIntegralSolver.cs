@@ -1842,12 +1842,10 @@ namespace AngouriMath.Functions.Algebra
                 // So its terms are asked, each as a question of its own. From the top only,
                 // which is where that asking reaches, and once: a term asked so is at the top
                 // itself, and its own remainder asked the same way would lift the search again,
-                // each level with the depth reset. And of a multiple of x only: of `a + b x`, the
-                // remainder is over the linear, and its terms are the exponentials a hyperbolic
-                // function is written as, each a harder question than the whole -- the decline of
-                // `x Shi(a + b x)^2` went from a second to past twenty asking them.
+                // each level with the depth reset. And not for every argument: see
+                // TheRemainderIsAskedTermByTerm.
                 // https://github.com/asc-community/AngouriMath/issues/1501
-                if (remainingIntegral is null && besideASpecialFunction && OfAMultipleOfTheVariable(v, x)
+                if (remainingIntegral is null && besideASpecialFunction && TheRemainderIsAskedTermByTerm(v, u, x)
                     && Integration.AnsweringTheQuestionAsked && !askingTheTermsOfARemainder)
                 {
                     var terms = remaining is Divf(var remainingAbove, var remainingBelow)
@@ -1872,7 +1870,7 @@ namespace AngouriMath.Functions.Algebra
                         askingTheTermsOfARemainder = false;
                     }
                 }
-                else if (remainingIntegral is null && besideASpecialFunction && OfAMultipleOfTheVariable(v, x)
+                else if (remainingIntegral is null && besideASpecialFunction && TheRemainderIsAskedTermByTerm(v, u, x)
                     && Integration.AnsweringTheQuestionAsked)
                     Integration.DeclinedForItsScope();
                 if (remainingIntegral is null) return null;
@@ -20345,12 +20343,29 @@ namespace AngouriMath.Functions.Algebra
                 || factor is Powf(var @base, Number.Integer power) && power.EInteger.Sign > 0 && IsASpecialFunctionOfALinear(@base, x);
 
         /// <summary>
-        /// Whether the special function in <paramref name="factor"/>, or in the base of its power,
-        /// is of a multiple of <paramref name="x"/>, <c>b x</c>, with no offset.
+        /// Whether the remainder after differentiating <paramref name="v"/>, a special function of
+        /// a linear argument or a power of one, against <paramref name="u"/> is asked term by term
+        /// when nothing answers it whole. Of a multiple of <paramref name="x"/>, always. Of
+        /// <c>a + b x</c>, where the function's derivative divides by its argument -- <c>Ei</c>,
+        /// <c>Si</c>, <c>Ci</c>, <c>Shi</c>, <c>Chi</c> -- since the constant of the factor
+        /// integrated beside it is then matched to the linear and the terms are the case without
+        /// the offset; and where the function is integrated against itself, the square alone.
+        /// Not an error function of <c>a + b x</c> beside anything else: its derivative is a
+        /// Gaussian of the shifted argument rather than a quotient by it, a polynomial beside it
+        /// stays in every term, and asking them took the decline of <c>(c + d x) erf(a + b x)^2</c>
+        /// from six seconds to twenty-four, answering nothing.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
         /// </summary>
-        private static bool OfAMultipleOfTheVariable(Entity factor, Variable x)
-            => (factor is Powf(var @base, _) ? @base : factor).DirectChildren.FirstOrDefault() is { } argument
-                && TreeAnalyzer.TryGetPolyLinear(argument, x, out _, out var offset) && TreeAnalyzer.IsZero(offset);
+        private static bool TheRemainderIsAskedTermByTerm(Entity v, Entity u, Variable x)
+        {
+            var special = v is Powf(var @base, _) ? @base : v;
+            if (special.DirectChildren.FirstOrDefault() is not { } argument
+                || !TreeAnalyzer.TryGetPolyLinear(argument, x, out _, out var offset))
+                return false;
+            return TreeAnalyzer.IsZero(offset)
+                || special is not (Entity.Erff or Entity.Erfcf or Entity.Erfif)
+                || u == special;
+        }
 
         /// <summary>
         /// The factors of <paramref name="expr"/> that are polynomials in <paramref name="x"/> of

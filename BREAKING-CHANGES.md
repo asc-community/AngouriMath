@@ -2335,6 +2335,24 @@ beside a power of `x`, the answer is written with the same constant: `x Ei(a + b
 | `"x*Shi(a+b*x)^2".Integrate("x")` | `a ^ 2 * Shi * x ^ 2 / 2 + a * b * 2 * Shi * x ^ 3 / 3 + b ^ 2 * Shi * x ^ 4 / 4 + C`, with `Shi` a variable | an antiderivative in `Shi(a + b x)` and `Ei(2 (a + b x))`, `Ei(-2 (a + b x))` |
 | `"x*Ei(a+b*x)^2".Integrate("x")` | `a ^ 2 * Ei * x ^ 2 / 2 + a * b * 2 * Ei * x ^ 3 / 3 + b ^ 2 * Ei * x ^ 4 / 4 + C`, with `Ei` a variable | an antiderivative in `Ei(a + b x)` and `Ei(2 (a + b x))` |
 
+### A square of a special function of a shifted argument is integrated by parts
+
+The remainder of a special function's square was asked term by term only for an argument `b x`.
+For `a + b x`, the remainder divided by the linear until the constant of integration was matched to
+it; with that matched, the terms are the case without the offset, and the asking is offered for any
+linear argument ([#1501](https://github.com/asc-community/AngouriMath/issues/1501)). The exception
+is an error function beside anything but itself, whose derivative is a Gaussian of the shifted
+argument, so a polynomial beside it stays in every term: `(c + d x) erf(a + b x)^2` is still
+declined. An integrand holding one of these functions had no reading in 2.5.0, which the entries for
+the functions themselves record, and no integrand without one changes: Rubi's independent suites and
+a sample of its families 1 to 7 are answered alone as they were.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"Shi(a+b*x)^2".Integrate("x")` | `Shi * (a + b * x) ^ 3 / 3 / b + C`, with `Shi` a variable | an antiderivative in `Shi(a + b x)`, `Ei(2 (a + b x))` and `Ei(-2 (a + b x))` |
+| `"x^2*Ei(a+b*x)^2".Integrate("x")` | `a ^ 2 * Ei * x ^ 3 / 3 + a * b * 2 * Ei * x ^ 4 / 4 + b ^ 2 * Ei * x ^ 5 / 5 + C`, with `Ei` a variable | an antiderivative in `Ei(a + b x)` and `Ei(2 (a + b x))` |
+| `"erf(a+b*x)^2".Integrate("x")` | `UnrecognizedFunctionParseException`: there is no function `erf` | an antiderivative in `erf` |
+
 ### An exponential or a hyperbolic function over several linears is split into partial fractions over them
 
 `e^x/(x (x + 1))` was left unevaluated, where `e^x/x` and `e^x/(x + 1)` were each answered with

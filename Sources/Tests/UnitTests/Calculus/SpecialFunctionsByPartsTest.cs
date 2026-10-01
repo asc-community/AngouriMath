@@ -142,6 +142,10 @@ namespace AngouriMath.Tests.Calculus
         [Theory]
         [InlineData("x*Shi(a + b*x)^2")]
         [InlineData("x*Ei(a + b*x)^2")]
+        [InlineData("Shi(a + b*x)^2")]
+        [InlineData("x*Si(a + b*x)^2")]
+        [InlineData("x^2*Ei(a + b*x)^2")]
+        [InlineData("erf(a + b*x)^2")]
         public void ASquareOfAShiftedArgumentIsTwoRoundsOfParts(string integrand)
             => DifferentiatesBack(integrand, Parameters);
     }
