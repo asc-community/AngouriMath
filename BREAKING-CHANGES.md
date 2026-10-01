@@ -2917,6 +2917,20 @@ since they are these exponentials
 | `"(p + q*x)^2*f^(a + b*x + c*x^2)".Integrate("x")` | `integral((p + q * x) ^ 2 * f ^ (a + b * x + c * x ^ 2), x)` | the antiderivative |
 | `"x^2*sinh(a + b*x + c*x^2)".Integrate("x")` | `integral(x ^ 2 * (e ^ (a + b * x + c * x ^ 2) - e ^ (-(a + b * x + c * x ^ 2))) / 2, x)` | the antiderivative |
 
+### A Gaussian below the bar is read as the exponential of its negated exponent
+
+`e^(-x^2)/x^2` was integrated by the Gaussian's moments, and `1/(e^(x^2) x^2)`, the same function,
+was not: the rule for the moments took the exponential from above the bar only. By parts writes
+the factor beside `erf(b x)` in `erf(b x)/(e^(b^2 x^2) x^2)` the second way, and that integral was
+declined for want of it ([#1501](https://github.com/asc-community/AngouriMath/issues/1501)). Both
+columns measured on a build, `v2.5.0` against this change; `erf` had no reading in 2.5.0, which its
+own entry records.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(e^(x^2)*x^2)".Integrate("x")` | `integral(1 / (e ^ x ^ 2 * x ^ 2), x)` | `-1 / x * e ^ (-x ^ 2) + (-2) * pi ^ (1/2) / 2 * erf(x) + C` |
+| `"erf(b*x)/(e^(b^2*x^2)*x^2)".Integrate("x")` | `UnrecognizedFunctionParseException`: there is no function `erf` | an antiderivative in `erf` and `Ei(-2 b^2 x^2)` |
+
 ### An exponential of a polynomial beside the polynomial's derivative is integrated
 
 `e^(a + b x + c x^2) (b + 2 c x) sqrt(a + b x + c x^2)` was left unintegrated. `G^P k P' f(P)`, with
