@@ -646,6 +646,9 @@ namespace AngouriMath.Functions.Algebra
             // And either over several linears, split into partial fractions over them first, as the
             // trigonometric rule below splits.
             if ((answer = IndefiniteIntegralSolver.SolveAnExponentialOverSeveralLinears(expr, x)) is { }) return answer;
+            // And with sines and cosines beside the exponential, written as exponentials: each term
+            // is then the exponential's, with a complex rate.
+            if ((answer = IndefiniteIntegralSolver.SolveAnExponentialTimesATrigonometricOverLinears(expr, x)) is { }) return answer;
             // Sines and cosines of a linear over a power of a linear, onto Si and Ci under u = the
             // linear, where the search would take the quotient by parts without end.
             if ((answer = IndefiniteIntegralSolver.SolveATrigonometricOfALinearOverAPowerOfALinear(expr, x)) is { }) return answer;
@@ -838,6 +841,8 @@ namespace AngouriMath.Functions.Algebra
             // is why the general substitution does not find it and why it pays: the integrator
             // answers an exponential times almost anything.
             if ((answer = IndefiniteIntegralSolver.SolveByLogarithmSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // And a power of x times a function of one logarithm of a monomial, under t = that logarithm.
+            if ((answer = IndefiniteIntegralSolver.SolveByAPowerAndALogarithmOfAMonomial(expr, x, integrateByParts)) is { }) return answer;
             // And the inverse trigonometric functions' own, beside the logarithm's and for the
             // same reason: `x = sin(u)` removes the `x` that substituting for `arcsin(x)` leaves.
             if ((answer = IndefiniteIntegralSolver.SolveByInverseTrigonometricSubstitution(expr, x, integrateByParts)) is { }) return answer;

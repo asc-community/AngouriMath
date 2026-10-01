@@ -3978,6 +3978,99 @@ namespace AngouriMath.Functions.Algebra
             return Functions.PartialFractions.Bare((constant * sum).InnerSimplified);
         }
 
+        /// <summary>
+        /// An exponential of a linear times sines and cosines of linears, and a polynomial, over
+        /// linears: each sine and cosine is written as exponentials, <c>sin(c x) = (e^(i c x) - e^(-i c x))/(2i)</c>,
+        /// the product multiplied out, and every term is an exponential of a linear with a
+        /// complex rate over the linears, which <see cref="SolveAnExponentialOfALinearOverAPowerOfALinear"/>
+        /// and <see cref="SolveAnExponentialOverSeveralLinears"/> answer with the exponential
+        /// integral of a complex argument. <c>e^(2x) sin(x)/x</c> is
+        /// <c>(Ei((2 + i) x) - Ei((2 - i) x))/(2i)</c>, real where <c>x</c> is: the two terms are
+        /// conjugates. What by parts leaves of <c>Si(ln(x))</c>, under <c>t = ln(x)</c>, is
+        /// <c>e^t sin(t)/t</c>. Rubi's 8.4, <c>(e x)^m Si(d (a + b ln(c x^n)))</c>, answers the same way.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </summary>
+        /// <remarks>
+        /// Only with an exponential of a real rate beside the sine or cosine: alone over a linear,
+        /// the sine and cosine integrals are their closed form, and the rule for them answers.
+        /// </remarks>
+        internal static Entity? SolveAnExponentialTimesATrigonometricOverLinears(Entity expr, Entity.Variable x)
+        {
+            if (expr is not (Divf or Mulf))
+                return null;
+            int exponentialsByShape = 0, trigonometricsByShape = 0;
+            var aPowerOfASumByShape = false;
+            CountFactorsByShape(expr, x, ref exponentialsByShape, ref trigonometricsByShape, ref aPowerOfASumByShape);
+            if (exponentialsByShape == 0 || trigonometricsByShape == 0)
+                return null;
+            Entity constant = Number.Integer.One;
+            Entity? polynomial = null;
+            var linears = new List<(Entity Linear, int Power)>();
+            var exponents = new List<WrittenExponent>();
+            var terms = new List<(Entity Coefficient, int[] Multiples)> { (Number.Integer.One, new int[MostExponents]) };
+            int exponentials = 0, trigonometrics = 0;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                var (@base, exponent) = factor is Powf(var raised, Number.Integer whole) && whole.EInteger.CanFitInInt32() && !whole.EInteger.IsZero
+                    ? (raised, whole.EInteger.ToInt32Checked()) : (factor, 1);
+                if (underneath && TreeAnalyzer.TryGetPolyLinear(@base, x, out var slopeOfIt, out _) && !TreeAnalyzer.IsZero(slopeOfIt))
+                {
+                    var at = linears.FindIndex(pair => pair.Linear == @base);
+                    if (at < 0)
+                        linears.Add((@base, exponent));
+                    else
+                        linears[at] = (@base, linears[at].Power + exponent);
+                    continue;
+                }
+                if (underneath)
+                    return null;
+                if (AsExponentialsOfQuadratics(factor, x, exponents) is { } read)
+                {
+                    if (factor.Nodes.Any(node => node is Sinf or Cosf))
+                        trigonometrics++;
+                    else
+                        exponentials++;
+                    if (Multiplied(terms, read) is not { } product)
+                        return null;
+                    terms = product;
+                    continue;
+                }
+                if (TreeAnalyzer.TryGetPolynomial(factor, x, out var monomials) && monomials.Keys.All(degree => degree.Sign >= 0 && degree.CompareTo(EInteger.FromInt32(12)) <= 0))
+                {
+                    polynomial = polynomial is null ? factor : polynomial * factor;
+                    continue;
+                }
+                return null;
+            }
+            if (exponentials == 0 || trigonometrics == 0 || linears.Count == 0 || linears.Count > 4 || linears.Sum(pair => pair.Power) > 12)
+                return null;
+            var below = linears.Aggregate((Entity)Number.Integer.One, (product, pair) => product * MathS.Pow(pair.Linear, pair.Power));
+            var above = polynomial ?? Number.Integer.One;
+            Entity sum = Number.Integer.Zero;
+            foreach (var (coefficient, multiples) in terms)
+            {
+                var (a, b, c) = TheExponent(multiples, exponents);
+                // Linear exponents only: a quadratic left is the Gaussian's, and is another rule's.
+                if (!TreeAnalyzer.IsZero(a))
+                    return null;
+                var factorOfTheTerm = TreeAnalyzer.IsZero(c) ? coefficient : coefficient * MathS.Pow(MathS.e, c);
+                var question = TreeAnalyzer.IsZero(b)
+                    ? above / below
+                    : MathS.Pow(MathS.e, b * x) * above / below;
+                if (((TreeAnalyzer.IsZero(b) ? null
+                        : linears.Count == 1 ? SolveAnExponentialOfALinearOverAPowerOfALinear(question, x) : SolveAnExponentialOverSeveralLinears(question, x))
+                        ?? Integration.ComputeIndefiniteIntegral(question, x, false)) is not { } integral)
+                    return null;
+                sum += factorOfTheTerm * integral;
+            }
+            return Functions.PartialFractions.Bare((constant * sum).InnerSimplified);
+        }
+
         /// <summary>Whether a factor of <paramref name="expr"/> is a sum with an exponential of the variable in it.</summary>
         private static bool HasASumOfExponentials(Entity expr, Entity.Variable x) => expr switch
         {
@@ -6612,6 +6705,90 @@ namespace AngouriMath.Functions.Algebra
             return Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is { } result
                 ? result.Substitute(u, MathS.Ln(x))
                 : null;
+        }
+
+        /// <summary>
+        /// A power of <c>x</c> times a function of one logarithm of a monomial, <c>x^m G(ln(c x^n))</c>,
+        /// under <c>t = ln(c x^n)</c>: <c>dx = x dt/n</c>, and <c>x^(m + 1)</c> is
+        /// <c>K e^((m + 1) t/n)</c> with <c>K = x^(m + 1) (c x^n)^(-(m + 1)/n)</c>, whose derivative
+        /// is 0 wherever it is defined. So the answer is <c>K/n</c> times the integral of
+        /// <c>e^((m + 1) t/n) G(t)</c> at <c>t = ln(c x^n)</c>, an antiderivative on the whole of
+        /// the real line where the integrand is real -- for an even <c>n</c> that includes negative
+        /// <c>x</c>, where <c>ln(c x^n)</c> is not <c>ln(c) + n ln(x)</c>. A power of a monomial,
+        /// <c>(e x)^p</c>, is <c>x^p</c> times a factor of the same kind. What by parts leaves of
+        /// <c>(e x)^m Si(d (a + b ln(c x^n)))</c> is this, with <c>G(t)</c> a sine over a linear in
+        /// <c>t</c>. Rubi's answers to 8.3 to 8.5 are written in exactly this <c>K</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </summary>
+        /// <remarks>
+        /// After <see cref="SolveByLogarithmSubstitution"/>, which answers <c>ln(x)</c> alone.
+        /// </remarks>
+        internal static Entity? SolveByAPowerAndALogarithmOfAMonomial(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!expr.Nodes.Any(node => node is Logf))
+                return null;
+            Entity constant = Number.Integer.One;
+            Entity m = Number.Integer.Zero;
+            Entity locallyConstant = Number.Integer.One;
+            Entity rest = Number.Integer.One;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                // x, a power of x, or a power of a monomial (k x)^p, p free of x.
+                var (@base, power) = factor is Powf(var raised, var exponent) && !exponent.ContainsNode(x) ? (raised, exponent) : (factor, (Entity)Number.Integer.One);
+                if (TheMonomial(@base, x) is var (coefficientOfIt, degreeOfIt) && degreeOfIt == Number.Integer.One)
+                {
+                    var p = underneath ? -power : power;
+                    m = m + p;
+                    if (coefficientOfIt != Number.Integer.One)
+                        locallyConstant = locallyConstant * MathS.Pow(@base, p) * MathS.Pow(x, -p);
+                    continue;
+                }
+                rest = underneath ? rest / factor : rest * factor;
+            }
+            // One logarithm of a monomial in what is left.
+            var logarithms = rest.Nodes.OfType<Logf>().Where(node => node.Base == MathS.e && node.ContainsNode(x)).Distinct().ToList();
+            if (logarithms.Count != 1 || TheMonomial(logarithms[0].Antilogarithm, x) is not var (c, n) || TreeAnalyzer.IsZero(n))
+                return null;
+            var t = Variable.CreateUnique(expr, "t_log");
+            var inT = rest.Substitute(logarithms[0], t);
+            if (inT.ContainsNode(x))
+                return null;
+            var mPlusOne = (m + Number.Integer.One).InnerSimplified;
+            var integrand = (MathS.Pow(MathS.e, (mPlusOne / n).InnerSimplified * t) * inT).InnerSimplified;
+            if (integrand is Providedf(var bare, _))
+                integrand = bare;
+            if (Integration.ComputeIndefiniteIntegral(integrand, t, integrateByParts) is not { } inTIntegral)
+                return null;
+            // Of ln(x) itself, K is 1, and written as x^(m + 1) x^(-(m + 1)) it is not seen to be.
+            var k = logarithms[0].Antilogarithm == x ? Number.Integer.One
+                : MathS.Pow(x, mPlusOne) * MathS.Pow(logarithms[0].Antilogarithm, (-mPlusOne / n).InnerSimplified);
+            var back = constant * locallyConstant * k / n * inTIntegral.Substitute(t, logarithms[0]);
+            return back.Nodes.Any(node => node == MathS.NaN) ? null : back;
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> as <c>c x^n</c>, <c>c</c> and <c>n</c> free of <paramref name="x"/>,
+        /// or <see langword="null"/>.
+        /// </summary>
+        private static (Entity Coefficient, Entity Degree)? TheMonomial(Entity expr, Entity.Variable x)
+        {
+            if (expr == x)
+                return (Number.Integer.One, Number.Integer.One);
+            if (expr is Powf(var @base, var power) && @base == x && !power.ContainsNode(x))
+                return (Number.Integer.One, power);
+            if (expr is Mulf(var left, var right))
+            {
+                if (!left.ContainsNode(x) && TheMonomial(right, x) is var (c, n))
+                    return (left * c, n);
+                if (!right.ContainsNode(x) && TheMonomial(left, x) is var (c2, n2))
+                    return (right * c2, n2);
+            }
+            return null;
         }
 
         /// <summary>
