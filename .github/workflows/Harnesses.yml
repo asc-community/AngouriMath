@@ -45,6 +45,8 @@ jobs:
         dotnet build -c Release Sources/Tests/Harnesses/PropCheck
         dotnet build -c Release Sources/Tests/Harnesses/SimpSweep
         dotnet build -c Release Sources/Tests/Harnesses/RuleCheck
+        dotnet build -c Release Sources/Tests/Harnesses/CanonCheck
+        dotnet build -c Release Sources/Tests/Harnesses/Confluence
 
     # One step each, every one run whatever the one before did, so a red run names the harness.
     - name: BoundCheck
@@ -69,6 +71,15 @@ jobs:
     - name: RuleCheck
       if: success() || failure()
       run: dotnet Sources/Tests/Harnesses/RuleCheck/bin/Release/net10.0/rulecheck.dll
+
+    # These two report findings by design and fail when their committed list of them changes.
+    - name: CanonCheck
+      if: success() || failure()
+      run: dotnet Sources/Tests/Harnesses/CanonCheck/bin/Release/net10.0/canoncheck.dll
+
+    - name: Confluence
+      if: success() || failure()
+      run: dotnet Sources/Tests/Harnesses/Confluence/bin/Release/net10.0/confluence.dll
 
     - name: Reports
       if: always()
