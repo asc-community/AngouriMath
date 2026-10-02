@@ -103,6 +103,36 @@ namespace AngouriMath.Tests.Calculus
                 ("a", 1.3), ("c", 0.8), ("d", 1.1), ("m", 0.6), ("A", 0.7), ("B", -0.4), ("F", 0.9));
 
         /// <summary>
+        /// The antiderivative is real wherever the integrand is, and not real by a constant: a
+        /// differentiation back cannot see a constant. The logarithm over the linear's root is of
+        /// <c>(1 + z)/(1 - z)</c> where the quadratic has no real root and of <c>(z + 1)/(z - 1)</c>
+        /// where it has two, and each row is on one side, the symbolic ones pinned to it.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(4 - x^2)/x^3", new[] { 0.3, 0.9, 1.7 }, new string[0], new double[0])]
+        [InlineData("sqrt(1 + x^2)/(1 + x)^2", new[] { -2.6, 0.3, 0.9, 1.7 }, new string[0], new double[0])]
+        [InlineData("1/((g + h*x)*sqrt(a + c*x^2))", new[] { -1.2, 0.3, 0.9, 1.7 }, new[] { "a", "c", "g", "h" }, new[] { 1.3, 0.8, 1.9, 0.5 })]
+        [InlineData("1/((g + h*x)*sqrt(a + c*x^2))", new[] { -2.6, 1.5, 2.0, 2.6 }, new[] { "a", "c", "g", "h" }, new[] { -1.2, 0.8, 1.9, 0.5 })]
+        public void RealWhereTheIntegrandIsReal(string integrand, double[] points, string[] names, double[] values)
+        {
+            var integral = integrand.ToEntity().Integrate("x").Substitute("C", 0);
+            Entity original = integrand.ToEntity();
+            for (var i = 0; i < names.Length; i++)
+            {
+                integral = integral.Substitute(names[i], values[i]);
+                original = original.Substitute(names[i], values[i]);
+            }
+            foreach (var at in points)
+            {
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.True(!want.IsNaN && Math.Abs((double)want.ImaginaryPart) < 1e-12, $"{integrand} is not real at x = {at}");
+                var got = integral.Substitute("x", at).EvalNumerical();
+                Assert.True(!got.IsNaN && Math.Abs((double)got.ImaginaryPart) < 1e-9,
+                    $"the antiderivative of {integrand} is {got} at x = {at}, where the integrand is real");
+            }
+        }
+
+        /// <summary>
         /// Rubi's rows with numbers, which nothing answered: the rules further down take a
         /// product of distinct linears apart beside the root, and not a power of one.
         /// </summary>

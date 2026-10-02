@@ -8085,9 +8085,12 @@ namespace AngouriMath.Functions.Algebra
         /// <c>Z = 2 q0 h - q1 g + (q1 h - 2 q2 g) x</c>, <c>int 1/(y S)</c> is
         /// <c>-artanh(Z/(2 sqrt(H) S))/sqrt(H)</c>, written as the logarithm the library writes it
         /// as, and <c>arctan(Z/(2 sqrt(-H) S))/sqrt(-H)</c>, real where <c>H &lt; 0</c>. The
-        /// derivative of each of those two needs only <c>sqrt(z)^2 = z</c>, since
-        /// <c>Z^2 - 4 H Q</c> is <c>(q1^2 - 4 q0 q2) y^2</c>. Each pair is given by the sign of its
-        /// quantity, as for the roots of two linears.
+        /// derivative of each of those two needs only <c>sqrt(z)^2 = z</c>. Each pair is given by
+        /// the sign of its quantity, as for the roots of two linears. And since
+        /// <c>Z^2 - 4 H Q</c> is <c>(q1^2 - 4 q0 q2) y^2</c>, the artanh is of a number less than
+        /// 1 in size where <c>Q</c> has no real root, and of one more than 1 where it has two:
+        /// there it is written as the logarithm of <c>(z + 1)/(z - 1)</c>, which differs from
+        /// that of <c>(1 + z)/(1 - z)</c> by a constant and is the real one.
         /// </para>
         /// <para>
         /// <b>Where it is asked.</b> Only with the linear below the bar. A polynomial beside the
@@ -8162,8 +8165,13 @@ namespace AngouriMath.Functions.Algebra
                 var (_, g, h, _, atThePole, _) = pole!;
                 var z = 2 * q0 * h - q1 * g + (q1 * h - 2 * q2 * g) * x;
                 var twiceTheRoot = 2 * MathS.Sqrt(atThePole[0]) * root;
-                answer = answer + BySign(atThePole[0],
-                    -ofTheThirdKind * MathS.Ln((twiceTheRoot + z) / (twiceTheRoot - z)) / (2 * MathS.Sqrt(atThePole[0])),
+                // z^2 - 4 H Q is (q1^2 - 4 q0 q2) (g + h x)^2, so z/(2 sqrt(H) S) is less than 1 in
+                // size where that is negative, and the logarithm of (1 + it)/(1 - it) is real, and
+                // more where it is positive, and the logarithm of (it + 1)/(it - 1) is.
+                Entity Logarithm(Entity ratio) => -ofTheThirdKind * MathS.Ln(ratio) / (2 * MathS.Sqrt(atThePole[0]));
+                answer = answer + BySigns(atThePole[0], q1 * q1 - 4 * q0 * q2,
+                    Logarithm((z + twiceTheRoot) / (z - twiceTheRoot)),
+                    Logarithm((twiceTheRoot + z) / (twiceTheRoot - z)),
                     ofTheThirdKind * MathS.Arctan(z / (2 * MathS.Sqrt(-atThePole[0]) * root)) / MathS.Sqrt(-atThePole[0]));
             }
             return (constantBelow == Number.Integer.One ? answer : answer / constantBelow).InnerSimplified;
@@ -8515,6 +8523,20 @@ namespace AngouriMath.Functions.Algebra
             => SignOfANumberTimesEvenPowers(quantity) is { } sign
                 ? (sign < 0 ? whereNegative : wherePositive)
                 : MathS.Piecewise((wherePositive, new Greaterf(quantity, Number.Integer.Zero)), (whereNegative, new Lessf(quantity, Number.Integer.Zero)));
+
+        // The same where the form for a positive first quantity is chosen by the sign of a second,
+        // as one piecewise rather than one inside another.
+        private static Entity BySigns(Entity first, Entity second, Entity wherePositiveAndPositive, Entity wherePositiveAndNegative, Entity whereNegative)
+        {
+            var wherePositive = BySign(second, wherePositiveAndPositive, wherePositiveAndNegative);
+            if (wherePositive is not Piecewise || SignOfANumberTimesEvenPowers(first) is { })
+                return BySign(first, wherePositive, whereNegative);
+            var positive = new Greaterf(first, Number.Integer.Zero);
+            return MathS.Piecewise(
+                (wherePositiveAndPositive, new Andf(positive, new Greaterf(second, Number.Integer.Zero))),
+                (wherePositiveAndNegative, new Andf(positive, new Lessf(second, Number.Integer.Zero))),
+                (whereNegative, new Lessf(first, Number.Integer.Zero)));
+        }
 
         private static int? SignOfANumberTimesEvenPowers(Entity quantity)
         {
