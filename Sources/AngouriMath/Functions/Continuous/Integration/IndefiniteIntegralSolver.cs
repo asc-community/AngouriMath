@@ -10360,18 +10360,27 @@ namespace AngouriMath.Functions.Algebra
                 return null;
 
             // What is free of x in a factor goes in front, to the factor's power.
+            void Front(MultivariatePolynomial free, int power)
+            {
+                if (free.IsConstant && free.SameAs(MultivariatePolynomial.One(free.VariableCount)))
+                    return;
+                var front = free.ToEntity(variables);
+                var raised = power == 1 ? front : MathS.Pow(front, power);
+                constant = constant == Number.Integer.One ? raised : constant * raised;
+            }
             bool Keep(MultivariatePolynomial poly, int power)
             {
+                // A part free of x goes in front whole, its sign with it: a divisor is found up to
+                // a unit, so taking -(b u^2 - 1)^2 apart leaves a part -1, whose content is 1.
+                if (poly.DegreeIn(at) == 0)
+                {
+                    Front(poly, power);
+                    return true;
+                }
                 if (Functions.PolynomialGcd.ContentIn(poly, at, rest, 0) is not { } content || poly.DivideExact(content) is not { } primitive)
                     return false;
-                if (!content.IsConstant || !content.SameAs(MultivariatePolynomial.One(poly.VariableCount)))
-                {
-                    var front = content.ToEntity(variables);
-                    var raised = power == 1 ? front : MathS.Pow(front, power);
-                    constant = constant == Number.Integer.One ? raised : constant * raised;
-                }
-                if (primitive.DegreeIn(at) > 0)
-                    parts.Add((primitive, power));
+                Front(content, power);
+                parts.Add((primitive, power));
                 return true;
             }
 
