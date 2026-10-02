@@ -91,8 +91,18 @@ let ``input that does not parse fails, and says why`` () =
 let ``help lists every command`` () =
     let code, printed, _ = run [ "help" ] ""
     Assert.Equal(0, code)
-    for command in [ "eval"; "simp"; "fsimp"; "diff"; "solve"; "sub"; "latex"; "info" ] do
+    for command in [ "eval"; "simp"; "fsimp"; "diff"; "solve"; "sub"; "latex"; "info"; "mcp" ] do
         Assert.Contains($"amcli {command} ", printed)
+
+/// Not one answer but a session: the server reads requests from stdin until it ends, and writes
+/// nothing to stdout but its replies.
+[<Fact>]
+let ``mcp serves the protocol on stdin and stdout`` () =
+    let code, printed, error = run [ "mcp" ] "{\"jsonrpc\":\"2.0\",\"id\":0,\"method\":\"initialize\",\"params\":{}}"
+    Assert.Equal("", error)
+    Assert.Equal(0, code)
+    Assert.StartsWith("{\"jsonrpc\":\"2.0\",\"id\":0,\"result\":{\"protocolVersion\":\"2024-11-05\"", printed)
+    Assert.DoesNotContain("\n", printed)
 
 /// What info says about an expression's stationary points, by the second derivative test.
 [<Theory>]

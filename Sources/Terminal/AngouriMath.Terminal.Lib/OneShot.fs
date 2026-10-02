@@ -27,6 +27,7 @@ amcli solve VAR STATEMENT    solves for VAR, one root per line when there are fi
 amcli sub VAR VALUE EXPR     substitutes VALUE for VAR
 amcli latex EXPR             writes EXPR as LaTeX
 amcli info EXPR              its variables, derivatives, roots and stationary points
+amcli mcp                    serves the library to an agent over MCP, on stdin and stdout
 amcli help                   prints this
 
 An argument written as _ is read from stdin, and so is one that is left out:
@@ -34,7 +35,7 @@ An argument written as _ is read from stdin, and so is one that is left out:
 """
 
 /// The names <c>run</c> answers. Anything else as a first argument is a usage error.
-let commands = set [ "eval"; "simp"; "fsimp"; "diff"; "solve"; "sub"; "latex"; "info"; "help"; "-h"; "--help" ]
+let commands = set [ "eval"; "simp"; "fsimp"; "diff"; "solve"; "sub"; "latex"; "info"; "mcp"; "help"; "-h"; "--help" ]
 
 /// The arguments still to read, falling back to a line of stdin where one is missing or is <c>_</c>.
 type private Arguments(given: string list, input: TextReader) =
@@ -193,6 +194,8 @@ let private answer (command: string) (next: unit -> string option) : Result<stri
 /// <param name="args">The command line after the program's own name, which must not be empty.</param>
 let run (args: string list) (input: TextReader) (output: TextWriter) (error: TextWriter) : int =
     match args with
+    // Not one answer but a session: the server reads requests until stdin ends.
+    | "mcp" :: rest -> AngouriMath.Mcp.Server.Run(List.toArray rest, input, output, error)
     | command :: rest when commands.Contains command ->
         let arguments = Arguments(rest, input)
         try
