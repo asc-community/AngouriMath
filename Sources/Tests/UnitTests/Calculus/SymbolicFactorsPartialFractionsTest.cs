@@ -197,6 +197,18 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1), ("n", 1.3));
 
         /// <summary>
+        /// What the splits above leave whole: a numerator that x divides as well, and a quotient
+        /// written over one bar that is not of polynomials. Split, each part would be the whole
+        /// question asked again a level down, and the rules that answer these at the top would not
+        /// be reached in the time they take there.
+        /// </summary>
+        [Theory]
+        [InlineData("(p*x^3 + q*x^4 + r*x^5)/(x*(a + b*x^2 + c*x^4)^2)")]
+        [InlineData("sec(c + d*x)^8/(a + i*a*tan(c + d*x))^4")]
+        public void WhatTheSplitsLeaveWhole(string integrand)
+            => DifferentiatesBack(integrand, "x", ("a", 1.81), ("b", 2.18), ("c", 2.55), ("d", 1.1), ("p", 0.7), ("q", 1.07), ("r", 1.44));
+
+        /// <summary>
         /// A repeated <b>linear</b> factor is one block, <c>P/(a + b u)^k</c>, which the rule for
         /// a polynomial over a power of a linear reads; Welz's <c>1/(a + b e^(p x))^2</c> is
         /// this under <c>u = e^(p x)</c>.

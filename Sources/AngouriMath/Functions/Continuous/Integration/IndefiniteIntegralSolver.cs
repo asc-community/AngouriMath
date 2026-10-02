@@ -632,10 +632,14 @@ namespace AngouriMath.Functions.Algebra
             // What the bars were cleared with is a power of x on both sides, `x^3/(x^2 Q L^2)` for
             // `1/((a + b/x + c/x^2) x L^2)`, and it is cancelled: the rules below read a numerator
             // and a denominator with a common factor as coprime, and answered that one wrongly.
+            // Only where both sides are then polynomials in x, which is what the rules below read:
+            // anything else, written over one bar, would be the whole question asked again a level
+            // down, from inside every search that passes through here.
             if ((HasTheVariableBelowABar(numerator, x) || HasTheVariableBelowABar(denominator, x))
                 && Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr)) is var (top, bottom)
                 && !HasTheVariableBelowABar(top, x) && !HasTheVariableBelowABar(bottom, x)
                 && bottom.ContainsNode(x)
+                && TreeAnalyzer.TryGetPolynomial(top, x, out _) && TreeAnalyzer.TryGetPolynomial(bottom, x, out _)
                 && WithoutACommonPowerOfX(top, bottom, x) is var (reducedTop, reducedBottom))
                 return SolveByPartialFractions(reducedTop / reducedBottom, x, integrateByParts)
                     ?? Integration.ComputeIndefiniteIntegral(reducedTop / reducedBottom, x, integrateByParts);
@@ -887,8 +891,15 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         private static Entity? IntegrateOverAPowerOfXBesideABlock(Entity numerator, Entity denominator, Entity.Variable x, bool integrateByParts)
         {
+            // For the question asked, or one substitution below it, as the blocks in a power of x
+            // are: the rest over the block is integrated again.
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
             var k = 0;
             Entity block = Number.Integer.One;
+            // Whether a factor of the block, or the base of a power of one, is past the second
+            // degree: linear and quadratic ones, and their powers, are the written-factor split's.
+            var pastTheSecondDegree = false;
             foreach (var factor in Mulf.LinearChildren(denominator))
             {
                 if (factor == x)
@@ -896,15 +907,25 @@ namespace AngouriMath.Functions.Algebra
                 else if (factor is Powf(var @base, Number.Integer e) && @base == x && e.EInteger.Sign > 0 && e.EInteger.CanFitInInt32())
                     k += e.EInteger.ToInt32Unchecked();
                 else
+                {
                     block = block == Number.Integer.One ? factor : block * factor;
+                    var written = factor is Powf(var raised, Number.Integer { EInteger.Sign: > 0 }) ? raised : factor;
+                    pastTheSecondDegree |= TreeAnalyzer.TryGetPolynomial(written, x, out var terms) && terms.Keys.Any(power => power.CompareTo(EInteger.FromInt32(2)) > 0);
+                }
             }
-            if (k == 0 || k > MaximumPowerOfXBesideABlock || !block.ContainsNode(x) || !block.Vars.Any(symbol => symbol != x))
+            if (k == 0 || k > MaximumPowerOfXBesideABlock || !pastTheSecondDegree || !block.ContainsNode(x) || !block.Vars.Any(symbol => symbol != x))
                 return null;
             if (!TreeAnalyzer.TryGetPolynomial(block, x, out var below) || !TreeAnalyzer.TryGetPolynomial(numerator, x, out var above))
                 return null;
             foreach (var term in below.Concat(above))
                 if (term.Key.Sign < 0 || !term.Key.CanFitInInt32() || term.Value.ContainsNode(x))
                     return null;
+            // In lowest terms in x: where x divides the numerator as well, the part over x^k is
+            // nothing, and the rest is the whole question asked again a level down, out of reach
+            // of the rules that answer only the question asked. `(A x^3 + B x^4 + C x^5)/(x (a +
+            // b x^2 + c x^4)^2)` is answered at the top once the x is cancelled.
+            if (!above.TryGetValue(EInteger.Zero, out var numeratorConstant) || VanishesIdentically(numeratorConstant))
+                return null;
             var degreeBelow = below.Keys.Max()!.ToInt32Unchecked();
             var degreeAbove = above.Count == 0 ? 0 : above.Keys.Max()!.ToInt32Unchecked();
             if (degreeBelow > MaximumPowerOfXBesideABlock || !below.TryGetValue(EInteger.Zero, out var constant) || VanishesIdentically(constant))
@@ -982,6 +1003,11 @@ namespace AngouriMath.Functions.Algebra
                 foreach (var term in polynomial)
                     if (term.Key.Sign < 0 || !term.Key.CanFitInInt32() || term.Value.ContainsNode(x))
                         return null;
+                // A block x divides is the content's to take apart, not one to split at roots:
+                // `b x^4 + c x^8`, read as quadratic in x^4 with no constant term, has
+                // `(-b ± sqrt(b^2))/(2 c)` for roots, one of them a zero that is not recognised.
+                if (!polynomial.TryGetValue(EInteger.Zero, out var blockConstant) || VanishesIdentically(blockConstant))
+                    return null;
                 blocks.Add((polynomial, power));
             }
             if (blocks.Count == 0 || !(numerator + denominator).Vars.Any(symbol => symbol != x))
@@ -16234,14 +16260,18 @@ namespace AngouriMath.Functions.Algebra
         /// powers of x, each answered at once: no rule reads a power of x whose exponent is a
         /// symbol as a polynomial, and the rule above writes out one power and not a product of
         /// them. As late as that one, and for the same reason: a product that a rule answers in
-        /// its own terms is not written out. Only where every factor with x in it is a sum, a
-        /// positive whole power of one, or a power of x itself, so that writing it out is a finite
-        /// identity, bounded by <see cref="MathS.Settings.MaxExpansionTermCount"/>.
+        /// its own terms is not written out. Only where every factor with x in it is a sum of
+        /// powers of x, a positive whole power of one, or a power of x itself, so that writing it
+        /// out is a finite identity, bounded by <see cref="MathS.Settings.MaxExpansionTermCount"/>,
+        /// whose terms are each answered at once; and only for the question asked, not for what a
+        /// rule leaves over. A sum of exponentials is a sum too: integration by parts on
+        /// <c>x^2 Shi(a + b x) sinh(a + b x)</c> leaves a run of them beside powers of x, and
+        /// written out each term is a search of its own.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveByExpandingAProductOfSums(Entity expr, Entity.Variable x, bool integrateByParts)
         {
-            if (expr is not Mulf)
+            if (expr is not Mulf || !Integration.AnsweringTheQuestionAsked)
                 return null;
             var sums = 0;
             foreach (var factor in Mulf.LinearChildren(expr))
@@ -16250,8 +16280,8 @@ namespace AngouriMath.Functions.Algebra
                     continue;
                 switch (factor)
                 {
-                    case Sumf or Minusf:
-                    case Powf(Sumf or Minusf, Number.Integer power) when power.EInteger.CompareTo(EInteger.One) > 0:
+                    case Sumf or Minusf when IsASumOfPowersOfX(factor, x):
+                    case Powf((Sumf or Minusf) and var sum, Number.Integer power) when power.EInteger.CompareTo(EInteger.One) > 0 && IsASumOfPowersOfX(sum, x):
                         sums++;
                         break;
                     case Entity.Variable when factor == x:
@@ -16267,6 +16297,11 @@ namespace AngouriMath.Functions.Algebra
             if (written is not Sumf and not Minusf)
                 return null;
             return Integration.ComputeIndefiniteIntegral(written, x, integrateByParts);
+
+            // Each term a constant times a power of x, the power's exponent free of x.
+            static bool IsASumOfPowersOfX(Entity sum, Entity.Variable x)
+                => Sumf.LinearChildren(sum).All(term => Mulf.LinearChildren(term).All(factor =>
+                    !factor.ContainsNode(x) || factor == x || factor is Powf(var @base, var exponent) && @base == x && !exponent.ContainsNode(x)));
         }
 
         /// <summary>
