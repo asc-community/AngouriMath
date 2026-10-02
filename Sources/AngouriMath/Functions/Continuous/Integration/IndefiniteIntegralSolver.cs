@@ -18662,6 +18662,350 @@ namespace AngouriMath.Functions.Algebra
                 };
         }
 
+        /// <summary>Set while <see cref="SolveByWritingEachLinearOnce"/> asks its product.</summary>
+        [System.ThreadStatic] private static bool writingEachLinearOnce;
+
+        /// <summary>
+        /// A product of powers of quotients of polynomials in <paramref name="x"/> whose roots
+        /// are rational in the symbols, where one root stands in two of the bases, written over
+        /// each linear once: <c>K (x - r_1)^(e_1) ... (x - r_k)^(e_k)</c>, with <c>e_i</c> the sum
+        /// of the exponents <c>r_i</c> has in the bases. <c>K</c> is the integrand over that
+        /// product, and its logarithmic derivative is zero -- each base is its leading coefficient
+        /// times its linears, so both sides have the same <c>sum e_i/(x - r_i)</c> -- so it is
+        /// constant wherever it is defined and stands in front of the answer, the way Rubi writes
+        /// <c>x^p (c + d/x)^p/(1 + c x/d)^p</c> in front of its.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>e^atanh(a x) sqrt(c - c/(a x))</c> is <c>sqrt((1 + a x)/(1 - a x)) sqrt(c (a x - 1)/(a x))</c>,
+        /// and the root <c>1/a</c> stands in both bases, with exponents <c>-1/2</c> and <c>1/2</c>.
+        /// Written once it is gone: the integrand is <c>K sqrt(a x + 1)/sqrt(x)</c>, which the
+        /// rule for two linear radicals answers in milliseconds, where the substitution search ran
+        /// out of time. Rubi's 7.3.6 and 7.4.2. https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// <para>
+        /// Only where it helps: a root stands in two bases under powers that are not whole --
+        /// <c>sqrt(c - a c x)/sqrt(1 - a x)</c> -- or in a root of a quotient with x below the bar,
+        /// <c>sqrt(c - c/(a x))</c>, and in another base; and at most two linears are left under a
+        /// power that is not whole, which is what the rule for two linear radicals reads. A root
+        /// beside a whole power of one of its linears -- <c>sqrt(x)/(x (x + 1))</c>, and
+        /// <c>(1 - a^2 x^2)^(3/2)/((1 - a x)^2 (c + d x))</c>, which the rules behind this one write
+        /// over the radicand -- is read by the rules as it is written, and is answered without a
+        /// <c>K</c>.
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveByWritingEachLinearOnce(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // Not while answering its own product, see below; and only where something of x is
+            // under a power that is not whole, or is the exponential of a logarithm -- looked for
+            // before anything is read, since this is the first rule every question is asked of.
+            if (writingEachLinearOnce || !Integration.AnsweringTheQuestionAsked
+                || !expr.Nodes.Any(node => node is Powf(var @base, var exponent) && @base.ContainsNode(x) && exponent is Number.Rational and not Number.Integer
+                                           || node is Powf(var e, var power) && e == MathS.e && power.Nodes.Any(inner => inner is Logf)))
+                return null;
+            // Each root, with the sum of its exponents, the bases it stands in, and whether one of
+            // them is under a power that is not whole; and each base, with its roots, whether it
+            // is under such a power, and whether it is a quotient with x below the bar.
+            var roots = new List<(Entity Root, Number.Rational Exponent, HashSet<int> Bases, bool UnderARoot)>();
+            var bases = new List<(HashSet<int> Roots, bool UnderARoot, bool AQuotient)>();
+            if (!Read(expr, Number.Integer.One))
+                return null;
+            // With every power whole the integrand is a rational function, and a root of a quotient
+            // shared with another base is the same help: `e^(2 acoth(a x))/(c - c/(a^2 x^2))^2` is
+            // `K x^4/((a x + 1)(a x - 1)^3)`, which the partial fractions answer at once, where
+            // as written it ran out of time; and `K` is a constant there, with no arms to it.
+            var wholePowersOnly = !bases.Any(written => written.UnderARoot);
+            if (!roots.Any(root => root.Bases.Count(which => bases[which].UnderARoot) >= 2
+                                   || root.Bases.Any(which => (bases[which].UnderARoot || wholePowersOnly) && bases[which].AQuotient) && root.Bases.Count >= 2)
+                || roots.Count(root => root.Exponent is not Number.Integer) > 2)
+                return null;
+            // Each linear with the root's denominator for its leading coefficient: `a x + 1` for
+            // the root `-1/a`, as the integrand writes it, where `x + 1/a` is the same up to `K`.
+            // Every root's, those whose exponents add up to zero too: the integrand changes there.
+            var linears = new List<(Entity Linear, Number.Rational Exponent)>();
+            foreach (var (root, exponent, _, _) in roots)
+            {
+                var (above, below) = Functions.SingleQuotient.Of(root);
+                var linear = root == Number.Integer.Zero ? x
+                    : (above is Number.Real { IsNegative: true } negative ? below * x + (-negative).InnerSimplified : below * x - above).InnerSimplified;
+                linears.Add((linear, exponent));
+            }
+            // And with the sign that is positive on an interval where the integrand is real: there
+            // the product is real too, `K` taking the imaginary unit the other sign would leave,
+            // and the rules answer a product of linears where it is real. `e^atanh(a x) sqrt(c - c/(a x))`
+            // is real between `-1/a` and 0 for a positive `c`, where `sqrt(a x + 1)/sqrt(x)` has
+            // no value in the answer the rules give and `sqrt(a x + 1)/sqrt(-x)` has one; and for
+            // a negative `c` it is real between 0 and `1/a`, where `sqrt(a x + 1)/sqrt(x)` is the
+            // one. Each such sign is an arm, saying where it holds -- where every linear under a
+            // power that is not whole is not negative, which is where its product is real, and
+            // where its answer holds whatever the symbols are -- and the arms are found with the
+            // other symbols pinned to either sign.
+            var arms = new List<Providedf>();
+            var tried = new HashSet<string>();
+            foreach (var (found, pinned, low, high) in IntervalsWhereItIsReal(expr, linears.Select(written => written.Linear).ToList(), x))
+            {
+                var signs = wholePowersOnly ? linears.Select(_ => 1).ToArray() : found;
+                if (!tried.Add(string.Join(",", linears.Select((written, i) => written.Exponent == Number.Integer.Zero ? 0 : signs[i]))))
+                    continue;
+                // As a quotient, the negative powers below the bar, which is how the rules read it:
+                // `(a x + 1)^(-1/2) (1 - a x)^(-1) x^(3/2)` was declined where
+                // `x^(3/2)/(sqrt(a x + 1) (1 - a x))` is answered.
+                Entity above = Number.Integer.One, below = Number.Integer.One;
+                Entity holdsWhere = Entity.Boolean.True;
+                for (var i = 0; i < linears.Count; i++)
+                {
+                    var (linear, exponent) = linears[i];
+                    if (exponent == Number.Integer.Zero)
+                        continue;
+                    if (signs[i] < 0)
+                        linear = linear is Variable ? -linear
+                            : TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out var intercept) ? ((-intercept).InnerSimplified - slope * x).InnerSimplified
+                            : (-linear).InnerSimplified;
+                    if (exponent is Number.Rational { ERational.Sign: < 0 })
+                    {
+                        var positive = (Number.Rational)(-exponent);
+                        below = below == Number.Integer.One ? (positive == Number.Integer.One ? linear : MathS.Pow(linear, positive))
+                            : below * (positive == Number.Integer.One ? linear : MathS.Pow(linear, positive));
+                    }
+                    else
+                        above = above == Number.Integer.One ? (exponent == Number.Integer.One ? linear : MathS.Pow(linear, exponent))
+                            : above * (exponent == Number.Integer.One ? linear : MathS.Pow(linear, exponent));
+                    if (exponent is not Number.Integer)
+                    {
+                        var notNegative = new GreaterOrEqualf(linear, Number.Integer.Zero);
+                        holdsWhere = holdsWhere == Entity.Boolean.True ? notNegative : holdsWhere & notNegative;
+                    }
+                }
+                var product = below == Number.Integer.One ? above : above / below;
+                // The product is asked with this rule out of the way: the rules in front of it write
+                // `sqrt(x + 1)/x^(5/2)` as `sqrt(x^2 + x)/x^3`, a root of a product beside a power
+                // of one of its linears, and asked of this rule again that was its own question with
+                // arms of its own, one fewer each time.
+                // Where the arm is for negative x, in t = -x, with the power of x a power of t: the
+                // rules read `x^(1/2)` and not `(-x)^(1/2)`, and `sqrt(-x) (1 - a x)^2/(1 + a x)^(3/2)`
+                // ran out of time where `sqrt(t) (1 + a t)^2/(1 - a t)^(3/2)` takes milliseconds.
+                var reflected = linears.Any(written => written.Linear == x && written.Exponent != Number.Integer.Zero)
+                    && signs[linears.FindIndex(written => written.Linear == x)] < 0;
+                var t = reflected ? Variable.CreateUnique(expr, "t") : x;
+                Entity? integrated;
+                writingEachLinearOnce = true;
+                try
+                {
+                    integrated = Integration.ComputeAsAQuestionOfItsOwn(reflected ? product.Substitute(x, -t).InnerSimplified : product, t, integrateByParts);
+                }
+                finally
+                {
+                    writingEachLinearOnce = false;
+                }
+                if (reflected && integrated is not null)
+                    integrated = -integrated.Substitute(t, -x);
+                // Every arm or none: an interval left without one would have no answer where the
+                // rules behind this one may give one.
+                if (integrated is null || integrated.Nodes.Any(node => node == MathS.NaN))
+                    return null;
+                var arm = expr / product * integrated;
+                // Checked at two points of that interval, with the symbols pinned as they were there.
+                var inside = new[] { low + (high - low) / 3, low + 2 * (high - low) / 3 }
+                    .Select(at => at.ToString("R", System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+                if (!Functions.PartialFractions.HoldsAtSampledPoints(pinned(arm.Differentiate(x)), pinned(expr), x, inside))
+                    return null;
+                arms.Add(new Providedf(arm, holdsWhere));
+            }
+            return arms.Count switch
+            {
+                0 => null,
+                1 => arms[0],
+                _ => MathS.Piecewise(arms),
+            };
+
+            // A constant in lowest terms: numbers by their arithmetic, which is exact and cheap, and
+            // quotients in the symbols by the polynomial gcd. This rule is the first every
+            // question is asked of, and most constants it meets are numbers.
+            static Entity Reduced(Entity constant)
+                => constant.Vars.Any() ? Functions.PartialFractions.InLowestTermsOverTheSymbols(constant) : constant.InnerSimplified;
+
+            // `factor` to the power `times`, read into the table through products, quotients and
+            // powers of them, the power of a product taken as the product of the powers and the
+            // exponential of a multiple of a logarithm as the power it is, `e^(1/2 ln q)` as
+            // `q^(1/2)` -- which is how the inverse hyperbolic functions under an exponential
+            // arrive. Each of those has the logarithmic derivative it is read with, whatever the
+            // branches, and `K` takes what the branches make of it. False where a factor of x is
+            // anything else.
+            bool Read(Entity factor, Number.Rational times)
+            {
+                if (!factor.ContainsNode(x))
+                    return true;
+                switch (factor)
+                {
+                    case Mulf:
+                        return Mulf.LinearChildren(factor).All(child => Read(child, times));
+                    case Divf(var above, var below):
+                        return Read(above, times) && Read(below, (Number.Rational)(-times));
+                    case Powf(var @base, Number.Rational exponent):
+                        return Read(@base, (Number.Rational)(times * exponent));
+                    case Powf(var @base, var exponent) when @base == MathS.e && AMultipleOfALogarithm(exponent) is var (multiple, argument):
+                        return Read(argument, (Number.Rational)(times * multiple));
+                    case Variable or Sumf or Minusf:
+                        var index = bases.Count;
+                        var underARoot = times is not Number.Integer;
+                        var (top, bottom) = Functions.SingleQuotient.Of(AsOneQuotient(factor));
+                        bases.Add((new HashSet<int>(), underARoot, bottom.ContainsNode(x)));
+                        return WithItsRoots(top, times, index, underARoot) && WithItsRoots(bottom, (Number.Rational)(-times), index, underARoot);
+                    default:
+                        return false;
+                }
+            }
+
+            // `c ln(q)` as `(c, q)` for a rational `c` -- a product of rationals and one natural
+            // logarithm -- and null otherwise.
+            (Number.Rational Multiple, Entity Argument)? AMultipleOfALogarithm(Entity exponent)
+            {
+                Number.Rational multiple = Number.Integer.One;
+                Entity? argument = null;
+                foreach (var factor in Mulf.LinearChildren(exponent))
+                    switch (factor)
+                    {
+                        case Number.Rational rational:
+                            multiple = (Number.Rational)(multiple * rational);
+                            break;
+                        case Logf(var logarithmBase, var antilogarithm) when logarithmBase == MathS.e && argument is null:
+                            argument = antilogarithm;
+                            break;
+                        default:
+                            return null;
+                    }
+                return argument is null ? null : (multiple, argument);
+            }
+
+            // The roots of a polynomial in x, each its multiplicity times `exponent` into the
+            // table: a power of x, a linear, and a quadratic with no linear term whose roots are
+            // a monomial and its negative. False for anything else.
+            bool WithItsRoots(Entity polynomial, Number.Rational exponent, int @base, bool underARoot)
+            {
+                if (!polynomial.ContainsNode(x))
+                    return true;
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, x, out var read) || read.Count == 0
+                    || read.Values.Any(coefficient => coefficient.ContainsNode(x)))
+                    return false;
+                var lowest = read.Keys.Min()!;
+                var highest = read.Keys.Max()!;
+                if (lowest.Sign < 0)
+                    return false;
+                Entity CoefficientOf(EInteger power) => read.TryGetValue(power, out var coefficient) ? coefficient : Number.Integer.Zero;
+                if (lowest.Sign > 0)
+                    Add(Number.Integer.Zero, (Number.Rational)(exponent * Number.Integer.Create(lowest)));
+                var degree = highest.Subtract(lowest);
+                if (degree.IsZero)
+                    return true;
+                if (degree.Equals(EInteger.One))
+                {
+                    Add(Reduced(-CoefficientOf(lowest) / CoefficientOf(highest)), exponent);
+                    return true;
+                }
+                if (degree.Equals(EInteger.FromInt32(2))
+                    && Reduced(CoefficientOf(lowest.Add(EInteger.One))) == Number.Integer.Zero
+                    && AMonomialSquareRoot(-CoefficientOf(lowest) / CoefficientOf(highest)) is { } root)
+                {
+                    Add(root, exponent);
+                    Add(Reduced(-root), exponent);
+                    return true;
+                }
+                return false;
+
+                void Add(Entity root, Number.Rational times)
+                {
+                    for (var i = 0; i < roots.Count; i++)
+                        if (roots[i].Root == root || Reduced(roots[i].Root - root) == Number.Integer.Zero)
+                        {
+                            roots[i].Bases.Add(@base);
+                            roots[i] = (roots[i].Root, (Number.Rational)(roots[i].Exponent + times), roots[i].Bases, roots[i].UnderARoot || underARoot);
+                            bases[@base].Roots.Add(i);
+                            return;
+                        }
+                    roots.Add((root, times, new HashSet<int> { @base }, underARoot));
+                    bases[@base].Roots.Add(roots.Count - 1);
+                }
+            }
+
+            // For each way of pinning the other symbols -- all positive, all negative, and each
+            // sign in turn -- the signs of `linears` on every interval between their roots where
+            // `expr` may be real, with the pinning and that interval, the outer ones a unit wide.
+            static IEnumerable<(int[] Signs, System.Func<Entity, Entity> Pinned, double Low, double High)> IntervalsWhereItIsReal(Entity expr, List<Entity> linears, Entity.Variable x)
+            {
+                static double? ValueOf(Entity e)
+                    => Numerics.IntervalEvaluation.Of(e) is { IsFinite: true, Im.IsZero: true } value ? (value.Re.Low + value.Re.High) / 2 : null;
+                var symbols = expr.Vars.Where(symbol => symbol != x).ToList();
+                for (var pattern = 0; pattern < (symbols.Count switch { 0 => 1, 1 => 2, _ => 4 }); pattern++)
+                {
+                    var pins = new Dictionary<Variable, Entity>();
+                    for (var i = 0; i < symbols.Count; i++)
+                    {
+                        var negative = pattern == 1 || pattern == 2 && i % 2 == 1 || pattern == 3 && i % 2 == 0;
+                        pins[symbols[i]] = (negative ? -1 : 1) * (1.37 + 0.61 * i);
+                    }
+                    System.Func<Entity, Entity> pinned = e => pins.Count == 0 ? e : e.Substitute(pins);
+                    var pinnedLinears = linears.Select(pinned).ToList();
+                    var places = new List<double>();
+                    foreach (var linear in pinnedLinears)
+                    {
+                        if (!TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out var intercept)
+                            || ValueOf(slope) is not { } a || a == 0 || ValueOf(intercept) is not { } b)
+                            yield break;
+                        places.Add(-b / a);
+                    }
+                    places = places.Distinct().OrderBy(place => place).ToList();
+                    var bounds = new List<double> { places[0] - 1 };
+                    bounds.AddRange(places);
+                    bounds.Add(places[^1] + 1);
+                    var integrand = pinned(expr);
+                    for (var i = 0; i + 1 < bounds.Count; i++)
+                    {
+                        var (low, high) = (bounds[i], bounds[i + 1]);
+                        if (high - low < 1e-9)
+                            continue;
+                        var at = (low + high) / 2;
+                        if (Numerics.IntervalEvaluation.Of(integrand.Substitute(x, at)) is not { IsFinite: true } value || !value.Im.ContainsZero)
+                            continue;
+                        var signs = new int[linears.Count];
+                        var read = true;
+                        for (var j = 0; j < linears.Count && read; j++)
+                            if (ValueOf(pinnedLinears[j].Substitute(x, at)) is { } sign && sign != 0)
+                                signs[j] = System.Math.Sign(sign);
+                            else
+                                read = false;
+                        if (read)
+                            yield return (signs, pinned, low, high);
+                    }
+                }
+            }
+
+            // The square root of a quotient of monomials in the symbols with a positive square
+            // rational coefficient and even powers -- `1/a^2` is `(1/a)^2` -- and null otherwise.
+            static Entity? AMonomialSquareRoot(Entity constant)
+            {
+                var (above, below) = Functions.SingleQuotient.Of(Functions.PartialFractions.InLowestTermsOverTheSymbols(constant));
+                return RootOf(above) is { } top && RootOf(below) is { } bottom ? top / bottom : null;
+
+                static Entity? RootOf(Entity monomial)
+                {
+                    Entity root = Number.Integer.One;
+                    foreach (var factor in Mulf.LinearChildren(monomial))
+                        switch (factor)
+                        {
+                            case Number.Integer { EInteger: var whole } when whole.Sign > 0 && whole.Sqrt() is var floor && floor.Multiply(floor).Equals(whole):
+                                root *= Number.Integer.Create(floor);
+                                break;
+                            case Powf(Variable symbol, Number.Integer { EInteger: var power }) when power.Sign > 0 && power.IsEven:
+                                root *= MathS.Pow(symbol, Number.Integer.Create(power.Divide(EInteger.FromInt32(2))));
+                                break;
+                            default:
+                                return null;
+                        }
+                    return root;
+                }
+            }
+        }
+
         /// <summary>
         /// Whether <paramref name="expr"/> over <paramref name="derivative"/> takes two values at
         /// two points where <paramref name="candidate"/>, a sine, cosine, tangent, cotangent,
