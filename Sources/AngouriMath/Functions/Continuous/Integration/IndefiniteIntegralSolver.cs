@@ -1068,7 +1068,7 @@ namespace AngouriMath.Functions.Algebra
                 var first = Functions.PartialFractions.InLowestTermsOverTheSymbols((-b + root) / (2 * c));
                 var second = Functions.PartialFractions.InLowestTermsOverTheSymbols((-b - root) / (2 * c));
                 constant = constant == Number.Integer.One ? (power == 1 ? c : MathS.Pow(c, power)) : constant * (power == 1 ? c : MathS.Pow(c, power));
-                inUBlocks = [(u - first, power), (u - second, power)];
+                inUBlocks = new List<(Entity Block, int Power)> { (u - first, power), (u - second, power) };
             }
             Entity below = constant;
             foreach (var (block, power) in inUBlocks)
