@@ -1405,14 +1405,19 @@ namespace AngouriMath.Functions.Algebra
             var a = below.TryGetValue(EInteger.Zero, out var a0) ? a0 : Number.Integer.Zero;
             var b = below.TryGetValue(EInteger.FromInt32(2), out var b0) ? b0 : Number.Integer.Zero;
             var c = below[EInteger.FromInt32(4)];
-            if (a == Number.Integer.Zero || a.Evaled is Number.Complex { IsZero: true })
+            // Zero as a value, and not only as written: the coefficients are read off the
+            // denominator as it is written, and `((c - u^2)/c - 1)(u^2 - c)` is `-u^2 (u^2 - c)/c`,
+            // with `-(c/c - 1) c` for its constant term. Read as a biquadratic, one of its roots
+            // in `u^2` was that zero, and `atan(u/sqrt(0))/sqrt(0)` made the answer NaN.
+            // https://github.com/asc-community/AngouriMath/issues/1665
+            if (Functions.PartialFractions.IsZeroAsAValue(a) || Functions.PartialFractions.IsZeroAsAValue(c))
                 return null;
             if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var above) || above.Count == 0
                 || above.Keys.Any(power => power.Sign < 0 || !power.IsEven) || above.Values.Any(coefficient => coefficient.ContainsNode(x)))
                 return null;
 
             var discriminant = Functions.PartialFractions.Bare((b * b - 4 * a * c).Simplify());
-            if (discriminant == Number.Integer.Zero || discriminant.Evaled is Number.Complex { IsZero: true })
+            if (Functions.PartialFractions.IsZeroAsAValue(discriminant))
                 return null;
 
             // The numerator in w = x^2, divided down by c w^2 + b w + a to a remainder d + e w.

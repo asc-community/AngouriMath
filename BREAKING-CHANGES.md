@@ -334,6 +334,19 @@ zero-discriminant arm, which gives the right answer.
 Each of these was checked by differentiating it back with the parameters pinned and comparing at
 four points. Nothing that already had an antiderivative changes.
 
+### `e^(k acoth(a x))` beside a power of `c - a c x` is integrated
+
+**Improvement, not silent.** `e^(3 acoth(a x))/(c - a c x)^3` and `e^(2 acoth(a x)) sqrt(c - a c x)/x`
+were left unevaluated. The radical substitution leaves coefficients that are zero as values and not
+as written, `-6 a^3 + 6 a^3` and `1/c c - 1`, and the long division and the rule for a biquadratic
+read them as nonzero. They are now decided over one bar, expanded, and at pinned symbols. Rubi's
+7.4.2 ([#1665](https://github.com/asc-community/AngouriMath/issues/1665)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(3*acoth(a*x))/(c-a*c*x)^3".Integrate("x")`, and over `(c - a c x)^4` | left unevaluated | an antiderivative in `sqrt((a x + 1)/(a x - 1))` |
+| `"e^(2*acoth(a*x))*sqrt(c-a*c*x)/x".Integrate("x")`, and over `x^2` | left unevaluated | an antiderivative in `sqrt(c - a c x)`, by cases on the sign of `c` |
+
 ### `NaN` again, from an exponent that was read as written rather than as a number
 
 **A wrong answer, and a second one of the same kind.** `(a^2 + 2abx^2 + b^2x^4)^3/x^7` came back as
