@@ -754,6 +754,12 @@ namespace AngouriMath.Functions.Algebra
                 && IntegrateByAnsatz(null, numerator / denominator, x) is { } byHermite)
                 return byHermite;
 
+            // A power of a binomial past what the Hermite reduction's system takes with symbols in
+            // it, `(c + d x)/(a + b x^4)^4`: the classical recurrence, a power at a time, down to
+            // the binomial itself.
+            if (IntegrateAPolynomialOverAPowerOfABinomial(numerator, denominator, x, integrateByParts) is { } downThePowers)
+                return downThePowers;
+
             // Splitting into coprime blocks comes before peeling one root off, and the order is
             // load-bearing rather than a preference.
             //
@@ -1117,6 +1123,101 @@ namespace AngouriMath.Functions.Algebra
         /// <see cref="IntegrateOverAPowerOfXBesideABlock"/> takes: Rubi's suite goes to twelve.
         /// </summary>
         private const int MaximumPowerOfXBesideABlock = 12;
+
+        /// <summary>
+        /// A polynomial over a power of a binomial, <c>P(x)/(a + b x^n)^k</c> with <c>n &gt;= 3</c>
+        /// and <c>k &gt;= 2</c>, a power at a time down to <c>P'(x)/(a + b x^n)</c>, which
+        /// <see cref="IntegrateAPolynomialOverABinomial"/> answers at the roots of unity.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// For a monomial, with <c>B = a + b x^n</c>,
+        /// <code>
+        /// int x^m/B^j = x^(m+1)/(a n (j - 1) B^(j-1)) - (m + 1 - n (j - 1))/(a n (j - 1)) int x^m/B^(j-1)
+        /// </code>
+        /// since the derivative of <c>x^(m+1)/B^(j-1)</c> is <c>(m + 1) x^m/B^(j-1) - (j - 1) n b x^(m+n)/B^j</c>
+        /// and <c>b x^(m+n) = x^m B - a x^m</c>. Each monomial of <c>P</c> goes down the powers on
+        /// its own, and what reaches the first power is gathered into one polynomial over
+        /// <c>B</c>, integrated once.
+        /// </para>
+        /// <para>
+        /// After the Hermite reduction, which answers the square and the cube of a binomial with
+        /// symbols in it in one linear solve and keeps those answers. Its system grows with
+        /// <c>n k</c>: <c>1/(a + b x^4)^3</c> is answered and <c>1/(a + b x^4)^4</c> was declined.
+        /// The constant term is divided by, which is the generic case, as everywhere in the
+        /// integrator.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// </remarks>
+        private static Entity? IntegrateAPolynomialOverAPowerOfABinomial(Entity numerator, Entity denominator, Entity.Variable x, bool integrateByParts)
+        {
+            Entity constant = Number.Integer.One;
+            Entity? binomial = null;
+            var power = 0;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                    constant = constant == Number.Integer.One ? factor : constant * factor;
+                else if (binomial is null && factor is Powf(var @base, Number.Integer { EInteger: var e }) && e.CompareTo(EInteger.FromInt32(2)) >= 0 && e.CanFitInInt32())
+                {
+                    binomial = @base;
+                    power = e.ToInt32Unchecked();
+                }
+                else
+                    return null;
+            }
+            if (binomial is null || power > MaximumPowerOfABinomial
+                || !TreeAnalyzer.TryGetPolynomial(binomial, x, out var below) || below.Count != 2
+                || !below.TryGetValue(EInteger.Zero, out var a) || IsZeroAsAValue(a)
+                || below.Keys.Max() is not { } top || top.CompareTo(EInteger.FromInt32(3)) < 0 || !top.CanFitInInt32()
+                || IsZeroAsAValue(below[top])
+                || !TreeAnalyzer.TryGetPolynomial(numerator, x, out var above)
+                || above.Keys.Any(degree => degree.Sign < 0 || !degree.CanFitInInt32())
+                || above.Values.Any(coefficient => coefficient.ContainsNode(x)))
+                return null;
+            var n = top.ToInt32Unchecked();
+
+            // Each monomial down the powers: the algebraic part over B^(j - 1) gathered by j, and
+            // what is left at the first power gathered by the monomial's degree.
+            var overPowers = new Dictionary<int, Entity>();
+            var atTheFirst = new Dictionary<int, Entity>();
+            foreach (var pair in above)
+            {
+                var m = pair.Key.ToInt32Unchecked();
+                var coefficient = pair.Value;
+                for (var j = power; j >= 2 && coefficient != Number.Integer.Zero; j--)
+                {
+                    var over = a * n * (j - 1);
+                    var term = Functions.PartialFractions.InLowestTermsOverTheSymbols(coefficient / over) * MathS.Pow(x, m + 1);
+                    overPowers[j - 1] = overPowers.TryGetValue(j - 1, out var so) ? so + term : term;
+                    coefficient = Functions.PartialFractions.InLowestTermsOverTheSymbols(-coefficient * (m + 1 - n * (j - 1)) / over);
+                }
+                if (coefficient != Number.Integer.Zero)
+                    atTheFirst[m] = atTheFirst.TryGetValue(m, out var so) ? so + coefficient : coefficient;
+            }
+
+            Entity answer = Number.Integer.Zero;
+            foreach (var pair in overPowers.OrderByDescending(pair => pair.Key))
+                answer = answer + pair.Value / (pair.Key == 1 ? binomial : MathS.Pow(binomial, pair.Key));
+            if (atTheFirst.Count > 0)
+            {
+                Entity rest = Number.Integer.Zero;
+                foreach (var pair in atTheFirst.OrderBy(pair => pair.Key))
+                    rest = rest + pair.Value * (pair.Key == 0 ? Number.Integer.One : pair.Key == 1 ? x : MathS.Pow(x, pair.Key));
+                if (Integration.ComputeIndefiniteIntegral(rest / binomial, x, integrateByParts) is not { } overTheBinomial)
+                    return null;
+                answer = answer + overTheBinomial;
+            }
+            return (constant == Number.Integer.One ? answer : answer / constant).InnerSimplified;
+
+            static bool IsZeroAsAValue(Entity e) => e.Evaled is Number.Complex { IsZero: true };
+        }
+
+        /// <summary>
+        /// The largest power of a binomial <see cref="IntegrateAPolynomialOverAPowerOfABinomial"/>
+        /// takes down, one algebraic term a monomial a power.
+        /// </summary>
+        private const int MaximumPowerOfABinomial = 12;
 
         /// <summary>
         /// A polynomial over a binomial <c>a x^n + b</c>, <c>n >= 3</c>, decomposed at the

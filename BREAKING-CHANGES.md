@@ -259,6 +259,23 @@ too. A correct antiderivative in an unhelpful form, where there was none at all.
 `e^(x^2)` is still declined, and correctly: its exponent is not linear and it has no elementary
 antiderivative.
 
+### A polynomial over a power of a binomial past the cube is integrated
+
+**Answers where there were none.** `P(x)/(a + b x^n)^k` with symbols in the binomial, `n >= 3`, was
+answered by the Hermite reduction for `k = 2` and `k = 3` only: from the fourth power on, its
+linear system grew past what it takes. Each monomial of `P` is now taken down a power at a time by
+the classical recurrence, `int x^m/B^j = x^(m+1)/(a n (j - 1) B^(j-1)) - (m + 1 - n (j - 1))/(a n (j - 1)) int x^m/B^(j-1)`,
+and what reaches the first power is integrated once over the binomial, at its roots of unity. The
+square and the cube keep the Hermite reduction's answers. Rubi's 1.1.3.8 `P(x) (c x)^m (a + b x^n)^p`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(a + b*x^4)^4".ToEntity().Integrate("x")` | `integral(...)` | three algebraic terms over powers of the binomial, and logarithms and arctangents at its roots |
+| `"(c + d*x)/(a + b*x^4)^4".ToEntity().Integrate("x")` | `integral(...)` | the same |
+| `"(c + d*x)/(a + b*x^3)^4".ToEntity().Integrate("x")` | `integral(...)` | the same at the roots of `a + b x^3` |
+| `"x^2/(a + b*x^5)^5".ToEntity().Integrate("x")` | `integral(...)` | four algebraic terms, and the integral of `x^2/(a + b x^5)` |
+
 ### A symbolic parameter no longer stops a rational integrand being integrated
 
 `1/(8 + x^3)` and `1/(16 - x^4)` are answered at once. `1/(a^3 + x^3)` and `1/(a^4 - x^4)` were not,
