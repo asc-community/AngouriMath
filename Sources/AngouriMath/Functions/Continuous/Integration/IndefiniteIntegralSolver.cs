@@ -1048,8 +1048,9 @@ namespace AngouriMath.Functions.Algebra
             Entity InU(Dictionary<EInteger, Entity> polynomial)
             {
                 Entity sum = Number.Integer.Zero;
-                foreach (var (power, coefficient) in polynomial.OrderBy(term => term.Key))
+                foreach (var entry in polynomial.OrderBy(term => term.Key))
                 {
+                    var (power, coefficient) = (entry.Key, entry.Value);
                     var degree = power.ToInt32Unchecked() / step;
                     var term = degree == 0 ? coefficient : coefficient * (degree == 1 ? u : MathS.Pow(u, degree));
                     sum = sum == Number.Integer.Zero ? term : sum + term;
@@ -1091,8 +1092,9 @@ namespace AngouriMath.Functions.Algebra
             foreach (var residue in above.GroupBy(term => term.Key.ToInt32Unchecked() % step))
             {
                 Entity inU = Number.Integer.Zero;
-                foreach (var (power, coefficient) in residue)
+                foreach (var entry in residue)
                 {
+                    var (power, coefficient) = (entry.Key, entry.Value);
                     var degree = power.ToInt32Unchecked() / step;
                     inU += degree == 0 ? coefficient : coefficient * MathS.Pow(u, degree);
                 }
@@ -1443,8 +1445,9 @@ namespace AngouriMath.Functions.Algebra
             Entity Shifted(Dictionary<EInteger, Entity> polynomial, int by)
             {
                 Entity sum = Number.Integer.Zero;
-                foreach (var (power, coefficient) in polynomial.OrderBy(term => term.Key))
+                foreach (var entry in polynomial.OrderBy(term => term.Key))
                 {
+                    var (power, coefficient) = (entry.Key, entry.Value);
                     var degree = power.ToInt32Unchecked() - by;
                     var term = degree == 0 ? coefficient : coefficient * (degree == 1 ? x : MathS.Pow(x, degree));
                     sum = sum == Number.Integer.Zero ? term : sum + term;
