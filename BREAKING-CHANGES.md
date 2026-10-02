@@ -2210,6 +2210,21 @@ coefficient of either sign ([#1670](https://github.com/asc-community/AngouriMath
 | `"1/sqrt(-a^2-2*a*b*x-b^2*x^2)".Integrate("x")` | a piecewise whose arcsine divides by `sqrt(0)`, `NaN` for every real `b` but zero | a logarithm over `sqrt(-b^2)`, `provided b^2 > 0` |
 | `"1/(x*sqrt(a^2+2*a*b*x+b^2*x^2))".Integrate("x")`, the same with `-a^2 - 2 a b x - b^2 x^2`, or with `d + e x` for `x` | left unevaluated | the antiderivative, `provided b^2 > 0` |
 
+### A root of a square in a fractional power of `x` is the modulus of a linear in that power
+
+**Answers where there were none.** A sum of powers of `x` that are whole multiples of one
+fractional `k`, such as `a^2 + 2 a b x^(1/3) + b^2 x^(2/3)`, is read as a polynomial in `w = x^k`,
+and the root of a square in it as the modulus of a linear in `w`, as the root of a square
+quadratic is. `w` is real for a positive `x`, and the answer says so, `provided x > 0`. Rubi's
+1.2.3.2 ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(a^2+2*a*b*x^(1/3)+b^2*x^(2/3))".Integrate("x")` | left unevaluated | `sgn(x^(1/3) + a/b) sqrt(b^2) (3/4 x^(4/3) + a/b x) provided x > 0 and b^2 > 0` |
+| `"1/sqrt(a^2+b^2*x+2*a*b*sqrt(x))".Integrate("x")` | left unevaluated | `sgn(sqrt(x) + a/b) (2 sqrt(x) - 2 a/b ln(a/b + sqrt(x)))/sqrt(b^2)`, under the same condition |
+| `"(a^2+b^2/x^(2/5)+2*a*b/x^(1/5))^(5/2)".Integrate("x")`, Rubi 1.2.3.2 #659 | left unevaluated | an antiderivative in `x^(-1/5)`, under the same condition |
+| `"(1+2*x^(1/2)+x)^(3/2)".Integrate("x")` | left unevaluated | `2 (x/2 + x^(3/2) + 3 x^2/4 + x^(5/2)/5) provided x > 0` |
+
 ### A power of the variable times a sine or cosine of a logarithm, and a power of a monomial
 
 `x^2 sin(a + b ln(c x^n))` and `(c x^n)^b` were both left as written. Two rules, each exact:
