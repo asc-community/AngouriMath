@@ -9408,6 +9408,11 @@ namespace AngouriMath.Functions.Algebra
         /// ansatz wants whole powers of its monomials, and splitting the sum loses it, since
         /// <c>F^(c(a + bx)) x^m ln(dx)^n</c> on its own is not elementary.
         /// </para>
+        /// <para>
+        /// Where a power is not a whole one, the sum may be missing -- the product of powers is
+        /// then a constant times its own raised product's derivative -- and x may be raised from
+        /// nothing, a power of it the integrand does not have.
+        /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveAsTheDerivativeOfAProductOfPowers(Entity expr, Entity.Variable x)
@@ -9448,34 +9453,68 @@ namespace AngouriMath.Functions.Algebra
                 }
                 raisable.Add((factor, underneath ? Number.Integer.MinusOne : Number.Integer.One));
             }
-            if (bracket is null || raisable.Count == 0 || raisable.Count > 4)
+            if (raisable.Count == 0 || raisable.Count > 4)
+                return null;
+            // Where a power is not a whole one -- a root, or a symbolic exponent -- two more
+            // candidates, each a shape nothing else reads. With no sum beside two or more powers,
+            // the product is the derivative's up to a constant: `1/(x^2 sqrt(a x + b x^4))` is
+            // `(-2/(3 a) sqrt(a x + b x^4)/x^2)'`, the root raised and the power of x kept; a
+            // power on its own is the power rule's, or the binomial's. And x raised from nothing
+            // where it is not among the powers, in front of them: Rubi's
+            // `(a + b x^n + c x^(2 n))^p (a + b (1 + n + n p) x^n + c (1 + 2 n (1 + p)) x^(2 n))`
+            // is `(x (a + b x^n + c x^(2 n))^(p + 1))'`. Whole powers only are a rational
+            // function's, or a polynomial's beside a function, and the rules for those answer them.
+            if (raisable.Any(pair => pair.Exponent is not Number.Integer))
+            {
+                if (raisable.Count >= 2)
+                    bracket ??= Number.Integer.One;
+                if (!raisable.Any(pair => pair.Base == x))
+                    raisable.Insert(0, (x, Number.Integer.Zero));
+            }
+            if (bracket is null)
                 return null;
             for (var subset = 1; subset < 1 << raisable.Count; subset++)
             {
                 Entity candidate = kept;
                 Entity productOfRaisedBases = Number.Integer.One;
-                Entity logarithmicDerivative = Number.Integer.Zero;
+                for (var i = 0; i < raisable.Count; i++)
+                    if ((subset & (1 << i)) != 0)
+                        productOfRaisedBases *= raisable[i].Base;
+                // The bracket the candidate's derivative has, against the integrand's: the
+                // candidate is the integrand's powers with the raised bases in besides, so
+                // G' is (integrand without its bracket) (product of raised bases) (sum of the
+                // logarithmic derivatives), and the constant is the quotient of the brackets.
+                // Written as a sum of products, each raised base's logarithmic derivative times
+                // the other raised bases, so that it reads as a polynomial wherever the bases do:
+                // with `f'/f` left in, it read as nothing, and the constant fell to simplifying a
+                // quotient of the two brackets -- past a minute for Rubi's
+                // `x (a + b x + c x^2)^m (d + e x + f x^2 + g x^3)^n (...)`, 0.3 s read off one
+                // monomial.
+                Entity bracketOfTheDerivative = Number.Integer.Zero;
                 foreach (var derivative in logarithmicDerivativesKept)
-                    logarithmicDerivative += derivative;
+                    bracketOfTheDerivative += derivative * productOfRaisedBases;
                 for (var i = 0; i < raisable.Count; i++)
                 {
                     var (@base, exponent) = raisable[i];
                     var raised = (subset & (1 << i)) != 0;
                     var newExponent = raised ? (exponent + 1).InnerSimplified : exponent;
-                    if (raised)
-                        productOfRaisedBases *= @base;
                     if (newExponent.Evaled is Number.Complex { IsZero: true })
                         continue;   // a power raised to nothing: not a factor of the candidate
                     candidate *= newExponent == Number.Integer.One ? @base : MathS.Pow(@base, newExponent);
-                    logarithmicDerivative += newExponent * @base.Differentiate(x) / @base;
+                    if (!raised)
+                    {
+                        bracketOfTheDerivative += newExponent * @base.Differentiate(x) * productOfRaisedBases / @base;
+                        continue;
+                    }
+                    Entity theOtherRaisedBases = Number.Integer.One;
+                    for (var j = 0; j < raisable.Count; j++)
+                        if (j != i && (subset & (1 << j)) != 0)
+                            theOtherRaisedBases *= raisable[j].Base;
+                    bracketOfTheDerivative += newExponent * @base.Differentiate(x) * theOtherRaisedBases;
                 }
                 if (candidate == kept)
                     continue;
-                // The bracket the candidate's derivative has, against the integrand's: the
-                // candidate is the integrand's powers with the raised bases in besides, so
-                // G' is (integrand without its bracket) (product of raised bases) (sum of the
-                // logarithmic derivatives), and the constant is the quotient of the brackets.
-                var bracketOfTheDerivative = Functions.PartialFractions.Bare((productOfRaisedBases * logarithmicDerivative).InnerSimplified);
+                bracketOfTheDerivative = Functions.PartialFractions.Bare(bracketOfTheDerivative.InnerSimplified);
                 if (!AreProportionalAtSampledPoints(bracket, bracketOfTheDerivative, x))
                     continue;
                 // The constant is the quotient of one monomial's coefficients, the two
@@ -14360,8 +14399,19 @@ namespace AngouriMath.Functions.Algebra
                     return node;
                 var (radicand, exponent) = (Powf)node;
                 var r = (Number.Rational)exponent;
+                // A quadratic in a fractional power of x, `a^2 + 2 a b x^(-1/5) + b^2 x^(-2/5)`, is
+                // read in `w = x^k`, exact for every x since each power of x is a whole power of w;
+                // and real only for a positive x, which the answer then says.
+                Entity wBase = x;
                 if (!TreeAnalyzer.TryGetPolynomial(radicand, x, out var monomials) || monomials.Count == 0)
-                    return node;
+                {
+                    if (!atTheTop || InAFractionalPowerOfX(radicand, x) is not var (inW, k))
+                        return node;
+                    monomials = inW;
+                    wBase = MathS.Pow(x, k);
+                    var positive = new Greaterf(x, Number.Integer.Zero);
+                    assumed = assumed == Entity.Boolean.True ? positive : assumed & positive;
+                }
                 // A quadratic in w = x^k: a w^2 + b w + c, the square being of w + h. Beyond
                 // k = 1 only with the constant term written, since `a x^(2k)` alone is a power
                 // of a monomial, which another rule distributes.
@@ -14380,7 +14430,7 @@ namespace AngouriMath.Functions.Algebra
                 var a = monomials[degree];
                 var b = monomials.TryGetValue(half, out var b1) ? b1 : Number.Integer.Zero;
                 var c = monomials.TryGetValue(EInteger.Zero, out var c0) ? c0 : Number.Integer.Zero;
-                Entity w = half.Equals(EInteger.One) ? x : MathS.Pow(x, Number.Integer.Create(half));
+                Entity w = half.Equals(EInteger.One) ? wBase : MathS.Pow(wBase, Number.Integer.Create(half));
                 // A leading coefficient of known sign, since `sqrt(a (x + h)^2)` is
                 // `sqrt(a) |x + h|` for either: a number, or one positive or negative for a real
                 // parameter -- `b^2` is, and `a^2 + 2 a b x + b^2 x^2` is the square Rubi writes,
@@ -14412,8 +14462,10 @@ namespace AngouriMath.Functions.Algebra
                 // between the linear factor's zeros, and a rule below that differentiates the
                 // integrand cannot evaluate `derivative(sgn(...))` -- which is the exception
                 // `sqrt(a^2 + 2abx + b^2x^2) sqrt(c + ex + dx^2)` threw with it left in place.
-                // None where it is plainly one: an even power of x plus a positive number.
-                if (!whole && !(half.IsEven && h.Evaled is Number.Real { IsPositive: true }))
+                // None where it is plainly one: an even power of x plus a positive number, or a
+                // root of x of an even order plus one, `sqrt(x) + 1`.
+                if (!whole && !((half.IsEven || wBase is Powf(_, Number.Rational { ERational.Denominator.IsEven: true }))
+                                && h.Evaled is Number.Real { IsPositive: true }))
                     signs = signs * MathS.Signum(linear);
                 changed = true;
                 return leading == Number.Integer.One ? power : MathS.Pow(leading, r) * power;
@@ -14423,6 +14475,60 @@ namespace AngouriMath.Functions.Algebra
             if (signs != Number.Integer.One)
                 answer = signs * answer;
             return assumed == Entity.Boolean.True ? answer : answer.Provided(assumed);
+        }
+
+        /// <summary>
+        /// <paramref name="sum"/> as a polynomial in <c>w = x^k</c> for a rational <c>k</c> that is
+        /// not whole, each of its terms a constant times a power of <paramref name="x"/> that is a
+        /// whole, non-negative multiple of <c>k</c>; <see langword="null"/> otherwise.
+        /// </summary>
+        private static (Dictionary<EInteger, Entity> Monomials, Number.Rational K)? InAFractionalPowerOfX(Entity sum, Entity.Variable x)
+        {
+            var terms = new List<(ERational Power, Entity Coefficient)>();
+            foreach (var term in Sumf.LinearChildren(sum))
+            {
+                var power = ERational.Zero;
+                Entity coefficient = Number.Integer.One;
+                foreach (var (factor, underneath) in FactorsOfTheIntegrand(term))
+                {
+                    if (!factor.ContainsNode(x))
+                    {
+                        coefficient = underneath ? coefficient / factor : coefficient * factor;
+                        continue;
+                    }
+                    var exponent = factor == x ? ERational.One
+                        : factor is Powf(var @base, Number.Rational q) && @base == x ? q.ERational
+                        : (ERational?)null;
+                    if (exponent is null)
+                        return null;
+                    power = underneath ? power.Subtract(exponent) : power.Add(exponent);
+                }
+                terms.Add((power, coefficient));
+            }
+            var powers = terms.Select(term => term.Power).Where(q => !q.IsZero).Distinct().ToList();
+            if (powers.Count == 0 || powers.All(q => q.IsInteger()) || powers.Any(q => q.Sign > 0) && powers.Any(q => q.Sign < 0))
+                return null;
+            // k the greatest common divisor of the powers, with their sign.
+            var numerators = EInteger.Zero;
+            var denominators = EInteger.One;
+            foreach (var q in powers)
+            {
+                numerators = numerators.Gcd(q.Numerator.Abs());
+                denominators = denominators.Multiply(q.Denominator).Divide(denominators.Gcd(q.Denominator));
+            }
+            var k = ERational.Create(numerators, denominators);
+            if (powers[0].Sign < 0)
+                k = k.Negate();
+            var monomials = new Dictionary<EInteger, Entity>();
+            foreach (var (power, coefficient) in terms)
+            {
+                var degree = power.Divide(k);
+                if (!degree.IsInteger() || degree.Sign < 0)
+                    return null;
+                var key = degree.ToEInteger();
+                monomials[key] = monomials.TryGetValue(key, out var so) ? so + coefficient : coefficient;
+            }
+            return (monomials, Number.Rational.Create(k));
         }
 
         /// <summary>

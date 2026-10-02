@@ -864,17 +864,17 @@ entry for every changed answer measured on real builds, **a performance column m
 previous one on the same machine**, a version number that does not contradict #746, **the
 integration work of [#718](https://github.com/asc-community/AngouriMath/issues/718) properly done
 for the release that claims it** — `2.6.0` is not cut while a Rubi family it promised is half
-landed — and **three other repositories brought to the release**, none of which is carried by
-anything here:
+landed — and **the MCP server and two other repositories brought to the release**:
 
-- [AngouriMathMCP](https://github.com/asc-community/AngouriMathMCP), the server that exposes the
-  library to an agent. It has to expose what the release added, and its documentation is where an
-  agent learns *how a problem is put to the library* — which nodes to build for a question, which
-  operation to invoke, and how to read the answer back out of the nodes. That documentation is as
-  much a deliverable as the operation (the maintainer's words on
-  [#1409](https://github.com/asc-community/AngouriMath/issues/1409)); write it there, or in this
-  repository's `Docs/Usage` and the website, and check at every release that the MCP still says
-  what the library does.
+- the MCP server, `amcli mcp`, in [`Sources/MCP`](Sources/MCP), which exposes the library to an
+  agent. It was asc-community/AngouriMathMCP, now archived. It builds against the library here and
+  its tests run in CI, so its code keeps up, but it has to expose what the release added. Its
+  documentation, `Sources/MCP/README.md`, is where an agent learns *how a problem is put to the
+  library* — which nodes to build for a question, which operation to invoke, and how to read the
+  answer back out of the nodes. That documentation is as much a deliverable as the operation (the
+  maintainer's words on [#1409](https://github.com/asc-community/AngouriMath/issues/1409)); write it
+  there, or in this repository's `Docs/Usage` and the website, and check at every release that the
+  MCP still says what the library does.
 - [CSharpMath](https://github.com/verybadcat/CSharpMath), for the round trip of `Latexize` — see
   *The standard command wins* above. If a PR there from an earlier release is still unmerged, add
   to it rather than opening a second.

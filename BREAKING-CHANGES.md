@@ -2019,6 +2019,21 @@ and in no release -- and is `sgn(u) u/(u^2 - 1)`
 | `"1/sqrt(1+csch(x)^2)".Integrate("x")` | left unevaluated | `-sgn(tanh(x)) ln(tanh(x)^2 - 1)/2`, in exponentials |
 | `"x^4/sech(2*ln(c*x))^(1/2)".Integrate("x")` | left unevaluated | `sgn(x) (1 + c^4 x^4)^(3/2)/(6 sqrt(2) c^5)` up to the form, `provided c^4 > 0` |
 
+### A product of powers is read as its own raised product's derivative without a sum beside it
+
+**Improvement, not silent.** An integrand that is a constant times the derivative of its powers
+with some of them raised by one is answered by that product. The rule wanted a sum beside the powers
+and a power of `x` among them, and read the sum's quotient through `f'/f`, which with two symbolic
+powers of polynomials ran past a minute. Where a power is not a whole one it now reads a product
+with no sum, and `x` raised from no power at all, and the sum as a polynomial
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(x^2*sqrt(a*x+b*x^4))".Integrate("x")` | left unevaluated | `-2 sqrt(a x + b x^4)/(3 a x^2)` |
+| `"(a+b*x^n+c*x^(2*n))^p*(a+b*(1+n+n*p)*x^n+c*(1+2*n*(1+p))*x^(2*n))".Integrate("x")`, Rubi's 1.2.3.5 | no answer in 30 s | `x (a + b x^n + c x^(2 n))^(p + 1)` |
+| Rubi 1.3.2's `x (a + b x + c x^2)^m (d + e x + f x^2 + g x^3)^n` times the sum its derivative leaves | no answer in 90 s | `x^2 (a + b x + c x^2)^(m + 1) (d + e x + f x^2 + g x^3)^(n + 1)` |
+
 ### A root of a rational function of `coth(x)` is integrated by the hyperbolic half-angle
 
 `coth(x)^3/sqrt(a + b coth(x)^2)` was a search past the budget. The rational-in-`tanh` route
@@ -2294,6 +2309,21 @@ coefficient of either sign ([#1670](https://github.com/asc-community/AngouriMath
 | `"1/sqrt(-4-4*x-x^2)".Integrate("x")`, and `sqrt(-4 - 4 x - x^2)` | `NaN` | `sgn(x + 2) ln(i x + 2 i)/i`, and `i sgn(x + 2) (x^2/2 + 2 x)` |
 | `"1/sqrt(-a^2-2*a*b*x-b^2*x^2)".Integrate("x")` | a piecewise whose arcsine divides by `sqrt(0)`, `NaN` for every real `b` but zero | a logarithm over `sqrt(-b^2)`, `provided b^2 > 0` |
 | `"1/(x*sqrt(a^2+2*a*b*x+b^2*x^2))".Integrate("x")`, the same with `-a^2 - 2 a b x - b^2 x^2`, or with `d + e x` for `x` | left unevaluated | the antiderivative, `provided b^2 > 0` |
+
+### A root of a square in a fractional power of `x` is the modulus of a linear in that power
+
+**Answers where there were none.** A sum of powers of `x` that are whole multiples of one
+fractional `k`, such as `a^2 + 2 a b x^(1/3) + b^2 x^(2/3)`, is read as a polynomial in `w = x^k`,
+and the root of a square in it as the modulus of a linear in `w`, as the root of a square
+quadratic is. `w` is real for a positive `x`, and the answer says so, `provided x > 0`. Rubi's
+1.2.3.2 ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(a^2+2*a*b*x^(1/3)+b^2*x^(2/3))".Integrate("x")` | left unevaluated | `sgn(x^(1/3) + a/b) sqrt(b^2) (3/4 x^(4/3) + a/b x) provided x > 0 and b^2 > 0` |
+| `"1/sqrt(a^2+b^2*x+2*a*b*sqrt(x))".Integrate("x")` | left unevaluated | `sgn(sqrt(x) + a/b) (2 sqrt(x) - 2 a/b ln(a/b + sqrt(x)))/sqrt(b^2)`, under the same condition |
+| `"(a^2+b^2/x^(2/5)+2*a*b/x^(1/5))^(5/2)".Integrate("x")`, Rubi 1.2.3.2 #659 | left unevaluated | an antiderivative in `x^(-1/5)`, under the same condition |
+| `"(1+2*x^(1/2)+x)^(3/2)".Integrate("x")` | left unevaluated | `2 (x/2 + x^(3/2) + 3 x^2/4 + x^(5/2)/5) provided x > 0` |
 
 ### A power of the variable times a sine or cosine of a logarithm, and a power of a monomial
 
