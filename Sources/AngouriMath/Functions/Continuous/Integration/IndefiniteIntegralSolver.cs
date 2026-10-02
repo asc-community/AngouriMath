@@ -17122,11 +17122,48 @@ namespace AngouriMath.Functions.Algebra
             => SignsOnEveryRealInterval(bases, x) is { } table && table.All(holds);
 
         /// <summary>
+        /// <see cref="OnEveryRealInterval"/>, with the point of each interval the signs were read at.
+        /// </summary>
+        private static bool OnEveryRealIntervalAt(List<Entity> bases, Entity.Variable x, System.Func<double, List<int>, bool> holds)
+            => SamplesAndSignsOnEveryRealInterval(bases, x) is { } table && table.All(row => holds(row.At, row.Signs));
+
+        /// <summary>
+        /// Whether <paramref name="expr"/> is decidedly not real at <paramref name="at"/>: its
+        /// imaginary part, in interval arithmetic, excludes zero with every other symbol pinned
+        /// to a positive value, to a negative one, and to each sign in turn. Where it cannot be
+        /// evaluated nothing is decided, and it is not.
+        /// </summary>
+        private static bool NotRealAt(Entity expr, Entity.Variable x, double at)
+        {
+            var value = expr.Substitute(x, at);
+            var symbols = value.Vars;
+            for (var pattern = 0; pattern < symbols.Count switch { 0 => 1, 1 => 2, _ => 4 }; pattern++)
+            {
+                var pinned = value;
+                for (var i = 0; i < symbols.Count; i++)
+                {
+                    var negative = pattern == 1 || pattern == 2 && i % 2 == 1 || pattern == 3 && i % 2 == 0;
+                    pinned = pinned.Substitute(symbols[i], (negative ? -1 : 1) * (1.37 + 0.61 * i));
+                }
+                if (Numerics.IntervalEvaluation.Of(pinned) is not { IsFinite: true } interval || interval.Im.ContainsZero)
+                    return false;
+            }
+            return true;
+        }
+
+        /// <summary>
         /// The signs of the polynomials <paramref name="bases"/>, one list per interval between
         /// their real roots, in the order of <paramref name="bases"/>; <see langword="null"/>
         /// where the roots cannot be had.
         /// </summary>
         private static List<List<int>>? SignsOnEveryRealInterval(List<Entity> bases, Entity.Variable x)
+            => SamplesAndSignsOnEveryRealInterval(bases, x)?.Select(row => row.Signs).ToList();
+
+        /// <summary>
+        /// <see cref="SignsOnEveryRealInterval"/>, with the point of each interval the signs were
+        /// read at.
+        /// </summary>
+        private static List<(double At, List<int> Signs)>? SamplesAndSignsOnEveryRealInterval(List<Entity> bases, Entity.Variable x)
         {
             var roots = new List<double>();
             foreach (var @base in bases)
@@ -17153,7 +17190,7 @@ namespace AngouriMath.Functions.Algebra
                     if (roots[i + 1] - roots[i] > 1e-9)
                         samples.Add((roots[i] + roots[i + 1]) / 2);
             }
-            var table = new List<List<int>>();
+            var table = new List<(double At, List<int> Signs)>();
             foreach (var at in samples)
             {
                 var signs = new List<int>();
@@ -17163,7 +17200,7 @@ namespace AngouriMath.Functions.Algebra
                         return null;
                     signs.Add(value < 0 ? -1 : value > 0 ? 1 : 0);
                 }
-                table.Add(signs);
+                table.Add((at, signs));
             }
             return table;
         }
@@ -17300,7 +17337,8 @@ namespace AngouriMath.Functions.Algebra
                 // The degree bound is on what is left under the root, and where every
                 // polynomial factor comes out nothing polynomial is left.
                 var oddRoot = !exponent.ERational.Denominator.IsEven;
-                var everyFactorComesOut = oddRoot || AnEvenRootOfAProductSplits(above, below, exponent.ERational.Denominator);
+                var onlyWhereTheRootIsReal = false;
+                var everyFactorComesOut = oddRoot || AnEvenRootOfAProductSplits(above, below, exponent.ERational.Denominator, out onlyWhereTheRootIsReal);
                 if (everyFactorComesOut || OfModestDegreeOrNotAPolynomial(above) && OfModestDegreeOrNotAPolynomial(below))
                 {
                     // On either side of the bar: `sqrt(sin(x)^5/cos(x))` is `sin(x)^2 sqrt(sin(x)/cos(x))`.
@@ -17352,7 +17390,14 @@ namespace AngouriMath.Functions.Algebra
                                 oddAbove = oddAbove * factor;
                         }
                     if (taken.ContainsNode(x))
+                    {
+                        if (onlyWhereTheRootIsReal)
+                        {
+                            var real = new GreaterOrEqualf(@base, Number.Integer.Zero);
+                            assumed = assumed == Entity.Boolean.True ? real : assumed & real;
+                        }
                         return MathS.Pow(oddBelow == Number.Integer.One ? oddAbove : oddAbove / oddBelow, exponent) * taken;
+                    }
                 }
                 // And a polynomial every monomial of which an even power of x divides: the root
                 // of `x^4 + x^2` is `|x| sqrt(x^2 + 1)`, exactly, since `x^2` is not negative --
@@ -17450,16 +17495,22 @@ namespace AngouriMath.Functions.Algebra
             // wherever the root is real: the polynomial factors are real, and on each interval
             // between their roots the product's argument is pi times the sum of the n_i of the
             // negative ones. Where that sum is odd the product is negative and its even root is
-            // not real, so the integrand is not asked about there; where it is even the root is
-            // real and positive, and the product of the principal powers agrees with it exactly
-            // when their phases, pi n_i / q each, add up to a whole turn: the sum a multiple of
-            // 2q. Not of q: `sqrt(t^2)` is `|t|`, and `t^(2/2)` is `t`, half a turn out below
-            // zero -- which Timofeev's `sqrt(tan(x) tan(2x))` found. The constant must be
-            // positive, since a negative one would take the phase the other way.
+            // not real, so the integrand is not asked about there -- unless another factor is
+            // imaginary there too and the integrand is real all the same. Then the root still
+            // splits, and `onlyWhereTheRootIsReal` has the answer say it holds where the root is
+            // real: `e^atanh(x) sqrt(1 - x)` is `sqrt((1 + x)/(1 - x)) sqrt(1 - x)`, real past
+            // `x = 1`, where written apart it is `sqrt(1 + x)` with the other sign
+            // (https://github.com/asc-community/AngouriMath/issues/1664). Where the sum is even
+            // the root is real and positive, and the product of the principal powers agrees with
+            // it exactly when their phases, pi n_i / q each, add up to a whole turn: the sum a
+            // multiple of 2q. Not of q: `sqrt(t^2)` is `|t|`, and `t^(2/2)` is `t`, half a turn
+            // out below zero -- which Timofeev's `sqrt(tan(x) tan(2x))` found. The constant must
+            // be positive, since a negative one would take the phase the other way.
             // `((x - 1)^3 (x + 2)^5)^(1/4)` splits: above 1 both are positive, below -2 both
             // negative with 3 + 5 a multiple of 8, and between the product is negative.
-            bool AnEvenRootOfAProductSplits(Entity above, Entity below, EInteger q)
+            bool AnEvenRootOfAProductSplits(Entity above, Entity below, EInteger q, out bool onlyWhereTheRootIsReal)
             {
+                onlyWhereTheRootIsReal = false;
                 var factors = new List<(Entity Polynomial, EInteger Times)>();
                 foreach (var side in new[] { above, below })
                     foreach (var factor in Mulf.LinearChildren(side))
@@ -17477,14 +17528,21 @@ namespace AngouriMath.Functions.Algebra
                     }
                 if (factors.Count < 2)
                     return false;
-                return OnEveryRealInterval(factors.Select(f => f.Polynomial).ToList(), x, signs =>
+                var realBeyondTheRoot = false;
+                var splits = OnEveryRealIntervalAt(factors.Select(f => f.Polynomial).ToList(), x, (at, signs) =>
                 {
                     var negativeTimes = EInteger.Zero;
                     for (var i = 0; i < signs.Count; i++)
                         if (signs[i] < 0)
                             negativeTimes = negativeTimes.Add(factors[i].Times);
-                    return !negativeTimes.IsEven || negativeTimes.Remainder(q.ShiftLeft(1)).IsZero;
+                    if (negativeTimes.IsEven)
+                        return negativeTimes.Remainder(q.ShiftLeft(1)).IsZero;
+                    if (!NotRealAt(expr, x, at))
+                        realBeyondTheRoot = true;
+                    return true;
                 });
+                onlyWhereTheRootIsReal = splits && realBeyondTheRoot;
+                return splits;
             }
 
             // Q^r for a Q positive at every real x: a monomial `c x^(2k)` is `c^r x^(2kr)` for x > 0.

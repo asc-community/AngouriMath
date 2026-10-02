@@ -188,6 +188,43 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// Where the root of the quotient is not real the integrand can still be, and there an
+        /// answer from the root written apart must not stand. <c>e^atanh(x) sqrt(1 - x)</c> is
+        /// <c>sqrt((1 + x)/(1 - x)) sqrt(1 - x)</c>, and written apart as <c>sqrt(1 + x)</c> it
+        /// is the integrand only for <c>x &lt; 1</c>. Past <c>x = 1</c> it is the product of two
+        /// imaginary factors, real and of the other sign, and the answer was wrong there. Now the
+        /// answer says it holds where the root is real, and claims nothing past it.
+        /// https://github.com/asc-community/AngouriMath/issues/1664
+        /// </summary>
+        [Theory]
+        [InlineData("e^atanh(x)*(1-x)^(1/2)")]
+        [InlineData("e^atanh(x)/(1-x)^(1/2)")]
+        [InlineData("((1+x)/(1-x))^(1/2)*(1-x)^(1/2)")]
+        public void AnAnswerFromARootWrittenApartHoldsWhereItIsGiven(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            var original = integrand.ToEntity();
+            foreach (var at in new[] { 0.29, -0.61 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.True(Math.Abs((double)(got - want).RealPart) < 1e-9 * Math.Max(1, Math.Abs((double)want.RealPart)),
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+            foreach (var at in new[] { 1.43, 3.17 })
+            {
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.True(Math.Abs((double)want.ImaginaryPart) < 1e-12, $"the integrand at x = {at} is {want}, not real");
+                var got = derivative.Substitute("x", at).Evaled;
+                Assert.True(got.IsNaN || got is Entity.Number.Complex number
+                    && Math.Abs((double)(number - want).RealPart) < 1e-9 * Math.Max(1, Math.Abs((double)want.RealPart)),
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
+
+        /// <summary>
         /// An even power on either side of the bar comes out of the root as well, since it is
         /// not negative: <c>sqrt(sin(x)/cos(x)^5)</c> is <c>sqrt(sin(x)/cos(x))/cos(x)^2</c> and
         /// <c>sqrt(sin(x)^5/cos(x))</c> is <c>sin(x)^2 sqrt(sin(x)/cos(x))</c>, exactly, and the
