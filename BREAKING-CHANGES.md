@@ -552,6 +552,23 @@ power of the variable every term holds comes out the same way.
 | `"x^2/((a*x + a)*(1 - x^2))".Integrate("x")` | unevaluated | the partial fractions over `(x + 1)^2 (1 - x)`, over `a` |
 | `"cot(x)^3/(a + b*csc(x))".Integrate("x")` | unevaluated | `-1/(b sin(x)) - a ln(sin(x))/b^2 + (b^2 - a^2) ln(a sin(x) + b)/(a b^2)`, once `a u^4 + b u^3` is read as `u^3 (a u + b)` |
 
+### Symbolic factors of a denominator that share a factor are written over it
+
+**Improvement, not silent.** Partial fractions over factors with symbols in them read the written
+factors as coprime and squarefree, and the refactoring after them reads rational coefficients only.
+A quadratic that shares a root with a linear beside it, or that is a square, was read as an
+irreducible quadratic and declined. The written factors are now taken apart over their greatest
+common divisors, in every variable, with one another and each with its derivative, and a factor
+shared with the numerator is cancelled. Rubi's 1.2.1.2
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((d+e*x)*(a*d*e+(c*d^2+a*e^2)*x+c*d*e*x^2)^2)".Integrate("x")` | unevaluated | the partial fractions over `(d + e x)^3 (a e + c d x)^2` |
+| `"(d+e*x)^6/(a*d*e+(c*d^2+a*e^2)*x+c*d*e*x^2)^4".Integrate("x")` | no answer in 90 s | the antiderivative of `(d + e x)^2/(a e + c d x)^4` |
+| `"1/((d+e*x)^2*(c*d^2+2*c*d*e*x+c*e^2*x^2)^3)".Integrate("x")` | unevaluated | `-1/(7 c^3 e^8 (d/e + x)^7)` |
+| `"x^2/((a+b*x)*(a^2+2*a*b*x+b^2*x^2))".Integrate("x")` | unevaluated | the partial fractions over `(a + b x)^3` |
+
 ### Fractional powers of `a ± a sin` are integrated by the half angle at which they are squares
 
 **Improvement, not silent.** `(A + C sin(y)^2)/((c - c sin(y))^(3/2) sqrt(a + a sin(y)))` and
