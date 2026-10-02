@@ -984,7 +984,7 @@ namespace AngouriMath.Functions.Algebra
                         return null;
                 blocks.Add((polynomial, power));
             }
-            if (blocks.Count < 2 || !(numerator + denominator).Vars.Any(symbol => symbol != x))
+            if (blocks.Count == 0 || !(numerator + denominator).Vars.Any(symbol => symbol != x))
                 return null;
             // n, the greatest common divisor of every power the blocks hold.
             var n = EInteger.Zero;
@@ -1015,12 +1015,29 @@ namespace AngouriMath.Functions.Algebra
                 }
                 return sum;
             }
-            Entity below = constant;
-            foreach (var (polynomial, power) in blocks)
+            var inUBlocks = blocks.Select(pair => (Block: InU(pair.Polynomial), pair.Power)).ToList();
+            // One block, quadratic in u, is two at its roots: `a + b u + c u^2` is
+            // `c (u - r_1)(u - r_2)` with `r = (-b ± sqrt(b^2 - 4 a c))/(2 c)`, exact wherever the
+            // two differ, which is the generic case; a discriminant that is zero as written declines.
+            if (inUBlocks.Count == 1)
             {
-                var block = InU(polynomial);
-                below = below == Number.Integer.One ? (power == 1 ? block : MathS.Pow(block, power)) : below * (power == 1 ? block : MathS.Pow(block, power));
+                var (polynomial, power) = blocks[0];
+                if (polynomial.Keys.Max()!.ToInt32Unchecked() != 2 * step)
+                    return null;
+                Entity At(int degree) => polynomial.TryGetValue(EInteger.FromInt32(degree * step), out var coefficient) ? coefficient : Number.Integer.Zero;
+                var (a, b, c) = (At(0), At(1), At(2));
+                var discriminant = b * b - 4 * a * c;
+                if (VanishesIdentically(discriminant))
+                    return null;
+                var root = MathS.Sqrt(discriminant);
+                var first = Functions.PartialFractions.InLowestTermsOverTheSymbols((-b + root) / (2 * c));
+                var second = Functions.PartialFractions.InLowestTermsOverTheSymbols((-b - root) / (2 * c));
+                constant = constant == Number.Integer.One ? (power == 1 ? c : MathS.Pow(c, power)) : constant * (power == 1 ? c : MathS.Pow(c, power));
+                inUBlocks = [(u - first, power), (u - second, power)];
             }
+            Entity below = constant;
+            foreach (var (block, power) in inUBlocks)
+                below = below == Number.Integer.One ? (power == 1 ? block : MathS.Pow(block, power)) : below * (power == 1 ? block : MathS.Pow(block, power));
 
             Entity total = Number.Integer.Zero;
             foreach (var residue in above.GroupBy(term => term.Key.ToInt32Unchecked() % step))

@@ -138,7 +138,8 @@ namespace AngouriMath.Tests.Calculus
         /// <summary>
         /// Blocks that are each a polynomial in one power of x past the second, split in
         /// <c>u = x^n</c>, where they are linear: <c>1/((a + b x^3)(c + d x^3))</c> was declined.
-        /// With a power of x beside them as well, both splits in turn.
+        /// With a power of x beside them as well, both splits in turn; and one block quadratic in
+        /// <c>u</c> is split at its two roots.
         /// </summary>
         [Theory]
         [InlineData("1/((a + b*x^3)*(c + d*x^3))")]
@@ -146,6 +147,10 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x^4/((a + b*x^3)*(c + d*x^3))")]
         [InlineData("1/((a + b*x^4)*(c + d*x^4))")]
         [InlineData("1/(x^2*(a + b*x^3)*(c + d*x^3))")]
+        // One block quadratic in x^n is two at its roots.
+        [InlineData("1/(a + b*x^3 + c*x^6)")]
+        [InlineData("x/(a + b*x^3 + c*x^6)")]
+        [InlineData("(1 + x^4)/(1 + b*x^4 + x^8)")]
         public void SymbolicBlocksInOnePowerOfX(string integrand)
             => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1));
 

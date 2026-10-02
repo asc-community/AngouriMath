@@ -204,7 +204,8 @@ series of `N/B` at 0 are the part over `x^k`, and the rest is a polynomial over 
 split over written factors took linear and quadratic blocks only, so `1/(x (x^3 + c))` was declined
 where `1/(x (x^3 + 2))` was answered. And blocks that are each a polynomial in one power `x^n`,
 `n >= 3`, linear or quadratic in it, are split in `u = x^n`, where they are linear or quadratic
-factors the split over written factors reads: `1/((a + b x^3)(c + d x^3))`. And a quotient with
+factors the split over written factors reads: `1/((a + b x^3)(c + d x^3))`; one block quadratic in
+`u` is two at its roots, as `a + b x^2 + c x^4` already was. And a quotient with
 `x` below a bar inside it is written over one bar first, since every rule after it reads polynomials:
 `1/(a + b/x)` was declined where `x/(a x + b)` was answered. And a product of sums in `x^n` with a
 symbol for `n` is written out, as a power of one already was. Rubi's `x^m (a + b x^n)^p` and
@@ -219,6 +220,7 @@ symbol for `n` is written out, as a power of one already was. Rubi's `x^m (a + b
 | `"1/(x^2*(x^3 + c))".Integrate("x")`, and `(c + d x + e x^2)/(x^2 (a + b x^3))` | left unevaluated | a logarithm and an arctangent in `c^(1/3)`, beside `-1/(c x)` |
 | `"1/((a+b*x^3)*(c+d*x^3))".Integrate("x")`, and `x/((a + b x^3)(c + d x^3))` | left unevaluated | logarithms and arctangents in `(-a/b)^(1/3)` and `(-c/d)^(1/3)`, over `a d - b c` |
 | `"1/((a+b*x^4)*(c+d*x^4))".Integrate("x")` | left unevaluated | arctangents and logarithms of each binomial's roots, over `a d - b c` |
+| `"1/(a+b*x^3+c*x^6)".Integrate("x")`, `(1 + x^4)/(1 + b x^4 + x^8)` | left unevaluated | the same, at the two roots of the quadratic in `x^n`, over `sqrt(b^2 - 4 a c)` |
 | `"1/(a+b/x)".Integrate("x")` | left unevaluated | `x/a - b ln(a x + b)/a^2` |
 | `"1/(2+3/x^2)^3".Integrate("x")`, `1/(a + b/x^3)` | left unevaluated | an antiderivative |
 | `"(a+b*x^n)*(c+d*x^n)^3".Integrate("x")` | left unevaluated | written out, eight powers of `x` integrated: `a c^3 x + ... + b d^3 x^(4 n + 1)/(4 n + 1)` |
