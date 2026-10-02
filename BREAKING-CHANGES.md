@@ -598,8 +598,8 @@ with a constant or linear `P`, 1.2.1.2 to 1.2.1.4. They are now integrated by un
 coefficients, as the roots of two linears are. The answer is a rational function times `sqrt(Q)`,
 a logarithm or an arcsine by the sign of the leading coefficient of `Q`, and a logarithm or an
 arctangent by the sign of `Q` at the linear's root. Where the linear shares a root with `Q`, there
-is no third term. Below the root's first power, `m < -1`, and without the linear, the answers are
-as they were ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+is no third term. Without the linear, the answers are as they were
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
@@ -609,6 +609,19 @@ as they were ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 | `"(A + B*x + F*x^2)*sqrt(d^2 - m^2*x^2)/(d + m*x)^2".ToEntity().Integrate("x")` | `integral(...)` | a rational function times the root, and an arcsine |
 | `"sqrt(1 - x^2)/(1 + x)^2".ToEntity().Integrate("x")` | `integral(...)` | `-2 sqrt(1 - x^2)/(1 + x) + arcsin(-x)` |
 | `"sqrt(x^2 + 1)/x^2".ToEntity().Integrate("x")` | `integral(...)` | `-sqrt(x^2 + 1)/x + ln(2 sqrt(x^2 + 1) + 2 x)` |
+
+### A power of the quadratic below the bar beside its root is integrated
+
+And with a power of the quadratic below the bar beside its root, `P(x)/((g + h x)^k Q^(n + 1/2))`,
+which was left unevaluated as well. The answer is powers of `1/(g + h x)` and linears over powers
+of `Q`, times `sqrt(Q)`, and the same two integrals that are not algebraic
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((x + 2)^2*(x^2 + 1)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | `((4 + 3 x)/(25 (x^2 + 1)) - 1/(25 (x + 2))) sqrt(x^2 + 1)`, and a logarithm in `(2 - 4 x)/(2 sqrt(5) sqrt(x^2 + 1))` |
+| `"(1 + 3*x + 4*x^2)/((1 + 2*x)^3*(2 + 3*x^2)^(5/2))".ToEntity().Integrate("x")` | `integral(...)` | linears over `(2 + 3 x^2)^2` and `2 + 3 x^2` and powers of `1/(1 + 2 x)`, times the root, and a logarithm |
+| `"(d + k*x + f*x^2)/((g + h*x)^2*(a + c*x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | the same in the symbols, and a logarithm or an arctangent by the sign of `a h^2 + c g^2` |
 
 ### A function comes out of a fractional power of its even power with its sign
 
