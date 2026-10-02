@@ -491,6 +491,21 @@ taken apart into pieces each closed the same way
 | `"(2 + x)/((2 + 4*x - 3*x^2)*(1 + 3*x + 2*x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative |
 | `"1/((x^2 + 1)*sqrt(x^2 + x + 1))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm and an arctangent |
 
+### A power of a multiple of a quadratic's derivative beside a power of the quadratic is a binomial
+
+**Improvement, not silent.** `(b d + 2 c d x)^m (a + b x + c x^2)^p`, with a power that is not whole,
+was declined or ran out of time. Under `t = b d + 2 c d x` the quadratic is
+`(t^2/d^2 - (b^2 - 4 a c))/(4 c)`, so the integrand is a binomial in `t`. That binomial is asked with
+its constant term named by a symbol of its own, since with `a - b^2/(4 c)` written in it the rules for
+a binomial ran out of time too. Rubi's 1.2.1.2
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a+b*x+c*x^2)^(3/2)/(b*d+2*c*d*x)^3".Integrate("x")` | `integral(...)` | the antiderivative |
+| `"(a+b*x+c*x^2)^(1/2)/(b*d+2*c*d*x)^7".Integrate("x")` | `integral(...)` | the antiderivative |
+| `"(b*d+2*c*d*x)^(5/2)/(a+b*x+c*x^2)^3".Integrate("x")` | `integral(...)` | the antiderivative |
+
 ### A polynomial over a power of a quadratic beside the root of another is integrated
 
 `P/(A^k sqrt(B))`, `A` and `B` two different quadratics and `k` at least two, was left
@@ -563,6 +578,23 @@ power of the variable every term holds comes out the same way.
 | `"sec(x)^2/(a + a*csc(x))".Integrate("x")` | unevaluated | in `tan(x/2)`, over `a` |
 | `"x^2/((a*x + a)*(1 - x^2))".Integrate("x")` | unevaluated | the partial fractions over `(x + 1)^2 (1 - x)`, over `a` |
 | `"cot(x)^3/(a + b*csc(x))".Integrate("x")` | unevaluated | `-1/(b sin(x)) - a ln(sin(x))/b^2 + (b^2 - a^2) ln(a sin(x) + b)/(a b^2)`, once `a u^4 + b u^3` is read as `u^3 (a u + b)` |
+
+### Symbolic factors of a denominator that share a factor are written over it
+
+**Improvement, not silent.** Partial fractions over factors with symbols in them read the written
+factors as coprime and squarefree, and the refactoring after them reads rational coefficients only.
+A quadratic that shares a root with a linear beside it, or that is a square, was read as an
+irreducible quadratic and declined. The written factors are now taken apart over their greatest
+common divisors, in every variable, with one another and each with its derivative, and a factor
+shared with the numerator is cancelled. Rubi's 1.2.1.2
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((d+e*x)*(a*d*e+(c*d^2+a*e^2)*x+c*d*e*x^2)^2)".Integrate("x")` | unevaluated | the partial fractions over `(d + e x)^3 (a e + c d x)^2` |
+| `"(d+e*x)^6/(a*d*e+(c*d^2+a*e^2)*x+c*d*e*x^2)^4".Integrate("x")` | no answer in 90 s | the antiderivative of `(d + e x)^2/(a e + c d x)^4` |
+| `"1/((d+e*x)^2*(c*d^2+2*c*d*e*x+c*e^2*x^2)^3)".Integrate("x")` | unevaluated | `-1/(7 c^3 e^8 (d/e + x)^7)` |
+| `"x^2/((a+b*x)*(a^2+2*a*b*x+b^2*x^2))".Integrate("x")` | unevaluated | the partial fractions over `(a + b x)^3` |
 
 ### Fractional powers of `a ± a sin` are integrated by the half angle at which they are squares
 
@@ -665,6 +697,23 @@ reached 3^12 cases and 8 GB inside integration by parts
 | `(q = 0 and not q = 0).Evaled` | as written | `False` |
 | `(x < 0 and x = 0).Simplify()` | `False provided x in RR` | `False` — the condition was over-strong, one conjunct is false wherever `x` is |
 | `(x > 0 and x > 0).Evaled` | `x > 0` | `x > 0` (unchanged) |
+
+### Two piecewises split on one quantity combine sign by sign
+
+A sum or product of two piecewises still joins every case's condition to every other's, and now
+drops two more kinds of pair. A quantity is read up to a constant factor, so `f = 0 and not 2 f = 0`
+is `False`. And `q > 0 and q < 0`, which is `NaN` off the real line rather than `False`, goes where
+every case after it tests `q` too: off the real line each of those is false or undecided, so no case
+it was keeping from being reached could be. Where a later case tests something else it stays. Sums
+of the answers the radical substitution gives for `x sqrt(1 + d x) sqrt(1 + f x)` had reached
+32,769 cases ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `piecewise(1 provided q = 0, 2 provided q > 0, 3 provided q < 0) + piecewise(10 provided q = 0, 20 provided q > 0, 30 provided q < 0)`, `.InnerSimplified` | nine cases | three: `11 provided q = 0`, `22 provided q > 0`, `33 provided q < 0` |
+| `piecewise(1 provided f = 0, 2 provided not 2 * f = 0) + piecewise(10 provided 3 * f = 0, 20 provided not f = 0)`, `.InnerSimplified` | four cases | two |
+| the same with a third case `provided p > 0` in each | nine cases | nine, unchanged |
+| `"x*sqrt(1 + d*x)*sqrt(1 + f*x)".Integrate("x")`, and with `x^2`, or `A + B x + K x^2`, for `x` | left unevaluated | the antiderivative, a piecewise of three cases |
 
 ### A union with an empty interval is the other set
 
@@ -1554,6 +1603,21 @@ below are one indeterminate. Rubi's 7.5.1 and 7.6.1
 | `"x * acsch(c * x)".ToEntity().Integrate("x")` | `integral(x * ln(1 / (c * x) + sqrt(1 / (c * x) ^ 2 + 1)), x)` | an antiderivative, `provided c^2 > 0` |
 | `"x^2 * asech(c * x)".ToEntity().Integrate("x")` | `integral(...)`, the same | an antiderivative |
 | `"x / sqrt(1 + 1/(c*x)^2)".ToEntity().Integrate("x")` | `integral(x / sqrt(1 + 1 / (c * x) ^ 2), x)` | an antiderivative, `provided c^2 > 0` |
+
+### A conditional expression is differentiated where its condition holds
+
+**Answers where there were none.** `F provided P` is differentiated with `P` known to hold, and
+so is each case of a piecewise. Under a strict bound such as `x > 0`, a root of `x` is real, so
+the sign, the modulus, `max` and `min` of an expression in it are differentiated as on the real
+line, where without the bound they are left as written: for `x < 0` the roots are complex. The
+answer is still claimed only where `P` holds.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sgn(x^(1/3) + 2) provided x > 0".ToEntity().Differentiate("x")` | `derivative(sgn(x ^ (1/3) + 2), x) provided x > 0` | `0 provided x > 0 and not x ^ (1/3) + 2 = 0` |
+| `"abs(sqrt(x) - 1) provided x > 0".ToEntity().Differentiate("x")` | `derivative(abs(sqrt(x) - 1), x) provided x > 0` | `sgn(sqrt(x) - 1) * 1/2 * x ^ (-1/2) provided x > 0 and not sqrt(x) - 1 = 0` |
+| `"max(sqrt(x), 1) provided x > 0".ToEntity().Differentiate("x")` | `derivative(max(sqrt(x), 1), x) provided x > 0` | `(1/2 * x ^ (-1/2) + sgn(sqrt(x) - 1) * 1/2 * x ^ (-1/2)) / 2 provided x > 0 and not sqrt(x) - 1 = 0` |
+| `"piecewise(abs(sqrt(x) - 1) provided x > 0, 0)".ToEntity().Differentiate("x")` | `piecewise((derivative(abs(sqrt(x) - 1), x)) provided (x > 0), 0 provided True)` | the same with that case's derivative written out |
 
 ### `arsech` and `arcsch` below the bar are integrated
 
