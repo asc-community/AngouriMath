@@ -1259,6 +1259,23 @@ of [#1409](https://github.com/asc-community/AngouriMath/issues/1409) — is `Tru
 | `"x^2 = 4 and not x = 2".Solve("x")` | `{ x : x ^ 2 = 4 and not x = 2 }` | `{ -2 }` |
 | `"x^2 = 4 and x > 0".Solve("x")` | `{ 2 }` | `{ 2 }` — unchanged, both sides being settled |
 | `"x^6 + x*y + 1 = 0 and x - 1 = 0".Solve("x")` | `{ x : … }`, as written | unchanged |
+
+### An undecided member of an intersection stays in it, and a conjunction keeps its second equation
+
+**Wrong answers, silent.** A member of a listed set whose membership in the other set could not be
+decided was kept in their intersection unconditionally: `{ y } /\ { 2 }` was `{ y }`, which is
+wrong at every `y` but 2. `Solve` meets the solution sets of a conjunction's two sides, so an
+equation with a parameter in it was dropped: `x = y and x = 2` solved to `{ y }`. Such a member now
+stays intersected with the other set, beside the members that are decided
+([#1680](https://github.com/asc-community/AngouriMath/issues/1680)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"{ y } /\ { 2 }".ToEntity().Evaled` | `{ y } \/ {  }` | `{ y } /\ { 2 }` |
+| `"{ y, 3 } /\ { 3 }".ToEntity().Evaled` | `{ y } \/ { 3 }` | `{ 3 } \/ { y } /\ { 3 }` |
+| `"x = y and x = 2".Solve("x")` | `{ y } \/ {  }`, which is `{ 1 }` at `y = 1` | `{ y } /\ { 2 }`, which is empty at `y = 1` |
+| `"x + y = 3 and x - y = 1".Solve("x")` | `{ 3 - y } \/ {  }` | `{ 3 - y } /\ { 1 + y }`: `{ 2 }` at `y = 1`, and empty elsewhere |
+| `"x^2 = 4 and x = y".Solve("x")` | `{ 2, -2 } \/ {  }` | `{ 2, -2 } /\ { y }` |
 ### `image` and `preimage` of a set under an expression
 
 `image(f(x), x in A)` is `{ f(x) : x in A }` — `union({f(x)}, x in A)` — listed over a listed
