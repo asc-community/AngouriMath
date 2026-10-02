@@ -10359,6 +10359,15 @@ namespace AngouriMath.Functions.Algebra
             if (degree > 12 || parts.Count < 2 && parts[0].Poly.DegreeIn(at) < 2)
                 return null;
 
+            // A power of x is what a factor shares with x^k beside it, or with its own derivative
+            // where its lowest term is x^k, and taking it out is the content's, before this. Split
+            // here, `b x^2 + c x^4` came apart as `x^2 (b/c + x^2) c`, and over that monic quadratic
+            // with a symbol below its bar Rubi's `x^12 (A + B x^2)/(b x^2 + c x^4)^3` had an answer
+            // of four million characters, where with the content taken out it has seven thousand.
+            bool IsAPowerOfX(MultivariatePolynomial poly)
+                => poly.Monomials.Take(2).Count() == 1
+                   && rest.All(variable => MultivariatePolynomial.PowerOfMonomial(poly.Monomials.First(), variable) == 0);
+
             // What is free of x in a factor goes in front, to the factor's power.
             void Front(MultivariatePolynomial free, int power)
             {
@@ -10393,7 +10402,7 @@ namespace AngouriMath.Functions.Algebra
                     var (poly, power) = parts[i];
                     // A factor repeated inside: what it shares with its derivative.
                     if (poly.DegreeIn(at) >= 2 && Functions.PolynomialGcd.Gcd(poly, poly.DerivativeIn(at), all, 0) is { } repeated
-                        && repeated.DegreeIn(at) >= 1 && poly.DivideExact(repeated) is { } remaining)
+                        && repeated.DegreeIn(at) >= 1 && !IsAPowerOfX(repeated) && poly.DivideExact(repeated) is { } remaining)
                     {
                         parts.RemoveAt(i);
                         if (!Keep(repeated, power) || !Keep(remaining, power))
@@ -10404,7 +10413,7 @@ namespace AngouriMath.Functions.Algebra
                     // Two factors that share one.
                     for (var j = i + 1; j < parts.Count; j++)
                     {
-                        if (Functions.PolynomialGcd.Gcd(poly, parts[j].Poly, all, 0) is not { } common || common.DegreeIn(at) == 0)
+                        if (Functions.PolynomialGcd.Gcd(poly, parts[j].Poly, all, 0) is not { } common || common.DegreeIn(at) == 0 || IsAPowerOfX(common))
                             continue;
                         if (poly.DivideExact(common) is not { } left || parts[j].Poly.DivideExact(common) is not { } right)
                             return null;
@@ -10432,7 +10441,7 @@ namespace AngouriMath.Functions.Algebra
                 {
                     var (poly, power) = parts[i];
                     if (poly.DegreeIn(at) < 2 || Functions.PolynomialGcd.Gcd(top, poly, all, 0) is not { } common
-                        || common.DegreeIn(at) == 0 || common.DegreeIn(at) == poly.DegreeIn(at)
+                        || common.DegreeIn(at) == 0 || IsAPowerOfX(common) || common.DegreeIn(at) == poly.DegreeIn(at)
                         || poly.DivideExact(common) is not { } remaining)
                         continue;
                     parts.RemoveAt(i);
