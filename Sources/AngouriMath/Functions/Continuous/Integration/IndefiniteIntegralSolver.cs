@@ -950,7 +950,7 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// <c>N/(B_1 ... B_m)</c> where every block <c>B_i</c> is a polynomial in <c>x^n</c> for one
-        /// <c>n >= 3</c>, linear or quadratic in it, with a symbol among them: split in
+        /// <c>n >= 2</c>, linear or quadratic in it, with a symbol among them: split in
         /// <c>u = x^n</c> by <see cref="Functions.PartialFractions.TrySplitOverWrittenFactors"/>,
         /// one residue of the numerator's powers modulo <c>n</c> at a time, each fraction then
         /// over one block in x.
@@ -991,7 +991,9 @@ namespace AngouriMath.Functions.Algebra
             foreach (var (polynomial, _) in blocks)
                 foreach (var power in polynomial.Keys)
                     n = n.Gcd(power);
-            if (n.CompareTo(EInteger.FromInt32(3)) < 0 || n.CompareTo(EInteger.FromInt32(MaximumPowerOfXBesideABlock)) > 0)
+            // In x^2 for two blocks or more only: one quadratic in x^2 is the biquadratic rule's.
+            if (n.CompareTo(EInteger.FromInt32(2)) < 0 || n.Equals(EInteger.FromInt32(2)) && blocks.Count < 2
+                || n.CompareTo(EInteger.FromInt32(MaximumPowerOfXBesideABlock)) > 0)
                 return null;
             var step = n.ToInt32Unchecked();
             foreach (var (polynomial, _) in blocks)

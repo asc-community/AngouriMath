@@ -151,6 +151,8 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("1/(a + b*x^3 + c*x^6)")]
         [InlineData("x/(a + b*x^3 + c*x^6)")]
         [InlineData("(1 + x^4)/(1 + b*x^4 + x^8)")]
+        // Two blocks in x^2, which the split over written factors reads only while both are quadratic.
+        [InlineData("1/(x^4*(d + e*x^2)*(a + c*x^4))")]
         public void SymbolicBlocksInOnePowerOfX(string integrand)
             => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1));
 
