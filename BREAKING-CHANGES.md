@@ -2309,6 +2309,24 @@ here that writes one does: left inside, a rule below differentiated it, and
 | `"sqrt(a^2+2*a*b*x+b^2*x^2)*sqrt(c+pe*x+d*x^2)".Integrate("x")` | left unevaluated | the antiderivative |
 | `"(a^2+2*a*b*x+b^2*x^2)^(5/2)".Integrate("x")` | the antiderivative, through the substitution search | `sgn(a + b x) (a + b x)^6 |b|^5/(6 b)` up to the form |
 
+### Any power of a square written out is the power of its root, in any power of `x`
+
+**Answers where there were none.** A square written out, `A + B w + C w^2` with `B^2 = 4 A C`,
+was read as the modulus of its root only under half an odd power, and only in a whole power of
+`x`. A symbolic power, `(a^2 + 2 a b x + b^2 x^2)^p`, or a power such as `3/4`, was declined, and
+so was the square in `x^n` or in `x^(1/3)`. Now the power of the square is the power of its root
+`L = w + B/(2 C)` times `(A + B w + C w^2)^p / L^(2p)`. That factor is constant wherever `L` is
+not zero, and it goes in front of the integral. These are Rubi's 1.2.1.2, 1.2.2.2 and 1.2.3.2
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2*(a^2 + 2*a*b*x^3 + b^2*x^6)^p".Integrate("x")` | left unevaluated | `(a^2 + 2 a b x^3 + b^2 x^6)^p (x^3 + a/b)/(3 (2 p + 1))`, as that factor times a power of `x^3 + a/b` |
+| `"(a + b*x)*(d + e*x)^3*(a^2 + 2*a*b*x + b^2*x^2)^p".Integrate("x")` | left unevaluated | the factor times powers of `x + a/b` |
+| `"(a^2 + 2*a*b*x^2 + b^2*x^4)^(3/4)".Integrate("x")` | left unevaluated | the factor times the antiderivative of `(x^2 + a/b)^(3/2)` |
+| `"x*sqrt(a^2 + 2*a*b*x^n + b^2*x^(2*n))".Integrate("x")` | left unevaluated | `sqrt(a^2 + 2 a b x^n + b^2 x^(2n))/(x^n + a/b)` times `a x^2/(2 b) + x^(n + 2)/(n + 2)` |
+| `"x*(a^2 + 2*a*b*x^(1/3) + b^2*x^(2/3))^p".Integrate("x")` | left unevaluated | the factor times powers of `x^(1/3) + a/b` |
+
 ### The root of a quadratic that is a square is the modulus of a linear, and was read as any quadratic
 
 **Wrong answers, silent.** The table's entry for `k/sqrt(Q)` and `sqrt(Q)` reads a quadratic by the
