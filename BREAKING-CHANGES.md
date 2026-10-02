@@ -1487,6 +1487,21 @@ below are one indeterminate. Rubi's 7.5.1 and 7.6.1
 | `"x^2 * asech(c * x)".ToEntity().Integrate("x")` | `integral(...)`, the same | an antiderivative |
 | `"x / sqrt(1 + 1/(c*x)^2)".ToEntity().Integrate("x")` | `integral(x / sqrt(1 + 1 / (c * x) ^ 2), x)` | an antiderivative, `provided c^2 > 0` |
 
+### A conditional expression is differentiated where its condition holds
+
+**Answers where there were none.** `F provided P` is differentiated with `P` known to hold, and
+so is each case of a piecewise. Under a strict bound such as `x > 0`, a root of `x` is real, so
+the sign, the modulus, `max` and `min` of an expression in it are differentiated as on the real
+line, where without the bound they are left as written: for `x < 0` the roots are complex. The
+answer is still claimed only where `P` holds.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sgn(x^(1/3) + 2) provided x > 0".ToEntity().Differentiate("x")` | `derivative(sgn(x ^ (1/3) + 2), x) provided x > 0` | `0 provided x > 0 and not x ^ (1/3) + 2 = 0` |
+| `"abs(sqrt(x) - 1) provided x > 0".ToEntity().Differentiate("x")` | `derivative(abs(sqrt(x) - 1), x) provided x > 0` | `sgn(sqrt(x) - 1) * 1/2 * x ^ (-1/2) provided x > 0 and not sqrt(x) - 1 = 0` |
+| `"max(sqrt(x), 1) provided x > 0".ToEntity().Differentiate("x")` | `derivative(max(sqrt(x), 1), x) provided x > 0` | `(1/2 * x ^ (-1/2) + sgn(sqrt(x) - 1) * 1/2 * x ^ (-1/2)) / 2 provided x > 0 and not sqrt(x) - 1 = 0` |
+| `"piecewise(abs(sqrt(x) - 1) provided x > 0, 0)".ToEntity().Differentiate("x")` | `piecewise((derivative(abs(sqrt(x) - 1), x)) provided (x > 0), 0 provided True)` | the same with that case's derivative written out |
+
 ### `arsech` and `arcsch` below the bar are integrated
 
 `1/(x^2 (a + b arcsch(c x)))` and `1/(x^4 (a + b arsech(c x)))` were left unevaluated. The
