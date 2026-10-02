@@ -18708,15 +18708,41 @@ namespace AngouriMath.Functions.Algebra
             // is under such a power, and whether it is a quotient with x below the bar.
             var roots = new List<(Entity Root, Number.Rational Exponent, HashSet<int> Bases, bool UnderARoot)>();
             var bases = new List<(HashSet<int> Roots, bool UnderARoot, bool AQuotient)>();
+            // The roots of the linears written under a power that is not whole, which a quadratic
+            // beside them may share: `a d e + (c d^2 + a e^2) x + c d e x^2` is
+            // `(d + e x)(a e + c d x)`. Beside a whole power of the linear, `(d + e x)^3 sqrt(a d e
+            // + ...)`, the quadratic is under a root beside a polynomial, which the rules for one
+            // answer as it is written.
+            var writtenRoots = new List<Entity>();
+            foreach (var node in expr.Nodes)
+                if (node is Powf((Sumf or Minusf) and var linear, Number.Rational power) && power is not Number.Integer
+                    && linear.ContainsNode(x) && TreeAnalyzer.TryGetPolyLinear(linear, x, out var writtenSlope, out var writtenIntercept)
+                    && !writtenSlope.ContainsNode(x) && !writtenIntercept.ContainsNode(x) && writtenSlope.Evaled is not Number.Complex { IsZero: true })
+                {
+                    var writtenRoot = Reduced(-writtenIntercept / writtenSlope);
+                    if (!writtenRoots.Contains(writtenRoot))
+                        writtenRoots.Add(writtenRoot);
+                }
+            // Set where a quadratic under a power that is not whole came apart only through a root
+            // it shares, which no other rule reads it as.
+            var splitThroughAShare = false;
             if (!Read(expr, Number.Integer.One))
                 return null;
             // With every power whole the integrand is a rational function, and a root of a quotient
             // shared with another base is the same help: `e^(2 acoth(a x))/(c - c/(a^2 x^2))^2` is
             // `K x^4/((a x + 1)(a x - 1)^3)`, which the partial fractions answer at once, where
             // as written it ran out of time; and `K` is a constant there, with no arms to it.
+            // And a quadratic that came apart through a root it shares is help on its own where it
+            // leaves two linears or fewer, a product the rules for two linears answer: the linear
+            // it shares stands under a root too, and the two roots of it are one power that is
+            // whole. `(d + e x)^(7/2)/(a d e + (c d^2 + a e^2) x + c d e x^2)^(3/2)` is
+            // `K (d + e x)^2/(a e + c d x)^(3/2)`, where as written it was declined. Beside a
+            // third, as in `(a d e + ...)^(3/2)/(x^5 (d + e x))`, it is a product of three, which
+            // those rules do not answer, and the quadratic is left to the rules that read it whole.
             var wholePowersOnly = !bases.Any(written => written.UnderARoot);
-            if (!roots.Any(root => root.Bases.Count(which => bases[which].UnderARoot) >= 2
-                                   || root.Bases.Any(which => (bases[which].UnderARoot || wholePowersOnly) && bases[which].AQuotient) && root.Bases.Count >= 2)
+            if (!(splitThroughAShare && roots.Count(root => root.Exponent != Number.Integer.Zero) <= 2
+                  || roots.Any(root => root.Bases.Count(which => bases[which].UnderARoot) >= 2
+                                       || root.Bases.Any(which => (bases[which].UnderARoot || wholePowersOnly) && bases[which].AQuotient) && root.Bases.Count >= 2))
                 || roots.Count(root => root.Exponent is not Number.Integer) > 2)
                 return null;
             // Each linear with the root's denominator for its leading coefficient: `a x + 1` for
@@ -18909,6 +18935,19 @@ namespace AngouriMath.Functions.Algebra
                     Add(root, exponent);
                     Add(Reduced(-root), exponent);
                     return true;
+                }
+                if (degree.Equals(EInteger.FromInt32(2)))
+                {
+                    var (c2, c1, c0) = (CoefficientOf(highest), CoefficientOf(lowest.Add(EInteger.One)), CoefficientOf(lowest));
+                    // A root of a linear written beside it, and the other root by their sum.
+                    foreach (var shared in writtenRoots)
+                        if (Reduced(c2 * shared * shared + c1 * shared + c0) == Number.Integer.Zero)
+                        {
+                            Add(shared, exponent);
+                            Add(Reduced(-c1 / c2 - shared), exponent);
+                            splitThroughAShare |= underARoot;
+                            return true;
+                        }
                 }
                 return false;
 
