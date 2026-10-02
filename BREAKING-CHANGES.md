@@ -27,17 +27,16 @@ and whatever gets decided — is
 [#1019](https://github.com/asc-community/AngouriMath/issues/1019). Deliberately not restated here,
 so that there is one list rather than two that drift apart.
 
-Measured on `281e0d0c`:
+Measured on `94ba5ff6`:
 
 | Written | Reads today as | |
 |---|---|---|
-| `2 \| 6` | `2 or 6` — a disjunction of two numbers | `\|` is an alias for `or`, and is the one spelling in the grammar that already means something *else* in mathematics: divides, "such that", "given", and the delimiter in `\|x\|` |
-| `{ x \| x > 0 }` | `{ x or x > 0 }` — a `FiniteSet` of **one** element, that element a disjunction | ordinary set-builder notation, read as a one-element set |
+| `{ x \| x > 0 }` | `{ x divides x > 0 }` — a `FiniteSet` of **one** element, that element a divisibility | ordinary set-builder notation, read as a one-element set: `\|` is divisibility now (see *`\|` is divisibility, and was disjunction* below), and on `281e0d0c` the element was the disjunction `x or x > 0` |
 | `a != b` | `a! = b` — the factorial of `a`, equated to `b` | `!=` is not a token, so the lexer takes `!` as the postfix factorial and `=` as equality ([#1225](https://github.com/asc-community/AngouriMath/issues/1225)) |
 
-All three are well-formed, silent, and unrelated to what was written. Until they are settled, write
-`or` rather than `|`, `{ x : x > 0 }` for a set builder, and `<>` rather than `!=` — each of which
-is the primary spelling anyway and is what the library prints.
+Both are well-formed, silent, and unrelated to what was written. Until they are settled, write
+`{ x : x > 0 }` for a set builder, which is what the library prints, and `<>` rather than `!=`.
+A not-equal written `<>` is read as `not (a = b)`, and printed that way.
 
 ---
 
