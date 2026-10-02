@@ -66,6 +66,15 @@ Describes
 its variables, the derivative and the roots for each, and its stationary points, each classified
 by the second derivative test.
 .TP
+.B mcp
+Serves the library to an agent over the Model Context Protocol: JSON-RPC on standard input and
+standard output, until standard input ends. An MCP client's configuration names
+.B amcli
+with the argument
+.BR mcp .
+.B "amcli mcp \-\-selftest"
+checks the install, and that the library still behaves as the server's documents say.
+.TP
 .B help
 Lists the commands.
 .SH EXIT STATUS

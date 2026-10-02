@@ -480,10 +480,11 @@ namespace AngouriMath.Functions.Algebra
                         / (rate * rate + frequency * frequency),
 
             // ∫ sqrt(ax^2 + bx + c) dx, which is one integration by parts away from the
-            // reciprocal form below and is written in terms of it.
+            // reciprocal form below and is written in terms of it. Not of a square, as below.
             Entity.Powf(var radicand, Entity.Number.Rational(Entity.Number.Integer(1), Entity.Number.Integer(2))) when
                 TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var qa, out var qb, out var qc)
                 && qa.Evaled is Entity.Number.Complex { IsZero: false }
+                && !IndefiniteIntegralSolver.IsAPerfectSquareDiscriminant(qa, qb, qc)
                     => IntegrateRootOfQuadratic(qa, qb, qc, radicand, x),
 
             // ∫ k / (x^2 * sqrt(ax^2 + c)) dx, the shape a trigonometric substitution is
@@ -496,10 +497,17 @@ namespace AngouriMath.Functions.Algebra
 
             // ∫ k / sqrt(ax^2 + bx + c) dx -- the arcsine and logarithm forms. Without
             // these, 1/sqrt(1 - x^2) had no antiderivative at all.
+            // Not of a square: its root is the modulus of a linear, `sqrt(a (x + h)^2)` being
+            // `sqrt(a) |x + h|`, which the rule for a root of a perfect square writes. Here the
+            // arcsine divides by the root of the discriminant, zero, and the logarithm is of
+            // `2a (x + h) + 2a |x + h|`, zero beyond the root: `1/sqrt(x^2 + 2x + 1)` was
+            // `ln(0)` for every x below -1, and `1/sqrt(-a^2 - 2abx - b^2 x^2)` NaN everywhere.
+            // https://github.com/asc-community/AngouriMath/issues/1670
             Entity.Divf(var numerator,
                         Entity.Powf(var radicand, Entity.Number.Rational(Entity.Number.Integer(1), Entity.Number.Integer(2)))) when
                 !numerator.ContainsNode(x)
                 && TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var ra, out var rb, out var rc)
+                && !IndefiniteIntegralSolver.IsAPerfectSquareDiscriminant(ra, rb, rc)
                     => IntegrateOverRootOfQuadratic(numerator, ra, rb, rc, radicand, x),
 
             // ∫ (px + q)/(ax^2 + bx + c) dx. Only the constant numerator was covered, so

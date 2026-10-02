@@ -606,6 +606,11 @@ namespace AngouriMath.Functions.Algebra
             // dropped it re-enabled integration by parts one level below the call that
             // switched it off -- which is a cycle, since by parts calls back into here.
             // `x * ln(x)` went round it until the stack ran out.
+            // A product of powers of quotients of linears with one linear in two of them, written
+            // over each linear once with the constant that takes in front. First, since it answers
+            // the question asked only, and the polynomial term below writes `1/u` as `u^(-1)` and
+            // asks that a level down: `1/(e^atanh(a x) (c - c/(a x))^(3/2))` reached it nowhere.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingEachLinearOnce(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x, integrateByParts)) is { }) return answer;
             // A product of powers of the variable with a power of a constant multiple of it
             // among them, `(c x)^m x^n`, by the power rule with the written power kept as
