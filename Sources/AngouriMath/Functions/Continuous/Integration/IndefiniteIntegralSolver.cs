@@ -13841,6 +13841,88 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of a linear that is a constant multiple of a quadratic's derivative, beside a
+        /// power of the quadratic, under the linear as the variable: with <c>t = λ (b + 2 c x)</c>
+        /// the quadratic <c>a + b x + c x^2</c> is <c>(t^2/λ^2 - Δ)/(4 c)</c>, with
+        /// <c>Δ = b^2 - 4 a c</c>, so <c>t^m Q^p</c> is a binomial in <c>t</c>. Rubi's 1.2.1.2,
+        /// <c>(b d + 2 c d x)^m (a + b x + c x^2)^p</c>, which it substitutes the same way.
+        /// </summary>
+        /// <remarks>
+        /// The substitution is affine, so the integrand in <c>t</c> is the integrand exactly. The
+        /// quadratic is written in <c>t</c> from its coefficients rather than by substituting:
+        /// substituted, it keeps a linear term that is zero as a value and not as written, and the
+        /// rules for a binomial read <c>α + β t^2</c>. Only where a power is not whole: a rational
+        /// function is the partial fractions'.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByTheDerivativeOfAQuadraticAsTheVariable(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            Entity constant = Number.Integer.One;
+            (Entity Base, Entity Exponent)? linear = null, quadratic = null;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                var (@base, exponent) = factor is Powf(var b, var e) && !e.ContainsNode(x) ? (b, e) : (factor, (Entity)Number.Integer.One);
+                if (underneath)
+                    exponent = (-exponent).InnerSimplified;
+                if (!TreeAnalyzer.TryGetPolynomial(@base, x, out var read) || read.Count == 0 || read.Keys.Any(k => k.Sign < 0)
+                    || read.Values.Any(coefficient => coefficient.ContainsNode(x)))
+                    return null;
+                var degree = read.Keys.Max()!;
+                if (degree.Equals(EInteger.One) && linear is null)
+                    linear = (@base, exponent);
+                else if (degree.Equals(EInteger.FromInt32(2)) && quadratic is null)
+                    quadratic = (@base, exponent);
+                else
+                    return null;
+            }
+            if (linear is not var (l, m) || quadratic is not var (q, p) || m is Number.Integer && p is Number.Integer)
+                return null;
+            if (!TreeAnalyzer.TryGetPolyLinear(l, x, out var l1, out var l0)
+                || !TreeAnalyzer.TryGetPolyQuadratic(q, x, out var c2, out var c1, out var c0)
+                || VanishesIdentically(c2) || VanishesIdentically(l1)
+                // With no linear term the integrand is a binomial in x already, and taken as one in
+                // t it would be this question again with t scaled.
+                || VanishesIdentically(c1)
+                // The linear is a multiple of 2 c x + b where its root is the vertex's.
+                || !VanishesIdentically(2 * c2 * l0 - c1 * l1))
+                return null;
+            var lambda = Reduced(l1 / (2 * c2));
+            // Q = (t^2/λ^2 - Δ)/(4 c) = α + β t^2, each constant named by a symbol of its own where
+            // it is a compound of the coefficients, and written back into the answer: the rules for
+            // a binomial answer `t^(-7) sqrt(c t^2 + k)` in milliseconds, and with
+            // `a - b^2/(4 c)` for `k` they ran out of time.
+            var alpha = Reduced(-(c1 * c1 - 4 * c2 * c0) / (4 * c2));
+            var beta = Reduced(1 / (4 * c2 * lambda * lambda));
+            var t = Variable.CreateUnique(expr, "t_deriv");
+            var named = new List<(Variable Name, Entity Value)>();
+            Entity Named(Entity value)
+            {
+                if (value is Number or Variable || value is Mulf(Number, Variable) || value is Powf(Variable, Number))
+                    return value;
+                var name = Variable.CreateUnique(expr + t + named.Aggregate((Entity)Number.Integer.Zero, (sum, pair) => sum + pair.Name), "k_named");
+                named.Add((name, value));
+                return name;
+            }
+            var inT = Reduced(constant / l1) * MathS.Pow(t, m) * MathS.Pow(Named(alpha) + Named(beta) * MathS.Sqr(t), p);
+            if (Integration.ComputeAsAQuestionOfItsOwn(inT, t, integrateByParts) is not { } answer
+                || answer.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            foreach (var (name, value) in named)
+                answer = answer.Substitute(name, value);
+            return answer.Substitute(t, l);
+
+            static Entity Reduced(Entity constant)
+                => constant.Vars.Any() ? Functions.PartialFractions.InLowestTermsOverTheSymbols(constant) : constant.InnerSimplified;
+        }
+
+        /// <summary>
         /// A whole power of a product in which the variable stands beside a constant, written
         /// as the product of the powers: <c>(c x)^2</c> is <c>c^2 x^2</c>, exact for a whole
         /// power over the complex numbers. That is the spelling the parser gives the inverse

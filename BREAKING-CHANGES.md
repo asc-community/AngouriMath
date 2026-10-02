@@ -478,6 +478,21 @@ taken apart into pieces each closed the same way
 | `"(2 + x)/((2 + 4*x - 3*x^2)*(1 + 3*x + 2*x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative |
 | `"1/((x^2 + 1)*sqrt(x^2 + x + 1))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm and an arctangent |
 
+### A power of a multiple of a quadratic's derivative beside a power of the quadratic is a binomial
+
+**Improvement, not silent.** `(b d + 2 c d x)^m (a + b x + c x^2)^p`, with a power that is not whole,
+was declined or ran out of time. Under `t = b d + 2 c d x` the quadratic is
+`(t^2/d^2 - (b^2 - 4 a c))/(4 c)`, so the integrand is a binomial in `t`. That binomial is asked with
+its constant term named by a symbol of its own, since with `a - b^2/(4 c)` written in it the rules for
+a binomial ran out of time too. Rubi's 1.2.1.2
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a+b*x+c*x^2)^(3/2)/(b*d+2*c*d*x)^3".Integrate("x")` | `integral(...)` | the antiderivative |
+| `"(a+b*x+c*x^2)^(1/2)/(b*d+2*c*d*x)^7".Integrate("x")` | `integral(...)` | the antiderivative |
+| `"(b*d+2*c*d*x)^(5/2)/(a+b*x+c*x^2)^3".Integrate("x")` | `integral(...)` | the antiderivative |
+
 ### A polynomial over a power of a quadratic beside the root of another is integrated
 
 `P/(A^k sqrt(B))`, `A` and `B` two different quadratics and `k` at least two, was left
