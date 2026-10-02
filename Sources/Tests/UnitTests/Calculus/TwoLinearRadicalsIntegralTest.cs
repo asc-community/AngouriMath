@@ -84,6 +84,11 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x/(sqrt(a + b*x)*sqrt(c + d*x))")]
         [InlineData("1/(sqrt(a + b*x)*sqrt(c + d*x))")]
         [InlineData("sqrt(c + d*x)/(a + b*x)^(3/2)")]
+        // A power of x beside them: each term of the rational function in t is split on the
+        // sign of the same quantity, and their sum combines sign by sign rather than pair by pair
+        // (https://github.com/asc-community/AngouriMath/issues/718).
+        [InlineData("x*sqrt(a + b*x)*sqrt(c + d*x)")]
+        [InlineData("x^2*sqrt(a + b*x)*sqrt(c + d*x)")]
         public void SymbolicCoefficients(string integrand)
             => DifferentiatesBackPinned(integrand, new[] { 0.3, 0.9, 1.7, 2.6 }, ("a", 1.7), ("b", 2.3), ("c", 0.6), ("d", 1.1));
 
