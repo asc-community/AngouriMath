@@ -110,10 +110,10 @@ let ``info classifies each stationary point`` (expression: string) (expected: st
     Assert.Contains(expected, printed.Split('\n'))
 
 [<Fact>]
-let ``info names the variables and gives the derivative and the roots over each`` () =
+let ``info names the variables and gives the derivative and the roots for each`` () =
     let code, printed, _ = run [ "info"; "x^2 - 4" ] ""
     Assert.Equal(0, code)
     let lines = printed.Split('\n')
     Assert.Contains("variables: x", lines)
-    Assert.Contains("derivative over x: 2 * x", lines)
-    Assert.Contains(lines, fun line -> line.StartsWith("roots over x: ") && line.Contains("-2") && line.Contains("2"))
+    Assert.Contains("derivative with respect to x: 2 * x", lines)
+    Assert.Contains(lines, fun line -> line.StartsWith("roots for x: ") && line.Contains("-2") && line.Contains("2"))
