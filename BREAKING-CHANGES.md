@@ -206,7 +206,8 @@ where `1/(x (x^3 + 2))` was answered. And blocks that are each a polynomial in o
 `n >= 3`, linear or quadratic in it, are split in `u = x^n`, where they are linear or quadratic
 factors the split over written factors reads: `1/((a + b x^3)(c + d x^3))`. And a quotient with
 `x` below a bar inside it is written over one bar first, since every rule after it reads polynomials:
-`1/(a + b/x)` was declined where `x/(a x + b)` was answered. Rubi's `x^m (a + b x^n)^p` and
+`1/(a + b/x)` was declined where `x/(a x + b)` was answered. And a product of sums in `x^n` with a
+symbol for `n` is written out, as a power of one already was. Rubi's `x^m (a + b x^n)^p` and
 `(a + b x^n)^p (c + d x^n)^q`
 ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 
@@ -220,6 +221,7 @@ factors the split over written factors reads: `1/((a + b x^3)(c + d x^3))`. And 
 | `"1/((a+b*x^4)*(c+d*x^4))".Integrate("x")` | left unevaluated | arctangents and logarithms of each binomial's roots, over `a d - b c` |
 | `"1/(a+b/x)".Integrate("x")` | left unevaluated | `x/a - b ln(a x + b)/a^2` |
 | `"1/(2+3/x^2)^3".Integrate("x")`, `1/(a + b/x^3)` | left unevaluated | an antiderivative |
+| `"(a+b*x^n)*(c+d*x^n)^3".Integrate("x")` | left unevaluated | written out, eight powers of `x` integrated: `a c^3 x + ... + b d^3 x^(4 n + 1)/(4 n + 1)` |
 
 ### The hyperbolic functions have antiderivatives, and so does anything rational in `e^(k x)`
 

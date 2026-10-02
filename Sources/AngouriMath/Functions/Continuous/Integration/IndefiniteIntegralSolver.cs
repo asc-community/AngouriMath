@@ -16111,6 +16111,50 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A product of sums, of positive whole powers of sums and of powers of the variable,
+        /// written out and integrated term by term.
+        /// </summary>
+        /// <remarks>
+        /// <c>(a + b x^n)(c + d x^n)^3</c> had no antiderivative, and written out it is eight
+        /// powers of x, each answered at once: no rule reads a power of x whose exponent is a
+        /// symbol as a polynomial, and the rule above writes out one power and not a product of
+        /// them. As late as that one, and for the same reason: a product that a rule answers in
+        /// its own terms is not written out. Only where every factor with x in it is a sum, a
+        /// positive whole power of one, or a power of x itself, so that writing it out is a finite
+        /// identity, bounded by <see cref="MathS.Settings.MaxExpansionTermCount"/>.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByExpandingAProductOfSums(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (expr is not Mulf)
+                return null;
+            var sums = 0;
+            foreach (var factor in Mulf.LinearChildren(expr))
+            {
+                if (!factor.ContainsNode(x))
+                    continue;
+                switch (factor)
+                {
+                    case Sumf or Minusf:
+                    case Powf(Sumf or Minusf, Number.Integer power) when power.EInteger.CompareTo(EInteger.One) > 0:
+                        sums++;
+                        break;
+                    case Entity.Variable when factor == x:
+                    case Powf(var @base, var exponent) when @base == x && !exponent.ContainsNode(x):
+                        break;
+                    default:
+                        return null;
+                }
+            }
+            if (sums == 0)
+                return null;
+            var written = expr.Expand();
+            if (written is not Sumf and not Minusf)
+                return null;
+            return Integration.ComputeIndefiniteIntegral(written, x, integrateByParts);
+        }
+
+        /// <summary>
         /// Several square roots of polynomials in the variable, written as one:
         /// <c>sqrt(1 + x^2) sqrt(1 - x^2)</c> is <c>sqrt(1 - x^4)</c>, and a root below the bar
         /// is a root above it over its own base, <c>1/sqrt(B) = sqrt(B)/B</c>.

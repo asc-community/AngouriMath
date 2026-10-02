@@ -163,6 +163,16 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3));
 
         /// <summary>
+        /// A product of sums in a power of x whose exponent is a symbol, written out: each term is
+        /// a power of x, answered at once, and no rule reads the product as a polynomial.
+        /// </summary>
+        [Theory]
+        [InlineData("(a + b*x^n)*(c + d*x^n)^3")]
+        [InlineData("(c + d*x^(n - 1))*(a + b*x^n)^3")]
+        public void AProductOfSumsInASymbolicPowerOfX(string integrand)
+            => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1), ("n", 1.3));
+
+        /// <summary>
         /// A repeated <b>linear</b> factor is one block, <c>P/(a + b u)^k</c>, which the rule for
         /// a polynomial over a power of a linear reads; Welz's <c>1/(a + b e^(p x))^2</c> is
         /// this under <c>u = e^(p x)</c>.
