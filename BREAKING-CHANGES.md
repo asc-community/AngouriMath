@@ -1055,6 +1055,25 @@ real is an arm of a piecewise, saying where it holds. Rubi's 7.3.6 and 7.4.2
 | `"x*sqrt(c - a*c*x)/e^(3*atanh(a*x))".Integrate("x")` | left unevaluated | the antiderivative on both sides of `a x = 1`, where `master` gave one `provided c - a c x >= 0` |
 | `"sqrt(x)/(sqrt(1/x + 1)*sqrt(1 - x^2))".Integrate("x")` | left unevaluated | the antiderivative on both sides of `x = 0`, where `master` gave one `provided x >= 0` |
 
+### A quadratic that shares a root with a linear beside it is written over it
+
+**Answers where there were none.** In Rubi's 1.2.1.2 and 1.2.1.4 a quadratic under a root stands
+beside a power of a linear that divides it: `a d h + (c d^2 + a h^2) x + c d h x^2` is
+`(d + h x)(a h + c d x)`. Nothing split a quadratic with symbols in it over a root it shares, so it
+was read as irreducible and the integral was declined or ran out of time. A quadratic beside a
+linear under a root now takes the linear's root where it vanishes there, and its other root by
+the sum of the two. Each linear is then written once, as in the entry above
+([#718](https://github.com/asc-community/AngouriMath/issues/718)), and the two roots of the shared
+linear are one whole power of it. That is done only where it leaves two linears or fewer. Beside a
+whole power of the linear, as in `(d + h x)^3 sqrt(a d h + ...)`, or beside a third linear, as in
+`x sqrt(a d h + ...)/(d + h x)`, the quadratic is read whole, as before.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(d + h*x)^(7/2)/(a*d*h + (c*d^2 + a*h^2)*x + c*d*h*x^2)^(3/2)".Integrate("x")` | left unevaluated | `K` times a sum of powers of `sqrt(a h + c d x)`, `provided a h + c d x >= 0` |
+| `"(d + h*x)^(3/2)*(a*d*h + (c*d^2 + a*h^2)*x + c*d*h*x^2)^(1/2)".Integrate("x")` | left unevaluated | `K` times a polynomial in `sqrt(a h + c d x)`, `provided a h + c d x >= 0` |
+| `"sqrt(d + h*x)/sqrt(a*d*h + (c*d^2 + a*h^2)*x + c*d*h*x^2)".Integrate("x")` | left unevaluated | `K` times `2 sqrt(a h + c d x)/(c d)`, `provided a h + c d x >= 0` |
+
 ### The inverse hyperbolic tangent's answer is given on its domain, and says so
 
 `1/((1 - a^2 x^2)^(5/2) artanh(a x))` was left unevaluated, although the substitution `a x = tanh(u)`
