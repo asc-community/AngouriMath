@@ -279,6 +279,22 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1), ("g", 0.7));
 
         /// <summary>
+        /// Written factors that share a factor, or repeat one inside, are written over what they
+        /// share, the greatest common divisors taken in every variable: Rubi's 1.2.1.2,
+        /// <c>(d + e x)^m (a d e + (c d^2 + a e^2) x + c d e x^2)^p</c>, whose quadratic is
+        /// <c>(d + e x)(a e + c d x)</c>, and the square <c>c d^2 + 2 c d e x + c e^2 x^2</c>
+        /// beside a power of its linear, or with the numerator sharing it. Each was declined or
+        /// ran past the corpus's budget.
+        /// </summary>
+        [Theory]
+        [InlineData("1/((d + h*x)*(a*d*h + (c*d^2 + a*h^2)*x + c*d*h*x^2)^2)")]
+        [InlineData("(d + h*x)^6/(a*d*h + (c*d^2 + a*h^2)*x + c*d*h*x^2)^4")]
+        [InlineData("1/((d + h*x)^2*(c*d^2 + 2*c*d*h*x + c*h^2*x^2)^3)")]
+        [InlineData("x^2/((a + b*x)*(a^2 + 2*a*b*x + b^2*x^2))")]
+        public void FactorsThatShareOneAreWrittenOverIt(string integrand)
+            => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1), ("h", 0.7));
+
+        /// <summary>
         /// A written power of a linear is integrated as the power it is: expanded,
         /// <c>(f/g + x)^2</c> is a quadratic whose discriminant is zero in a spelling the
         /// quadratic rule did not read as zero, and <c>1/(f/g + x)^2</c> was a piecewise on it.
