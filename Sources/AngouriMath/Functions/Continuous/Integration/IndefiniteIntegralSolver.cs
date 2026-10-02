@@ -8030,12 +8030,12 @@ namespace AngouriMath.Functions.Algebra
 
             // h^2 Q at the third linear's root is (h a - g b)(h c - g d), zero where it shares a
             // root with one under a root.
-            (Entity, Entity, Entity, int, Entity[])? pole = null;
+            ALinearBesideTheRoot? pole = null;
             if (third is { })
             {
                 if (!TreeAnalyzer.TryGetPolyLinear(third, x, out var h, out var g) || IsZeroOverTheSymbols(h))
                     return null;
-                pole = (third, g, h, order, new[] { h * a - g * b, h * c - g * d });
+                pole = new(third, g, h, order, new[] { h * a - g * b, h * c - g * d }, SharesARoot: false);
             }
             if (IntegrateOverARootOfAQuadratic(expr, x, t, a * c, a * d + b * c, b * d, xi => (a + b * xi) * (c + d * xi), pole, b, 0)
                 is not var (algebraic, ofTheLogarithm, ofTheThirdKind))
@@ -8054,7 +8054,7 @@ namespace AngouriMath.Functions.Algebra
             {
                 // int 1/(y S) over 1/(h a - g b), -2 arctan(sqrt(rho) t)/sqrt(rho) with
                 // rho = (g d - h c)/(h a - g b).
-                var atThePole = pole!.Value.Item5;
+                var atThePole = pole!.AtThePole;
                 var rho = LowestOverTheSymbols(-atThePole[1] / atThePole[0]);
                 answer = answer + BySign(rho,
                     -2 * ofTheThirdKind * MathS.Arctan(MathS.Sqrt(rho) * root) / MathS.Sqrt(rho),
@@ -8133,12 +8133,17 @@ namespace AngouriMath.Functions.Algebra
                 || CoefficientsBesideARoot(above * WholePower(quadratic, (halves[quadratic] + 1) / 2), x) is not { } t)
                 return null;
             var (q0, q1, q2) = (q[0], q[1], q[2]);
-            (Entity, Entity, Entity, int, Entity[])? pole = null;
+            ALinearBesideTheRoot? pole = null;
             if (third is { })
             {
                 if (!TreeAnalyzer.TryGetPolyLinear(third, x, out var h, out var g) || IsZeroOverTheSymbols(h))
                     return null;
-                pole = (third, g, h, order, new[] { q0 * h * h - q1 * g * h + q2 * g * g });
+                // h^2 Q at the linear's root; where that is zero, h Q' there, which is not, since
+                // the root is a simple one.
+                var atTheRoot = q0 * h * h - q1 * g * h + q2 * g * g;
+                pole = IsZeroOverTheSymbols(atTheRoot)
+                    ? new(third, g, h, order, new[] { q1 * h - 2 * q2 * g }, SharesARoot: true)
+                    : new(third, g, h, order, new[] { atTheRoot }, SharesARoot: false);
             }
             if (IntegrateOverARootOfAQuadratic(expr, x, t, q0, q1, q2, xi => quadratic.Substitute(x, xi), pole, null, null)
                 is not var (algebraic, ofTheFirstKind, ofTheThirdKind))
@@ -8154,7 +8159,7 @@ namespace AngouriMath.Functions.Algebra
             }
             if (ofTheThirdKind != Number.Integer.Zero)
             {
-                var (_, g, h, _, atThePole) = pole!.Value;
+                var (_, g, h, _, atThePole, _) = pole!;
                 var z = 2 * q0 * h - q1 * g + (q1 * h - 2 * q2 * g) * x;
                 var twiceTheRoot = 2 * MathS.Sqrt(atThePole[0]) * root;
                 answer = answer + BySign(atThePole[0],
@@ -8246,8 +8251,8 @@ namespace AngouriMath.Functions.Algebra
         /// <paramref name="t"/> and <c>S</c> a square root of <c>Q = q0 + q1 x + q2 x^2</c>, by
         /// undetermined coefficients: the algebraic terms, which the caller multiplies by
         /// <c>S</c>; a multiple of <c>int 1/S</c>; and with the linear, a multiple of
-        /// <c>int 1/((g + h x) S)</c>. Null where <c>Q</c> vanishes at the root of the linear, or
-        /// where a coefficient is not written back in the symbols.
+        /// <c>int 1/((g + h x) S)</c>. Null where a coefficient is not written back in the
+        /// symbols.
         /// </summary>
         /// <remarks>
         /// <para>
@@ -8270,15 +8275,18 @@ namespace AngouriMath.Functions.Algebra
         /// <c>(2 (1 - j) alpha s^(-j) + (3 - 2j) beta s^(1-j) + (4 - 2j) gamma s^(2-j)) / (2 S)</c>.
         /// So for <c>j &gt;= 2</c>, <c>I_j = int 1/(s^j S)</c> is given by <c>S s^(1-j)</c> and the two
         /// integrals before it, and all the way down it is algebraic terms and a multiple of
-        /// <c>I_1</c>. That needs <c>alpha</c>, the value of <c>Q</c> at the root of <c>y</c>, to be
-        /// nonzero, so a linear that shares a root with <c>Q</c> is declined.
+        /// <c>I_1</c>, where <c>alpha</c>, the value of <c>Q</c> at the root of <c>y</c>, is not zero.
+        /// Where it is, the linear shares a root with <c>Q</c>, and the derivative of
+        /// <c>S s^(-j)</c> is <c>((1 - 2j) beta s^(-j) + (2 - 2j) gamma s^(1-j)) / (2 S)</c>: then
+        /// every <c>I_j</c> is algebraic, from <c>I_1 = -2 S/(beta s)</c> up, and there is no
+        /// third integral.
         /// </para>
         /// <para>
         /// <b>Back in the symbols.</b> A symbol stands for <c>xi</c> until the end, so that what
-        /// is computed is polynomial in it, and <c>alpha^(k-1)</c> is divided by once. Each
-        /// coefficient is then written homogeneous in <c>g</c> and <c>h</c>, with the powers of
-        /// <c>h</c> counted, over the factors the caller writes <c>h^2 alpha</c> as:
-        /// <paramref name="pole"/>'s <c>AtThePole</c>. The multiple of <c>int 1/S</c> is divided by
+        /// is computed is polynomial in it, and <c>alpha^(k-1)</c>, or <c>beta^k</c> beside a shared
+        /// root, is divided by once. Each coefficient is then written homogeneous in <c>g</c> and
+        /// <c>h</c>, with the powers of <c>h</c> counted, over the factors the caller writes
+        /// <c>h^2 alpha</c> or <c>h beta</c> as: <paramref name="pole"/>'s <c>AtThePole</c>. The multiple of <c>int 1/S</c> is divided by
         /// <paramref name="firstKindOver"/> first, where there is one, and the multiple of
         /// <c>int 1/(y S)</c> by the factor <paramref name="thirdKindAlsoOver"/> names: the
         /// caller's closed forms have them below the bar.
@@ -8286,7 +8294,7 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         private static (Entity Algebraic, Entity OfTheFirstKind, Entity OfTheThirdKind)? IntegrateOverARootOfAQuadratic(
             Entity expr, Entity.Variable x, Entity[] t, Entity q0, Entity q1, Entity q2, System.Func<Entity, Entity> quadraticAt,
-            (Entity Linear, Entity G, Entity H, int Order, Entity[] AtThePole)? pole, Entity? firstKindOver, int? thirdKindAlsoOver)
+            ALinearBesideTheRoot? pole, Entity? firstKindOver, int? thirdKindAlsoOver)
         {
             var degree = t.Length - 1;
             // Around the linear's root, a symbol xi stands for -g/h until the end, so that what
@@ -8298,13 +8306,16 @@ namespace AngouriMath.Functions.Algebra
             var polynomial = t;
             var overThePole = new SortedDictionary<int, Entity>();
             Entity ofTheThirdKind = Number.Integer.Zero;
+            // What the coefficients over the pole are divided by: a power of each factor of
+            // h^2 alpha, or of h beta, and the powers of h that brings.
+            var belowThePole = 0;
+            var hOfThePole = 0;
             if (pole is { } linear)
             {
                 if (linear.AtThePole.Any(IsZeroOverTheSymbols))
                     return null;
                 order = linear.Order;
                 xi = Variable.CreateUnique(expr, "pole");
-                var alpha = LowestOverTheSymbols(quadraticAt(xi));
                 var beta = LowestOverTheSymbols(q1 + 2 * q2 * xi);
                 var gamma = q2;
                 var tau = new Entity[degree + 1];
@@ -8325,43 +8336,74 @@ namespace AngouriMath.Functions.Algebra
                             sum = sum + tau[i] * BinomialCoefficient(i - order, m) * WholePower(-xi, i - order - m);
                     polynomial[m] = LowestOverTheSymbols(sum);
                 }
-                // I_j = int 1/((x - xi)^j S), with Q = alpha + beta (x - xi) + gamma (x - xi)^2. The
-                // derivative of S (x - xi)^(1-j) is
-                //     (2 (1 - j) alpha (x - xi)^(-j) + (3 - 2j) beta (x - xi)^(1-j)
-                //         + (4 - 2j) gamma (x - xi)^(2-j)) / (2 S),
-                // so alpha^(j-1) I_j is a polynomial in xi times powers of x - xi, times S, and a
-                // polynomial in xi times I_1: divided by alpha only once, at the end.
-                var scaled = new Dictionary<int, Entity>[order + 1];
-                var ofTheFirst = new Entity[order + 1];
-                scaled[0] = new Dictionary<int, Entity>();
-                ofTheFirst[0] = Number.Integer.Zero;
-                if (order >= 1)
+                if (linear.SharesARoot)
                 {
-                    scaled[1] = new Dictionary<int, Entity>();
-                    ofTheFirst[1] = Number.Integer.One;
+                    // Q = beta (x - xi) + gamma (x - xi)^2, so
+                    //     I_j = (2 S (x - xi)^(-j) - (2 - 2j) gamma I_(j-1)) / ((1 - 2j) beta),
+                    // and beta^j I_j is a polynomial in xi times powers of x - xi, times S: sum
+                    // tau_(k-j) I_j over beta^k.
+                    var previous = new Dictionary<int, Entity>();
+                    for (var j = 1; j <= order; j++)
+                    {
+                        var these = new Dictionary<int, Entity> { [-j] = 2 * WholePower(beta, j - 1) };
+                        foreach (var pair in previous)
+                            these[pair.Key] = these.TryGetValue(pair.Key, out var so)
+                                ? so - (2 - 2 * j) * gamma * pair.Value : -(2 - 2 * j) * gamma * pair.Value;
+                        previous = these.ToDictionary(pair => pair.Key, pair => LowestOverTheSymbols(pair.Value / (1 - 2 * j)));
+                        if (order - j > degree || tau[order - j] == Number.Integer.Zero)
+                            continue;
+                        var weight = tau[order - j] * WholePower(beta, order - j);
+                        foreach (var pair in previous)
+                            overThePole[pair.Key] = overThePole.TryGetValue(pair.Key, out var so) ? so + weight * pair.Value : weight * pair.Value;
+                    }
+                    foreach (var power in overThePole.Keys.ToList())
+                        overThePole[power] = LowestOverTheSymbols(overThePole[power]);
+                    belowThePole = order;
+                    hOfThePole = order;
                 }
-                for (var j = 2; j <= order; j++)
+                else
                 {
-                    var these = new Dictionary<int, Entity> { [1 - j] = 2 * WholePower(alpha, j - 2) };
-                    foreach (var (earlier, times) in new[] { (scaled[j - 1], (3 - 2 * j) * beta), (scaled[j - 2], (4 - 2 * j) * gamma * alpha) })
-                        foreach (var pair in earlier)
-                            these[pair.Key] = these.TryGetValue(pair.Key, out var so) ? so - times * pair.Value : -times * pair.Value;
-                    scaled[j] = these.ToDictionary(pair => pair.Key, pair => LowestOverTheSymbols(pair.Value / (2 * (1 - j))));
-                    ofTheFirst[j] = LowestOverTheSymbols((-(3 - 2 * j) * beta * ofTheFirst[j - 1] - (4 - 2 * j) * gamma * alpha * ofTheFirst[j - 2]) / (2 * (1 - j)));
+                    var alpha = LowestOverTheSymbols(quadraticAt(xi));
+                    // I_j = int 1/((x - xi)^j S), with Q = alpha + beta (x - xi) + gamma (x - xi)^2. The
+                    // derivative of S (x - xi)^(1-j) is
+                    //     (2 (1 - j) alpha (x - xi)^(-j) + (3 - 2j) beta (x - xi)^(1-j)
+                    //         + (4 - 2j) gamma (x - xi)^(2-j)) / (2 S),
+                    // so alpha^(j-1) I_j is a polynomial in xi times powers of x - xi, times S, and a
+                    // polynomial in xi times I_1: divided by alpha only once, at the end.
+                    var scaled = new Dictionary<int, Entity>[order + 1];
+                    var ofTheFirst = new Entity[order + 1];
+                    scaled[0] = new Dictionary<int, Entity>();
+                    ofTheFirst[0] = Number.Integer.Zero;
+                    if (order >= 1)
+                    {
+                        scaled[1] = new Dictionary<int, Entity>();
+                        ofTheFirst[1] = Number.Integer.One;
+                    }
+                    for (var j = 2; j <= order; j++)
+                    {
+                        var these = new Dictionary<int, Entity> { [1 - j] = 2 * WholePower(alpha, j - 2) };
+                        foreach (var (earlier, times) in new[] { (scaled[j - 1], (3 - 2 * j) * beta), (scaled[j - 2], (4 - 2 * j) * gamma * alpha) })
+                            foreach (var pair in earlier)
+                                these[pair.Key] = these.TryGetValue(pair.Key, out var so) ? so - times * pair.Value : -times * pair.Value;
+                        scaled[j] = these.ToDictionary(pair => pair.Key, pair => LowestOverTheSymbols(pair.Value / (2 * (1 - j))));
+                        ofTheFirst[j] = LowestOverTheSymbols((-(3 - 2 * j) * beta * ofTheFirst[j - 1] - (4 - 2 * j) * gamma * alpha * ofTheFirst[j - 2]) / (2 * (1 - j)));
+                    }
+                    // sum tau_(k-j) I_j over alpha^(k-1).
+                    for (var j = 1; j <= order; j++)
+                    {
+                        if (order - j > degree || tau[order - j] == Number.Integer.Zero)
+                            continue;
+                        var weight = tau[order - j] * WholePower(alpha, order - j);
+                        foreach (var pair in scaled[j])
+                            overThePole[pair.Key] = overThePole.TryGetValue(pair.Key, out var so) ? so + weight * pair.Value : weight * pair.Value;
+                        ofTheThirdKind = ofTheThirdKind + weight * ofTheFirst[j];
+                    }
+                    foreach (var power in overThePole.Keys.ToList())
+                        overThePole[power] = LowestOverTheSymbols(overThePole[power]);
+                    ofTheThirdKind = LowestOverTheSymbols(ofTheThirdKind);
+                    belowThePole = order - 1;
+                    hOfThePole = 2 * (order - 1);
                 }
-                // sum tau_(k-j) I_j over alpha^(k-1).
-                for (var j = 1; j <= order; j++)
-                {
-                    if (order - j > degree || tau[order - j] == Number.Integer.Zero)
-                        continue;
-                    var weight = tau[order - j] * WholePower(alpha, order - j);
-                    foreach (var pair in scaled[j])
-                        overThePole[pair.Key] = overThePole.TryGetValue(pair.Key, out var so) ? so + weight * pair.Value : weight * pair.Value;
-                    ofTheThirdKind = ofTheThirdKind + weight * ofTheFirst[j];
-                }
-                foreach (var power in overThePole.Keys.ToList())
-                    overThePole[power] = LowestOverTheSymbols(overThePole[power]);
-                ofTheThirdKind = LowestOverTheSymbols(ofTheThirdKind);
             }
 
             // The polynomial part: u_(j-1) from the top down, and lambda at x^0.
@@ -8388,17 +8430,18 @@ namespace AngouriMath.Functions.Algebra
                     return LowestOverTheSymbols(above / below);
                 if (Homogeneous(above) is not var (aboveInGAndH, aboveDegree) || Homogeneous(below) is not var (belowInGAndH, belowDegree))
                     return null;
-                var h = pole!.Value.H;
+                var h = pole!.H;
                 var power = powerOfH + belowDegree - aboveDegree - order;
                 var numerator = LowestOverTheSymbols(power > 0 ? aboveInGAndH * WholePower(h, power) : aboveInGAndH);
                 if (numerator == Number.Integer.Zero)
                     return Number.Integer.Zero;
                 var denominator = LowestOverTheSymbols(power < 0 ? belowInGAndH * WholePower(h, -power) : belowInGAndH);
-                // alpha^(k-1) is (h^2 alpha)^(k-1)/h^(2 (k - 1)), its powers of h counted in
-                // powerOfH, and h^2 alpha is left in the factors the caller writes it as.
+                // alpha^(k-1) is (h^2 alpha)^(k-1)/h^(2 (k - 1)), and beta^k is (h beta)^k/h^k, their
+                // powers of h counted in powerOfH, and h^2 alpha or h beta left in the factors the
+                // caller writes it as.
                 Entity written = denominator;
                 for (var i = 0; i < overTheFactors.Length; i++)
-                    written = written * WholePower(pole.Value.AtThePole[i], overTheFactors[i]);
+                    written = written * WholePower(pole.AtThePole[i], overTheFactors[i]);
                 var lowest = LowestOverTheSymbols(numerator / written);
                 return lowest.Complexity <= (numerator / written).Complexity ? lowest : numerator / written;
             }
@@ -8406,7 +8449,7 @@ namespace AngouriMath.Functions.Algebra
             {
                 if (!TreeAnalyzer.TryGetPolynomial(inXi, xi!, out var byPower) || byPower.Keys.Any(power => power.Sign < 0 || !power.CanFitInInt32()))
                     return null;
-                var (_, g, h, _, _) = pole!.Value;
+                var (_, g, h, _, _, _) = pole!;
                 var top = byPower.Keys.Max()!.ToInt32Unchecked();
                 Entity sum = Number.Integer.Zero;
                 foreach (var pair in byPower)
@@ -8424,14 +8467,14 @@ namespace AngouriMath.Functions.Algebra
                     if (coefficient != Number.Integer.Zero)
                         algebraic = algebraic + coefficient * WholePower(x, j);
                 }
-            // (x - xi)^p is h^(-p) (g + h x)^p, and 1/alpha^(k-1) brings h^(2 (k - 1)).
-            var overAlpha = Enumerable.Repeat(order - 1, factors).ToArray();
+            // (x - xi)^p is h^(-p) (g + h x)^p.
+            var overThePoleFactors = Enumerable.Repeat(belowThePole, factors).ToArray();
             foreach (var pair in overThePole)
             {
-                if (Back(pair.Value, -pair.Key + 2 * (order - 1), overAlpha) is not { } coefficient)
+                if (Back(pair.Value, -pair.Key + hOfThePole, overThePoleFactors) is not { } coefficient)
                     return null;
                 if (coefficient != Number.Integer.Zero)
-                    algebraic = algebraic + coefficient / WholePower(pole!.Value.Linear, -pair.Key);
+                    algebraic = algebraic + coefficient / WholePower(pole!.Linear, -pair.Key);
             }
             Entity ofTheFirstKind = Number.Integer.Zero;
             if (lambda != Number.Integer.Zero)
@@ -8445,23 +8488,52 @@ namespace AngouriMath.Functions.Algebra
             if (xi is { } && ofTheThirdKind != Number.Integer.Zero)
             {
                 if (thirdKindAlsoOver is { } factor)
-                    overAlpha[factor]++;
-                if (Back(ofTheThirdKind, 2 * (order - 1) + 1, overAlpha) is not { } coefficient)
+                    overThePoleFactors[factor]++;
+                if (Back(ofTheThirdKind, hOfThePole + 1, overThePoleFactors) is not { } coefficient)
                     return null;
                 thirdKind = coefficient;
             }
             return (algebraic, ofTheFirstKind, thirdKind);
         }
 
+        /// <summary>
+        /// The linear below the bar beside the root of a quadratic <c>Q</c>, for
+        /// <see cref="IntegrateOverARootOfAQuadratic"/>: as written, <c>g + h x</c>, to the power
+        /// <c>Order</c>. <c>AtThePole</c> holds the factors the caller writes <c>h^2 Q(-g/h)</c> as,
+        /// or where that is zero and the linear shares a root with <c>Q</c>, <c>h Q'(-g/h)</c>.
+        /// </summary>
+        private sealed record ALinearBesideTheRoot(Entity Linear, Entity G, Entity H, int Order, Entity[] AtThePole, bool SharesARoot);
+
         private static Entity LowestOverTheSymbols(Entity e) => Functions.PartialFractions.InLowestTermsOverTheSymbols(e);
 
         // Each closed form is real on one side of the sign of the quantity under its roots, and
         // complex by a constant on the other: the form for the sign of a number, and both, each
-        // where it holds, for a quantity with symbols in it, as `1/(a - x^2)` is answered.
+        // where it holds, for a quantity with symbols in it, as `1/(a - x^2)` is answered. A
+        // number times even powers of symbols has the number's sign wherever the symbols are
+        // real and not zero, which is the generic case: `-b^2` in `a^2 - b^2 x^2` is negative.
         private static Entity BySign(Entity quantity, Entity wherePositive, Entity whereNegative)
-            => !quantity.Vars.Any() && quantity.InnerSimplified is Number.Real number
-                ? (number.IsNegative ? whereNegative : wherePositive)
+            => SignOfANumberTimesEvenPowers(quantity) is { } sign
+                ? (sign < 0 ? whereNegative : wherePositive)
                 : MathS.Piecewise((wherePositive, new Greaterf(quantity, Number.Integer.Zero)), (whereNegative, new Lessf(quantity, Number.Integer.Zero)));
+
+        private static int? SignOfANumberTimesEvenPowers(Entity quantity)
+        {
+            var sign = 1;
+            foreach (var factor in Mulf.LinearChildren(quantity.InnerSimplified))
+                switch (factor)
+                {
+                    case Number.Real { IsZero: true }:
+                        return null;
+                    case Number.Real number:
+                        sign *= number.IsNegative ? -1 : 1;
+                        break;
+                    case Powf(Variable, Number.Integer power) when power.EInteger.IsEven && !power.EInteger.IsZero:
+                        break;
+                    default:
+                        return null;
+                }
+            return sign;
+        }
 
         private static bool IsZeroOverTheSymbols(Entity e) => e.InnerSimplified is var simplified
             && (simplified.Evaled is Number.Complex { IsZero: true } || simplified.Vars.Any() && LowestOverTheSymbols(simplified) == Number.Integer.Zero);
