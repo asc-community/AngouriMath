@@ -48,7 +48,28 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x*sqrt(c-c/(a*x))/e^(3*atanh(a*x))", "a=1.37,c=-2.11")]
         [InlineData("e^(2*acoth(a*x))/(c-c/(a^2*x^2))^2", "a=1.37,c=2.11")]
         [InlineData("1/(e^(2*atanh(a*x))*(c-c/(a^2*x^2))^4)", "a=1.37,c=-2.11")]
+        // A quadratic that shares a root with a linear beside it, Rubi's 1.2.1.2 and 1.2.1.4:
+        // `a d e + (c d^2 + a e^2) x + c d e x^2` is `(d + e x)(a e + c d x)`, and comes apart
+        // only through the root it shares, where the linear stands under a root as well.
+        [InlineData("(d+h*x)^(7/2)/(a*d*h+(c*d^2+a*h^2)*x+c*d*h*x^2)^(3/2)", "a=1.37,c=2.11,d=0.83,h=1.9")]
+        [InlineData("(d+h*x)^(3/2)*(a*d*h+(c*d^2+a*h^2)*x+c*d*h*x^2)^(1/2)", "a=1.37,c=2.11,d=0.83,h=1.9")]
+        [InlineData("sqrt(d+h*x)/sqrt(a*d*h+(c*d^2+a*h^2)*x+c*d*h*x^2)", "a=1.37,c=2.11,d=0.83,h=1.9")]
         public void IsAnsweredWithEachLinearOnce(string integrand, string pins)
+            => DifferentiatesBack(integrand, pins);
+
+        /// <summary>
+        /// Beside a third linear, a quadratic is not taken apart through the root it shares. That
+        /// would leave a product of three linears, which the rules for two do not answer, and
+        /// written so <c>x sqrt(a d h + ...)/(d + h x)</c> grows past what fits in memory. Read
+        /// whole, it is answered.
+        /// </summary>
+        [Theory]
+        [InlineData("x*sqrt(a*d*h+(c*d^2+a*h^2)*x+c*d*h*x^2)/(d+h*x)", "a=1.37,c=2.11,d=0.83,h=1.9")]
+        [InlineData("sqrt(a*d*h+(c*d^2+a*h^2)*x+c*d*h*x^2)/(x*(d+h*x))", "a=1.37,c=2.11,d=0.83,h=1.9")]
+        public void BesideAThirdLinearTheQuadraticIsReadWhole(string integrand, string pins)
+            => DifferentiatesBack(integrand, pins);
+
+        private static void DifferentiatesBack(string integrand, string pins)
         {
             var integral = integrand.ToEntity().Integrate("x").Substitute("C", 0);
             Assert.DoesNotContain("integral(", integral.Stringize());
