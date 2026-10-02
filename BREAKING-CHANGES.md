@@ -654,6 +654,23 @@ reached 3^12 cases and 8 GB inside integration by parts
 | `(x < 0 and x = 0).Simplify()` | `False provided x in RR` | `False` — the condition was over-strong, one conjunct is false wherever `x` is |
 | `(x > 0 and x > 0).Evaled` | `x > 0` | `x > 0` (unchanged) |
 
+### Two piecewises split on one quantity combine sign by sign
+
+A sum or product of two piecewises still joins every case's condition to every other's, and now
+drops two more kinds of pair. A quantity is read up to a constant factor, so `f = 0 and not 2 f = 0`
+is `False`. And `q > 0 and q < 0`, which is `NaN` off the real line rather than `False`, goes where
+every case after it tests `q` too: off the real line each of those is false or undecided, so no case
+it was keeping from being reached could be. Where a later case tests something else it stays. Sums
+of the answers the radical substitution gives for `x sqrt(1 + d x) sqrt(1 + f x)` had reached
+32,769 cases ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `piecewise(1 provided q = 0, 2 provided q > 0, 3 provided q < 0) + piecewise(10 provided q = 0, 20 provided q > 0, 30 provided q < 0)`, `.InnerSimplified` | nine cases | three: `11 provided q = 0`, `22 provided q > 0`, `33 provided q < 0` |
+| `piecewise(1 provided f = 0, 2 provided not 2 * f = 0) + piecewise(10 provided 3 * f = 0, 20 provided not f = 0)`, `.InnerSimplified` | four cases | two |
+| the same with a third case `provided p > 0` in each | nine cases | nine, unchanged |
+| `"x*sqrt(1 + d*x)*sqrt(1 + f*x)".Integrate("x")`, and with `x^2`, or `A + B x + K x^2`, for `x` | left unevaluated | the antiderivative, a piecewise of three cases |
+
 ### A union with an empty interval is the other set
 
 **Wrong answer fixed.** Two intervals were joined wherever one ended where the other began, before
