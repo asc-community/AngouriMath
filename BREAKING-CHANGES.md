@@ -523,6 +523,23 @@ in both quadratics, the cube's coefficients grow past what the reduction takes, 
 | `"(7 + 13*x)/((5 + x + 2*x^2)^3*sqrt(2 + x + 3*x^2))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative |
 | `"sqrt(a + a*sec(x))/(c + d*sec(x))^2".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `tan(x/2)` |
 
+### A polynomial beside the square roots of two linears with symbols in them is integrated
+
+`P(x) sqrt(c + d x) sqrt(e + f x)`, a polynomial beside the roots of two linears with symbols in
+them or over their product, was left unevaluated, and so was the same over a power of a third
+linear. These are Rubi's 1.1.1.6, `P(x) (a + b x)^m (c + d x)^n (e + f x)^p`. They are now
+integrated by undetermined coefficients. The answer is a rational function times the two roots,
+a logarithm of their quotient, and an arctangent of the quotient where a third linear is below
+the bar. Where the slopes are numbers of opposite signs, the logarithm is written as the
+arctangent it is ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(c + d*x)*sqrt(e + f*x)".ToEntity().Integrate("x")` | `integral(...)` | `(x/2 + (d e + c f)/(4 d f)) sqrt(c + d x) sqrt(e + f x)`, and a logarithm in `sqrt(f/d) sqrt(c + d x)/sqrt(e + f x)` |
+| `"(A + B*x + C*x^2)*sqrt(c + d*x)*sqrt(e + f*x)".ToEntity().Integrate("x")` | `integral(...)` | a cubic times the two roots, and the same logarithm |
+| `"(A + B*x + C*x^2)*sqrt(c + d*x)/((a + b*x)^3*sqrt(e + f*x))".ToEntity().Integrate("x")` | `integral(...)` | the roots over powers of `a + b x`, a logarithm, and an arctangent |
+| `"x^2*sqrt(a + 2*x)*sqrt(c - 3*x)".ToEntity().Integrate("x")` | `integral(...)` | a cubic times the two roots, and an arctangent of `sqrt(6)/2 sqrt(a + 2 x)/sqrt(c - 3 x)` |
+
 ### A function comes out of a fractional power of its even power with its sign
 
 **Improvement, not silent.** The entry two above made `(sin(x)^2)^(3/2)` the modulus `|sin(x)|^3`
