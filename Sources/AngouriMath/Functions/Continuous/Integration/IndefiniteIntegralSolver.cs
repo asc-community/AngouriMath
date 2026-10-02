@@ -7949,6 +7949,359 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A polynomial over a power of a linear beside the square roots of two others,
+        /// <c>P(x) (a + b x)^(m/2) (c + d x)^(n/2) / (g + h x)^k</c> with <c>m</c> and <c>n</c>
+        /// odd and neither below <c>-1</c>, and <c>k &gt;= 0</c>, by undetermined coefficients:
+        /// algebraic terms times <c>sqrt(a + b x) sqrt(c + d x)</c>, and a multiple of each of
+        /// two integrals that are not algebraic.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Write <c>S = sqrt(a + b x) sqrt(c + d x)</c> and <c>Q = (a + b x)(c + d x)</c>. Over
+        /// <c>S</c> the integrand is <c>T(x)/((g + h x)^k S)</c>, where
+        /// <c>T = P (a + b x)^((m + 1)/2) (c + d x)^((n + 1)/2)</c> is a polynomial, and
+        /// <c>S' = Q'/(2 S)</c> because <c>sqrt(z)^2 = z</c> for every complex <c>z</c>.
+        /// </para>
+        /// <para>
+        /// <b>The polynomial part.</b> In powers of <c>y = g + h x</c>, the terms of <c>T</c> from
+        /// <c>y^k</c> up leave a polynomial <c>R(x)</c>, and
+        /// <c>int R/S = U S + lambda int 1/S</c>. The derivative of <c>U S</c> is
+        /// <c>(U' Q + U Q'/2)/S</c>, so <c>R = U' Q + U Q'/2 + lambda</c>, which for <c>U</c> of one
+        /// degree less than <c>R</c> is triangular. With
+        /// <c>Q = q0 + q1 x + q2 x^2</c>, the coefficient of <c>x^j</c> on the right is
+        /// <c>(j + 1) q0 u_(j+1) + (j + 1/2) q1 u_j + j q2 u_(j-1)</c>. That is solved for
+        /// <c>u_(j-1)</c> from the top down, and <c>lambda</c> is what is left at <c>x^0</c>.
+        /// </para>
+        /// <para>
+        /// <b>The terms over powers of <c>y</c>.</b> Write <c>Q = alpha + beta y + gamma y^2</c>.
+        /// The derivative of <c>S y^(1-j)</c> is
+        /// <c>h (2 (1 - j) alpha y^(-j) + (3 - 2j) beta y^(1-j) + (4 - 2j) gamma y^(2-j)) / (2 S)</c>.
+        /// So for <c>j &gt;= 2</c>, <c>I_j = int 1/(y^j S)</c> is given by <c>S y^(1-j)</c> and the two
+        /// integrals before it, and all the way down it is algebraic terms and a multiple of
+        /// <c>I_1</c>. That needs <c>alpha</c>, the value of <c>Q</c> at the root of <c>y</c>, to be
+        /// nonzero, so a third linear that shares a root with one under a root is declined.
+        /// </para>
+        /// <para>
+        /// <b>The two integrals left.</b> With <c>t = sqrt(a + b x)/sqrt(c + d x)</c>,
+        /// <c>dx/S = 2 dt/(b - d t^2)</c>, so <c>int 1/S</c> is <c>2 artanh(sqrt(r) t)/(b sqrt(r))</c>
+        /// with <c>r = d/b</c>. And <c>dx/(y S) = -2 dt/(p t^2 + q)</c> with <c>p = g d - h c</c>
+        /// and <c>q = h a - g b</c>, so <c>I_1</c> is <c>-2 arctan(sqrt(rho) t)/(q sqrt(rho))</c>
+        /// with <c>rho = p/q</c>. Each derivative needs only <c>sqrt(z)^2 = z</c>, so each holds for every
+        /// value of the symbols that the divisions allow. Where <c>r</c> or <c>rho</c> is a number
+        /// of the other sign, the integral is written as the other function, without an <c>i</c>
+        /// in it. The slopes are divided by, which is the generic case, as everywhere in the
+        /// integrator.
+        /// </para>
+        /// <para>
+        /// The substitution <see cref="SolveByAQuotientOfTwoLinearRadicals"/> answers the same
+        /// integrands. With symbols in the linears, though, its rational function in <c>t</c> is
+        /// over a power of <c>b - d t^2</c> that grows with the degree of <c>P</c>. Rubi's 1.1.1.6
+        /// <c>(A + B x + C x^2) sqrt(c + d x) sqrt(e + f x)</c> took more than 4 GB that way,
+        /// where this is a triangular system.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveAPolynomialOverAPowerOfALinearBesideTwoRoots(Entity expr, Entity.Variable x)
+        {
+            // The two bases, read before anything is built, since this asks every sub-integrand.
+            Entity? first = null;
+            Entity? second = null;
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not Powf(var @base, Number.Rational exponent) || exponent is Number.Integer || !@base.ContainsNode(x))
+                    continue;
+                if (!exponent.ERational.Denominator.Equals(EInteger.FromInt32(2)) || !exponent.ERational.Numerator.CanFitInInt32())
+                    return null;
+                if (first is null)
+                    first = @base;
+                else if (first != @base)
+                {
+                    if (second is null)
+                        second = @base;
+                    else if (second != @base)
+                        return null;
+                }
+            }
+            // With numbers in both linears the combining of roots and the quotient substitution
+            // answer, and in their own forms; this is for the symbols, which those declined or
+            // took gigabytes over. Two proportional linears are one root with a constant in it,
+            // which AsOneLinearRadical takes.
+            if (first is null || second is null
+                || !first.Vars.Concat(second.Vars).Any(symbol => symbol != x)
+                || !TreeAnalyzer.TryGetPolyLinear(first, x, out var b, out var a)
+                || !TreeAnalyzer.TryGetPolyLinear(second, x, out var d, out var c)
+                || IsZero(b) || IsZero(d) || IsZero(b * c - a * d))
+                return null;
+
+            // As one quotient, with a negative half-power read as the root below the bar it is.
+            // Each root's power is counted in halves, above the bar and below; anything else of x
+            // above is the polynomial, and below it may be powers of one more linear.
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr.Replace(node =>
+                node is Powf(var @base, Number.Rational power) && power is not Number.Integer && power.ERational.Sign < 0
+                    ? Number.Integer.One / MathS.Pow(@base, Number.Rational.Create(power.ERational.Negate()))
+                    : node));
+            var halves = new Dictionary<Entity, int> { [first] = 0, [second] = 0 };
+            Entity above = Number.Integer.One;
+            Entity constantBelow = Number.Integer.One;
+            Entity? third = null;
+            var order = 0;
+            foreach (var (side, sign) in new[] { (numerator, 1), (denominator, -1) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    var (@base, inHalves) = factor switch
+                    {
+                        Powf(var whole, Number.Integer k) when k.EInteger.CanFitInInt32() => (whole, 2 * k.EInteger.ToInt32Unchecked()),
+                        Powf(var radicand, Number.Rational r) when r.ERational.Denominator.Equals(EInteger.FromInt32(2))
+                            && r.ERational.Numerator.CanFitInInt32() => (radicand, r.ERational.Numerator.ToInt32Unchecked()),
+                        _ => (factor, 2),
+                    };
+                    if (halves.ContainsKey(@base))
+                        halves[@base] += sign * inHalves;
+                    else if (!factor.ContainsNode(x))
+                    {
+                        if (sign > 0)
+                            above = above * factor;
+                        else
+                            constantBelow = constantBelow * factor;
+                    }
+                    else if (sign > 0)
+                        above = above * factor;
+                    else if (inHalves <= 0 || inHalves % 2 != 0 || third is { } && third != @base)
+                        return null;
+                    else
+                    {
+                        third = @base;
+                        order += inHalves / 2;
+                    }
+                }
+            // (a + b x)^(m/2) is (a + b x)^((m + 1)/2) over its root. Below -1 there is a pole
+            // at the root of a linear under a root, which is the substitution's.
+            if (halves[first] % 2 == 0 || halves[second] % 2 == 0)
+                return null;
+            var wholeOfFirst = (halves[first] + 1) / 2;
+            var wholeOfSecond = (halves[second] + 1) / 2;
+            if (wholeOfFirst < 0 || wholeOfSecond < 0)
+                return null;
+            above = above * Power(first, wholeOfFirst) * Power(second, wholeOfSecond);
+            if (!TreeAnalyzer.TryGetPolynomial(above, x, out var monomials))
+                return null;
+            var degree = 0;
+            foreach (var pair in monomials)
+            {
+                if (pair.Key.Sign < 0 || pair.Key.CompareTo(EInteger.FromInt32(MaximumDegreeBesideTwoLinearRoots)) > 0
+                    || pair.Value.ContainsNode(x))
+                    return null;
+                degree = System.Math.Max(degree, pair.Key.ToInt32Unchecked());
+            }
+            var t = new Entity[degree + 1];
+            for (var j = 0; j <= degree; j++)
+                t[j] = monomials.TryGetValue(EInteger.FromInt32(j), out var coefficient) ? coefficient : Number.Integer.Zero;
+
+            var q0 = a * c;
+            var q1 = a * d + b * c;
+            var q2 = b * d;
+            var root = MathS.Sqrt(first) / MathS.Sqrt(second);
+
+            // Around the third linear's root, a symbol xi stands for -g/h until the end, so that
+            // what is computed is polynomial in it: T/(g + h x)^k is T/(h^k (x - xi)^k), and with
+            // T = sum tau_i (x - xi)^i its terms from (x - xi)^k up are the polynomial R(x), and the
+            // rest are tau_(k-j)/(x - xi)^j.
+            Variable? xi = null;
+            Entity? g = null;
+            Entity? h = null;
+            Entity? firstAtThePole = null;
+            Entity? secondAtThePole = null;
+            var polynomial = t;
+            var overThePole = new SortedDictionary<int, Entity>();
+            Entity ofTheThirdKind = Number.Integer.Zero;
+            if (third is { })
+            {
+                if (!TreeAnalyzer.TryGetPolyLinear(third, x, out h, out g) || IsZero(h))
+                    return null;
+                // h^2 Q at the pole, (h a - g b)(h c - g d): zero where the third linear shares
+                // a root with one under a root, which is declined.
+                firstAtThePole = h * a - g * b;
+                secondAtThePole = h * c - g * d;
+                if (IsZero(firstAtThePole) || IsZero(secondAtThePole))
+                    return null;
+                xi = Variable.CreateUnique(expr, "pole");
+                var alpha = Lowest((a + b * xi) * (c + d * xi));
+                var beta = Lowest(q1 + 2 * q2 * xi);
+                var gamma = q2;
+                var tau = new Entity[degree + 1];
+                for (var i = 0; i <= degree; i++)
+                {
+                    Entity sum = Number.Integer.Zero;
+                    for (var m = i; m <= degree; m++)
+                        if (t[m] != Number.Integer.Zero)
+                            sum = sum + t[m] * Binomial(m, i) * Power(xi, m - i);
+                    tau[i] = Lowest(sum);
+                }
+                polynomial = new Entity[System.Math.Max(degree - order + 1, 0)];
+                for (var m = 0; m < polynomial.Length; m++)
+                {
+                    Entity sum = Number.Integer.Zero;
+                    for (var i = order + m; i <= degree; i++)
+                        if (tau[i] != Number.Integer.Zero)
+                            sum = sum + tau[i] * Binomial(i - order, m) * Power(-xi, i - order - m);
+                    polynomial[m] = Lowest(sum);
+                }
+                // I_j = int 1/((x - xi)^j S), with Q = alpha + beta (x - xi) + gamma (x - xi)^2. The
+                // derivative of S (x - xi)^(1-j) is
+                //     (2 (1 - j) alpha (x - xi)^(-j) + (3 - 2j) beta (x - xi)^(1-j)
+                //         + (4 - 2j) gamma (x - xi)^(2-j)) / (2 S),
+                // so alpha^(j-1) I_j is a polynomial in xi times powers of x - xi, times S, and a
+                // polynomial in xi times I_1: divided by alpha only once, at the end.
+                var scaled = new Dictionary<int, Entity>[order + 1];
+                var ofTheFirst = new Entity[order + 1];
+                scaled[0] = new Dictionary<int, Entity>();
+                ofTheFirst[0] = Number.Integer.Zero;
+                if (order >= 1)
+                {
+                    scaled[1] = new Dictionary<int, Entity>();
+                    ofTheFirst[1] = Number.Integer.One;
+                }
+                for (var j = 2; j <= order; j++)
+                {
+                    var these = new Dictionary<int, Entity> { [1 - j] = 2 * Power(alpha, j - 2) };
+                    foreach (var (earlier, times) in new[] { (scaled[j - 1], (3 - 2 * j) * beta), (scaled[j - 2], (4 - 2 * j) * gamma * alpha) })
+                        foreach (var pair in earlier)
+                            these[pair.Key] = these.TryGetValue(pair.Key, out var so) ? so - times * pair.Value : -times * pair.Value;
+                    scaled[j] = these.ToDictionary(pair => pair.Key, pair => Lowest(pair.Value / (2 * (1 - j))));
+                    ofTheFirst[j] = Lowest((-(3 - 2 * j) * beta * ofTheFirst[j - 1] - (4 - 2 * j) * gamma * alpha * ofTheFirst[j - 2]) / (2 * (1 - j)));
+                }
+                // sum tau_(k-j) I_j over alpha^(k-1).
+                for (var j = 1; j <= order; j++)
+                {
+                    if (order - j > degree || tau[order - j] == Number.Integer.Zero)
+                        continue;
+                    var weight = tau[order - j] * Power(alpha, order - j);
+                    foreach (var pair in scaled[j])
+                        overThePole[pair.Key] = overThePole.TryGetValue(pair.Key, out var so) ? so + weight * pair.Value : weight * pair.Value;
+                    ofTheThirdKind = ofTheThirdKind + weight * ofTheFirst[j];
+                }
+                foreach (var power in overThePole.Keys.ToList())
+                    overThePole[power] = Lowest(overThePole[power]);
+                ofTheThirdKind = Lowest(ofTheThirdKind);
+            }
+
+            // The polynomial part: u_(j-1) from the top down, and lambda at x^0.
+            var u = new Entity[polynomial.Length + 1];
+            for (var j = 0; j < u.Length; j++)
+                u[j] = Number.Integer.Zero;
+            Entity lambda = Number.Integer.Zero;
+            if (polynomial.Length > 0)
+            {
+                var n = polynomial.Length - 1;
+                for (var j = n; j >= 1; j--)
+                    u[j - 1] = Lowest((polynomial[j] - (j + 1) * q0 * u[j + 1] - Number.Rational.Create(2 * j + 1, 2) * q1 * u[j]) / (j * q2));
+                lambda = polynomial[0] - q0 * u[1] - q1 * u[0] / 2;
+            }
+
+            // xi back to -g/h, with the 1/h^k in front. Each side of a coefficient is a
+            // polynomial in xi, written homogeneous in g and h with the powers of h counted:
+            // substituted as it stands, each term would bring its own power of h below the bar,
+            // and over one bar they multiply.
+            Entity? Back(Entity coefficient, int powerOfH, int belowAtThePole, int belowTheFirst)
+            {
+                var (above, below) = Functions.SingleQuotient.Of(Lowest(coefficient));
+                if (xi is null)
+                    return Lowest(above / below);
+                if (Homogeneous(above) is not var (aboveInGAndH, aboveDegree) || Homogeneous(below) is not var (belowInGAndH, belowDegree))
+                    return null;
+                var power = powerOfH + belowDegree - aboveDegree - order;
+                var numerator = Lowest(power > 0 ? aboveInGAndH * Power(h!, power) : aboveInGAndH);
+                if (numerator == Number.Integer.Zero)
+                    return Number.Integer.Zero;
+                var denominator = Lowest(power < 0 ? belowInGAndH * Power(h!, -power) : belowInGAndH);
+                // alpha^(k-1) at the pole is ((h a - g b)(h c - g d))^(k-1)/h^(2 (k - 1)), its powers
+                // of h counted in powerOfH; the two linears are left as written.
+                Entity written = denominator * Power(firstAtThePole!, belowTheFirst) * Power(secondAtThePole!, belowAtThePole);
+                var lowest = Lowest(numerator / written);
+                return lowest.Complexity <= (numerator / written).Complexity ? lowest : numerator / written;
+            }
+            (Entity, int)? Homogeneous(Entity polynomial)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, xi!, out var byPower) || byPower.Keys.Any(power => power.Sign < 0 || !power.CanFitInInt32()))
+                    return null;
+                var top = byPower.Keys.Max()!.ToInt32Unchecked();
+                Entity sum = Number.Integer.Zero;
+                foreach (var pair in byPower)
+                    sum = sum + pair.Value * Power(-g!, pair.Key.ToInt32Unchecked()) * Power(h!, top - pair.Key.ToInt32Unchecked());
+                return (Lowest(sum), top);
+            }
+
+            Entity algebraic = Number.Integer.Zero;
+            for (var j = u.Length - 1; j >= 0; j--)
+                if (u[j] != Number.Integer.Zero)
+                {
+                    if (Back(u[j], 0, 0, 0) is not { } coefficient)
+                        return null;
+                    if (coefficient != Number.Integer.Zero)
+                        algebraic = algebraic + coefficient * Power(x, j);
+                }
+            // (x - xi)^p is h^(-p) (g + h x)^p, and 1/alpha^(k-1) brings h^(2 (k - 1)).
+            foreach (var pair in overThePole)
+            {
+                if (Back(pair.Value, -pair.Key + 2 * (order - 1), order - 1, order - 1) is not { } coefficient)
+                    return null;
+                if (coefficient != Number.Integer.Zero)
+                    algebraic = algebraic + coefficient / Power(third!, -pair.Key);
+            }
+            var answer = algebraic * MathS.Sqrt(first) * MathS.Sqrt(second);
+            if (lambda != Number.Integer.Zero)
+            {
+                if (Back(lambda / b, 0, 0, 0) is not { } ofTheLogarithm)
+                    return null;
+                // int 1/S, with 2 artanh(z) written as the logarithm the library writes it as.
+                var r = Lowest(d / b);
+                if (ofTheLogarithm != Number.Integer.Zero)
+                    answer = answer + BySign(r,
+                        ofTheLogarithm * MathS.Ln((1 + MathS.Sqrt(r) * root) / (1 - MathS.Sqrt(r) * root)) / MathS.Sqrt(r),
+                        2 * ofTheLogarithm * MathS.Arctan(MathS.Sqrt(-r) * root) / MathS.Sqrt(-r));
+            }
+            if (xi is { } && ofTheThirdKind != Number.Integer.Zero)
+            {
+                // int 1/((x - xi) S) is h I_1, and I_1 = -2 arctan(sqrt(rho) t)/((h a - g b) sqrt(rho)) with
+                // rho = (g d - h c)/(h a - g b).
+                if (Back(ofTheThirdKind, 2 * (order - 1) + 1, order - 1, order) is not { } coefficient)
+                    return null;
+                var rho = Lowest(-secondAtThePole! / firstAtThePole!);
+                if (coefficient != Number.Integer.Zero)
+                    answer = answer + BySign(rho,
+                        -2 * coefficient * MathS.Arctan(MathS.Sqrt(rho) * root) / MathS.Sqrt(rho),
+                        -coefficient * MathS.Ln((1 + MathS.Sqrt(-rho) * root) / (1 - MathS.Sqrt(-rho) * root)) / MathS.Sqrt(-rho));
+            }
+            return (constantBelow == Number.Integer.One ? answer : answer / constantBelow).InnerSimplified;
+
+            static Entity Lowest(Entity e) => Functions.PartialFractions.InLowestTermsOverTheSymbols(e);
+            // Each closed form is real on one side of the sign of the quantity under its roots, and
+            // complex by a constant on the other: the form for the sign of a number, and both, each
+            // where it holds, for a quantity with symbols in it, as `1/(a - x^2)` is answered.
+            static Entity BySign(Entity quantity, Entity wherePositive, Entity whereNegative)
+                => !quantity.Vars.Any() && quantity.InnerSimplified is Number.Real number
+                    ? (number.IsNegative ? whereNegative : wherePositive)
+                    : MathS.Piecewise((wherePositive, new Greaterf(quantity, Number.Integer.Zero)), (whereNegative, new Lessf(quantity, Number.Integer.Zero)));
+            static bool IsZero(Entity e) => e.InnerSimplified is var simplified
+                && (simplified.Evaled is Number.Complex { IsZero: true } || simplified.Vars.Any() && Lowest(simplified) == Number.Integer.Zero);
+            // Not e^0, which is 1 only where e is not 0, and says so.
+            static Entity Power(Entity e, int n) => n switch { 0 => Number.Integer.One, 1 => e, _ => MathS.Pow(e, n) };
+            static Entity Binomial(int n, int k)
+            {
+                var result = EInteger.One;
+                for (var i = 1; i <= k; i++)
+                    result = result.Multiply(EInteger.FromInt32(n - k + i)).Divide(EInteger.FromInt32(i));
+                return Number.Integer.Create(result);
+            }
+        }
+
+        /// <summary>
+        /// The degree of the polynomial <see cref="SolveAPolynomialOverAPowerOfALinearBesideTwoRoots"/>
+        /// solves for: one unknown a degree, and Rubi's 1.1.1.6 reaches eight.
+        /// </summary>
+        private const int MaximumDegreeBesideTwoLinearRoots = 16;
+
+        /// <summary>
         /// Whether <paramref name="expr"/> is a quotient of two polynomials linear in
         /// <paramref name="x"/>, the one below with a slope.
         /// </summary>

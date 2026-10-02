@@ -747,6 +747,11 @@ namespace AngouriMath.Functions.Algebra
             // `x/sqrt(1 - x^4)`, which the substitution answers, and it is what by parts leaves
             // from `arcsin(x)/(1 + x^2)^(3/2)`.
             if ((answer = IndefiniteIntegralSolver.SolveByCombiningRadicals(expr, x, integrateByParts)) is { }) return answer;
+            // A polynomial beside the roots of two linears with symbols in them, which the
+            // combining above cannot sign, and over a power of one more linear:
+            // `(A + B x + C x^2) sqrt(c + d x) sqrt(e + f x)` by undetermined coefficients,
+            // where the substitution further down took gigabytes.
+            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialOverAPowerOfALinearBesideTwoRoots(expr, x)) is { }) return answer;
             // A square root of a polynomial with a repeated factor, the factor taken out of
             // the root with its sign: `sqrt((x - 3)^2 (x + 1))` is `sgn(x - 3) (x - 3) sqrt(x + 1)`.
             if ((answer = IndefiniteIntegralSolver.SolveByTakingASquareFactorOutOfARoot(expr, x, integrateByParts)) is { }) return answer;
