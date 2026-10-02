@@ -14046,8 +14046,19 @@ namespace AngouriMath.Functions.Algebra
                     return node;
                 var (radicand, exponent) = (Powf)node;
                 var r = (Number.Rational)exponent;
+                // A quadratic in a fractional power of x, `a^2 + 2 a b x^(-1/5) + b^2 x^(-2/5)`, is
+                // read in `w = x^k`, exact for every x since each power of x is a whole power of w;
+                // and real only for a positive x, which the answer then says.
+                Entity wBase = x;
                 if (!TreeAnalyzer.TryGetPolynomial(radicand, x, out var monomials) || monomials.Count == 0)
-                    return node;
+                {
+                    if (!atTheTop || InAFractionalPowerOfX(radicand, x) is not var (inW, k))
+                        return node;
+                    monomials = inW;
+                    wBase = MathS.Pow(x, k);
+                    var positive = new Greaterf(x, Number.Integer.Zero);
+                    assumed = assumed == Entity.Boolean.True ? positive : assumed & positive;
+                }
                 // A quadratic in w = x^k: a w^2 + b w + c, the square being of w + h. Beyond
                 // k = 1 only with the constant term written, since `a x^(2k)` alone is a power
                 // of a monomial, which another rule distributes.
@@ -14066,7 +14077,7 @@ namespace AngouriMath.Functions.Algebra
                 var a = monomials[degree];
                 var b = monomials.TryGetValue(half, out var b1) ? b1 : Number.Integer.Zero;
                 var c = monomials.TryGetValue(EInteger.Zero, out var c0) ? c0 : Number.Integer.Zero;
-                Entity w = half.Equals(EInteger.One) ? x : MathS.Pow(x, Number.Integer.Create(half));
+                Entity w = half.Equals(EInteger.One) ? wBase : MathS.Pow(wBase, Number.Integer.Create(half));
                 // A leading coefficient of known sign, since `sqrt(a (x + h)^2)` is
                 // `sqrt(a) |x + h|` for either: a number, or one positive or negative for a real
                 // parameter -- `b^2` is, and `a^2 + 2 a b x + b^2 x^2` is the square Rubi writes,
@@ -14098,8 +14109,10 @@ namespace AngouriMath.Functions.Algebra
                 // between the linear factor's zeros, and a rule below that differentiates the
                 // integrand cannot evaluate `derivative(sgn(...))` -- which is the exception
                 // `sqrt(a^2 + 2abx + b^2x^2) sqrt(c + ex + dx^2)` threw with it left in place.
-                // None where it is plainly one: an even power of x plus a positive number.
-                if (!whole && !(half.IsEven && h.Evaled is Number.Real { IsPositive: true }))
+                // None where it is plainly one: an even power of x plus a positive number, or a
+                // root of x of an even order plus one, `sqrt(x) + 1`.
+                if (!whole && !((half.IsEven || wBase is Powf(_, Number.Rational { ERational.Denominator.IsEven: true }))
+                                && h.Evaled is Number.Real { IsPositive: true }))
                     signs = signs * MathS.Signum(linear);
                 changed = true;
                 return leading == Number.Integer.One ? power : MathS.Pow(leading, r) * power;
@@ -14109,6 +14122,60 @@ namespace AngouriMath.Functions.Algebra
             if (signs != Number.Integer.One)
                 answer = signs * answer;
             return assumed == Entity.Boolean.True ? answer : answer.Provided(assumed);
+        }
+
+        /// <summary>
+        /// <paramref name="sum"/> as a polynomial in <c>w = x^k</c> for a rational <c>k</c> that is
+        /// not whole, each of its terms a constant times a power of <paramref name="x"/> that is a
+        /// whole, non-negative multiple of <c>k</c>; <see langword="null"/> otherwise.
+        /// </summary>
+        private static (Dictionary<EInteger, Entity> Monomials, Number.Rational K)? InAFractionalPowerOfX(Entity sum, Entity.Variable x)
+        {
+            var terms = new List<(ERational Power, Entity Coefficient)>();
+            foreach (var term in Sumf.LinearChildren(sum))
+            {
+                var power = ERational.Zero;
+                Entity coefficient = Number.Integer.One;
+                foreach (var (factor, underneath) in FactorsOfTheIntegrand(term))
+                {
+                    if (!factor.ContainsNode(x))
+                    {
+                        coefficient = underneath ? coefficient / factor : coefficient * factor;
+                        continue;
+                    }
+                    var exponent = factor == x ? ERational.One
+                        : factor is Powf(var @base, Number.Rational q) && @base == x ? q.ERational
+                        : (ERational?)null;
+                    if (exponent is null)
+                        return null;
+                    power = underneath ? power.Subtract(exponent) : power.Add(exponent);
+                }
+                terms.Add((power, coefficient));
+            }
+            var powers = terms.Select(term => term.Power).Where(q => !q.IsZero).Distinct().ToList();
+            if (powers.Count == 0 || powers.All(q => q.IsInteger()) || powers.Any(q => q.Sign > 0) && powers.Any(q => q.Sign < 0))
+                return null;
+            // k the greatest common divisor of the powers, with their sign.
+            var numerators = EInteger.Zero;
+            var denominators = EInteger.One;
+            foreach (var q in powers)
+            {
+                numerators = numerators.Gcd(q.Numerator.Abs());
+                denominators = denominators.Multiply(q.Denominator).Divide(denominators.Gcd(q.Denominator));
+            }
+            var k = ERational.Create(numerators, denominators);
+            if (powers[0].Sign < 0)
+                k = k.Negate();
+            var monomials = new Dictionary<EInteger, Entity>();
+            foreach (var (power, coefficient) in terms)
+            {
+                var degree = power.Divide(k);
+                if (!degree.IsInteger() || degree.Sign < 0)
+                    return null;
+                var key = degree.ToEInteger();
+                monomials[key] = monomials.TryGetValue(key, out var so) ? so + coefficient : coefficient;
+            }
+            return (monomials, Number.Rational.Create(k));
         }
 
         /// <summary>
