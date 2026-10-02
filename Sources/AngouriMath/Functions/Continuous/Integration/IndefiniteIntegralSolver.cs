@@ -13697,14 +13697,11 @@ namespace AngouriMath.Functions.Algebra
         /// Symbolically as well as numerically: for <c>a^2 + 2 a b x + b^2 x^2</c> it is
         /// <c>4 a^2 b^2 - 4 a^2 b^2</c>, which <see cref="Entity.InnerSimplified"/> does not
         /// collect, so a guard that asks only what it evaluates to reads the square as an
-        /// ordinary quadratic.
+        /// ordinary quadratic. Asked of every quadratic under a root the table meets, so the
+        /// simplification is only for a discriminant that is zero with its symbols pinned.
         /// </summary>
-        private static bool IsAPerfectSquareDiscriminant(Entity a, Entity b, Entity c)
-        {
-            var discriminant = (b * b - Number.Integer.Create(4) * a * c).InnerSimplified;
-            return discriminant.Evaled is Number.Complex { IsZero: true }
-                || discriminant.Vars.Any() && Functions.PartialFractions.Bare(discriminant.Simplify()).Evaled is Number.Complex { IsZero: true };
-        }
+        internal static bool IsAPerfectSquareDiscriminant(Entity a, Entity b, Entity c)
+            => VanishesIdentically(b * b - Number.Integer.Create(4) * a * c);
 
         /// <summary>
         /// A square root of a perfect square in <paramref name="x"/> is the modulus:
@@ -13798,15 +13795,17 @@ namespace AngouriMath.Functions.Algebra
                 var b = monomials.TryGetValue(half, out var b1) ? b1 : Number.Integer.Zero;
                 var c = monomials.TryGetValue(EInteger.Zero, out var c0) ? c0 : Number.Integer.Zero;
                 Entity w = half.Equals(EInteger.One) ? x : MathS.Pow(x, Number.Integer.Create(half));
-                // A positive leading coefficient, since `sqrt(a (x + h)^2)` is `sqrt(a) |x + h|`:
-                // a positive number, or one positive for a real parameter -- `b^2` is, and
-                // `a^2 + 2 a b x + b^2 x^2` is the square Rubi writes -- whose condition travels
+                // A leading coefficient of known sign, since `sqrt(a (x + h)^2)` is
+                // `sqrt(a) |x + h|` for either: a number, or one positive or negative for a real
+                // parameter -- `b^2` is, and `a^2 + 2 a b x + b^2 x^2` is the square Rubi writes,
+                // and `-b^2` is, whose square has an imaginary root -- whose condition travels
                 // with the answer. The other two coefficients are real or symbolic, not a
-                // number off the line, for the same reason.
+                // number off the line, so that `(x + h)^2` is not negative.
                 // A whole power needs no sign of anything: (a (w + h)^2)^n is a^n (w + h)^(2n).
-                if (!whole && a.Evaled is not Number.Real { IsPositive: true })
+                if (!whole && a.Evaled is not Number.Real { IsZero: false })
                 {
-                    if (!IsPositiveForARealParameter(a, x, out var leadingAssumed, assumed))
+                    if (!IsPositiveForARealParameter(a, x, out var leadingAssumed, assumed)
+                        && !IsPositiveForARealParameter((-a).InnerSimplified, x, out leadingAssumed, assumed))
                         return node;
                     assumed = leadingAssumed;
                 }
