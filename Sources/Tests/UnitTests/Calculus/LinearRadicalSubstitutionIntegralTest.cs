@@ -118,6 +118,44 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// <c>e^artanh(a x) sqrt(c - a c x)</c> is real past <c>a x = 1</c> as well, where both
+        /// factors are imaginary, and there it is the negative of what it is inside. Through the
+        /// quotient of the logarithm's linears the answer was the one for inside, given
+        /// everywhere, so past <c>a x = 1</c> it was wrong by its sign: the check at sampled
+        /// points skipped the points where the derivative has no value, and those were the
+        /// points where it was wrong. Now the answer holds where it is given and says where that is.
+        /// https://github.com/asc-community/AngouriMath/issues/1655
+        /// </summary>
+        [Fact]
+        public void AnExponentialOfAnInverseTangentBesideTheRootSaysWhereItHolds()
+        {
+            var integrand = "e^atanh(a*x)*sqrt(c - a*c*x)".ToEntity();
+            var integral = integrand.Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var pinned = integral.Substitute("C", 0).Substitute("a", 1.37).Substitute("c", 3.71);
+            var derivative = pinned.Differentiate("x");
+            var original = integrand.Substitute("a", 1.37).Substitute("c", 3.71);
+            // Inside, a x < 1: the derivative is the integrand.
+            foreach (var at in new[] { 0.29, -0.61 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.True(Math.Abs((double)(got - want).RealPart) < 1e-9 * Math.Max(1, Math.Abs((double)want.RealPart)),
+                    $"d/dx of the antiderivative is {got} at x = {at}, where the integrand is {want}");
+            }
+            // Past it the integrand is real, and the answer is either right or claims nothing.
+            foreach (var at in new[] { 1.43, 3.17 })
+            {
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.True(Math.Abs((double)want.ImaginaryPart) < 1e-12, $"the integrand at x = {at} is {want}, not real");
+                var got = derivative.Substitute("x", at).Evaled;
+                Assert.True(got.IsNaN || got is Entity.Number.Complex number
+                    && Math.Abs((double)(number - want).RealPart) < 1e-9 * Math.Max(1, Math.Abs((double)want.RealPart)),
+                    $"d/dx of the antiderivative is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
+
+        /// <summary>
         /// The substitution search's even root reads the sign of a real <c>u</c> as well, and
         /// says where it does: <c>(1 + sec(x))^(5/2) sqrt(cos(x))</c> under <c>t = cos(x)</c> and
         /// <c>u = sqrt(t)</c> is <c>-2 u^2 (1 + 1/u^2)^(5/2)/sqrt(1 - u^4)</c>, whose power of a

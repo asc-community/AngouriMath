@@ -14297,7 +14297,20 @@ namespace AngouriMath.Functions.Algebra
             if (Integration.ComputeAsAQuestionOfItsOwn(rewritten, t, integrateByParts) is not { } integrated)
                 return null;
             var answer = integrated.Substitute(t, l1.Linear / l2.Linear);
-            if (answer.Nodes.Any(node => node == MathS.NaN) || !Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
+            if (answer.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            // The generic case holds where the linears' powers split as written. Past that it can
+            // fail where the integrand is still real, a product of two imaginary factors. The
+            // sampled check skips a point where the derivative has no value, and there the
+            // derivative is a fractional power of a negative number, which the interval and decimal
+            // evaluations decline. So it compared only where the generic case holds:
+            // `e^artanh(a x) sqrt(c - a c x)`, as `e^(ln((1 + a x)/(1 - a x))/2)`, passed it and was
+            // wrong by its sign past `a x = 1`. A point where the integrand is real and the
+            // derivative is not is a difference too.
+            // https://github.com/asc-community/AngouriMath/issues/1655
+            var derivative = answer.Differentiate(x);
+            if (!Functions.PartialFractions.HoldsAtSampledPoints(derivative, expr, x)
+                || Functions.PartialFractions.DiffersWhereReal(derivative, expr, x))
                 return null;
             return answer;
 
