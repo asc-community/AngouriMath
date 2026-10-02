@@ -82,8 +82,8 @@ namespace AngouriMath.Tests.Calculus
         /// The square below the bar, where it is <c>1/F</c> that comes out of the integral.
         /// </summary>
         [Theory]
-        [InlineData("1/(a^2 + 2*a*b*x^(1/3) + b^2*x^(2/3))^(3/2)")]
-        [InlineData("1/(a^2 + b^2/x^(2/3) + 2*a*b/x^(1/3))^(1/2)")]
+        [InlineData("1/(a^2 + 2*a*b*x^(1/3) + b^2*x^(2/3))^p")]
+        [InlineData("1/(a^2 + b^2/x^(2/3) + 2*a*b/x^(1/3))^(3/4)")]
         [InlineData("x^(2*n - 1)/(a^2 + 2*a*b*x^n + b^2*x^(2*n))^(3/2)")]
         [InlineData("1/(x*sqrt(a^2 + 2*a*b*x^n + b^2*x^(2*n)))")]
         [InlineData("x/(a^2 + 2*a*b*x + b^2*x^2)^p")]
