@@ -975,6 +975,25 @@ and this is the same answer reached through the even root
 |---|---|---|
 | `"sqrt(x)/(sqrt(1/x + 1)*sqrt(1 - x^2))".Integrate("x")` | `integral(...)` | an antiderivative in `sqrt(x)`, `provided x >= 0` |
 
+### A product of powers of quotients of linears is written over each linear once
+
+**Improvement, not silent.** `e^atanh(a x) sqrt(c - c/(a x))` is
+`sqrt((1 + a x)/(1 - a x)) sqrt(c (a x - 1)/(a x))`, in which the linear `1 - a x` stands twice, under
+two roots, and the substitution search took one root at a time and ran out of time. The integrand is
+now written over each linear once, `K sqrt(a x + 1)/sqrt(x)`, where `K` is the integrand over that
+product: its logarithmic derivative is zero, so it is constant on every interval where it is defined,
+and it stands in front of the answer as Rubi's does. Each sign the linears take where the integrand is
+real is an arm of a piecewise, saying where it holds. Rubi's 7.3.6 and 7.4.2
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^atanh(a*x)*sqrt(c-c/(a*x))".Integrate("x")` | left unevaluated | the antiderivative, a piecewise with an arm for each interval where it is real |
+| `"1/(e^atanh(a*x)*(c-c/(a*x))^(3/2))".Integrate("x")` | left unevaluated | the same |
+| `"e^(2*acoth(a*x))/(c-c/(a^2*x^2))^2".Integrate("x")` | left unevaluated | `K` times the antiderivative of `x^4/((a x + 1)(a x - 1)^3)` |
+| `"x*sqrt(c - a*c*x)/e^(3*atanh(a*x))".Integrate("x")` | left unevaluated | the antiderivative on both sides of `a x = 1`, where `master` gave one `provided c - a c x >= 0` |
+| `"sqrt(x)/(sqrt(1/x + 1)*sqrt(1 - x^2))".Integrate("x")` | left unevaluated | the antiderivative on both sides of `x = 0`, where `master` gave one `provided x >= 0` |
+
 ### The inverse hyperbolic tangent's answer is given on its domain, and says so
 
 `1/((1 - a^2 x^2)^(5/2) artanh(a x))` was left unevaluated, although the substitution `a x = tanh(u)`
