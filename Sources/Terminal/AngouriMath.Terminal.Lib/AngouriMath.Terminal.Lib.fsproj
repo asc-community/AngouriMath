@@ -71,6 +71,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Wrappers\AngouriMath.Interactive\AngouriMath.Interactive.fsproj" />
+    <ProjectReference Include="..\..\MCP\AngouriMath.Mcp\AngouriMath.Mcp.csproj" />
   </ItemGroup>
 
 </Project>

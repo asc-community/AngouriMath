@@ -50,6 +50,18 @@ is 0 for an answer, 1 when the input does not parse or cannot be answered, and 2
 that does not exist or is missing an argument. These are the commands of the earlier standalone
 command-line tool, with the same names and argument order.
 
+## For an agent, over MCP
+
+`amcli mcp` serves the library to an LLM agent over the Model Context Protocol, as JSON-RPC on
+stdin and stdout. Register it with a client by naming `amcli` and the argument `mcp`:
+
+```
+claude mcp add angourimath -- amcli mcp
+```
+
+`amcli mcp --selftest` checks the install. [`Sources/MCP`](../MCP/README.md) says what the server
+offers and how it is built.
+
 
 ## Earlier results
 
