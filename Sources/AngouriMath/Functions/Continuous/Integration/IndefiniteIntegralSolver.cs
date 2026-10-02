@@ -8256,9 +8256,9 @@ namespace AngouriMath.Functions.Algebra
                 // int 1/S, with 2 artanh(z) written as the logarithm the library writes it as.
                 var r = Lowest(d / b);
                 if (ofTheLogarithm != Number.Integer.Zero)
-                    answer = answer + (r.Evaled is Number.Real { IsNegative: true }
-                        ? 2 * ofTheLogarithm * MathS.Arctan(MathS.Sqrt(-r) * root) / MathS.Sqrt(-r)
-                        : ofTheLogarithm * MathS.Ln((1 + MathS.Sqrt(r) * root) / (1 - MathS.Sqrt(r) * root)) / MathS.Sqrt(r));
+                    answer = answer + BySign(r,
+                        ofTheLogarithm * MathS.Ln((1 + MathS.Sqrt(r) * root) / (1 - MathS.Sqrt(r) * root)) / MathS.Sqrt(r),
+                        2 * ofTheLogarithm * MathS.Arctan(MathS.Sqrt(-r) * root) / MathS.Sqrt(-r));
             }
             if (xi is { } && ofTheThirdKind != Number.Integer.Zero)
             {
@@ -8268,13 +8268,20 @@ namespace AngouriMath.Functions.Algebra
                     return null;
                 var rho = Lowest(-secondAtThePole! / firstAtThePole!);
                 if (coefficient != Number.Integer.Zero)
-                    answer = answer + (rho.Evaled is Number.Real { IsNegative: true }
-                        ? -coefficient * MathS.Ln((1 + MathS.Sqrt(-rho) * root) / (1 - MathS.Sqrt(-rho) * root)) / MathS.Sqrt(-rho)
-                        : -2 * coefficient * MathS.Arctan(MathS.Sqrt(rho) * root) / MathS.Sqrt(rho));
+                    answer = answer + BySign(rho,
+                        -2 * coefficient * MathS.Arctan(MathS.Sqrt(rho) * root) / MathS.Sqrt(rho),
+                        -coefficient * MathS.Ln((1 + MathS.Sqrt(-rho) * root) / (1 - MathS.Sqrt(-rho) * root)) / MathS.Sqrt(-rho));
             }
             return (constantBelow == Number.Integer.One ? answer : answer / constantBelow).InnerSimplified;
 
             static Entity Lowest(Entity e) => Functions.PartialFractions.InLowestTermsOverTheSymbols(e);
+            // Each closed form is real on one side of the sign of the quantity under its roots, and
+            // complex by a constant on the other: the form for the sign of a number, and both, each
+            // where it holds, for a quantity with symbols in it, as `1/(a - x^2)` is answered.
+            static Entity BySign(Entity quantity, Entity wherePositive, Entity whereNegative)
+                => !quantity.Vars.Any() && quantity.InnerSimplified is Number.Real number
+                    ? (number.IsNegative ? whereNegative : wherePositive)
+                    : MathS.Piecewise((wherePositive, new Greaterf(quantity, Number.Integer.Zero)), (whereNegative, new Lessf(quantity, Number.Integer.Zero)));
             static bool IsZero(Entity e) => e.InnerSimplified is var simplified
                 && (simplified.Evaled is Number.Complex { IsZero: true } || simplified.Vars.Any() && Lowest(simplified) == Number.Integer.Zero);
             // Not e^0, which is 1 only where e is not 0, and says so.
