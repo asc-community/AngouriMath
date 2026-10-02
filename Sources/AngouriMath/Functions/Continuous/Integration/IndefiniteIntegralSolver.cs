@@ -963,7 +963,7 @@ namespace AngouriMath.Functions.Algebra
         /// the blocks are polynomials in <c>x^n</c> alone.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
-        private static Entity? IntegrateOverBlocksInAPowerOfX(Entity numerator, Entity denominator, Entity.Variable x, bool integrateByParts)
+        private static Entity? IntegrateOverBlocksInAPowerOfX(Entity numerator, Entity denominator, Entity.Variable x, bool integrateByParts, bool oneBlockAtItsRoots = false)
         {
             var blocks = new List<(Dictionary<EInteger, Entity> Polynomial, int Power)>();
             Entity constant = Number.Integer.One;
@@ -1023,6 +1023,13 @@ namespace AngouriMath.Functions.Algebra
             // two differ, which is the generic case; a discriminant that is zero as written declines.
             if (inUBlocks.Count == 1)
             {
+                // Last, from SolveByOneBlockInAPowerOfXAtItsRoots: the roots are complex where
+                // b^2 < 4ac, and a rule after the split that branches on the sign of one has no
+                // branch for it. `x (a + b x^4)/(c + d x^4 + e x^8)` comes to `x/(x^4 - r)`, and the
+                // table's piecewise on the sign of `r` has no value anywhere for a complex `r`,
+                // where the substitution `v = x^2` answers the block whole.
+                if (!oneBlockAtItsRoots)
+                    return null;
                 var (polynomial, power) = blocks[0];
                 if (polynomial.Keys.Max()!.ToInt32Unchecked() != 2 * step)
                     return null;
@@ -16196,6 +16203,26 @@ namespace AngouriMath.Functions.Algebra
                 return null;
 
             return Integration.ComputeIndefiniteIntegral(written, x, integrateByParts);
+        }
+
+        /// <summary>
+        /// A rational function over one block quadratic in a power of x, <c>a + b x^n + c x^(2n)</c>
+        /// with a symbol in it, split at the block's roots in <c>u = x^n</c>: the single block
+        /// <see cref="IntegrateOverBlocksInAPowerOfX"/> leaves to this.
+        /// </summary>
+        /// <remarks>
+        /// The roots are <c>(-b ± sqrt(b^2 - 4ac))/(2c)</c>, complex where <c>b^2 &lt; 4ac</c>, and
+        /// every fraction after the split is over a binomial <c>x^n - r</c> with that root in it.
+        /// Last, so that whatever answers the block whole answers first: a rule that branches on
+        /// the sign of <c>r</c> has no branch for a complex one.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByOneBlockInAPowerOfXAtItsRoots(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            return denominator.ContainsNode(x) && !numerator.Nodes.Any(node => node is Powf(_, Number.Rational r) && r is not Number.Integer)
+                ? IntegrateOverBlocksInAPowerOfX(numerator, denominator, x, integrateByParts, oneBlockAtItsRoots: true)
+                : null;
         }
 
         /// <summary>

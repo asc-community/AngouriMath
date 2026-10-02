@@ -157,6 +157,19 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1));
 
         /// <summary>
+        /// The same with the block's roots complex, <c>b^2 &lt; 4 a c</c> as pinned. The split at
+        /// the roots is last, since a rule after it that branches on the sign of a root has no
+        /// branch for a complex one: the third row is answered whole by <c>v = x^2</c>, and split
+        /// first it had no value anywhere.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(a + b*x^3 + c*x^6)")]
+        [InlineData("(1 + x^4)/(1 + b*x^4 + x^8)")]
+        [InlineData("(d + e*x^4)/(x^3*(a + b*x^4 + c*x^8))")]
+        public void OneBlockWhoseRootsAreComplex(string integrand)
+            => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 0.9), ("c", 1.3), ("d", 1.1), ("e", 0.6));
+
+        /// <summary>
         /// A quotient with x below a bar inside it is written over one bar first:
         /// <c>1/(a + b/x)</c> was declined where <c>x/(a x + b)</c> was answered, and so was the
         /// numeric <c>1/(2 + 3/x^2)^3</c>. The power of x the bars were cleared with is taken out
