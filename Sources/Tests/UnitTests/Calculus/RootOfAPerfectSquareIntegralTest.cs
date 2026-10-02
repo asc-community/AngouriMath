@@ -228,6 +228,37 @@ namespace AngouriMath.Tests.Calculus
             Assert.True(compared >= 6, $"only {compared} points were comparable for {integrand}");
         }
 
+        /// <summary>
+        /// A square in a fractional power of x, Rubi's 1.2.3.2 <c>(a^2 + b^2/x^(2/5) + 2 a b/x^(1/5))^(5/2)</c>:
+        /// read in <c>w = x^k</c>, every power of x a whole power of w, and real for a positive x,
+        /// which the answer says. Differentiated back where it says, with <c>a b</c> of either
+        /// sign, so that <c>w + a/b</c> changes sign among the points for the first two.
+        /// </summary>
+        [Theory]
+        [InlineData("(a^2 + b^2/x^(2/5) + 2*a*b/x^(1/5))^(5/2)")]
+        [InlineData("sqrt(a^2 + 2*a*b*x^(1/3) + b^2*x^(2/3))")]
+        [InlineData("(1 + 2*x^(1/2) + x)^(3/2)")]
+        [InlineData("sqrt(4 + 4*x^(1/4) + x^(1/2))/x")]
+        public void ASquareInAFractionalPowerOfTheVariable(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x").Substitute("C", 0);
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            foreach (var b in new[] { 0.7, -0.7 })
+            {
+                Entity Pin(Entity e) => e.Substitute("a", 1.3).Substitute("b", b);
+                var derivative = Pin(integral).Differentiate("x");
+                var original = Pin(integrand.ToEntity());
+                foreach (var at in new[] { 0.01, 0.31, 0.83, 2.41, 9.0 })
+                {
+                    var got = derivative.Substitute("x", at).EvalNumerical();
+                    var want = original.Substitute("x", at).EvalNumerical();
+                    var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                    Assert.True(difference / Math.Max(1.0, Math.Abs((double)want.RealPart)) < 1e-9,
+                        $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, b = {b}, where the integrand is {want}: {integral}");
+                }
+            }
+        }
+
         [Fact]
         public void TheSignIsTheSignOfTheLinearFactor()
         {

@@ -665,6 +665,9 @@ namespace AngouriMath.Functions.Algebra
             // And any power of a square in any power of x, as the power of its root times a factor
             // constant where the root is not zero: `x^2 (a^2 + 2 a b x^3 + b^2 x^6)^p`.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAPowerOfASquareAsAPowerOfItsRoot(expr, x, integrateByParts)) is { }) return answer;
+            // A power of a multiple of a quadratic's derivative beside a power of the quadratic is
+            // a binomial in the derivative: `(b d + 2 c d x)^m (a + b x + c x^2)^p`.
+            if ((answer = IndefiniteIntegralSolver.SolveByTheDerivativeOfAQuadraticAsTheVariable(expr, x, integrateByParts)) is { }) return answer;
             // x^(n - 1) g(x^n) with a symbolic n is g(u)/n under u = x^n.
             if ((answer = IndefiniteIntegralSolver.SolveByAPowerOfTheVariableTimesAFunctionOfItsPower(expr, x, integrateByParts)) is { }) return answer;
             // A whole power of a product of a constant and the variable, as the product of
