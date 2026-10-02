@@ -152,15 +152,19 @@ namespace AngouriMath.Tests.Calculus
         /// <summary>
         /// A quotient with x below a bar inside it is written over one bar first:
         /// <c>1/(a + b/x)</c> was declined where <c>x/(a x + b)</c> was answered, and so was the
-        /// numeric <c>1/(2 + 3/x^2)^3</c>.
+        /// numeric <c>1/(2 + 3/x^2)^3</c>. The power of x the bars were cleared with is taken out
+        /// of both sides again, since the rules after it read the two as coprime: Rubi's
+        /// <c>1/((a + c/x^2 + b/x) x (d + e x)^2)</c> was answered wrongly without that.
         /// </summary>
         [Theory]
         [InlineData("1/(a + b/x)")]
         [InlineData("1/(a + b/x^2)^2")]
         [InlineData("1/(a + b/x^3)")]
         [InlineData("1/(2 + 3/x^2)^3")]
+        [InlineData("1/((a + c/x^2 + b/x)*x*(d + e*x)^2)")]
+        [InlineData("x^2/((a + c/x^2 + b/x)*(d + e*x)^2)")]
         public void AQuotientWithXBelowABarInsideIt(string integrand)
-            => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3));
+            => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1), ("e", 0.6));
 
         /// <summary>
         /// A product of sums in a power of x whose exponent is a symbol, written out: each term is

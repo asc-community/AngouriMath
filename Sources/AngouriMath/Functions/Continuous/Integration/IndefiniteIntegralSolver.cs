@@ -629,12 +629,16 @@ namespace AngouriMath.Functions.Algebra
             // A quotient with x below a bar inside it, `1/(a + b/x)`, written over one bar: every
             // rule below reads the numerator and the denominator as polynomials, and `a + b/x` is
             // not one, where `x/(a x + b)` is read at once. Once: what one bar gives has none.
+            // What the bars were cleared with is a power of x on both sides, `x^3/(x^2 Q L^2)` for
+            // `1/((a + b/x + c/x^2) x L^2)`, and it is cancelled: the rules below read a numerator
+            // and a denominator with a common factor as coprime, and answered that one wrongly.
             if ((HasTheVariableBelowABar(numerator, x) || HasTheVariableBelowABar(denominator, x))
                 && Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr)) is var (top, bottom)
                 && !HasTheVariableBelowABar(top, x) && !HasTheVariableBelowABar(bottom, x)
-                && bottom.ContainsNode(x))
-                return SolveByPartialFractions(top / bottom, x, integrateByParts)
-                    ?? Integration.ComputeIndefiniteIntegral(top / bottom, x, integrateByParts);
+                && bottom.ContainsNode(x)
+                && WithoutACommonPowerOfX(top, bottom, x) is var (reducedTop, reducedBottom))
+                return SolveByPartialFractions(reducedTop / reducedBottom, x, integrateByParts)
+                    ?? Integration.ComputeIndefiniteIntegral(reducedTop / reducedBottom, x, integrateByParts);
 
             // The helper answers null for a fraction that is already proper, so this cannot
             // fire on one and recurse into the problem it started from. The check on the
@@ -1334,6 +1338,71 @@ namespace AngouriMath.Functions.Algebra
             if (!TryReadAsQuotient(expr, out var numerator, out var denominator))
                 return null;
             return RothsteinTrager.Integrate(numerator, denominator, x);
+        }
+
+        /// <summary>
+        /// <paramref name="numerator"/> over <paramref name="denominator"/> with the greatest
+        /// power of <paramref name="x"/> that divides both taken out of each, the denominator's
+        /// factors kept as written; the two unchanged where none does, or where a side is not a
+        /// polynomial in <paramref name="x"/>.
+        /// </summary>
+        private static (Entity Numerator, Entity Denominator) WithoutACommonPowerOfX(Entity numerator, Entity denominator, Entity.Variable x)
+        {
+            static int LowestPower(Dictionary<EInteger, Entity> polynomial)
+                => polynomial.Keys.Min()!.ToInt32Unchecked();
+            if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var above) || above.Count == 0
+                || above.Keys.Any(power => power.Sign < 0 || !power.CanFitInInt32()))
+                return (numerator, denominator);
+            var factors = new List<(Dictionary<EInteger, Entity>? Polynomial, Entity Written, int Power, int Lowest)>();
+            var available = 0;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                var (@base, power) = factor is Powf(var b, Number.Integer e) && e.EInteger.Sign > 0 && e.EInteger.CanFitInInt32()
+                    ? (b, e.EInteger.ToInt32Unchecked())
+                    : (factor, 1);
+                if (!@base.ContainsNode(x))
+                {
+                    factors.Add((null, factor, 1, 0));
+                    continue;
+                }
+                if (!TreeAnalyzer.TryGetPolynomial(@base, x, out var polynomial) || polynomial.Count == 0
+                    || polynomial.Keys.Any(k => k.Sign < 0 || !k.CanFitInInt32()))
+                    return (numerator, denominator);
+                var lowest = LowestPower(polynomial);
+                factors.Add((polynomial, factor, power, lowest));
+                available += lowest * power;
+            }
+            var common = System.Math.Min(LowestPower(above), available);
+            if (common == 0)
+                return (numerator, denominator);
+            Entity Shifted(Dictionary<EInteger, Entity> polynomial, int by)
+            {
+                Entity sum = Number.Integer.Zero;
+                foreach (var (power, coefficient) in polynomial.OrderBy(term => term.Key))
+                {
+                    var degree = power.ToInt32Unchecked() - by;
+                    var term = degree == 0 ? coefficient : coefficient * (degree == 1 ? x : MathS.Pow(x, degree));
+                    sum = sum == Number.Integer.Zero ? term : sum + term;
+                }
+                return sum;
+            }
+            var left = common;
+            Entity below = Number.Integer.One;
+            foreach (var (polynomial, written, power, lowest) in factors)
+            {
+                Entity kept = written;
+                if (polynomial is not null && lowest > 0 && left >= lowest * power)
+                {
+                    var @base = Shifted(polynomial, lowest);
+                    kept = power == 1 ? @base : MathS.Pow(@base, power);
+                    left -= lowest * power;
+                }
+                if (kept != Number.Integer.One)
+                    below = below == Number.Integer.One ? kept : below * kept;
+            }
+            // Whatever could not come out of a factor whole stays below the bar as written.
+            var taken = common - left;
+            return taken == 0 ? (numerator, denominator) : (Shifted(above, taken), below);
         }
 
         /// <summary>
