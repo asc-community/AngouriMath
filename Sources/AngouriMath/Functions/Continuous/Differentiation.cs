@@ -606,16 +606,20 @@ namespace AngouriMath
 
         partial record Providedf
         {
+            // Differentiated with its condition known to hold, since the derivative is claimed
+            // only there: under `x > 0`, sgn(x^(1/3) + 2) is flat, where for x < 0 the cube
+            // root is complex and nothing about it is.
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
-                => Expression.InnerDifferentiate(variable).Provided(Predicate);
+                => TreeAnalyzer.Assuming(Predicate, () => Expression.InnerDifferentiate(variable)).Provided(Predicate);
         }
 
         partial record Piecewise
         {
+            // Each case with its own condition known to hold, as a `provided` is.
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
-                => New(Cases.Select(c => c.New(c.Expression.InnerDifferentiate(variable), c.Predicate)));
+                => New(Cases.Select(c => c.New(TreeAnalyzer.Assuming(c.Predicate, () => c.Expression.InnerDifferentiate(variable)), c.Predicate)));
         }
 
         partial record Application

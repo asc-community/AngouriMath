@@ -606,6 +606,11 @@ namespace AngouriMath.Functions.Algebra
             // dropped it re-enabled integration by parts one level below the call that
             // switched it off -- which is a cycle, since by parts calls back into here.
             // `x * ln(x)` went round it until the stack ran out.
+            // A product of powers of quotients of linears with one linear in two of them, written
+            // over each linear once with the constant that takes in front. First, since it answers
+            // the question asked only, and the polynomial term below writes `1/u` as `u^(-1)` and
+            // asks that a level down: `1/(e^atanh(a x) (c - c/(a x))^(3/2))` reached it nowhere.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingEachLinearOnce(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x, integrateByParts)) is { }) return answer;
             // A product of powers of the variable with a power of a constant multiple of it
             // among them, `(c x)^m x^n`, by the power rule with the written power kept as
@@ -657,6 +662,12 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveAReciprocalOfAnInverseTrigonometricFunction(expr, x, integrateByParts)) is { }) return answer;
             // A fractional power of a perfect square is the power of the modulus, sgn(P) P^(2r).
             if ((answer = IndefiniteIntegralSolver.SolveByTakingARootOfAPerfectSquare(expr, x, integrateByParts)) is { }) return answer;
+            // And any power of a square in any power of x, as the power of its root times a factor
+            // constant where the root is not zero: `x^2 (a^2 + 2 a b x^3 + b^2 x^6)^p`.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingAPowerOfASquareAsAPowerOfItsRoot(expr, x, integrateByParts)) is { }) return answer;
+            // A power of a multiple of a quadratic's derivative beside a power of the quadratic is
+            // a binomial in the derivative: `(b d + 2 c d x)^m (a + b x + c x^2)^p`.
+            if ((answer = IndefiniteIntegralSolver.SolveByTheDerivativeOfAQuadraticAsTheVariable(expr, x, integrateByParts)) is { }) return answer;
             // x^(n - 1) g(x^n) with a symbolic n is g(u)/n under u = x^n.
             if ((answer = IndefiniteIntegralSolver.SolveByAPowerOfTheVariableTimesAFunctionOfItsPower(expr, x, integrateByParts)) is { }) return answer;
             // A whole power of a product of a constant and the variable, as the product of
@@ -736,6 +747,11 @@ namespace AngouriMath.Functions.Algebra
             // `x/sqrt(1 - x^4)`, which the substitution answers, and it is what by parts leaves
             // from `arcsin(x)/(1 + x^2)^(3/2)`.
             if ((answer = IndefiniteIntegralSolver.SolveByCombiningRadicals(expr, x, integrateByParts)) is { }) return answer;
+            // A polynomial beside the roots of two linears with symbols in them, which the
+            // combining above cannot sign, and over a power of one more linear:
+            // `(A + B x + C x^2) sqrt(c + d x) sqrt(e + f x)` by undetermined coefficients,
+            // where the substitution further down took gigabytes.
+            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialOverAPowerOfALinearBesideTwoRoots(expr, x)) is { }) return answer;
             // A square root of a polynomial with a repeated factor, the factor taken out of
             // the root with its sign: `sqrt((x - 3)^2 (x + 1))` is `sgn(x - 3) (x - 3) sqrt(x + 1)`.
             if ((answer = IndefiniteIntegralSolver.SolveByTakingASquareFactorOutOfARoot(expr, x, integrateByParts)) is { }) return answer;
