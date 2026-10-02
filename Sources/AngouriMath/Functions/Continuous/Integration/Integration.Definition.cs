@@ -611,6 +611,11 @@ namespace AngouriMath.Functions.Algebra
             // the question asked only, and the polynomial term below writes `1/u` as `u^(-1)` and
             // asks that a level down: `1/(e^atanh(a x) (c - c/(a x))^(3/2))` reached it nowhere.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingEachLinearOnce(expr, x, integrateByParts)) is { }) return answer;
+            // A linear under a power inside a sum, written as the variable: `x^3/(a + b (c + d x)^3)`.
+            // Before the polynomial term, which takes the leading coefficient out of a power of
+            // the sum and writes what is left out in powers of x, where the linear is gone; and
+            // before the substitution search, which reads one function at a time.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingAFunctionOfOneShiftedLinear(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x, integrateByParts)) is { }) return answer;
             // A product of powers of the variable with a power of a constant multiple of it
             // among them, `(c x)^m x^n`, by the power rule with the written power kept as
