@@ -783,6 +783,12 @@ namespace AngouriMath.Functions.Algebra
                     return termByTerm;
             }
 
+            // A power of x beside a block with a symbol in it that x does not divide:
+            // `1/(x (x^3 + c))`, which the written-factor split above declines for a block past
+            // the second degree. Split at the power of x, each part goes to a rule that reads it.
+            if (IntegrateOverAPowerOfXBesideABlock(numerator, denominator, x, integrateByParts) is { } besideABlock)
+                return besideABlock;
+
             // Last, because everything above answers in exact arithmetic where it can: a
             // binomial denominator the splits above could not take apart -- `x^3 + 2`, `x^5 + 1`,
             // `a x^3 - b` -- decomposed at its roots of unity in closed form.
@@ -844,6 +850,89 @@ namespace AngouriMath.Functions.Algebra
             }
             return (total / b).Substitute(t, linear).InnerSimplified;
         }
+
+        /// <summary>
+        /// <c>N/(x^k B)</c>, where the block <c>B</c> has a symbol in it and a constant term that
+        /// is not zero, split at the power of x. <c>N/B</c> has a power series at 0, and its first
+        /// <c>k</c> terms <c>P</c> are the part over <c>x^k</c>: <c>N/(x^k B) = P/x^k + R/B</c>, with
+        /// <c>R = (N - P B)/x^k</c> exactly.
+        /// </summary>
+        /// <remarks>
+        /// <c>1/(x (x^3 + 2))</c> had an antiderivative and <c>1/(x (x^3 + c))</c> did not: the
+        /// first is split over the rationals, and the split over written factors takes linear
+        /// and quadratic blocks only. Rubi writes <c>x^m (a + b x^n)^p</c> by the hundred, and a
+        /// root of a square in it, <c>1/(x sqrt((a + b x^3)^2))</c>, is this once its modulus is
+        /// taken. The constant term is divided by, in the generic case as everywhere here.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static Entity? IntegrateOverAPowerOfXBesideABlock(Entity numerator, Entity denominator, Entity.Variable x, bool integrateByParts)
+        {
+            var k = 0;
+            Entity block = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (factor == x)
+                    k++;
+                else if (factor is Powf(var @base, Number.Integer e) && @base == x && e.EInteger.Sign > 0 && e.EInteger.CanFitInInt32())
+                    k += e.EInteger.ToInt32Unchecked();
+                else
+                    block = block == Number.Integer.One ? factor : block * factor;
+            }
+            if (k == 0 || k > MaximumPowerOfXBesideABlock || !block.ContainsNode(x) || !block.Vars.Any(symbol => symbol != x))
+                return null;
+            if (!TreeAnalyzer.TryGetPolynomial(block, x, out var below) || !TreeAnalyzer.TryGetPolynomial(numerator, x, out var above))
+                return null;
+            foreach (var term in below.Concat(above))
+                if (term.Key.Sign < 0 || !term.Key.CanFitInInt32() || term.Value.ContainsNode(x))
+                    return null;
+            var degreeBelow = below.Keys.Max()!.ToInt32Unchecked();
+            var degreeAbove = above.Count == 0 ? 0 : above.Keys.Max()!.ToInt32Unchecked();
+            if (degreeBelow > MaximumPowerOfXBesideABlock || !below.TryGetValue(EInteger.Zero, out var constant) || VanishesIdentically(constant))
+                return null;
+            Entity Coefficient(Dictionary<EInteger, Entity> polynomial, int power)
+                => polynomial.TryGetValue(EInteger.FromInt32(power), out var coefficient) ? coefficient : Number.Integer.Zero;
+
+            // P: the first k terms of the power series of N/B at 0.
+            var series = new Entity[k];
+            for (var j = 0; j < k; j++)
+            {
+                var sum = Coefficient(above, j);
+                for (var i = 1; i <= j; i++)
+                    sum -= Coefficient(below, i) * series[j - i];
+                series[j] = Functions.PartialFractions.InLowestTermsOverTheSymbols(sum / constant);
+            }
+
+            // R = (N - P B)/x^k, whose coefficient of x^(m - k) is that of x^m in N - P B.
+            Entity remainder = Number.Integer.Zero;
+            for (var m = k; m <= System.Math.Max(degreeAbove, degreeBelow + k - 1); m++)
+            {
+                var coefficient = Coefficient(above, m);
+                for (var j = System.Math.Max(0, m - degreeBelow); j <= System.Math.Min(k - 1, m); j++)
+                    coefficient -= series[j] * Coefficient(below, m - j);
+                coefficient = Functions.PartialFractions.InLowestTermsOverTheSymbols(coefficient);
+                if (!VanishesIdentically(coefficient))
+                    remainder += m == k ? coefficient : coefficient * MathS.Pow(x, m - k);
+            }
+
+            // The part over x^k term by term, and the rest over the block as it is written.
+            Entity overX = Number.Integer.Zero;
+            for (var j = 0; j < k; j++)
+                if (!VanishesIdentically(series[j]))
+                    overX += j == k - 1
+                        ? series[j] * IntegralPatterns.AntiderivativeLog(x)
+                        : series[j] * MathS.Pow(x, j - k + 1) / (j - k + 1);
+            if (remainder == Number.Integer.Zero)
+                return overX;
+            return Integration.ComputeIndefiniteIntegral(remainder / block, x, integrateByParts) is { } overTheBlock
+                ? overX + overTheBlock
+                : null;
+        }
+
+        /// <summary>
+        /// The largest power of x, and the largest degree of the block beside it, that
+        /// <see cref="IntegrateOverAPowerOfXBesideABlock"/> takes: Rubi's suite goes to twelve.
+        /// </summary>
+        private const int MaximumPowerOfXBesideABlock = 12;
 
         /// <summary>
         /// A polynomial over a binomial <c>a x^n + b</c>, <c>n >= 3</c>, decomposed at the

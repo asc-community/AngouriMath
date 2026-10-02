@@ -119,6 +119,23 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// A power of x beside a block of the third degree or more with a symbol in it, split at
+        /// the power of x: <c>1/(x (x^3 + c))</c> was declined where <c>1/(x (x^3 + 2))</c> was
+        /// answered. Rubi's <c>x^m (a + b x^n)^p</c>, by the hundred.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(x*(x^3 + c))")]
+        [InlineData("1/(x^2*(x^3 + c))")]
+        [InlineData("1/(x*(x^3 + c)^2)")]
+        [InlineData("1/(x^4*(a + b*x^3))")]
+        [InlineData("1/(x*(a + b*x^5))")]
+        [InlineData("(1 + x)/(x^2*(x^3 + c))")]
+        [InlineData("(c + d*x + e*x^2)/(x^2*(a + b*x^3))")]
+        [InlineData("(c + d*x^3 + e*x^6)/(x^4*(a + b*x^3)^2)")]
+        public void APowerOfXBesideASymbolicBlock(string integrand)
+            => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1), ("e", 0.6));
+
+        /// <summary>
         /// A repeated <b>linear</b> factor is one block, <c>P/(a + b u)^k</c>, which the rule for
         /// a polynomial over a power of a linear reads; Welz's <c>1/(a + b e^(p x))^2</c> is
         /// this under <c>u = e^(p x)</c>.
