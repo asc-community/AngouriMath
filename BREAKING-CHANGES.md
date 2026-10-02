@@ -1844,6 +1844,21 @@ and in no release -- and is `sgn(u) u/(u^2 - 1)`
 | `"1/sqrt(1+csch(x)^2)".Integrate("x")` | left unevaluated | `-sgn(tanh(x)) ln(tanh(x)^2 - 1)/2`, in exponentials |
 | `"x^4/sech(2*ln(c*x))^(1/2)".Integrate("x")` | left unevaluated | `sgn(x) (1 + c^4 x^4)^(3/2)/(6 sqrt(2) c^5)` up to the form, `provided c^4 > 0` |
 
+### A product of powers is read as its own raised product's derivative without a sum beside it
+
+**Improvement, not silent.** An integrand that is a constant times the derivative of its powers
+with some of them raised by one is answered by that product. The rule wanted a sum beside the powers
+and a power of `x` among them, and read the sum's quotient through `f'/f`, which with two symbolic
+powers of polynomials ran past a minute. Where a power is not a whole one it now reads a product
+with no sum, and `x` raised from no power at all, and the sum as a polynomial
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(x^2*sqrt(a*x+b*x^4))".Integrate("x")` | left unevaluated | `-2 sqrt(a x + b x^4)/(3 a x^2)` |
+| `"(a+b*x^n+c*x^(2*n))^p*(a+b*(1+n+n*p)*x^n+c*(1+2*n*(1+p))*x^(2*n))".Integrate("x")`, Rubi's 1.2.3.5 | no answer in 30 s | `x (a + b x^n + c x^(2 n))^(p + 1)` |
+| Rubi 1.3.2's `x (a + b x + c x^2)^m (d + e x + f x^2 + g x^3)^n` times the sum its derivative leaves | no answer in 90 s | `x^2 (a + b x + c x^2)^(m + 1) (d + e x + f x^2 + g x^3)^(n + 1)` |
+
 ### A root of a rational function of `coth(x)` is integrated by the hyperbolic half-angle
 
 `coth(x)^3/sqrt(a + b coth(x)^2)` was a search past the budget. The rational-in-`tanh` route
