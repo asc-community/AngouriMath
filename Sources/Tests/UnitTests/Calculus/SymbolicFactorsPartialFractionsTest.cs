@@ -136,6 +136,20 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1), ("e", 0.6));
 
         /// <summary>
+        /// Blocks that are each a polynomial in one power of x past the second, split in
+        /// <c>u = x^n</c>, where they are linear: <c>1/((a + b x^3)(c + d x^3))</c> was declined.
+        /// With a power of x beside them as well, both splits in turn.
+        /// </summary>
+        [Theory]
+        [InlineData("1/((a + b*x^3)*(c + d*x^3))")]
+        [InlineData("x/((a + b*x^3)*(c + d*x^3))")]
+        [InlineData("x^4/((a + b*x^3)*(c + d*x^3))")]
+        [InlineData("1/((a + b*x^4)*(c + d*x^4))")]
+        [InlineData("1/(x^2*(a + b*x^3)*(c + d*x^3))")]
+        public void SymbolicBlocksInOnePowerOfX(string integrand)
+            => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1));
+
+        /// <summary>
         /// A repeated <b>linear</b> factor is one block, <c>P/(a + b u)^k</c>, which the rule for
         /// a polynomial over a power of a linear reads; Welz's <c>1/(a + b e^(p x))^2</c> is
         /// this under <c>u = e^(p x)</c>.

@@ -789,6 +789,12 @@ namespace AngouriMath.Functions.Algebra
             if (IntegrateOverAPowerOfXBesideABlock(numerator, denominator, x, integrateByParts) is { } besideABlock)
                 return besideABlock;
 
+            // Blocks that are each a polynomial in one power of x past the second,
+            // `1/((a + b x^3)(c + d x^3))`: split in `u = x^n`, where they are linear or quadratic,
+            // and each fraction back in x is over one block, which the rule for a binomial reads.
+            if (IntegrateOverBlocksInAPowerOfX(numerator, denominator, x, integrateByParts) is { } overBlocksInAPower)
+                return overBlocksInAPower;
+
             // Last, because everything above answers in exact arithmetic where it can: a
             // binomial denominator the splits above could not take apart -- `x^3 + 2`, `x^5 + 1`,
             // `a x^3 - b` -- decomposed at its roots of unity in closed form.
@@ -926,6 +932,103 @@ namespace AngouriMath.Functions.Algebra
             return Integration.ComputeIndefiniteIntegral(remainder / block, x, integrateByParts) is { } overTheBlock
                 ? overX + overTheBlock
                 : null;
+        }
+
+        /// <summary>
+        /// <c>N/(B_1 ... B_m)</c> where every block <c>B_i</c> is a polynomial in <c>x^n</c> for one
+        /// <c>n >= 3</c>, linear or quadratic in it, with a symbol among them: split in
+        /// <c>u = x^n</c> by <see cref="Functions.PartialFractions.TrySplitOverWrittenFactors"/>,
+        /// one residue of the numerator's powers modulo <c>n</c> at a time, each fraction then
+        /// over one block in x.
+        /// </summary>
+        /// <remarks>
+        /// <c>1/((a + b x^3)(c + d x^3))</c> was declined: over the rationals it does not factor,
+        /// and the split over written factors reads a block of the third degree as nothing. In
+        /// <c>u = x^3</c> it is <c>1/((a + b u)(c + d u))</c>, two linear factors. A numerator
+        /// term <c>x^r M(x^n)</c> keeps its <c>x^r</c> outside the split, which is exact since
+        /// the blocks are polynomials in <c>x^n</c> alone.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static Entity? IntegrateOverBlocksInAPowerOfX(Entity numerator, Entity denominator, Entity.Variable x, bool integrateByParts)
+        {
+            var blocks = new List<(Dictionary<EInteger, Entity> Polynomial, int Power)>();
+            Entity constant = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = constant == Number.Integer.One ? factor : constant * factor;
+                    continue;
+                }
+                var (@base, power) = factor is Powf(var b, Number.Integer e) && e.EInteger.Sign > 0 && e.EInteger.CanFitInInt32()
+                    ? (b, e.EInteger.ToInt32Unchecked())
+                    : (factor, 1);
+                if (!TreeAnalyzer.TryGetPolynomial(@base, x, out var polynomial) || polynomial.Count < 2)
+                    return null;
+                foreach (var term in polynomial)
+                    if (term.Key.Sign < 0 || !term.Key.CanFitInInt32() || term.Value.ContainsNode(x))
+                        return null;
+                blocks.Add((polynomial, power));
+            }
+            if (blocks.Count < 2 || !(numerator + denominator).Vars.Any(symbol => symbol != x))
+                return null;
+            // n, the greatest common divisor of every power the blocks hold.
+            var n = EInteger.Zero;
+            foreach (var (polynomial, _) in blocks)
+                foreach (var power in polynomial.Keys)
+                    n = n.Gcd(power);
+            if (n.CompareTo(EInteger.FromInt32(3)) < 0 || n.CompareTo(EInteger.FromInt32(MaximumPowerOfXBesideABlock)) > 0)
+                return null;
+            var step = n.ToInt32Unchecked();
+            foreach (var (polynomial, _) in blocks)
+                if (polynomial.Keys.Max()!.ToInt32Unchecked() / step > 2)
+                    return null;
+            if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var above))
+                return null;
+            foreach (var term in above)
+                if (term.Key.Sign < 0 || !term.Key.CanFitInInt32() || term.Value.ContainsNode(x))
+                    return null;
+
+            var u = Entity.Variable.CreateUnique(numerator + denominator, "u");
+            Entity InU(Dictionary<EInteger, Entity> polynomial)
+            {
+                Entity sum = Number.Integer.Zero;
+                foreach (var (power, coefficient) in polynomial.OrderBy(term => term.Key))
+                {
+                    var degree = power.ToInt32Unchecked() / step;
+                    var term = degree == 0 ? coefficient : coefficient * (degree == 1 ? u : MathS.Pow(u, degree));
+                    sum = sum == Number.Integer.Zero ? term : sum + term;
+                }
+                return sum;
+            }
+            Entity below = constant;
+            foreach (var (polynomial, power) in blocks)
+            {
+                var block = InU(polynomial);
+                below = below == Number.Integer.One ? (power == 1 ? block : MathS.Pow(block, power)) : below * (power == 1 ? block : MathS.Pow(block, power));
+            }
+
+            Entity total = Number.Integer.Zero;
+            foreach (var residue in above.GroupBy(term => term.Key.ToInt32Unchecked() % step))
+            {
+                Entity inU = Number.Integer.Zero;
+                foreach (var (power, coefficient) in residue)
+                {
+                    var degree = power.ToInt32Unchecked() / step;
+                    inU += degree == 0 ? coefficient : coefficient * MathS.Pow(u, degree);
+                }
+                if (!Functions.PartialFractions.TrySplitOverWrittenFactors(inU, below, u, out var decomposition))
+                    return null;
+                var outside = residue.Key == 0 ? (Entity)Number.Integer.One : residue.Key == 1 ? x : MathS.Pow(x, residue.Key);
+                foreach (var fraction in Sumf.LinearChildren(decomposition))
+                {
+                    var inX = outside * fraction.Substitute(u, MathS.Pow(x, step));
+                    if (Integration.ComputeIndefiniteIntegral(inX, x, integrateByParts) is not { } integrated)
+                        return null;
+                    total += integrated;
+                }
+            }
+            return total;
         }
 
         /// <summary>
