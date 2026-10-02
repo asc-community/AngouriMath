@@ -8009,9 +8009,12 @@ namespace AngouriMath.Functions.Algebra
                         return null;
                 }
             }
-            // Two proportional linears are one root with a constant in it, which
-            // AsOneLinearRadical takes.
+            // With numbers in both linears the combining of roots and the quotient substitution
+            // answer, and in their own forms; this is for the symbols, which those declined or
+            // took gigabytes over. Two proportional linears are one root with a constant in it,
+            // which AsOneLinearRadical takes.
             if (first is null || second is null
+                || !first.Vars.Concat(second.Vars).Any(symbol => symbol != x)
                 || !TreeAnalyzer.TryGetPolyLinear(first, x, out var b, out var a)
                 || !TreeAnalyzer.TryGetPolyLinear(second, x, out var d, out var c)
                 || IsZero(b) || IsZero(d) || IsZero(b * c - a * d))
