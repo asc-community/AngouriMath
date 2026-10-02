@@ -196,21 +196,22 @@ rules' already
 | `"asin(sqrt(1 + x) - sqrt(x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `arcsin(sqrt(1 + x) - sqrt(x))` |
 | `"x^3*atan(-sqrt(x)+sqrt(1+x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in the arctangent |
 
-### A power of `x` beside a symbolic block, and symbolic blocks in one power of `x`, are split, and `1/(a + b/x)` is read
+### Rational functions of `x` and `x^n` with symbols in them are taken apart
 
-**Answers where there were none.** `N/(x^k B)`, where the block `B` has a symbol in it and a
-constant term that is not zero, is split at the power of `x`: the first `k` terms of the power
-series of `N/B` at 0 are the part over `x^k`, and the rest is a polynomial over `B` exactly. The
-split over written factors took linear and quadratic blocks only, so `1/(x (x^3 + c))` was declined
-where `1/(x (x^3 + 2))` was answered. And blocks that are each a polynomial in one power `x^n`,
-`n >= 3`, or `n = 2` for two blocks or more, linear or quadratic in it, are split in
-`u = x^n`, where they are linear or quadratic
-factors the split over written factors reads: `1/((a + b x^3)(c + d x^3))`; one block quadratic in
-`u` is two at its roots, as `a + b x^2 + c x^4` already was. And a quotient with
-`x` below a bar inside it is written over one bar first, since every rule after it reads polynomials:
-`1/(a + b/x)` was declined where `x/(a x + b)` was answered. And a product of sums in `x^n` with a
-symbol for `n` is written out, as a power of one already was. Rubi's `x^m (a + b x^n)^p` and
-`(a + b x^n)^p (c + d x^n)^q`
+**Answers where there were none.** The partial fractions took apart a denominator with symbols in it
+only where its factors were linear or quadratic, so `1/(x (x^3 + c))` was declined where
+`1/(x (x^3 + 2))` was answered. Now:
+- a power of `x` beside a block `B` whose constant term is not zero is split off: the first `k`
+  terms of the power series of `N/B` at 0 are the part over `x^k`, and the rest is a polynomial
+  over `B` exactly;
+- blocks that are each a polynomial in one power `x^n` are split in `u = x^n`, where they are linear
+  or quadratic, for `n >= 3`, or `n = 2` with two blocks or more; one block quadratic in `u` is two
+  at its roots, as `a + b x^2 + c x^4` already was;
+- a quotient with `x` below a bar inside it, `1/(a + b/x)`, is written over one bar first, and the
+  power of `x` that cleared the bars is taken out of both sides again;
+- a product of sums in `x^n` with a symbol for `n` is written out, as a power of one already was.
+
+Rubi's `x^m (a + b x^n)^p` and `(a + b x^n)^p (c + d x^n)^q`
 ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 
 | Input | Was (2.5.0) | Now |
