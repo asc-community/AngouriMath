@@ -22,8 +22,8 @@ let usage =
 amcli eval EXPR              evaluates to a number, a boolean, or a + bi
 amcli simp EXPR              simplifies
 amcli fsimp EXPR             simplifies quickly: the normalisation, without the search
-amcli diff VAR EXPR          differentiates over VAR
-amcli solve VAR STATEMENT    solves over VAR, one root per line when there are finitely many
+amcli diff VAR EXPR          differentiates with respect to VAR
+amcli solve VAR STATEMENT    solves for VAR, one root per line when there are finitely many
 amcli sub VAR VALUE EXPR     substitutes VALUE for VAR
 amcli latex EXPR             writes EXPR as LaTeX
 amcli info EXPR              its variables, derivatives, roots and stationary points
@@ -84,7 +84,7 @@ let private kindOfStationaryPoint (hessian: int -> int -> Entity) (size: int) =
         else "a saddle point"
 
 /// <summary>
-/// The lines <c>amcli info</c> prints: the variables, the derivative and the roots over each, and
+/// The lines <c>amcli info</c> prints: the variables, the derivative and the roots for each, and
 /// the stationary points, each classified by the second derivative test.
 /// </summary>
 let private describe (expression: Entity) =
@@ -92,9 +92,9 @@ let private describe (expression: Entity) =
     let names = String.Join(", ", variables)
     [ yield $"variables: {names}"
       for v in variables do
-          yield $"derivative over {v}: {expression.Differentiate(v).Simplify().Stringize()}"
+          yield $"derivative with respect to {v}: {expression.Differentiate(v).Simplify().Stringize()}"
       for v in variables do
-          yield $"roots over {v}: {expression.Equalizes(Entity.Number.Integer.Zero).Solve(v).Simplify().Stringize()}"
+          yield $"roots for {v}: {expression.Equalizes(Entity.Number.Integer.Zero).Solve(v).Simplify().Stringize()}"
       match variables with
       | [] -> ()
       | [ v ] ->
