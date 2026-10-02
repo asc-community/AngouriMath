@@ -150,6 +150,19 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1));
 
         /// <summary>
+        /// A quotient with x below a bar inside it is written over one bar first:
+        /// <c>1/(a + b/x)</c> was declined where <c>x/(a x + b)</c> was answered, and so was the
+        /// numeric <c>1/(2 + 3/x^2)^3</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(a + b/x)")]
+        [InlineData("1/(a + b/x^2)^2")]
+        [InlineData("1/(a + b/x^3)")]
+        [InlineData("1/(2 + 3/x^2)^3")]
+        public void AQuotientWithXBelowABarInsideIt(string integrand)
+            => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3));
+
+        /// <summary>
         /// A repeated <b>linear</b> factor is one block, <c>P/(a + b u)^k</c>, which the rule for
         /// a polynomial over a power of a linear reads; Welz's <c>1/(a + b e^(p x))^2</c> is
         /// this under <c>u = e^(p x)</c>.

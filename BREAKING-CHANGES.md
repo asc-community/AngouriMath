@@ -196,7 +196,7 @@ rules' already
 | `"asin(sqrt(1 + x) - sqrt(x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `arcsin(sqrt(1 + x) - sqrt(x))` |
 | `"x^3*atan(-sqrt(x)+sqrt(1+x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in the arctangent |
 
-### A power of `x` beside a symbolic block, and symbolic blocks in one power of `x`, are split
+### A power of `x` beside a symbolic block, and symbolic blocks in one power of `x`, are split, and `1/(a + b/x)` is read
 
 **Answers where there were none.** `N/(x^k B)`, where the block `B` has a symbol in it and a
 constant term that is not zero, is split at the power of `x`: the first `k` terms of the power
@@ -204,8 +204,10 @@ series of `N/B` at 0 are the part over `x^k`, and the rest is a polynomial over 
 split over written factors took linear and quadratic blocks only, so `1/(x (x^3 + c))` was declined
 where `1/(x (x^3 + 2))` was answered. And blocks that are each a polynomial in one power `x^n`,
 `n >= 3`, linear or quadratic in it, are split in `u = x^n`, where they are linear or quadratic
-factors the split over written factors reads: `1/((a + b x^3)(c + d x^3))`. Rubi's
-`x^m (a + b x^n)^p` and `(a + b x^n)^p (c + d x^n)^q`
+factors the split over written factors reads: `1/((a + b x^3)(c + d x^3))`. And a quotient with
+`x` below a bar inside it is written over one bar first, since every rule after it reads polynomials:
+`1/(a + b/x)` was declined where `x/(a x + b)` was answered. Rubi's `x^m (a + b x^n)^p` and
+`(a + b x^n)^p (c + d x^n)^q`
 ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 
 | Input | Was (2.5.0) | Now |
@@ -216,6 +218,8 @@ factors the split over written factors reads: `1/((a + b x^3)(c + d x^3))`. Rubi
 | `"1/(x^2*(x^3 + c))".Integrate("x")`, and `(c + d x + e x^2)/(x^2 (a + b x^3))` | left unevaluated | a logarithm and an arctangent in `c^(1/3)`, beside `-1/(c x)` |
 | `"1/((a+b*x^3)*(c+d*x^3))".Integrate("x")`, and `x/((a + b x^3)(c + d x^3))` | left unevaluated | logarithms and arctangents in `(-a/b)^(1/3)` and `(-c/d)^(1/3)`, over `a d - b c` |
 | `"1/((a+b*x^4)*(c+d*x^4))".Integrate("x")` | left unevaluated | arctangents and logarithms of each binomial's roots, over `a d - b c` |
+| `"1/(a+b/x)".Integrate("x")` | left unevaluated | `x/a - b ln(a x + b)/a^2` |
+| `"1/(2+3/x^2)^3".Integrate("x")`, `1/(a + b/x^3)` | left unevaluated | an antiderivative |
 
 ### The hyperbolic functions have antiderivatives, and so does anything rational in `e^(k x)`
 

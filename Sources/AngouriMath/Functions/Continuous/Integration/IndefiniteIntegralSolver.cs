@@ -626,6 +626,16 @@ namespace AngouriMath.Functions.Algebra
             if (!TryReadAsQuotient(expr, out var numerator, out var denominator))
                 return null;
 
+            // A quotient with x below a bar inside it, `1/(a + b/x)`, written over one bar: every
+            // rule below reads the numerator and the denominator as polynomials, and `a + b/x` is
+            // not one, where `x/(a x + b)` is read at once. Once: what one bar gives has none.
+            if ((HasTheVariableBelowABar(numerator, x) || HasTheVariableBelowABar(denominator, x))
+                && Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr)) is var (top, bottom)
+                && !HasTheVariableBelowABar(top, x) && !HasTheVariableBelowABar(bottom, x)
+                && bottom.ContainsNode(x))
+                return SolveByPartialFractions(top / bottom, x, integrateByParts)
+                    ?? Integration.ComputeIndefiniteIntegral(top / bottom, x, integrateByParts);
+
             // The helper answers null for a fraction that is already proper, so this cannot
             // fire on one and recurse into the problem it started from. The check on the
             // quotient is the second half of that guarantee: a division that came back with
@@ -1325,6 +1335,14 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             return RothsteinTrager.Integrate(numerator, denominator, x);
         }
+
+        /// <summary>
+        /// Whether <paramref name="x"/> stands below a bar somewhere inside
+        /// <paramref name="expr"/>: in a divisor, or under a negative whole power.
+        /// </summary>
+        private static bool HasTheVariableBelowABar(Entity expr, Entity.Variable x)
+            => expr.Nodes.Any(node => node is Entity.Divf(_, var divisor) && divisor.ContainsNode(x)
+                || node is Entity.Powf(var @base, Number.Integer { EInteger.Sign: < 0 }) && @base.ContainsNode(x));
 
         private static bool TryReadAsQuotient(Entity expr, out Entity numerator, out Entity denominator)
         {
