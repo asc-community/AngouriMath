@@ -14478,6 +14478,141 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of a square written out, <c>(A + B w + C w^2)^p</c> with <c>B^2 = 4 A C</c> and
+        /// <c>w = x^k</c>, as the power of its root, <c>L = w + B/(2 C)</c>: the integral is
+        /// <c>F</c> times the integral with <c>L^(2p)</c> in its place, where
+        /// <c>F = (A + B w + C w^2)^p / L^(2p)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The square is <c>C L^2</c>, and <c>F</c> is constant on every interval where <c>L</c> is
+        /// not zero: its derivative is <c>2 p w' L^(2p-1) (C L^2 Q^(p-1) - Q^p) / L^(4p)</c>, and
+        /// <c>Q^(p-1) Q = Q^p</c> wherever <c>Q</c> is not zero. So <c>F</c> goes in front of the
+        /// integral, whatever <c>p</c> is: a symbol, <c>3/4</c>, or half an odd number with a
+        /// leading coefficient of unknown sign. For a whole <c>p</c> it is <c>C^p</c>. The square
+        /// is a factor of the integrand or nothing is read: below the bar <c>1/F</c> comes out,
+        /// and out of a sum nothing does.
+        /// </para>
+        /// <para>
+        /// After <see cref="SolveByTakingARootOfAPerfectSquare"/>, which answers half an odd power
+        /// of a square in a whole power of x with the sign written out, and before which nothing
+        /// read <c>k</c> as anything but a whole number. This reads <c>k</c> as any exponent, a
+        /// fraction or a symbol: Rubi's 1.2.3.2 <c>x^2 (a^2 + 2 a b x^3 + b^2 x^6)^p</c>,
+        /// <c>x sqrt(a^2 + 2 a b x^n + b^2 x^(2n))</c> and <c>(a^2 + 2 a b x^2 + b^2 x^4)^(3/4)</c>
+        /// were declined. At the top only, where the answer is the caller's, as for the sign the
+        /// rule above writes.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveByWritingAPowerOfASquareAsAPowerOfItsRoot(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            // The square as a factor of the integrand, above the bar or below it, and nowhere else:
+            // the factor comes out of a product and not out of a sum, and below the bar it is its
+            // reciprocal that comes out.
+            var (above, below) = Functions.SingleQuotient.Of(expr);
+            (Entity Square, Entity Exponent, Entity Root, Entity Leading, bool Below)? found = null;
+            foreach (var (side, isBelow) in new[] { (above, false), (below, true) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (factor is not Powf(var radicand, var power) || !radicand.ContainsNode(x) || power.ContainsNode(x)
+                        || radicand is not (Sumf or Minusf) || radicand.Complexity > 60
+                        || TrinomialInAPowerOfX(radicand, x) is not var (a, b, c, w, k))
+                        continue;
+                    var whole = power is Number.Integer;
+                    var halfOdd = power is Number.Rational half && half.ERational.Denominator.Equals(EInteger.FromInt32(2));
+                    var kIsWhole = k is Number.Integer { EInteger.Sign: > 0 };
+                    // What the rule above and the rational rules answer: half an odd power, or a
+                    // whole one, of a square in a whole power of x.
+                    if (kIsWhole && (whole || halfOdd))
+                        continue;
+                    if (!VanishesIdentically(b * b - 4 * a * c))
+                        continue;
+                    // Two squares would want two factors; one is what Rubi writes.
+                    if (found is { })
+                        return null;
+                    var shift = Functions.PartialFractions.InLowestTermsOverTheSymbols(b / (2 * c));
+                    found = (radicand, power, shift == Number.Integer.Zero ? w : w + shift, c, isBelow);
+                }
+            if (found is not var (square, exponent, root, leading, squareIsBelow)
+                || above.Nodes.Concat(below.Nodes).Count(node => node == square) != 1)
+                return null;
+            var twice = (2 * exponent).InnerSimplified;
+            // The root's power above the bar either way, with a negative exponent for the square
+            // below it: `x (x + h)^(-2p)` is read below the top where `x/(x + h)^(2p)` was not.
+            Entity Without(Entity side)
+            {
+                Entity product = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(side))
+                    if (!(factor is Powf(var radicand, var power) && radicand == square && power == exponent))
+                        product = product == Number.Integer.One ? factor : product * factor;
+                return product;
+            }
+            var ofTheRoot = MathS.Pow(root, squareIsBelow ? (-twice).InnerSimplified : twice);
+            var written = squareIsBelow
+                ? ofTheRoot * above / Without(below)
+                : ofTheRoot * Without(above) / below;
+            if (Integration.ComputeIndefiniteIntegral(written, x, integrateByParts) is not { } integral)
+                return null;
+            // F: the leading coefficient's power where p is whole, and the quotient otherwise.
+            var factorOfTheSquare = exponent is Number.Integer
+                ? MathS.Pow(leading, exponent)
+                : MathS.Pow(square, exponent) / MathS.Pow(root, twice);
+            return (squareIsBelow ? integral / factorOfTheSquare : factorOfTheSquare * integral);
+
+            // A + B x^k + C x^(2k), each term a coefficient times a power of x, with the three
+            // exponents 0, k and 2k.
+            static (Entity A, Entity B, Entity C, Entity W, Entity K)? TrinomialInAPowerOfX(Entity sum, Entity.Variable x)
+            {
+                var terms = new List<(Entity Coefficient, Entity Exponent)>();
+                foreach (var term in Sumf.LinearChildren(sum))
+                {
+                    if (PowerOfX(term, x) is not { } read)
+                        return null;
+                    terms.Add(read);
+                }
+                if (terms.Count != 3)
+                    return null;
+                var constant = terms.Where(term => term.Exponent == Number.Integer.Zero).ToList();
+                if (constant.Count != 1)
+                    return null;
+                var others = terms.Where(term => term.Exponent != Number.Integer.Zero).ToList();
+                foreach (var (first, second) in new[] { (others[0], others[1]), (others[1], others[0]) })
+                    if (VanishesIdentically(second.Exponent - 2 * first.Exponent) && !VanishesIdentically(first.Exponent))
+                    {
+                        var k = first.Exponent.InnerSimplified;
+                        return (constant[0].Coefficient, first.Coefficient, second.Coefficient, MathS.Pow(x, k), k);
+                    }
+                return null;
+            }
+
+            // A term as a coefficient free of x and an exponent of x, through products and quotients.
+            static (Entity Coefficient, Entity Exponent)? PowerOfX(Entity term, Entity.Variable x)
+            {
+                if (!term.ContainsNode(x))
+                    return (term, Number.Integer.Zero);
+                switch (term)
+                {
+                    case Entity.Variable v when v == x:
+                        return (Number.Integer.One, Number.Integer.One);
+                    case Powf(var @base, var power) when @base == x && !power.ContainsNode(x):
+                        return (Number.Integer.One, power);
+                    case Mulf(var left, var right):
+                        if (PowerOfX(left, x) is not var (lc, le) || PowerOfX(right, x) is not var (rc, re))
+                            return null;
+                        return (lc * rc, (le + re).InnerSimplified);
+                    case Divf(var above, var below):
+                        if (PowerOfX(above, x) is not var (ac, ae) || PowerOfX(below, x) is not var (bc, be))
+                            return null;
+                        return (ac / bc, (ae - be).InnerSimplified);
+                    default:
+                        return null;
+                }
+            }
+        }
+
+        /// <summary>
         /// <paramref name="sum"/> as a polynomial in <c>w = x^k</c> for a rational <c>k</c> that is
         /// not whole, each of its terms a constant times a power of <paramref name="x"/> that is a
         /// whole, non-negative multiple of <c>k</c>; <see langword="null"/> otherwise.
