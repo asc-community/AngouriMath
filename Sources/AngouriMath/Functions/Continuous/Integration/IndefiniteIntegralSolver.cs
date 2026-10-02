@@ -13523,8 +13523,23 @@ namespace AngouriMath.Functions.Algebra
             var named = expr.Substitute(linear, slope * x + constant);
             if (named == expr)
                 return null;
-            var answer = Integration.ComputeAsAQuestionOfItsOwn(named, x, integrateByParts);
-            return answer?.Substitute(constant, linear - slope * x);
+            if (Integration.ComputeAsAQuestionOfItsOwn(named, x, integrateByParts) is not { } answer)
+                return null;
+            var intercept = linear - slope * x;
+            var generic = answer.Substitute(constant, intercept);
+            // The answer is the generic case's, and where `c` is zero it can have no value:
+            // `1/(x ln(e^x))` is `1/(x (x + c))`, whose answer divides by `c`. That is the case
+            // wherever `ln(e^v)` is `v` -- on the strip `|Im v| < pi`, so on the whole real line
+            // for a real `v` -- and for `ln(e^x) - x` it is everywhere the integrand is real,
+            // where `ln(e^(2(a + b x))) - 2 b x` is `2a`. So where the answer has no value at
+            // `c = 0` and `c` is zero at real points, `c = 0` is asked as well, and its answer is
+            // the arm for it. https://github.com/asc-community/AngouriMath/issues/1666
+            if (!answer.Substitute(constant, Number.Integer.Zero).InnerSimplified.Nodes.Any(node => node is Number.Complex { IsNaN: true })
+                || Functions.PartialFractions.InLowestTermsOverTheSymbols(intercept) != Number.Integer.Zero)
+                return generic;
+            if (Integration.ComputeAsAQuestionOfItsOwn(named.Substitute(constant, Number.Integer.Zero), x, integrateByParts) is not { } whereZero)
+                return null;
+            return MathS.Piecewise(new[] { new Providedf(whereZero, intercept.EqualTo(Number.Integer.Zero)) }, generic);
         }
 
         /// <summary>
