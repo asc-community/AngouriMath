@@ -27,17 +27,16 @@ and whatever gets decided — is
 [#1019](https://github.com/asc-community/AngouriMath/issues/1019). Deliberately not restated here,
 so that there is one list rather than two that drift apart.
 
-Measured on `281e0d0c`:
+Measured on `94ba5ff6`:
 
 | Written | Reads today as | |
 |---|---|---|
-| `2 \| 6` | `2 or 6` — a disjunction of two numbers | `\|` is an alias for `or`, and is the one spelling in the grammar that already means something *else* in mathematics: divides, "such that", "given", and the delimiter in `\|x\|` |
-| `{ x \| x > 0 }` | `{ x or x > 0 }` — a `FiniteSet` of **one** element, that element a disjunction | ordinary set-builder notation, read as a one-element set |
+| `{ x \| x > 0 }` | `{ x divides x > 0 }` — a `FiniteSet` of **one** element, that element a divisibility | ordinary set-builder notation, read as a one-element set: `\|` is divisibility now (see *`\|` is divisibility, and was disjunction* below), and on `281e0d0c` the element was the disjunction `x or x > 0` |
 | `a != b` | `a! = b` — the factorial of `a`, equated to `b` | `!=` is not a token, so the lexer takes `!` as the postfix factorial and `=` as equality ([#1225](https://github.com/asc-community/AngouriMath/issues/1225)) |
 
-All three are well-formed, silent, and unrelated to what was written. Until they are settled, write
-`or` rather than `|`, `{ x : x > 0 }` for a set builder, and `<>` rather than `!=` — each of which
-is the primary spelling anyway and is what the library prints.
+Both are well-formed, silent, and unrelated to what was written. Until they are settled, write
+`{ x : x > 0 }` for a set builder, which is what the library prints, and `<>` rather than `!=`.
+A not-equal written `<>` is read as `not (a = b)`, and printed that way.
 
 ---
 
@@ -992,6 +991,33 @@ answer is still declined, and a route that answers everywhere can. Rubi's 7.3.4
 | `"1/((1-a^2*x^2)^(3/2)*atanh(a*x))".ToEntity().Integrate("x")` | `integral(...)` | `Chi(u)/a provided 1 - (a x)^2 > 0` |
 | `"x/((1-a^2*x^2)^(3/2)*atanh(a*x)^2)".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `Chi`, `provided 1 - (a x)^2 > 0` |
 | `"x*atanh(a*x)^3/(1-a^2*x^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative, `provided 1 - (a x)^2 > 0` |
+
+### `e^atanh(a x)` beside a half-integer power of a linear is integrated where its answer holds
+
+**Improvement, not silent.** `e^atanh(a x) (c - a c x)^p` for a half-integer `p` was left
+unevaluated. Past `a x = 1` both factors are imaginary and their product is real, and the answers
+the rules give have the other sign there, so each now says where it holds rather than claiming the
+whole line. Rubi's 7.3.6 ([#1655](https://github.com/asc-community/AngouriMath/issues/1655),
+[#1664](https://github.com/asc-community/AngouriMath/issues/1664)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^atanh(a*x)*sqrt(c - a*c*x)".Integrate("x")` | `integral(...)` | `2 (c (1 + a x))^(3/2)/(3 a c) provided c - a c x >= 0`, up to the form |
+| `"e^atanh(x)*sqrt(1 - x)".Integrate("x")` | `integral(...)` | `(1 + x)^(3/2)/(3/2) provided (1 + x)/(1 - x) >= 0` |
+| `"e^atanh(x)/sqrt(1 - x)".Integrate("x")` | `integral(...)` | an antiderivative, `provided (1 + x)/(1 - x) >= 0` |
+
+### A logarithm of `e^x` named as a linear is asked about where the name is zero
+
+**Improvement, not silent.** `1/(x ln(e^x))` was left unevaluated. The integrator names `ln(e^x)`
+as `x + c` and answers the generic case, which divides by `c`; on the real line `ln(e^x)` is `x`,
+so `c` is zero there. The case `c = 0` is now asked as well, and is the answer's first arm. Rubi's
+3.5 and 7.3.7 ([#1666](https://github.com/asc-community/AngouriMath/issues/1666)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(x*ln(e^x))".Integrate("x")` | `integral(...)` | `-1/x` where `ln(e^x) - x = 0`, the generic answer elsewhere |
+| `"cot(x)/ln(e^sin(x))".Integrate("x")` | `integral(...)` | `-1/sin(x)` where `ln(e^sin(x)) - sin(x) = 0`, the generic answer elsewhere |
+| `"1/atanh(tanh(a + b*x))".Integrate("x")` | no answer in 30 s | `ln(2 (a + b x))/b` where the name is zero, the generic answer elsewhere |
 
 ### A zero imaginary part is on the real axis, whatever its sign
 
