@@ -2128,6 +2128,24 @@ here that writes one does: left inside, a rule below differentiated it, and
 | `"sqrt(a^2+2*a*b*x+b^2*x^2)*sqrt(c+pe*x+d*x^2)".Integrate("x")` | left unevaluated | the antiderivative |
 | `"(a^2+2*a*b*x+b^2*x^2)^(5/2)".Integrate("x")` | the antiderivative, through the substitution search | `sgn(a + b x) (a + b x)^6 |b|^5/(6 b)` up to the form |
 
+### The root of a quadratic that is a square is the modulus of a linear, and was read as any quadratic
+
+**Wrong answers, silent.** The table's entry for `k/sqrt(Q)` and `sqrt(Q)` reads a quadratic by the
+sign of its leading coefficient: an arcsine over the root of the discriminant, or the logarithm of
+`2 a x + b + 2 sqrt(a) sqrt(Q)`. Where `Q` is a square the discriminant is zero, and that logarithm
+is of zero beyond the root. So `1/sqrt(x^2 + 2x + 1)` had no value for any `x < -1`, where it is
+`1/|x + 1|`, and with a negative leading coefficient there was no value anywhere. The root of a
+square is now the modulus of its linear, `sqrt(a (x + h)^2) = sqrt(a) |x + h|`, for a leading
+coefficient of either sign ([#1670](https://github.com/asc-community/AngouriMath/issues/1670)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/sqrt(x^2+2*x+1)".Integrate("x")` | `ln(2 x + 2 + 2 sqrt(x^2 + 2 x + 1))`, `ln(0)` for every `x < -1` | `sgn(x + 1) ln(x + 1)` |
+| `"sqrt(x^2+2*x+1)".Integrate("x")` | `(2 x + 2) sqrt(x^2 + 2 x + 1)/4 provided not 2 x + 2 + 2 sqrt(x^2 + 2 x + 1) = 0`, which says nothing for `x <= -1` | `sgn(x + 1) (x^2/2 + x)` |
+| `"1/sqrt(-4-4*x-x^2)".Integrate("x")`, and `sqrt(-4 - 4 x - x^2)` | `NaN` | `sgn(x + 2) ln(i x + 2 i)/i`, and `i sgn(x + 2) (x^2/2 + 2 x)` |
+| `"1/sqrt(-a^2-2*a*b*x-b^2*x^2)".Integrate("x")` | a piecewise whose arcsine divides by `sqrt(0)`, `NaN` for every real `b` but zero | a logarithm over `sqrt(-b^2)`, `provided b^2 > 0` |
+| `"1/(x*sqrt(a^2+2*a*b*x+b^2*x^2))".Integrate("x")`, the same with `-a^2 - 2 a b x - b^2 x^2`, or with `d + e x` for `x` | left unevaluated | the antiderivative, `provided b^2 > 0` |
+
 ### A power of the variable times a sine or cosine of a logarithm, and a power of a monomial
 
 `x^2 sin(a + b ln(c x^n))` and `(c x^n)^b` were both left as written. Two rules, each exact:
