@@ -9249,6 +9249,70 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An algebraic integrand in which a linear <c>c + d x</c> stands under a power inside a
+        /// sum, written in <c>u = c + d x</c>: <c>x^3/(a + b (c + d x)^3)</c> is
+        /// <c>(u - c)^3/(d^4 (a + b u^3))</c>, and <c>(c + d x)^4/(a + b (c + d x)^3)</c> is
+        /// <c>u^4/(d (a + b u^3))</c>, which the rules for a binomial answer.
+        /// </summary>
+        /// <remarks>
+        /// In x the sum is a polynomial whose roots are those of <c>a + b u^n</c> moved and
+        /// scaled, which the partial fractions do not read, and the substitution search reads
+        /// one function at a time: Rubi's 1.1.3.2, 1.2.3.2 and 1.3.1 write whole sections so.
+        /// Only where one linear, up to a constant multiple, stands under the powers inside sums,
+        /// with an offset or a slope other than 1, and x stands nowhere but in polynomials and
+        /// powers of them: written in u, nothing is left in x. At the question asked or one below
+        /// it, since it lands on the chain in u.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByWritingAFunctionOfOneShiftedLinear(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            // Algebraic in x: sums, products, quotients and powers with exponents free of it.
+            foreach (var node in expr.Nodes)
+                if (node.ContainsNode(x) && node is not (Variable or Sumf or Minusf or Mulf or Divf)
+                    && !(node is Powf(_, var exponent) && !exponent.ContainsNode(x)))
+                    return null;
+            Entity? linear = null;
+            Entity? slope = null;
+            Entity? offset = null;
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not (Sumf or Minusf))
+                    continue;
+                foreach (var term in Sumf.LinearChildren(node))
+                    foreach (var factor in Mulf.LinearChildren(term))
+                    {
+                        if (factor is not Powf(var @base, _) || !@base.ContainsNode(x)
+                            || !TreeAnalyzer.TryGetPolyLinear(@base, x, out var d, out var c)
+                            || d.ContainsNode(x) || c.ContainsNode(x) || TreeAnalyzer.IsZero(d))
+                            continue;
+                        if (linear is null)
+                            (linear, slope, offset) = (@base, d, c);
+                        else if (!VanishesIdentically(slope! * c - d * offset!))
+                            return null;
+                    }
+            }
+            if (linear is null || slope is null || offset is null
+                || VanishesIdentically(offset) && VanishesIdentically(slope - 1))
+                return null;
+            // x = (u - c)/d, and each base linear in u written as one.
+            var u = Variable.CreateUnique(expr, "u_linear");
+            var inU = expr.Substitute(x, (u - offset) / slope).InnerSimplified.Replace(node =>
+                node is Powf(var @base, var power) && @base.ContainsNode(u)
+                    && TreeAnalyzer.TryGetPolyLinear(@base, u, out var d, out var c) && !d.ContainsNode(u) && !c.ContainsNode(u)
+                    ? MathS.Pow(Functions.PartialFractions.InLowestTermsOverTheSymbols(d) * u + Functions.PartialFractions.InLowestTermsOverTheSymbols(c), power)
+                    : node);
+            if (inU.ContainsNode(x))
+                return null;
+            // dx = du/d.
+            if (Integration.ComputeAsAQuestionOfItsOwn((inU / slope).InnerSimplified, u, integrateByParts) is not { } answer)
+                return null;
+            var back = answer.Substitute(u, linear);
+            return back.Nodes.Any(node => node == MathS.NaN) ? null : back;
+        }
+
+        /// <summary>
         /// An integrand whose trigonometric functions have <b>different multiples</b> of one
         /// argument — <c>sin(x)/cos(2x)</c>, <c>cos(x)/(sin(x) tan(x/2))</c> — rewritten so that
         /// every one of them is of the same argument, and handed on.
