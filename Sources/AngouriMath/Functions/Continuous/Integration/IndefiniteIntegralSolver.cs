@@ -4156,6 +4156,14 @@ namespace AngouriMath.Functions.Algebra
         /// The identity holds wherever the root is real, which is where the answer is
         /// asked; <c>u</c> goes back in as <c>x (c + d x^n)^(-1/n)</c>.
         /// </para>
+        /// <para>
+        /// And beside a power of <c>x</c> that is not one of <c>x^n</c>: <c>x^j</c> times a
+        /// rational function of <c>x^n</c> times <c>(c + d x^n)^(k - (j + 1)/n)</c> is
+        /// <c>u^j</c> times the same in <c>u</c>, since <c>x^j (c + d x^n)^(-j/n)</c> is
+        /// <c>u^j</c>. Rubi's 1.1.3.4: <c>x/((a + b x^3)^(2/3) (c + d x^3))</c> is
+        /// <c>u/(c - (b c - a d) u^3)</c>, and <c>x^4 (a + b x^3)^(1/3)/(c + d x^3)</c> is the
+        /// same with <c>x^3</c> beside it; each was declined.
+        /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveByDividingByTheRoot(Entity expr, Entity.Variable x)
@@ -4166,6 +4174,8 @@ namespace AngouriMath.Functions.Algebra
             Entity? c = null, d = null;
             var n = 0;
             var k = EInteger.Zero;
+            // The power of x beside it, below n: the exponent is `k - (j + 1)/n`.
+            var j = 0;
             Entity rest = Number.Integer.One;
             var (above, below) = Functions.SingleQuotient.Of(expr);
             foreach (var (side, isBelow) in new[] { (above, false), (below, true) })
@@ -4177,15 +4187,18 @@ namespace AngouriMath.Functions.Algebra
                         if (radicand is not null || !TryReadAsABinomialIn(@base, x, out var readC, out var readD, out var readN)
                             || readN < 2 || !signed.Denominator.Equals(EInteger.FromInt32(readN)))
                             return null;
-                        // The numerator of the exponent is k n - 1.
-                        var shifted = signed.Numerator.Add(EInteger.One);
-                        if (!shifted.Remainder(EInteger.FromInt32(readN)).IsZero)
-                            return null;
+                        // The numerator of the exponent is k n - j - 1, for j from 0 to n - 1.
+                        var nAsEInteger = EInteger.FromInt32(readN);
+                        var residue = signed.Numerator.Add(EInteger.One).Remainder(nAsEInteger);
+                        if (residue.Sign < 0)
+                            residue = residue.Add(nAsEInteger);
+                        var readJ = residue.IsZero ? 0 : readN - residue.ToInt32Checked();
                         radicand = @base;
                         c = readC;
                         d = readD;
                         n = readN;
-                        k = shifted.Divide(EInteger.FromInt32(readN));
+                        j = readJ;
+                        k = signed.Numerator.Add(EInteger.FromInt32(readJ + 1)).Divide(nAsEInteger);
                         continue;
                     }
                     if (factor.ContainsNode(x) && !IsRationalIn(factor, x))
@@ -4194,8 +4207,25 @@ namespace AngouriMath.Functions.Algebra
                 }
             if (radicand is null || c is null || d is null || TreeAnalyzer.IsZero(c) || TreeAnalyzer.IsZero(d))
                 return null;
-            // The rest as a rational function of x^n: written in a stand-in for x^n where every
-            // power of x is a multiple of n, and declined otherwise.
+            // The rest as a rational function of x^n, x^j taken out of it first: written in a
+            // stand-in for x^n where every power of x is a multiple of n, and declined otherwise.
+            if (j != 0)
+            {
+                // Out of the polynomial above the bar, each of whose powers is then a multiple of n.
+                var (restAbove, restBelow) = Functions.SingleQuotient.Of(rest);
+                if (!TreeAnalyzer.TryGetPolynomial(restAbove, x, out var aboveTerms) || aboveTerms.Count == 0)
+                    return null;
+                Entity lowered = Number.Integer.Zero;
+                foreach (var term in aboveTerms)
+                {
+                    var power = term.Key.Subtract(EInteger.FromInt32(j));
+                    if (power.Sign < 0 || term.Value.ContainsNode(x))
+                        return null;
+                    var monomial = power.IsZero ? term.Value : term.Value * MathS.Pow(x, Number.Integer.Create(power));
+                    lowered = lowered == Number.Integer.Zero ? monomial : lowered + monomial;
+                }
+                rest = restBelow == Number.Integer.One ? lowered : lowered / restBelow;
+            }
             var xToTheN = Variable.CreateUnique(expr, "x_n");
             var inXToTheN = rest.Replace(node =>
                 node is Powf(var xAgain, Number.Integer power) && xAgain == x && power.EInteger.Remainder(EInteger.FromInt32(n)).IsZero
@@ -4214,8 +4244,11 @@ namespace AngouriMath.Functions.Algebra
             // base is its polynomial in u first, which collects what the substitution writes twice --
             // `1 - (-u^2) - u^2` is 1 under a secant's half angle -- and the factors stay as they are
             // written, which the rules after this read better than their product expanded.
+            var restInU = inXToTheN.Substitute(xToTheN, c * uToTheN / oneMinusDUToTheN);
+            if (j != 0)
+                restInU = MathS.Pow(u, j) * restInU;
             var integrand = WithTheFactorsWrittenOnBothSidesCancelled(u, Functions.SingleQuotient.Combine(
-                inXToTheN.Substitute(xToTheN, c * uToTheN / oneMinusDUToTheN)
+                restInU
                 * (k.IsZero ? Number.Integer.One : MathS.Pow(binomialInU, Number.Integer.Create(k)))
                 / oneMinusDUToTheN).InnerSimplified);
             if (integrand is Providedf(var inner, _))

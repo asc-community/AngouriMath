@@ -680,6 +680,21 @@ taken apart into pieces each closed the same way
 | `"(2 + x)/((2 + 4*x - 3*x^2)*(1 + 3*x + 2*x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative |
 | `"1/((x^2 + 1)*sqrt(x^2 + x + 1))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm and an arctangent |
 
+### A rational function of `x^n` beside a power of `x` and the root of a binomial is integrated
+
+**Answers where there were none.** `x/((a + b x^3)^(2/3) (c + d x^3))` and `x^4 (a + b x^3)^(1/3)/(c + d x^3)`,
+Rubi's 1.1.3.4, were declined, while the same without the power of `x` in front was answered under
+`u = x/(a + b x^n)^(1/n)`. That substitution takes `x^j (a + b x^n)^(k - (j + 1)/n)` beside a rational
+function of `x^n` to `u^j` times a rational function of `u`, for any `j` below `n`, and is taken for
+those now. Each answer holds on both sides of zero, an odd root of a negative being real here
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x/((a + b*x^3)^(2/3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | logarithms and an arctangent of `x (a + b x^3)^(-1/3)` |
+| `"x^4*(a + b*x^3)^(1/3)/(c + d*x^3)".ToEntity().Integrate("x")` | `integral(...)` | the same, beside a rational function of it |
+| `"x/((1 + x^3)^(2/3)*(2 + x^3))".ToEntity().Integrate("x")` | `integral(...)` | the same with numbers |
+
 ### A rational function of `x^n` beside a power of a symbolic binomial is integrated without a search
 
 **Answers where there were none.** A rational function of `x^n` beside `(c + d x^n)^(k - 1/n)` is a
