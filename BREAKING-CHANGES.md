@@ -204,6 +204,8 @@ only where its factors were linear or quadratic, so `1/(x (x^3 + c))` was declin
 - a power of `x` beside a block `B` whose constant term is not zero is split off: the first `k`
   terms of the power series of `N/B` at 0 are the part over `x^k`, and the rest is a polynomial
   over `B` exactly;
+- a power of another linear `g + h x` beside such a block is split the same way at the linear's
+  root, where the coefficients of `N` and `B` are read by Taylor's formula;
 - blocks that are each a polynomial in one power `x^n` are split in `u = x^n`, where they are linear
   or quadratic, for `n >= 3`, or `n = 2` with two blocks or more; one block quadratic in `u` is two
   at its roots, as `a + b x^2 + c x^4` already was;
@@ -219,6 +221,8 @@ Rubi's `x^m (a + b x^n)^p` and `(a + b x^n)^p (c + d x^n)^q`
 | `"1/(x*(x^3 + c))".Integrate("x")` | left unevaluated | `ln(x)/c - ln(c x^3 + c^2)/(3 c)` |
 | `"1/(x^4*(a + b*x^3))".Integrate("x")` | left unevaluated | `-1/(3 a x^3) - b ln(x)/a^2 + b ln(a^2 b x^3 + a^3)/(3 a^2)` |
 | `"1/(x*(a + b*x^5))".Integrate("x")` | left unevaluated | `ln(x)/a - ln(a b x^5 + a^2)/(5 a)` |
+| `"1/((x - c)*(a + b*x^3))".Integrate("x")` | left unevaluated | `ln(x - c)/(a + b c^3)`, and logarithms and an arctangent at the binomial's roots |
+| `"1/((g + h*x)*(a + b*x^3))".Integrate("x")` | left unevaluated | `h^3 ln(g + h x)/(a h^3 - b g^3)`, and the same |
 | `"1/(x^2*(x^3 + c))".Integrate("x")`, and `(c + d x + e x^2)/(x^2 (a + b x^3))` | left unevaluated | a logarithm and an arctangent in `c^(1/3)`, beside `-1/(c x)` |
 | `"1/((a+b*x^3)*(c+d*x^3))".Integrate("x")`, and `x/((a + b x^3)(c + d x^3))` | left unevaluated | logarithms and arctangents in `(-a/b)^(1/3)` and `(-c/d)^(1/3)`, over `a d - b c` |
 | `"1/((a+b*x^4)*(c+d*x^4))".Integrate("x")` | left unevaluated | arctangents and logarithms of each binomial's roots, over `a d - b c` |
