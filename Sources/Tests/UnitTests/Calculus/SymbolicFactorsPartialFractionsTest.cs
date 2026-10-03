@@ -136,6 +136,18 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1), ("e", 0.6));
 
         /// <summary>
+        /// And a power of another linear beside such a block, split at its root:
+        /// <c>1/((x - c)(a + b x^3))</c> was declined, and so was the same over <c>g + h x</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("1/((x - c)*(a + b*x^3))")]
+        [InlineData("1/((x - c)^2*(a + b*x^4))")]
+        [InlineData("(1 + x)/((x + 2)^2*(a + b*x^3))")]
+        [InlineData("1/((g + h*x)*(a + b*x^3))")]
+        public void APowerOfALinearBesideASymbolicBlock(string integrand)
+            => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("g", 1.1), ("h", 0.6));
+
+        /// <summary>
         /// Blocks that are each a polynomial in one power of x past the second, split in
         /// <c>u = x^n</c>, where they are linear: <c>1/((a + b x^3)(c + d x^3))</c> was declined.
         /// With a power of x beside them as well, both splits in turn; and one block quadratic in
