@@ -232,6 +232,20 @@ Rubi's `x^m (a + b x^n)^p` and `(a + b x^n)^p (c + d x^n)^q`
 | `"1/(2+3/x^2)^3".Integrate("x")`, `1/(a + b/x^3)` | left unevaluated | an antiderivative |
 | `"(a+b*x^n)*(c+d*x^n)^3".Integrate("x")` | left unevaluated | written out, eight powers of `x` integrated: `a c^3 x + ... + b d^3 x^(4 n + 1)/(4 n + 1)` |
 
+### A polynomial with symbols in it that is a binomial or an even quartic in a shifted variable is integrated in it
+
+**Answers where there were none.** `1/(c^2 x^3 + 3 b c x^2 + 3 b^2 x + 3 a b)` was left unevaluated,
+although its denominator is `((c x + b)^3 + 3 a b c - b^3)/c`, which the rule for a binomial reads at
+once: nothing factors a polynomial with a symbol among its coefficients. A polynomial below the bar
+of the third to the sixth degree, with a symbol in it, that written in `y = x + s` with
+`s = a_(n-1)/(n a_n)` is a binomial, or a quartic even in `y`, is integrated in `y`. Rubi's 1.3.1
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(3*a*b + 3*b^2*x + 3*b*c*x^2 + c^2*x^3)".ToEntity().Integrate("x")`, and its square | `integral(...)` | two logarithms and an arctangent in `x + b/c` |
+| `"x/(a + 8*x - 8*x^2 + 4*x^3 - x^4)".ToEntity().Integrate("x")`, and `1` over it | `integral(...)` | the antiderivative in `x - 1` |
+
 ### The hyperbolic functions have antiderivatives, and so does anything rational in `e^(k x)`
 
 An integrand rational in `e^(k x)` becomes a rational function of one variable under
