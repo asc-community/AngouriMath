@@ -79,5 +79,20 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("(A + B*tan(x))/(a + i*a*tan(x))^2")]
         [InlineData("1/(a + i*a*tan(c + d*x))^3")]
         public void APowerOfAPlusIATangent(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// A power of a quotient of linears with the imaginary unit in it, beside a power of x the
+        /// substitution for it does not take down to something answered: declined, and within a
+        /// minute. The scaling of the variable simplified it with the symbol beside the imaginary
+        /// unit, and that ran past two minutes before the decline.
+        /// </summary>
+        [Theory]
+        [InlineData("((1 + i*a*x)/(1 - i*a*x))^(-5/4)/x^2")]
+        [InlineData("((1 + i*a*x)/(1 - i*a*x))^(-5/4)/x^3")]
+        public void AnImaginaryMobiusPowerIsDeclinedWithinAMinute(string integrand)
+        {
+            var integrating = System.Threading.Tasks.Task.Run(() => integrand.ToEntity().Integrate("x"));
+            Assert.True(integrating.Wait(TimeSpan.FromSeconds(60)), $"{integrand} was not settled within a minute");
+        }
     }
 }
