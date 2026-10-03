@@ -204,6 +204,8 @@ only where its factors were linear or quadratic, so `1/(x (x^3 + c))` was declin
 - a power of `x` beside a block `B` whose constant term is not zero is split off: the first `k`
   terms of the power series of `N/B` at 0 are the part over `x^k`, and the rest is a polynomial
   over `B` exactly;
+- a power of another linear `g + h x` beside such a block is split the same way at the linear's
+  root, where the coefficients of `N` and `B` are read by Taylor's formula;
 - blocks that are each a polynomial in one power `x^n` are split in `u = x^n`, where they are linear
   or quadratic, for `n >= 3`, or `n = 2` with two blocks or more; one block quadratic in `u` is two
   at its roots, as `a + b x^2 + c x^4` already was;
@@ -219,6 +221,8 @@ Rubi's `x^m (a + b x^n)^p` and `(a + b x^n)^p (c + d x^n)^q`
 | `"1/(x*(x^3 + c))".Integrate("x")` | left unevaluated | `ln(x)/c - ln(c x^3 + c^2)/(3 c)` |
 | `"1/(x^4*(a + b*x^3))".Integrate("x")` | left unevaluated | `-1/(3 a x^3) - b ln(x)/a^2 + b ln(a^2 b x^3 + a^3)/(3 a^2)` |
 | `"1/(x*(a + b*x^5))".Integrate("x")` | left unevaluated | `ln(x)/a - ln(a b x^5 + a^2)/(5 a)` |
+| `"1/((x - c)*(a + b*x^3))".Integrate("x")` | left unevaluated | `ln(x - c)/(a + b c^3)`, and logarithms and an arctangent at the binomial's roots |
+| `"1/((g + h*x)*(a + b*x^3))".Integrate("x")` | left unevaluated | `h^3 ln(g + h x)/(a h^3 - b g^3)`, and the same |
 | `"1/(x^2*(x^3 + c))".Integrate("x")`, and `(c + d x + e x^2)/(x^2 (a + b x^3))` | left unevaluated | a logarithm and an arctangent in `c^(1/3)`, beside `-1/(c x)` |
 | `"1/((a+b*x^3)*(c+d*x^3))".Integrate("x")`, and `x/((a + b x^3)(c + d x^3))` | left unevaluated | logarithms and arctangents in `(-a/b)^(1/3)` and `(-c/d)^(1/3)`, over `a d - b c` |
 | `"1/((a+b*x^4)*(c+d*x^4))".Integrate("x")` | left unevaluated | arctangents and logarithms of each binomial's roots, over `a d - b c` |
@@ -354,6 +358,27 @@ leading coefficient once expanded, and declined: it is read expanded and bare no
 | `"tan(x)^4/(a+b*csc(x))".Integrate("x")` | `integral(...)` | the antiderivative, 2,719 characters, where the unreleased master answered in 520,864 |
 | `"sin(x)/(a+b*sin(x))^3".Integrate("x")`, Rubi's 4.1.2.1 row 242 | `integral(...)` | the antiderivative |
 | `"4*x*(1+x^2)/(a*x^2+2*b*x+a)^3".Integrate("x")` | `integral(...)` | the antiderivative |
+
+### A cube or fourth root of a quadratic binomial beside another is integrated where that is elementary
+
+**Answers where there were none.** `1/((A + B x^2)^(1/3) (C + D x^2))` is an elliptic integral
+except where `B C + 3 A D = 0` or `B C - 9 A D = 0`, and `1/((A + B x^2)^(1/4) (C + D x^2))` except
+where `B C - 2 A D = 0`. At those ratios it is arctangents and logarithms of quotients in the root,
+as Rubi's 1.1.2.3 gives them, and it was left unevaluated. It is answered there now, with symbols
+in the constants too: by the sign of `B/A` for the cube root, and by the signs of `A` and `B` for
+the fourth. With `A` and `B` both positive, the fourth root's answer jumps at `x = 0`, and is an
+antiderivative on each side of it, as Rubi's is
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((1 - x^2)^(1/3)*(3 + x^2))".ToEntity().Integrate("x")` | `integral(...)` | arctangents and logarithms in `x` and `(1 - x^2)^(1/3)` |
+| `"1/((1 + x^2)^(1/3)*(9 + x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same in `(1 + x^2)^(1/3)` |
+| `"1/((a + b*x^2)^(1/3)*(3*a - b*x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same in `(a + b x^2)^(1/3)`, by the sign of `b/a` |
+| `"1/((a + b*x^2)^(1/3)*(9*a + b*x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same, by the sign of `b/a` |
+| `"1/((a + b*x^2)^(1/4)*(2*a + b*x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same in `(a + b x^2)^(1/4)`, by the signs of `a` and `b` |
+| `"1/((2 + 3*x^2)^(1/4)*(4 + 3*x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same in `(2 + 3 x^2)^(1/4)` |
+| `"1/((-2 + 3*x^2)*(-1 + 3*x^2)^(1/4))".ToEntity().Integrate("x")` | `integral(...)` | `-(arctan(u) + artanh(u))/(2 sqrt(6))`, `u = sqrt(3) x/(sqrt(2) (-1 + 3 x^2)^(1/4))` |
 
 ### A rational function of the sine and cosine with symbols in it is integrated by the half angle
 
@@ -2843,6 +2868,36 @@ measured on a build, `v2.5.0` against this change.
 | `"sinh(x)/(x*(x+1))".Integrate("x")` | `integral((e ^ x - e ^ (-x)) / 2 / (x * (x + 1)), x)` | `1/2 * (2 * Shi(x) + ((-1) / e + e) * Chi(x + 1) + ((-1) / e - e) * Shi(x + 1)) + C` |
 | `"x^3*e^(2*x)/((x+1)*(x-2))".Integrate("x")` | `integral(x ^ 3 * e ^ (2 * x) / ((x + 1) * (x - 2)), x)` | `e ^ (2 * x) * (-1/4 + 1/2 * x) + e ^ (2 * x) / 2 + 1/3 * e ^ (-2) * Ei(2 * (x + 1)) + 8/3 * e ^ 4 * Ei(2 * (x - 2)) + C` |
 | `"x*sin(x)/((c+d*x)*(x-2))".Integrate("x")` | `integral(x * sin(x) / ((c + d * x) * (x - 2)), x)` | in `Si` and `Ci` of `(c + d x)/d` and `x - 2` |
+
+### An exponential, hyperbolic or trigonometric function over a quadratic or a binomial is split at its roots
+
+**Answers where there were none.** `sin(c + d x)/(a + b x^2)` was answered, the rule for a sine or a
+cosine writing the quadratic as its leading coefficient times the linears of its two roots, and
+`cosh(c + d x)/(a + b x^2)` was declined, as was `e^x/(x^2 + x + 1)`: the rule for an exponential or
+`sinh` and `cosh` over several linears read linears only. It writes a quadratic the same way now,
+and both rules write a binomial `a + b x^3` or `a + b x^4` as the linears of its roots,
+`(a/b)^(1/n)` times the n-th roots of -1. The roots are complex where the discriminant is negative,
+and the integrals at conjugate arguments add up to a real answer. An exponential that is not of a linear is not split:
+`sinh(sqrt((1 - a x)/(1 + a x)))/(1 - a^2 x^2)` is still answered whole, by its substitution. And
+both rules divided a numerator past the degree by the linears of the roots, which with a symbol in
+the quadratic left a remainder in the squares of its roots that nothing read: `x^2 sin(c + d x)/(a + b x^2)`
+was declined. They divide by the denominator as it is written now. Rubi's 6.2.2,
+`(e x)^m (a + b x^n)^p cosh(c + d x)`, its 4.1.11, and exponentials in its 2.3
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"cosh(c + d*x)/(a + b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | `Chi` and `Shi` of `d (x -/+ sqrt(-4 a b)/(2 b))` |
+| `"x*sinh(c + d*x)/(a + b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | the same |
+| `"cosh(c + d*x)/(x*(a + b*x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same, and `Chi(d x)` and `Shi(d x)` |
+| `"x^3*cosh(c + d*x)/(a + b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | `e^(c + d x)` and `e^(-c - d x)` times linears, and the same |
+| `"cosh(x)/(x^2 - 2)".ToEntity().Integrate("x")` | `integral(...)` | `Chi` and `Shi` of `x -/+ sqrt(2)` |
+| `"e^(c + d*x)/(a + b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | `Ei` of `d (x -/+ sqrt(-4 a b)/(2 b))` |
+| `"e^x/(x^2 + x + 1)".ToEntity().Integrate("x")` | `integral(...)` | `Ei` of `x + (1 -/+ sqrt(-3))/2` |
+| `"x^2*sin(c + d*x)/(a + b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | `cos(d x)` and `sin(d x)`, and `Si` and `Ci` of `d (x -/+ sqrt(-4 a b)/(2 b))` |
+| `"sin(c + d*x)/(a + b*x^3)".ToEntity().Integrate("x")` | `integral(...)` | `Si` and `Ci` of `d` times `x` less each root of `a + b x^3` |
+| `"cosh(c + d*x)/(a + b*x^3)".ToEntity().Integrate("x")` | `integral(...)` | `Chi` and `Shi` the same |
+| `"e^x/(a + b*x^4)".ToEntity().Integrate("x")` | `integral(...)` | `Ei` of `x` less each root of `a + b x^4` |
 
 ### An inverse trigonometric function below the bar is integrated to the sine and cosine integrals
 
