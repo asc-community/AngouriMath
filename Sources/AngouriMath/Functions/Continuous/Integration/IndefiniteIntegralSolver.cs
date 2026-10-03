@@ -4478,12 +4478,43 @@ namespace AngouriMath.Functions.Algebra
         /// <para>
         /// <b>The third case comes down to the second.</b> Where <c>s + p/q</c> is whole instead,
         /// <c>x = 1/y</c> turns <c>x^m (a + b x^n)^(p/q) dx</c> into
-        /// <c>-y^m' (b + a y^n)^(p/q) dy</c> with <c>m' = -m - 2 - n p/q</c>, a whole number, and
+        /// <c>-y^m' (b + a y^n)^(p/q) dy</c> with <c>m' = -m - 2 - n p/q</c> and
         /// <c>(m' + 1)/n = -(s + p/q)</c>, whole — so it is the second case in <c>y</c>, with the
-        /// roles of <c>a</c> and <c>b</c> exchanged, and <c>y = 1/x</c> put back afterwards.
+        /// roles of <c>a</c> and <c>b</c> exchanged. Its <c>u</c>, whose <c>q</c>-th power is
+        /// <c>b + a/x^n</c>, is put back as <c>(a + b x^n)^(1/q)/x^(n/q)</c>, which has that power
+        /// at every <c>x</c>. <c>(b + a/x^n)^(1/q)</c> is the same number for a positive <c>x</c>,
+        /// and for a negative one only under an odd root, which is real here:
+        /// <c>1/(1 + x^4)^(5/4)</c> came out as <c>1/(1 + 1/x^4)^(1/4)</c>, an even function
+        /// whose derivative is the integrand's negative for every negative <c>x</c>, where
+        /// <c>x/(1 + x^4)^(1/4)</c> is right on the whole line.
         /// <c>x^6 (3 + 4x^4)^(1/4)</c> and <c>(x^3 - 1)/(2 + x^3)^(1/3)</c> are this. Chebyshev
         /// proved there is no fourth case: outside these the integrand has no elementary
         /// antiderivative at all, which is worth knowing before anyone goes looking.
+        /// </para>
+        /// <para>
+        /// The theorem is about the exponents, and <c>m</c> and <c>n</c> are read as rationals and
+        /// <c>a</c> and <c>b</c> as anything free of the variable, since neither substitution
+        /// reads the coefficients: <c>x^(7/3) (a + b x^2)^(1/3)</c> is the third case. A power of
+        /// a multiple of the variable, <c>(c x)^(5/2)</c>, is read as <c>x^(5/2)</c> times
+        /// <c>(c x)^(5/2)/x^(5/2)</c>, whose derivative is zero: it is <c>c^(5/2)</c> for a
+        /// positive <c>c x</c> and constant on either side of zero whatever the signs, so it
+        /// stands outside the integral as written. Rubi's 1.1.2.2 and 1.1.3.2,
+        /// <c>(c x)^m (a + b x^n)^p</c>, are written so.
+        /// </para>
+        /// <para>
+        /// Where <c>m + 1 + n (p/q + 1)</c> is zero, a case of the third, the answer is one product
+        /// of powers, <c>x^(m+1) (a + b x^n)^(p/q+1)/(a (m + 1))</c>, and is given as that.
+        /// <see cref="SolveAsTheDerivativeOfAProductOfPowers"/> finds it too, but is asked at the
+        /// top and one level below only, and below that the third case wrote it out through the
+        /// rational integrator, many terms where one will do.
+        /// </para>
+        /// <para>
+        /// Here with numbers only. With a symbol in <c>a</c>, <c>b</c> or the multiple it is
+        /// <see cref="SolveABinomialDifferentialWithSymbols"/>, asked after the rules written for
+        /// a root of a quadratic and for a rational function of <c>x^n</c> beside the root of its
+        /// binomial, which answer what they share with this more shortly: asked first,
+        /// <c>1/(a - b x^4)^(1/4)</c> came out as two logarithms and two arctangents where
+        /// <see cref="SolveByDividingByTheRoot"/> gives two arctangents.
         /// </para>
         /// <para>
         /// Closed in one step: the polynomial case is a sum of powers, and the rational case
@@ -4496,52 +4527,75 @@ namespace AngouriMath.Functions.Algebra
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveABinomialDifferential(Entity expr, Entity.Variable x)
+            => SolveABinomialDifferential(expr, x, withSymbols: false);
+
+        /// <summary>
+        /// <see cref="SolveABinomialDifferential(Entity, Entity.Variable)"/> where a symbol stands
+        /// in <c>a</c>, <c>b</c> or the multiple, and nowhere else: what the first asking left
+        /// for the rules after it, and they declined.
+        /// </summary>
+        internal static Entity? SolveABinomialDifferentialWithSymbols(Entity expr, Entity.Variable x)
+            => SolveABinomialDifferential(expr, x, withSymbols: true);
+
+        private static Entity? SolveABinomialDifferential(Entity expr, Entity.Variable x, bool withSymbols)
         {
             if (!TryReadABinomialDifferential(expr, x, out var power, out var exponent,
                     out var inner, out var free, out var leading, out var factor))
                 return null;
+            if (withSymbols != (free.Vars.Any() || leading.Vars.Any() || factor.Vars.Any(symbol => symbol != x)))
+                return null;
+            var u = Variable.CreateUnique(expr, "u_binom");
+            var bracket = (free + leading * MathS.Pow(x, Number.Rational.Create(inner))).InnerSimplified;
+            var root = MathS.Pow(bracket, Number.Rational.Create(EInteger.One, exponent.Denominator));
+
+            // m + 1 + n (p/q + 1) = 0, a case of the third with one term for its answer:
+            // (x^(m+1) (a + b x^n)^(p/q+1))' is (m + 1) a x^m (a + b x^n)^(p/q) exactly there.
+            var raisedPower = power.Add(ERational.One);
+            if (!raisedPower.IsZero && raisedPower.Add(inner.Multiply(exponent.Add(ERational.One))).IsZero)
+                return (factor * MathS.Pow(x, Number.Rational.Create(raisedPower))
+                        * MathS.Pow(bracket, Number.Rational.Create(exponent.Add(ERational.One)))
+                        / (free * Number.Rational.Create(raisedPower))).InnerSimplified;
 
             // The second case: s = (m + 1)/n whole.
-            if ((power + 1) % inner == 0)
+            var s = raisedPower.Divide(inner);
+            if (s.IsInteger())
                 return IntegrateABinomialDifferentialInTheSecondCase(
-                    power, inner, exponent, free, leading, x, factor);
+                    power, inner, exponent, free, leading, u, root, factor);
 
             // The third: s + p/q whole, taken to the second by x = 1/y.
-            var sPlusP = ERational.Create(power + 1, inner).Add(exponent);
-            if (!sPlusP.IsInteger())
+            if (!s.Add(exponent).IsInteger())
                 return null;
-            var nTimesP = exponent.Multiply(EInteger.FromInt32(inner));
-            if (!nTimesP.IsInteger() || !nTimesP.Numerator.CanFitInInt32())
-                return null;
-            var reflectedPower = -power - 2 - nTimesP.ToLowestTerms().Numerator.ToInt32Unchecked();
-            var y = Variable.CreateUnique(expr, "y_binom");
+            var reflectedPower = power.Negate().Subtract(ERational.FromInt32(2)).Subtract(inner.Multiply(exponent));
+            var back = root / MathS.Pow(x, Number.Rational.Create(inner.Divide(ERational.FromEInteger(exponent.Denominator))));
             if (IntegrateABinomialDifferentialInTheSecondCase(
-                    reflectedPower, inner, exponent, leading, free, y, Number.Integer.MinusOne) is not { } inY)
+                    reflectedPower, inner, exponent, leading, free, u, back, Number.Integer.MinusOne) is not { } reflected)
                 return null;
-            return (factor * inY.Substitute(y, 1 / x)).InnerSimplified;
+            return (factor * reflected).InnerSimplified;
         }
 
         /// <summary>
-        /// <c>int factor * v^m (a + b v^n)^(p/q) dv</c> with <c>(m + 1)/n</c> whole: a polynomial
-        /// in <c>u = (a + b v^n)^(1/q)</c> expanded term by term for <c>s >= 1</c>, and a rational
-        /// function of <c>u</c> handed to the rational integrator for <c>s &lt;= 0</c>.
+        /// <c>int factor * v^m (a + b v^n)^(p/q) dv</c> with <c>(m + 1)/n</c> whole, in
+        /// <paramref name="u"/> and then written as <paramref name="back"/>, anything whose
+        /// <c>q</c>-th power is <c>a + b v^n</c>: a polynomial in <c>u</c> expanded term by term for
+        /// <c>s >= 1</c>, and a rational function of <c>u</c> handed to the rational integrator for
+        /// <c>s &lt;= 0</c>.
         /// </summary>
         private static Entity? IntegrateABinomialDifferentialInTheSecondCase(
-            int power, int inner, ERational exponent, ERational free, ERational leading,
-            Entity.Variable v, Entity factor)
+            ERational power, ERational inner, ERational exponent, Entity free, Entity leading,
+            Entity.Variable u, Entity back, Entity factor)
         {
-            if ((power + 1) % inner != 0)
+            var whole = power.Add(ERational.One).Divide(inner);
+            if (!whole.IsInteger())
                 return null;
-            var s = (power + 1) / inner;
+            var wholeInteger = whole.ToEIntegerIfExact();
+            if (!wholeInteger.CanFitInInt32())
+                return null;
+            var s = wholeInteger.ToInt32Checked();
             var q = exponent.Denominator.ToInt32Checked();
             var p = exponent.Numerator.ToInt32Checked();
-            var a = Number.Rational.Create(free);
-            var b = Number.Rational.Create(leading);
-            var u = Variable.CreateUnique(v + factor, "u_binom");
-            var outside = Number.Integer.Create(q)
-                        / (Number.Integer.Create(inner) * MathS.Pow(b, Number.Integer.Create(s)));
-            var bracket = (a + b * MathS.Pow(v, Number.Integer.Create(inner))).InnerSimplified;
-            var back = MathS.Pow(bracket, Number.Rational.Create(EInteger.One, exponent.Denominator));
+            var a = free;
+            var b = leading;
+            var outside = Number.Integer.Create(q) / (Number.Rational.Create(inner) * ToThe(b, s));
 
             if (s < 1)
             {
@@ -4571,16 +4625,23 @@ namespace AngouriMath.Functions.Algebra
                 if (raised == 0)
                     return null;   // the power rule would divide by zero; not a polynomial after all
                 total += Number.Integer.Create(binomial)
-                       * MathS.Pow(-a, Number.Integer.Create(s - 1 - i))
+                       * ToThe(-a, s - 1 - i)
                        * MathS.Pow(u, Number.Integer.Create(raised)) / Number.Integer.Create(raised);
                 binomial = binomial * (s - 1 - i) / (i + 1);
             }
             return (factor * outside * total.Substitute(u, back)).InnerSimplified;
+
+            // The zeroth power as the one it is: with a symbol in the base, `b^0` is simplified
+            // to 1 provided `b` is not zero, a condition the answer has no use for.
+            static Entity ToThe(Entity @base, int power)
+                => power == 0 ? Number.Integer.One : MathS.Pow(@base, Number.Integer.Create(power));
         }
 
         /// <summary>
-        /// Reads <paramref name="expr"/> as a rational multiple of <c>x^m (a + b x^n)^(p/q)</c>,
-        /// with <c>q</c> above one and <c>n</c> at least two.
+        /// Reads <paramref name="expr"/> as a multiple of <c>x^m (a + b x^n)^(p/q)</c>, with
+        /// <c>m</c> and <c>n</c> rational, <c>q</c> above one, <c>n</c> neither zero nor one, and
+        /// the multiple, <c>a</c> and <c>b</c> free of the variable -- or the multiple
+        /// <c>(c x^k)^r/x^(k r)</c>, whose derivative is zero, of a power of a monomial.
         /// </summary>
         /// <remarks>
         /// A whole exponent on the bracket is a polynomial and wants expanding rather than this;
@@ -4589,19 +4650,19 @@ namespace AngouriMath.Functions.Algebra
         /// shortly.
         /// </remarks>
         private static bool TryReadABinomialDifferential(
-            Entity expr, Entity.Variable x, out int power, out ERational exponent,
-            out int inner, out ERational free, out ERational leading, out Entity factor)
+            Entity expr, Entity.Variable x, out ERational power, out ERational exponent,
+            out ERational inner, out Entity free, out Entity leading, out Entity factor)
         {
-            power = 0;
+            power = ERational.Zero;
             exponent = ERational.Zero;
-            inner = 0;
-            free = ERational.Zero;
-            leading = ERational.Zero;
+            inner = ERational.Zero;
+            free = 0;
+            leading = 0;
             factor = 1;
 
             Entity? bracket = null;
             var exponentFound = ERational.Zero;
-            var powerFound = 0;
+            var powerFound = ERational.Zero;
             Entity constantFactor = 1;
             if (!Read(expr, 1) || bracket is null)
                 return false;
@@ -4623,18 +4684,18 @@ namespace AngouriMath.Functions.Algebra
                     return false;
             if (constantPart is null || monomial is null)
                 return false;
-            if (!TryReadAMonomial(monomial, x, out var degree, out var coefficient) || degree < 2)
+            if (!TryReadAMonomial(monomial, x, out var degree, out var coefficient)
+                || degree.IsZero || degree.CompareTo(ERational.One) == 0)
                 return false;
-            if (constantPart.Evaled is not Number.Rational constantValue
-                || coefficient.Evaled is not Number.Rational coefficientValue
-                || coefficientValue.ERational.IsZero)
+            if (VanishesIdentically(constantPart) || VanishesIdentically(coefficient))
                 return false;
 
             power = powerFound;
             exponent = lowest;
             inner = degree;
-            free = constantValue.ERational;
-            leading = coefficientValue.ERational;
+            // A number as the number it is, so that the answer is written as it was for numbers.
+            free = constantPart.Evaled is Number.Rational freeValue ? freeValue : constantPart.InnerSimplified;
+            leading = coefficient.Evaled is Number.Rational leadingValue ? leadingValue : coefficient.InnerSimplified;
             factor = constantFactor;
             return true;
 
@@ -4642,27 +4703,45 @@ namespace AngouriMath.Functions.Algebra
             {
                 switch (node)
                 {
+                    case var constant when !constant.ContainsNode(x):
+                        constantFactor = multiplicity > 0
+                            ? constantFactor * MathS.Pow(constant, multiplicity)
+                            : constantFactor / MathS.Pow(constant, -multiplicity);
+                        return true;
                     case Variable v when v == x:
-                        powerFound += multiplicity;
+                        powerFound = powerFound.Add(ERational.FromInt32(multiplicity));
                         return true;
                     case Mulf(var left, var right):
                         return Read(left, multiplicity) && Read(right, multiplicity);
                     case Divf(var above, var below):
                         return Read(above, multiplicity) && Read(below, -multiplicity);
-                    case Powf(var @base, Number.Integer whole)
-                        when @base == x && whole.EInteger.CanFitInInt32():
-                        powerFound += multiplicity * whole.EInteger.ToInt32Checked();
+                    case Powf(var @base, Number.Rational raised)
+                        when TryReadAMonomial(@base, x, out var ofTheBase, out _):
+                        // x^r, or (c x^k)^r as x^(k r) times (c x^k)^r/x^(k r): that is
+                        // c^r for a positive c x^k, and constant on either side of zero whatever
+                        // the signs, so it stands outside as written.
+                        var raisedHere = raised.ERational.Multiply(ERational.FromInt32(multiplicity));
+                        var ofTheVariable = ofTheBase.Multiply(raised.ERational);
+                        powerFound = powerFound.Add(ofTheBase.Multiply(raisedHere));
+                        if (@base != x)
+                        {
+                            var standingOutside = node / MathS.Pow(x, Number.Rational.Create(ofTheVariable));
+                            constantFactor = multiplicity > 0
+                                ? constantFactor * MathS.Pow(standingOutside, multiplicity)
+                                : constantFactor / MathS.Pow(standingOutside, -multiplicity);
+                        }
                         return true;
-                    case Powf(var @base, Number.Rational raised) when @base.ContainsNode(x):
+                    case Powf(var @base, Number.Rational raised):
                         if (bracket is not null && bracket != @base)
                             return false;
                         bracket = @base;
-                        exponentFound += ERational.FromInt32(multiplicity) * raised.ERational;
+                        exponentFound = exponentFound.Add(ERational.FromInt32(multiplicity).Multiply(raised.ERational));
                         return true;
-                    case Number.Rational rational when node is not Powf:
-                        constantFactor = multiplicity > 0
-                            ? constantFactor * MathS.Pow(rational, multiplicity)
-                            : constantFactor / MathS.Pow(rational, -multiplicity);
+                    case Sumf or Minusf:
+                        if (bracket is not null && bracket != node)
+                            return false;
+                        bracket = node;
+                        exponentFound = exponentFound.Add(ERational.FromInt32(multiplicity));
                         return true;
                     default:
                         return false;
@@ -4670,18 +4749,21 @@ namespace AngouriMath.Functions.Algebra
             }
         }
 
-        /// <summary>Reads <c>c * x^n</c>, giving the degree and the coefficient.</summary>
-        private static bool TryReadAMonomial(Entity term, Entity.Variable x, out int degree, out Entity coefficient)
+        /// <summary>
+        /// Reads <c>c * x^n</c>, giving the degree, any rational, and the coefficient, anything
+        /// free of the variable.
+        /// </summary>
+        private static bool TryReadAMonomial(Entity term, Entity.Variable x, out ERational degree, out Entity coefficient)
         {
-            degree = 0;
+            degree = ERational.Zero;
             coefficient = 1;
             switch (term)
             {
                 case Variable v when v == x:
-                    degree = 1;
+                    degree = ERational.One;
                     return true;
-                case Powf(var @base, Number.Integer whole) when @base == x && whole.EInteger.CanFitInInt32():
-                    degree = whole.EInteger.ToInt32Checked();
+                case Powf(var @base, Number.Rational raised) when @base == x:
+                    degree = raised.ERational;
                     return true;
                 case Mulf(var left, var right) when !left.ContainsNode(x):
                     if (!TryReadAMonomial(right, x, out degree, out var fromRight))
@@ -4692,6 +4774,17 @@ namespace AngouriMath.Functions.Algebra
                     if (!TryReadAMonomial(left, x, out degree, out var fromLeft))
                         return false;
                     coefficient = right * fromLeft;
+                    return true;
+                case Divf(var above, var below) when !below.ContainsNode(x):
+                    if (!TryReadAMonomial(above, x, out degree, out var fromAbove))
+                        return false;
+                    coefficient = fromAbove / below;
+                    return true;
+                case Divf(var above, var below) when !above.ContainsNode(x):
+                    if (!TryReadAMonomial(below, x, out var belowDegree, out var fromBelow))
+                        return false;
+                    degree = belowDegree.Negate();
+                    coefficient = above / fromBelow;
                     return true;
                 default:
                     return false;
@@ -7366,10 +7459,18 @@ namespace AngouriMath.Functions.Algebra
                     return node;
                 rewrote = true;
                 // The tangent's as two powers, `(1 + i L)^n (1 + L^2)^(-n/2)`, which the
-                // radical rules read where a power of the quotient is one node to them.
+                // radical rules read where a power of the quotient is one node to them; for an
+                // n that is not whole, as the power of the quotient,
+                // `((1 + i L)/(1 - i L))^(n/2)`, the same on the principal branch for a real L --
+                // the quotient is `e^(2 i arctan(L))` and `2 arctan(L)` is its principal
+                // argument -- and one power of a quotient of linears, which the substitution
+                // for it reads, where `(1 + i a x)^(3/2) (1 + a^2 x^2)^(-3/4)` is two radicals
+                // of different orders that nothing reads.
                 if (inverse is Arctanf)
                 {
                     var halfPower = Number.Rational.Create(n.ERational.Negate().Divide(2));
+                    if (n is not Number.Integer)
+                        return MathS.Pow((1 + MathS.i * argument) / (1 - MathS.i * argument), Number.Rational.Create(n.ERational.Divide(2)));
                     return (n == Number.Integer.One ? 1 + MathS.i * argument : MathS.Pow(1 + MathS.i * argument, n)) * MathS.Pow(1 + MathS.Sqr(argument), halfPower);
                 }
                 Entity unit = inverse is Arcsinf
@@ -8474,9 +8575,13 @@ namespace AngouriMath.Functions.Algebra
                     : node);
 
             var tangent = MathS.Tan(x);
-            // Or a sine or a cosine under a root, for the writing by the sign below; a rational
-            // function of those is the half-angle substitution's.
-            if (!expr.ContainsNode(tangent) && !(HasARadicalOf(expr, x) && expr.Nodes.Any(node => node is Sinf or Cosf && node.ContainsNode(x))))
+            // Or a sine or a cosine under a root, for the writing by the sign below, or an even
+            // power of the secant or the cosecant under one, which the next step writes in the
+            // tangent: `sqrt(a + b csc(x)^2)` is `sqrt(a + b + b/tan(x)^2)`. A rational function
+            // of those is the half-angle substitution's.
+            if (!expr.ContainsNode(tangent) && !(HasARadicalOf(expr, x) && expr.Nodes.Any(node =>
+                    node is Sinf or Cosf && node.ContainsNode(x)
+                    || node is Powf(Secantf or Cosecantf, Number.Integer { EInteger.IsEven: true }) && node.ContainsNode(x))))
                 return null;
 
             // An even power of the secant, cosine, sine or cosecant of x is a rational function
@@ -18544,7 +18649,13 @@ namespace AngouriMath.Functions.Algebra
 
             // dx = c dt.
             var t = Variable.CreateUnique(expr, "u_scale");
-            var scaled = (expr.Substitute(x, scale * t) * scale).Simplify();
+            // With the imaginary unit in the integrand the simplifier's search beside the symbol
+            // does not end within any budget, and inner simplification separates what a whole
+            // power of the scale does: `((1 + i a x)/(1 - i a x))^(-5/4)/x^2` under its radical's
+            // substitution was minutes here before it was declined. Where the parts do not
+            // separate so, the check below declines it.
+            Entity Simplified(Entity e) => HoldsTheImaginaryUnit(expr) ? Functions.PartialFractions.Bare(e.InnerSimplified) : e.Simplify();
+            var scaled = Simplified(expr.Substitute(x, scale * t) * scale);
             if (scaled.ContainsNode(x))
                 return null;
 
@@ -18553,11 +18664,11 @@ namespace AngouriMath.Functions.Algebra
             // The integrand with the scale set to one is the candidate h(t), and what is left
             // over when the scaled integrand is divided by it is the candidate factor. Read off
             // rather than searched for: if the two do separate, the quotient *is* the factor.
-            var withoutScale = scaled.Substitute(scale, Number.Integer.One).Simplify();
+            var withoutScale = Simplified(scaled.Substitute(scale, Number.Integer.One));
             if (withoutScale.ContainsNode(scale) || withoutScale == Number.Integer.Zero)
                 return null;
 
-            var factor = (scaled / withoutScale).Simplify();
+            var factor = Simplified(scaled / withoutScale);
             // Collapsing the quotient attaches the condition that the denominator it cleared is
             // non-zero. That denominator is the integrand's own, so the condition says where the
             // integrand is defined and nothing about this rewrite; it is dropped for the same
