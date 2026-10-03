@@ -1063,11 +1063,25 @@ namespace AngouriMath.Functions.Algebra
                 }
                 return shifted;
             }
-            var n = InS(above, degreeAbove);
+            // Where s divides B, the block shares the root.
             var b = InS(below, degreeBelow);
+            if (VanishesIdentically(b[0]))
+                return null;
+            // A block that is a polynomial in a power of the linear, `a + b (c + d x)^3`, makes the
+            // whole a function of the linear, which the substitution of it reads. Split here, the
+            // rest goes back over that block written in x, which the rules over x search long for:
+            // 20 s for `1/((c + d x)^2 (a + b (c + d x)^3)^2)`.
+            static int Gcd(int p, int q) => q == 0 ? p : Gcd(q, p % q);
+            var stride = 0;
+            for (var i = 1; i < b.Length; i++)
+                if (!VanishesIdentically(b[i]))
+                    stride = Gcd(stride, i);
+            if (stride > 1)
+                return null;
             // Where s divides N, the part over s^k is nothing and the rest is the question asked
-            // again; where it divides B, the block shares the root.
-            if (VanishesIdentically(n[0]) || VanishesIdentically(b[0]))
+            // again.
+            var n = InS(above, degreeAbove);
+            if (VanishesIdentically(n[0]))
                 return null;
             Entity At(Entity[] polynomial, int power) => power < polynomial.Length ? polynomial[power] : Number.Integer.Zero;
 
