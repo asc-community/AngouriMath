@@ -605,6 +605,27 @@ arctangent it is ([#718](https://github.com/asc-community/AngouriMath/issues/718
 | `"(A + B*x + C*x^2)*sqrt(c + d*x)/((a + b*x)^3*sqrt(e + f*x))".ToEntity().Integrate("x")` | `integral(...)` | the roots over powers of `a + b x`, a logarithm, and an arctangent |
 | `"x^2*sqrt(a + 2*x)*sqrt(c - 3*x)".ToEntity().Integrate("x")` | `integral(...)` | a cubic times the two roots, and an arctangent of `sqrt(6)/2 sqrt(a + 2 x)/sqrt(c - 3 x)` |
 
+### A polynomial over a power of a linear beside the root of a quadratic is integrated
+
+`P(x) Q^(m/2)/(g + h x)^k`, a polynomial over a power of a linear beside a half-odd power of a
+quadratic `Q`, was left unevaluated wherever the linear was below the bar to a power past the
+first, and with a symbol in the linear or in `Q` even to the first. These are Rubi's 1.2.1.9, and
+with a constant or linear `P`, 1.2.1.2 to 1.2.1.4. They are now integrated by undetermined
+coefficients, as the roots of two linears are. The answer is a rational function times `sqrt(Q)`,
+a logarithm or an arcsine by the sign of the leading coefficient of `Q`, and a logarithm or an
+arctangent by the sign of `Q` at the linear's root. Where the linear shares a root with `Q`, there
+is no third term. Below the root's first power, `m < -1`, and without the linear, the answers are
+as they were ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((g + h*x)*sqrt(a + c*x^2))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm in `(a h - c g x)/(sqrt(a h^2 + c g^2) sqrt(a + c x^2))` where `a h^2 + c g^2 > 0`, and an arctangent where it is negative |
+| `"(d + k*x + f*x^2)*sqrt(a + c*x^2)/(g + h*x)^4".ToEntity().Integrate("x")` | `integral(...)` | powers of `1/(g + h x)` times `sqrt(a + c x^2)`, a logarithm or an arcsine, and the same as above |
+| `"(2 + x + 3*x^2 - x^3 + 5*x^4)*sqrt(3 - x + 2*x^2)/(5 + 2*x)^5".ToEntity().Integrate("x")` | `integral(...)` | powers of `1/(5 + 2 x)` times the root, and two logarithms |
+| `"(A + B*x + F*x^2)*sqrt(d^2 - m^2*x^2)/(d + m*x)^2".ToEntity().Integrate("x")` | `integral(...)` | a rational function times the root, and an arcsine |
+| `"sqrt(1 - x^2)/(1 + x)^2".ToEntity().Integrate("x")` | `integral(...)` | `-2 sqrt(1 - x^2)/(1 + x) + arcsin(-x)` |
+| `"sqrt(x^2 + 1)/x^2".ToEntity().Integrate("x")` | `integral(...)` | `-sqrt(x^2 + 1)/x + ln(2 sqrt(x^2 + 1) + 2 x)` |
+
 ### A function comes out of a fractional power of its even power with its sign
 
 **Improvement, not silent.** The entry two above made `(sin(x)^2)^(3/2)` the modulus `|sin(x)|^3`

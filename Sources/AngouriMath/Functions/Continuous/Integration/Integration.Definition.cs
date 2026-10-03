@@ -757,6 +757,8 @@ namespace AngouriMath.Functions.Algebra
             // `(A + B x + C x^2) sqrt(c + d x) sqrt(e + f x)` by undetermined coefficients,
             // where the substitution further down took gigabytes.
             if ((answer = IndefiniteIntegralSolver.SolveAPolynomialOverAPowerOfALinearBesideTwoRoots(expr, x)) is { }) return answer;
+            // And beside the root of one quadratic: `(d + e x + f x^2) sqrt(a + c x^2)/(g + h x)^4`.
+            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialOverAPowerOfALinearBesideARootOfAQuadratic(expr, x)) is { }) return answer;
             // A square root of a polynomial with a repeated factor, the factor taken out of
             // the root with its sign: `sqrt((x - 3)^2 (x + 1))` is `sgn(x - 3) (x - 3) sqrt(x + 1)`.
             if ((answer = IndefiniteIntegralSolver.SolveByTakingASquareFactorOutOfARoot(expr, x, integrateByParts)) is { }) return answer;
