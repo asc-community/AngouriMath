@@ -1073,6 +1073,11 @@ namespace AngouriMath.Functions.Algebra
             // throws away whatever structure it had: (1 + x^2)^2 is answered as a power and only
             // wants writing out if that fails.
             if ((answer = IndefiniteIntegralSolver.SolveByExpandingAPower(expr, x, integrateByParts)) is { }) return answer;
+            // And a product of such powers and sums, written out for the same reason and as late.
+            if ((answer = IndefiniteIntegralSolver.SolveByExpandingAProductOfSums(expr, x, integrateByParts)) is { }) return answer;
+            // One block quadratic in a power of x, split at its roots, which are complex where its
+            // discriminant is negative: as late, so that a rule answering the block whole goes first.
+            if ((answer = IndefiniteIntegralSolver.SolveByOneBlockInAPowerOfXAtItsRoots(expr, x, integrateByParts)) is { }) return answer;
             // The sign of a real-valued factor is constant between its zeros, and goes in
             // front of the antiderivative of the rest. After every rule that reads the sign
             // where it stands: `cos(x) sgn(sin(x))` is `|sin(x)|` by the substitution, and
