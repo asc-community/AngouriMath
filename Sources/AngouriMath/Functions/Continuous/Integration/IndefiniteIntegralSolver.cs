@@ -1509,6 +1509,117 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A rational function with complex numbers among its coefficients, <c>1/((1 + i x)^2 (1 + x^2))</c>,
+        /// which is what the tangent substitution makes of <c>1/(a + i a tan(x))^2</c>. Times the
+        /// conjugate of its denominator over itself, <c>N/D = N D'/(D D')</c> with <c>D'</c> the
+        /// polynomial whose coefficients are those of <c>D</c> conjugated, the denominator has real
+        /// coefficients and the numerator is <c>P + i S</c> with <c>P</c> and <c>S</c> real: the
+        /// integral is that of <c>P/(D D')</c> and <c>i</c> times that of <c>S/(D D')</c>, which the
+        /// rules for real coefficients answer. An identity of polynomials, so exact wherever the
+        /// quotient is defined; the factors free of <c>x</c> are taken out first, and may hold
+        /// symbols.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        internal static Entity? SolveARationalFunctionWithComplexCoefficients(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!TryReadAsQuotient(expr, out var numerator, out var denominator))
+                return null;
+            Entity constant = Number.Integer.One;
+            Number.Complex[]? Read(Entity side, bool below)
+            {
+                Entity rest = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (!factor.ContainsNode(x))
+                        constant = below ? constant / factor : constant * factor;
+                    else
+                        rest = rest == Number.Integer.One ? factor : rest * factor;
+                }
+                if (!TreeAnalyzer.TryGetPolynomial(rest, x, out var terms) || terms.Count == 0
+                    || terms.Keys.Any(power => power.Sign < 0 || power.CompareTo(EInteger.FromInt32(MaximumComplexRationalDegree)) > 0))
+                    return null;
+                var coefficients = new Number.Complex[terms.Keys.Max()!.ToInt32Checked() + 1];
+                for (var i = 0; i < coefficients.Length; i++)
+                    coefficients[i] = Number.Integer.Zero;
+                // A product of symbols common to every coefficient, `a + i a x`, goes out with the
+                // other constants: each coefficient is its numbers times the same rest.
+                Entity? scale = null;
+                foreach (var term in terms)
+                {
+                    Number.Complex number = Number.Integer.One;
+                    Entity symbols = Number.Integer.One;
+                    foreach (var factor in Mulf.LinearChildren(term.Value.InnerSimplified))
+                        if (factor is Number.Complex value)
+                            number *= value;
+                        else
+                            symbols = symbols == Number.Integer.One ? factor : symbols * factor;
+                    if (scale is null)
+                        scale = symbols;
+                    else if (symbols != scale)
+                        return null;
+                    coefficients[term.Key.ToInt32Checked()] = number;
+                }
+                if (scale is { } common && common != Number.Integer.One)
+                    constant = below ? constant / common : constant * common;
+                return coefficients;
+            }
+            if (Read(numerator, false) is not { } above || Read(denominator, true) is not { } below || below.Length < 2)
+                return null;
+            static bool OffTheRealLine(Number.Complex[] polynomial) => polynomial.Any(c => !c.ImaginaryPart.IsZero);
+            if (!OffTheRealLine(above) && !OffTheRealLine(below))
+                return null;
+            static Number.Complex[] Times(Number.Complex[] left, Number.Complex[] right)
+            {
+                var product = new Number.Complex[left.Length + right.Length - 1];
+                for (var i = 0; i < product.Length; i++)
+                    product[i] = Number.Integer.Zero;
+                for (var i = 0; i < left.Length; i++)
+                    for (var j = 0; j < right.Length; j++)
+                        product[i + j] = product[i + j] + left[i] * right[j];
+                return product;
+            }
+            var conjugate = below.Select(c => c.Conjugate).ToArray();
+            var real = Times(below, conjugate);
+            var top = Times(above, conjugate);
+            Entity Polynomial(IEnumerable<Number.Real> coefficients)
+            {
+                Entity sum = Number.Integer.Zero;
+                var power = 0;
+                foreach (var coefficient in coefficients)
+                {
+                    if (!coefficient.IsZero)
+                        sum += power == 0 ? coefficient : coefficient * MathS.Pow(x, power);
+                    power++;
+                }
+                return sum;
+            }
+            if (real.Any(c => !c.ImaginaryPart.IsZero))
+                return null;
+            var bottom = Polynomial(real.Select(c => c.RealPart));
+            var realPart = Polynomial(top.Select(c => c.RealPart));
+            var imaginaryPart = Polynomial(top.Select(c => c.ImaginaryPart));
+            Entity answer = Number.Integer.Zero;
+            if (!TreeAnalyzer.IsZero(realPart))
+            {
+                if (Integration.ComputeIndefiniteIntegral(realPart / bottom, x, integrateByParts) is not { } integral)
+                    return null;
+                answer += integral;
+            }
+            if (!TreeAnalyzer.IsZero(imaginaryPart))
+            {
+                if (Integration.ComputeIndefiniteIntegral(imaginaryPart / bottom, x, integrateByParts) is not { } integral)
+                    return null;
+                answer += MathS.i * integral;
+            }
+            // In the generic case, as the rules for the two parts answer it.
+            return Functions.PartialFractions.Bare((constant * answer).InnerSimplified);
+        }
+
+        // The degree past which a rational function with complex coefficients is left alone: its
+        // denominator's degree doubles under the conjugate.
+        private const int MaximumComplexRationalDegree = 12;
+
+        /// <summary>
         /// <paramref name="numerator"/> over <paramref name="denominator"/> with the greatest
         /// power of <paramref name="x"/> that divides both taken out of each, the denominator's
         /// factors kept as written; the two unchanged where none does, or where a side is not a
