@@ -326,6 +326,21 @@ improper fraction is declined before the first division rather than after the la
 | `"(1 - b*x^2)^3/(c*(1 - b*x^2) + a*d*x^2)^3".ToEntity().Integrate("x")` | no answer within a minute | the antiderivative |
 | `"(a + b*x)^(5/2)/(c + d*x)^4".ToEntity().Integrate("x")` | `integral(...)` | the antiderivative |
 
+### The Hermite reduction's system is solved in one order whatever the spelling
+
+**Faster, and not a different value.** The reduction of a rational integrand with a repeated factor
+below the bar solves one linear system for the rational part, and took its rows in the order the
+powers of `x` were met, which follows how the factors are written. With symbols in the coefficients
+the elimination's pivots followed that order, and in one order the solution came out as quotients of
+polynomials of the thirty-sixth degree in the symbols that nothing reduced:
+`x/((1 + x^2)^3 (2 a x + b (x^2 + 1)))` took 42 s, and with `(x^2 + 1)^3` below the bar 1 s. The rows
+are ordered by their power of `x` now. Where the order mattered, the antiderivative's coefficients can
+come out reduced where they were not.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x/((1 + x^2)^3*(2*a*x + b*(x^2 + 1)))".ToEntity().Integrate("x")` | `integral(...)` | the antiderivative, in about half a second, as with `(x^2 + 1)^3` |
+
 ### A symbolic parameter no longer stops a rational integrand being integrated
 
 `1/(8 + x^3)` and `1/(16 - x^4)` are answered at once. `1/(a^3 + x^3)` and `1/(a^4 - x^4)` were not,
@@ -683,6 +698,23 @@ taken apart into pieces each closed the same way
 | `"(2 + x)/((2 + 4*x - 3*x^2)*(1 + 3*x + 2*x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative |
 | `"1/((x^2 + 1)*sqrt(x^2 + x + 1))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm and an arctangent |
 
+### A rational function of `x^n` beside a power of a symbolic binomial is integrated without a search
+
+**Answers where there were none.** A rational function of `x^n` beside `(c + d x^n)^(k - 1/n)` is a
+rational function of `u = x/(c + d x^n)^(1/n)`, and the integrand in `u` was simplified before it
+was integrated. With symbols in it the search for a simpler form grew with the power of the
+binomial: `1/((a + b x^2)^(5/2) (1 + x^2))` took 5 s on the unreleased master, the `7/2` power ran
+past 30 s, and both were declined on 2.5.0. What the search found was the factor the substitution
+leaves on both sides of the bar, which is cancelled as it is written now, the other factors left as
+they are written ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((a + b*x^2)^(5/2)*(1 + x^2))".ToEntity().Integrate("x")` | `integral(...)` | powers of `x/sqrt(a + b x^2)`, and an arctangent or a logarithm by the sign of `a - b`, in 0.6 s |
+| `"1/((a + b*x^2)^(7/2)*(1 + x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same, in 0.7 s |
+| `"1/((a + b*x^2)^(9/2)*(1 + x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same, in 1 s |
+| `"x^2/((a + b*x^2)^(7/2)*(c + d*x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same by the sign of `c (a d - b c)`, in 1 s |
+
 ### A power of a multiple of a quadratic's derivative beside a power of the quadratic is a binomial
 
 **Improvement, not silent.** `(b d + 2 c d x)^m (a + b x + c x^2)^p`, with a power that is not whole,
@@ -881,6 +913,26 @@ its sign on its own, so an answer through two says `provided cos(y) >= 0`
 | `"1/(sec(x)^(3/2)*sqrt(1 + sec(x)))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative through a root of `1 + tan(x/2)^2` |
 | `"sqrt(a - a*sec(x))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm in `tan(x/2)`, times `sgn(tan(x/2))` |
 | `"sqrt(1 + csc(x))".ToEntity().Integrate("x")` | `integral(...)` | an arctangent in `tan(pi/4 - x/2)` |
+
+### An even power of the secant or the cosecant under a root is written in the tangent
+
+**Answers where there were none.** `sqrt(a + b csc(x)^2)`, `(a + b sec(x)^2)^(3/2)` and their kin,
+Rubi's 4.5.7 and 4.6.7, were declined, while `sqrt(a + b tan(x)^2)` and `sqrt(a + b cot(x)^2)` were
+answered through `u = tan(x)`. That substitution writes an even power of the secant or the
+cosecant in the tangent, `sec^2 = 1 + tan^2` and `csc^2 = (1 + tan^2)/tan^2`, but went on to do so
+only where the tangent, or a sine or a cosine under a root, was already in the integrand. An even
+power of the secant or the cosecant under a root goes on now too. The cosecant's answers carry
+`sgn(tan(x))`, from the root of `1/tan(x)^2`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(a + b*csc(x)^2)".ToEntity().Integrate("x")` | `integral(...)` | arctangents in `sqrt((a + b) tan(x)^2 + b)`, times `sgn(tan(x))` |
+| `"(a + b*csc(c + d*x)^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | the same in `tan(c + d x)` and an algebraic part, by the signs of `a` and `b` |
+| `"sqrt(a + b*sec(x)^2)".ToEntity().Integrate("x")` | `integral(...)` | arctangents in `tan(x)/sqrt(a + b (1 + tan(x)^2))` |
+| `"1/sqrt(a + b*sec(x)^2)".ToEntity().Integrate("x")` | `integral(...)` | an arctangent or a logarithm in the same, by the sign of `a` |
+| `"sqrt(1 + csc(x)^2)".ToEntity().Integrate("x")` | `integral(...)` | logarithms and an arctangent in `sqrt(2 tan(x)^2 + 1)`, times `sgn(tan(x))` |
+| `"1/sqrt(-1 + csc(x)^2)".ToEntity().Integrate("x")` | `integral(...)` | `sgn(tan(x)) ln(1 + tan(x)^2)/2` |
 
 ### A partial-fraction coefficient with symbols in it is in lowest terms, its rational content included
 

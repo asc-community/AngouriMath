@@ -4207,10 +4207,17 @@ namespace AngouriMath.Functions.Algebra
             var uToTheN = MathS.Pow(u, n);
             var oneMinusDUToTheN = 1 - d * uToTheN;
             var binomialInU = c / oneMinusDUToTheN;
-            var integrand = Functions.SingleQuotient.Combine(
+            // The factor the substitution leaves on both sides cancelled as it is written, not simplified:
+            // `(1 - u^4)/((1 + u^4)(1 - u^4))` for Timofeev's above, which the rational integrator does
+            // not cancel, and the search for a simpler form that did grows with the power of the binomial
+            // while the symbols are in it: `1/((a + b x^2)^(7/2) (1 + x^2))` ran past 90 s on it. Each
+            // base is its polynomial in u first, which collects what the substitution writes twice --
+            // `1 - (-u^2) - u^2` is 1 under a secant's half angle -- and the factors stay as they are
+            // written, which the rules after this read better than their product expanded.
+            var integrand = WithTheFactorsWrittenOnBothSidesCancelled(u, Functions.SingleQuotient.Combine(
                 inXToTheN.Substitute(xToTheN, c * uToTheN / oneMinusDUToTheN)
                 * (k.IsZero ? Number.Integer.One : MathS.Pow(binomialInU, Number.Integer.Create(k)))
-                / oneMinusDUToTheN).Simplify();
+                / oneMinusDUToTheN).InnerSimplified);
             if (integrand is Providedf(var inner, _))
                 integrand = inner;
             if (integrand.ContainsNode(x) || integrand.Nodes.Any(node => node == MathS.NaN))
@@ -4219,6 +4226,66 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             var answer = result.Substitute(u, x * MathS.Pow(radicand, Number.Rational.Create(-1, n)));
             return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
+        /// <paramref name="quotient"/> with each base that is a sum written as its polynomial in
+        /// <paramref name="u"/>, and each factor then written alike above and below the bar
+        /// cancelled, power for power; the factors are kept as factors.
+        /// </summary>
+        private static Entity WithTheFactorsWrittenOnBothSidesCancelled(Entity.Variable u, Entity quotient)
+        {
+            var (top, bottom) = Functions.SingleQuotient.Of(quotient);
+            Entity AsItsPolynomial(Entity @base)
+            {
+                if (@base is not (Sumf or Minusf) || !@base.ContainsNode(u)
+                    || !TreeAnalyzer.TryGetPolynomial(@base, u, out var terms)
+                    || terms.Any(term => term.Key.Sign < 0 || term.Value.ContainsNode(u)))
+                    return @base;
+                Entity written = Number.Integer.Zero;
+                foreach (var term in terms.OrderBy(term => term.Key))
+                {
+                    var coefficient = term.Value.InnerSimplified;
+                    if (Functions.PartialFractions.IsZeroAsAValue(coefficient))
+                        continue;
+                    var monomial = term.Key.IsZero ? coefficient : coefficient * MathS.Pow(u, Number.Integer.Create(term.Key));
+                    written = written == Number.Integer.Zero ? monomial : written + monomial;
+                }
+                return written.InnerSimplified;
+            }
+            List<(Entity Base, EInteger Power)> Factors(Entity side)
+            {
+                var factors = new List<(Entity Base, EInteger Power)>();
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    var (@base, power) = factor is Powf(var raised, Number.Integer exponent) && exponent.EInteger.Sign > 0
+                        ? (raised, exponent.EInteger) : (factor, EInteger.One);
+                    @base = AsItsPolynomial(@base);
+                    var at = factors.FindIndex(written => written.Base == @base);
+                    if (at < 0)
+                        factors.Add((@base, power));
+                    else
+                        factors[at] = (@base, factors[at].Power.Add(power));
+                }
+                return factors;
+            }
+            var above = Factors(top);
+            var below = Factors(bottom);
+            for (var i = 0; i < above.Count; i++)
+            {
+                if (above[i].Base is Number)
+                    continue;
+                var j = below.FindIndex(written => written.Base == above[i].Base);
+                if (j < 0)
+                    continue;
+                var common = EInteger.Min(above[i].Power, below[j].Power);
+                above[i] = (above[i].Base, above[i].Power.Subtract(common));
+                below[j] = (below[j].Base, below[j].Power.Subtract(common));
+            }
+            static Entity Product(List<(Entity Base, EInteger Power)> factors)
+                => factors.Where(written => !written.Power.IsZero).Aggregate((Entity)Number.Integer.One,
+                    (product, written) => product * (written.Power.Equals(EInteger.One) ? written.Base : MathS.Pow(written.Base, Number.Integer.Create(written.Power))));
+            return (Product(above) / Product(below)).InnerSimplified;
         }
 
         /// <summary>
@@ -8397,9 +8464,13 @@ namespace AngouriMath.Functions.Algebra
                     : node);
 
             var tangent = MathS.Tan(x);
-            // Or a sine or a cosine under a root, for the writing by the sign below; a rational
-            // function of those is the half-angle substitution's.
-            if (!expr.ContainsNode(tangent) && !(HasARadicalOf(expr, x) && expr.Nodes.Any(node => node is Sinf or Cosf && node.ContainsNode(x))))
+            // Or a sine or a cosine under a root, for the writing by the sign below, or an even
+            // power of the secant or the cosecant under one, which the next step writes in the
+            // tangent: `sqrt(a + b csc(x)^2)` is `sqrt(a + b + b/tan(x)^2)`. A rational function
+            // of those is the half-angle substitution's.
+            if (!expr.ContainsNode(tangent) && !(HasARadicalOf(expr, x) && expr.Nodes.Any(node =>
+                    node is Sinf or Cosf && node.ContainsNode(x)
+                    || node is Powf(Secantf or Cosecantf, Number.Integer { EInteger.IsEven: true }) && node.ContainsNode(x))))
                 return null;
 
             // An even power of the secant, cosine, sine or cosecant of x is a rational function
@@ -12699,7 +12770,12 @@ namespace AngouriMath.Functions.Algebra
                 ? PolynomialProduct(PolynomialProduct(abovePoly, dSquared), qSquared)
                 : PolynomialProduct(PolynomialProduct(abovePoly, dSquared), squarefreePoly);
 
-            var powers = columns.SelectMany(c => c.Keys).Concat(targetRead.Keys).Distinct().ToList();
+            // The rows by their power of x, not in the order the dictionaries met them: that order
+            // is the spelling's, and the elimination's pivots follow it. `(1 + x^2)^3` below the bar
+            // where `(x^2 + 1)^3` is written left the solution in coefficients of the thirty-sixth
+            // degree in the symbols that nothing cancelled, and the logarithmic part they made was
+            // forty seconds of declining; in the one order both are under a second.
+            var powers = columns.SelectMany(c => c.Keys).Concat(targetRead.Keys).Distinct().OrderBy(power => power).ToList();
             var width = columns.Count;
             var matrix = new Entity[powers.Count][];
             var rhs = new Entity[powers.Count];
