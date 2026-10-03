@@ -8590,7 +8590,7 @@ namespace AngouriMath.Functions.Algebra
                     return null;
                 pole = new(third, g, h, order, new[] { h * a - g * b, h * c - g * d }, SharesARoot: false);
             }
-            if (IntegrateOverARootOfAQuadratic(expr, x, t, a * c, a * d + b * c, b * d, xi => (a + b * xi) * (c + d * xi), pole, b, 0)
+            if (IntegrateOverARootOfAQuadratic(expr, x, t, a * c, a * d + b * c, b * d, xi => (a + b * xi) * (c + d * xi), pole, b, 0, belowTheRoot: 0)
                 is not var (algebraic, ofTheLogarithm, ofTheThirdKind))
                 return null;
             var answer = algebraic * MathS.Sqrt(first) * MathS.Sqrt(second);
@@ -8618,15 +8618,16 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// A polynomial over a power of a linear beside a half-odd power of a quadratic,
-        /// <c>P(x) Q^(m/2) / (g + h x)^k</c> with <c>m</c> odd and not below <c>-1</c>, and
-        /// <c>k &gt;= 0</c>, by undetermined coefficients: algebraic terms times <c>sqrt(Q)</c>, and
-        /// a multiple of each of two integrals that are not algebraic.
+        /// <c>P(x) Q^(m/2) / (g + h x)^k</c> with <c>m</c> odd and <c>k &gt;= 1</c>, by undetermined
+        /// coefficients: algebraic terms times <c>sqrt(Q)</c>, and a multiple of each of two
+        /// integrals that are not algebraic.
         /// </summary>
         /// <remarks>
         /// <para>
         /// Over <c>S = sqrt(Q)</c> the integrand is <c>T(x)/((g + h x)^k S)</c>, where
-        /// <c>T = P Q^((m + 1)/2)</c> is a polynomial, and
-        /// <see cref="IntegrateOverARootOfAQuadratic"/> takes that to algebraic terms and two
+        /// <c>T = P Q^((m + 1)/2)</c> is a polynomial, or below <c>m = -1</c>,
+        /// <c>P/((g + h x)^k Q^n S)</c> with <c>n = -(m + 1)/2</c>; and
+        /// <see cref="IntegrateOverARootOfAQuadratic"/> takes either to algebraic terms and two
         /// integrals.
         /// </para>
         /// <para>
@@ -8684,9 +8685,12 @@ namespace AngouriMath.Functions.Algebra
                 || order == 0 || order == 1 && !quadratic.Vars.Concat(third!.Vars).Any(symbol => symbol != x))
                 return null;
 
-            // Q^(m/2) is Q^((m + 1)/2) over its root.
-            if (halves[quadratic] % 2 == 0 || halves[quadratic] < -1
-                || CoefficientsBesideARoot(above * WholePower(quadratic, (halves[quadratic] + 1) / 2), x) is not { } t)
+            // Q^(m/2) is Q^((m + 1)/2) over its root, and below -1 a power of Q below the bar
+            // beside it, Q^n with n = -(m + 1)/2.
+            if (halves[quadratic] % 2 == 0)
+                return null;
+            var belowTheRoot = halves[quadratic] < -1 ? -(halves[quadratic] + 1) / 2 : 0;
+            if (CoefficientsBesideARoot(belowTheRoot == 0 ? above * WholePower(quadratic, (halves[quadratic] + 1) / 2) : above, x) is not { } t)
                 return null;
             var (q0, q1, q2) = (q[0], q[1], q[2]);
             ALinearBesideTheRoot? pole = null;
@@ -8701,7 +8705,7 @@ namespace AngouriMath.Functions.Algebra
                     ? new(third, g, h, order, new[] { q1 * h - 2 * q2 * g }, SharesARoot: true)
                     : new(third, g, h, order, new[] { atTheRoot }, SharesARoot: false);
             }
-            if (IntegrateOverARootOfAQuadratic(expr, x, t, q0, q1, q2, xi => quadratic.Substitute(x, xi), pole, null, null)
+            if (IntegrateOverARootOfAQuadratic(expr, x, t, q0, q1, q2, xi => quadratic.Substitute(x, xi), pole, null, null, belowTheRoot)
                 is not var (algebraic, ofTheFirstKind, ofTheThirdKind))
                 return null;
             var root = MathS.Sqrt(quadratic);
@@ -8843,6 +8847,18 @@ namespace AngouriMath.Functions.Algebra
         /// third integral.
         /// </para>
         /// <para>
+        /// <b>A power of <c>Q</c> below the bar too.</b> <c>T/((g + h x)^k Q^n S)</c> for
+        /// <paramref name="belowTheRoot"/> <c>n &gt;= 1</c>, where <c>alpha</c> is not zero: the
+        /// terms over powers of <c>y</c> are those of the series of <c>T/Q^n</c> at the linear's root
+        /// below <c>s^k</c>, and what is left is <c>V/Q^n</c> with <c>V</c> a polynomial. Divided by
+        /// <c>Q</c> <c>n</c> times, <c>V</c> is a polynomial part, which goes as above, and a
+        /// linear <c>r0 + r1 x</c> over each power <c>Q^p</c>. And
+        /// <c>int (r0 + r1 x)/Q^(p + 1/2)</c> is <c>(A + B x)/Q^(p - 1/2)</c> and
+        /// <c>(2p - 2) B int 1/Q^(p - 1/2)</c>, with <c>A</c> and <c>B</c> from two equations whose
+        /// determinant is <c>q1^2 - 4 q0 q2</c>: algebraic all the way down, since at <c>p = 1</c>
+        /// there is nothing left.
+        /// </para>
+        /// <para>
         /// <b>Back in the symbols.</b> A symbol stands for <c>xi</c> until the end, so that what
         /// is computed is polynomial in it, and <c>alpha^(k-1)</c>, or <c>beta^k</c> beside a shared
         /// root, is divided by once. Each coefficient is then written homogeneous in <c>g</c> and
@@ -8855,7 +8871,7 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         private static (Entity Algebraic, Entity OfTheFirstKind, Entity OfTheThirdKind)? IntegrateOverARootOfAQuadratic(
             Entity expr, Entity.Variable x, Entity[] t, Entity q0, Entity q1, Entity q2, System.Func<Entity, Entity> quadraticAt,
-            ALinearBesideTheRoot? pole, Entity? firstKindOver, int? thirdKindAlsoOver)
+            ALinearBesideTheRoot? pole, Entity? firstKindOver, int? thirdKindAlsoOver, int belowTheRoot)
         {
             var degree = t.Length - 1;
             // Around the linear's root, a symbol xi stands for -g/h until the end, so that what
@@ -8868,12 +8884,18 @@ namespace AngouriMath.Functions.Algebra
             var overThePole = new SortedDictionary<int, Entity>();
             Entity ofTheThirdKind = Number.Integer.Zero;
             // What the coefficients over the pole are divided by: a power of each factor of
-            // h^2 alpha, or of h beta, and the powers of h that brings.
+            // h^2 alpha, or of h beta, and the powers of h that brings; and the power of them the
+            // rest is divided by, where Q is below the bar too.
             var belowThePole = 0;
             var hOfThePole = 0;
+            var belowTheRest = 0;
+            // (A + B x)/Q^p, p from 1 up to n, which the caller multiplies by S as well.
+            var overTheQuadratic = new (Entity A, Entity B)[belowTheRoot + 1];
+            if (belowTheRoot > 0 && pole is null)
+                return null;
             if (pole is { } linear)
             {
-                if (linear.AtThePole.Any(IsZeroOverTheSymbols))
+                if (linear.AtThePole.Any(IsZeroOverTheSymbols) || belowTheRoot > 0 && linear.SharesARoot)
                     return null;
                 order = linear.Order;
                 xi = Variable.CreateUnique(expr, "pole");
@@ -8888,14 +8910,17 @@ namespace AngouriMath.Functions.Algebra
                             sum = sum + t[m] * BinomialCoefficient(m, i) * WholePower(xi, m - i);
                     tau[i] = LowestOverTheSymbols(sum);
                 }
-                polynomial = new Entity[System.Math.Max(degree - order + 1, 0)];
-                for (var m = 0; m < polynomial.Length; m++)
+                if (belowTheRoot == 0)
                 {
-                    Entity sum = Number.Integer.Zero;
-                    for (var i = order + m; i <= degree; i++)
-                        if (tau[i] != Number.Integer.Zero)
-                            sum = sum + tau[i] * BinomialCoefficient(i - order, m) * WholePower(-xi, i - order - m);
-                    polynomial[m] = LowestOverTheSymbols(sum);
+                    polynomial = new Entity[System.Math.Max(degree - order + 1, 0)];
+                    for (var m = 0; m < polynomial.Length; m++)
+                    {
+                        Entity sum = Number.Integer.Zero;
+                        for (var i = order + m; i <= degree; i++)
+                            if (tau[i] != Number.Integer.Zero)
+                                sum = sum + tau[i] * BinomialCoefficient(i - order, m) * WholePower(-xi, i - order - m);
+                        polynomial[m] = LowestOverTheSymbols(sum);
+                    }
                 }
                 if (linear.SharesARoot)
                 {
@@ -8949,12 +8974,24 @@ namespace AngouriMath.Functions.Algebra
                         scaled[j] = these.ToDictionary(pair => pair.Key, pair => LowestOverTheSymbols(pair.Value / (2 * (1 - j))));
                         ofTheFirst[j] = LowestOverTheSymbols((-(3 - 2 * j) * beta * ofTheFirst[j - 1] - (4 - 2 * j) * gamma * alpha * ofTheFirst[j - 2]) / (2 * (1 - j)));
                     }
-                    // sum tau_(k-j) I_j over alpha^(k-1).
+                    // The numerators over (x - xi)^j are tau_(k-j), or with Q^n below the bar too, the
+                    // terms of the series of T/Q^n at xi, alpha^(n + k - 1) times over.
+                    var principal = tau;
+                    if (belowTheRoot > 0)
+                    {
+                        belowTheRest = belowTheRoot + order - 1;
+                        if (OverAPowerOfTheQuadratic(tau, alpha, beta, gamma) is not { } split)
+                            return null;
+                        principal = split.Principal;
+                        polynomial = split.Polynomial;
+                        overTheQuadratic = split.OverTheQuadratic;
+                    }
+                    // sum principal_(k-j) I_j over alpha^(k-1), and the alpha^(n + k - 1) of the series.
                     for (var j = 1; j <= order; j++)
                     {
-                        if (order - j > degree || tau[order - j] == Number.Integer.Zero)
+                        if (order - j >= principal.Length || principal[order - j] == Number.Integer.Zero)
                             continue;
-                        var weight = tau[order - j] * WholePower(alpha, order - j);
+                        var weight = principal[order - j] * WholePower(alpha, order - j);
                         foreach (var pair in scaled[j])
                             overThePole[pair.Key] = overThePole.TryGetValue(pair.Key, out var so) ? so + weight * pair.Value : weight * pair.Value;
                         ofTheThirdKind = ofTheThirdKind + weight * ofTheFirst[j];
@@ -8962,9 +8999,110 @@ namespace AngouriMath.Functions.Algebra
                     foreach (var power in overThePole.Keys.ToList())
                         overThePole[power] = LowestOverTheSymbols(overThePole[power]);
                     ofTheThirdKind = LowestOverTheSymbols(ofTheThirdKind);
-                    belowThePole = order - 1;
-                    hOfThePole = 2 * (order - 1);
+                    belowThePole = order - 1 + belowTheRest;
+                    hOfThePole = 2 * belowThePole;
                 }
+            }
+
+            // T/Q^n around xi, with s = x - xi: the series of 1/Q is sum p_i s^i/alpha^(i+1), with
+            // p_0 = 1 and p_i = -(beta p_(i-1) + gamma alpha p_(i-2)), so that of 1/Q^n is
+            // sum pi_i s^i/alpha^(n+i), pi the n-th power of p, and alpha^(n+k-1) times the terms
+            // of T/Q^n below s^k are polynomials in xi. What is left, V/Q^n, has
+            // V = (alpha^(n+k-1) T - Q^n sum_(i<k) w_i s^i)/s^k a polynomial; in x, divided by Q
+            // n times, it is the polynomial part over the quotient, and (r0 + r1 x)/Q^p over the
+            // remainders, each of which comes down to (A + B x) S/Q^p and the next power's.
+            (Entity[] Principal, Entity[] Polynomial, (Entity A, Entity B)[] OverTheQuadratic)? OverAPowerOfTheQuadratic(
+                Entity[] tau, Entity alpha, Entity beta, Entity gamma)
+            {
+                var n = belowTheRoot;
+                var scale = n + order - 1;
+                var p = new Entity[order];
+                for (var i = 0; i < order; i++)
+                    p[i] = i == 0 ? Number.Integer.One
+                        : LowestOverTheSymbols(-(beta * p[i - 1] + (i >= 2 ? gamma * alpha * p[i - 2] : Number.Integer.Zero)));
+                var pi = p;
+                for (var power = 2; power <= n; power++)
+                    pi = Product(pi, p, order);
+                var principal = new Entity[order];
+                for (var i = 0; i < order; i++)
+                {
+                    Entity sum = Number.Integer.Zero;
+                    for (var l = 0; l <= System.Math.Min(i, tau.Length - 1); l++)
+                        if (tau[l] != Number.Integer.Zero)
+                            sum = sum + tau[l] * pi[i - l] * WholePower(alpha, order - 1 - i + l);
+                    principal[i] = LowestOverTheSymbols(sum);
+                }
+                var quadratic = new[] { alpha, beta, gamma };
+                var qn = new Entity[] { Number.Integer.One };
+                for (var power = 1; power <= n; power++)
+                    qn = Product(qn, quadratic, 2 * power + 1);
+                var top = System.Math.Max(tau.Length - 1, 2 * n + order - 1);
+                var inS = new Entity[top - order + 1];
+                for (var m = order; m <= top; m++)
+                {
+                    Entity sum = m < tau.Length ? tau[m] * WholePower(alpha, scale) : Number.Integer.Zero;
+                    for (var i = 0; i < order; i++)
+                        if (m - i <= 2 * n && principal[i] != Number.Integer.Zero)
+                            sum = sum - qn[m - i] * principal[i];
+                    inS[m - order] = LowestOverTheSymbols(sum);
+                }
+                var inX = new Entity[inS.Length];
+                for (var j = 0; j < inX.Length; j++)
+                {
+                    Entity sum = Number.Integer.Zero;
+                    for (var m = j; m < inS.Length; m++)
+                        if (inS[m] != Number.Integer.Zero)
+                            sum = sum + inS[m] * BinomialCoefficient(m, j) * WholePower(-xi!, m - j);
+                    inX[j] = LowestOverTheSymbols(sum);
+                }
+                // The remainders by Q: the i-th is over Q^(n-i).
+                var carried = new (Entity R0, Entity R1)[n + 1];
+                var quotient = inX;
+                for (var i = 0; i < n; i++)
+                {
+                    var rest = (Entity[])quotient.Clone();
+                    var next = new Entity[System.Math.Max(rest.Length - 2, 0)];
+                    for (var m = rest.Length - 1; m >= 2; m--)
+                    {
+                        var c = LowestOverTheSymbols(rest[m] / q2);
+                        next[m - 2] = c;
+                        rest[m - 1] = rest[m - 1] - c * q1;
+                        rest[m - 2] = rest[m - 2] - c * q0;
+                    }
+                    carried[n - i] = (rest.Length > 0 ? LowestOverTheSymbols(rest[0]) : Number.Integer.Zero,
+                        rest.Length > 1 ? LowestOverTheSymbols(rest[1]) : Number.Integer.Zero);
+                    quotient = next;
+                }
+                // int (r0 + r1 x)/Q^(p + 1/2) = (A + B x)/Q^(p - 1/2) + (2p - 2) B int 1/Q^(p - 1/2), where
+                // (p - 1/2)(B q1 - 2 A q2) = r1 and (p - 1/2)(2 B q0 - A q1) = r0: the derivative of
+                // (A + B x)/Q^(p - 1/2) is (B Q - (p - 1/2)(A + B x) Q')/Q^(p + 1/2). At p = 1 there is
+                // nothing left over.
+                var discriminant = q1 * q1 - 4 * q0 * q2;
+                var overTheQuadratic = new (Entity A, Entity B)[n + 1];
+                for (var level = n; level >= 1; level--)
+                {
+                    var (r0, r1) = carried[level];
+                    var half = Number.Rational.Create(2 * level - 1, 2);
+                    var a = LowestOverTheSymbols((2 * q0 * r1 - q1 * r0) / (half * discriminant));
+                    var b = LowestOverTheSymbols((q1 * r1 - 2 * q2 * r0) / (half * discriminant));
+                    overTheQuadratic[level] = (a, b);
+                    if (level >= 2)
+                        carried[level - 1] = (LowestOverTheSymbols(carried[level - 1].R0 + (2 * level - 2) * b), carried[level - 1].R1);
+                }
+                return (principal, quotient, overTheQuadratic);
+            }
+            static Entity[] Product(Entity[] left, Entity[] right, int terms)
+            {
+                var product = new Entity[terms];
+                for (var i = 0; i < terms; i++)
+                {
+                    Entity sum = Number.Integer.Zero;
+                    for (var l = 0; l <= i; l++)
+                        if (l < left.Length && i - l < right.Length && left[l] != Number.Integer.Zero && right[i - l] != Number.Integer.Zero)
+                            sum = sum + left[l] * right[i - l];
+                    product[i] = LowestOverTheSymbols(sum);
+                }
+                return product;
             }
 
             // The polynomial part: u_(j-1) from the top down, and lambda at x^0.
@@ -9019,15 +9157,24 @@ namespace AngouriMath.Functions.Algebra
             }
 
             var factors = pole?.AtThePole.Length ?? 0;
+            var overTheRest = Enumerable.Repeat(belowTheRest, factors).ToArray();
             Entity algebraic = Number.Integer.Zero;
             for (var j = u.Length - 1; j >= 0; j--)
                 if (u[j] != Number.Integer.Zero)
                 {
-                    if (Back(u[j], 0, new int[factors]) is not { } coefficient)
+                    if (Back(u[j], 2 * belowTheRest, overTheRest) is not { } coefficient)
                         return null;
                     if (coefficient != Number.Integer.Zero)
                         algebraic = algebraic + coefficient * WholePower(x, j);
                 }
+            for (var power = belowTheRoot; power >= 1; power--)
+            {
+                var (a, b) = overTheQuadratic[power];
+                if (Back(a, 2 * belowTheRest, overTheRest) is not { } constant || Back(b, 2 * belowTheRest, overTheRest) is not { } slope)
+                    return null;
+                if (constant != Number.Integer.Zero || slope != Number.Integer.Zero)
+                    algebraic = algebraic + (constant + slope * x) / WholePower(quadraticAt(x), power);
+            }
             // (x - xi)^p is h^(-p) (g + h x)^p.
             var overThePoleFactors = Enumerable.Repeat(belowThePole, factors).ToArray();
             foreach (var pair in overThePole)
@@ -9040,7 +9187,7 @@ namespace AngouriMath.Functions.Algebra
             Entity ofTheFirstKind = Number.Integer.Zero;
             if (lambda != Number.Integer.Zero)
             {
-                if (Back(firstKindOver is null ? lambda : lambda / firstKindOver, 0, new int[factors]) is not { } coefficient)
+                if (Back(firstKindOver is null ? lambda : lambda / firstKindOver, 2 * belowTheRest, overTheRest) is not { } coefficient)
                     return null;
                 ofTheFirstKind = coefficient;
             }

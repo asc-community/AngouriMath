@@ -64,6 +64,9 @@ namespace AngouriMath.Tests.Calculus
             // A first power, which the rules for a linear beside the root declined.
             "1/((g + h*x)*sqrt(a + c*x^2))",
             "(d + k*x + f*x^2)*sqrt(a + c*x^2)/(g + h*x)",
+            // And a power of the quadratic below the bar beside its root.
+            "(d + k*x + f*x^2)/((g + h*x)^3*(a + b*x + c*x^2)^(3/2))",
+            "(d + k*x + f*x^2)/((g + h*x)*(a + c*x^2)^(3/2))",
         };
 
         /// <summary>
@@ -141,6 +144,8 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("(3 - x + 2*x^2)^(3/2)*(2 + x + 3*x^2 - x^3 + 5*x^4)/(5 + 2*x)^2")]
         [InlineData("(2 + x + 3*x^2 - x^3 + 5*x^4)/((5 + 2*x)^4*sqrt(3 - x + 2*x^2))")]
         [InlineData("(1 + 3*x + 4*x^2)*sqrt(2 - x + 3*x^2)/(1 + 2*x)^3")]
+        [InlineData("(2 + x + 3*x^2 - x^3 + 5*x^4)/((5 + 2*x)^3*(3 - x + 2*x^2)^(5/2))")]
+        [InlineData("(1 + 3*x + 4*x^2)/((1 + 2*x)^3*(2 + 3*x^2)^(5/2))")]
         public void WithNumbers(string integrand)
             => DifferentiatesBack(integrand, new[] { -1.7, 0.3, 0.9, 1.7, 2.6 });
     }
