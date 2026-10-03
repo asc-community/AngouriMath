@@ -23006,10 +23006,14 @@ namespace AngouriMath.Functions.Algebra
             // `1 + t^2` the division below takes off as a factor out of its sight, and
             // `tan(x)^6/(a + b sec(x))` was declined that way. And a base of a lower degree than it
             // is written in is written as its polynomial: `a (1 + t^2) + a (1 - t^2)` is `2 a`, and
-            // read as a quadratic its leading coefficient is zero as a value only.
+            // read as a quadratic its leading coefficient is zero as a value only. Only for a
+            // rational function of t: under a root the simplifier's writing of the radicand is
+            // what the radical rules read, and `1/(b cos(x) + c sin(x) - sqrt(b^2 + c^2))^(3/2)`
+            // went from a decline in three seconds to a search past two minutes without it.
             var combined = Functions.SingleQuotient.Combine(inT * 2 / (rate * (1 + tSquared)));
             Entity integrand;
-            if (combined.Vars.Any(symbol => symbol != t))
+            if (combined.Vars.Any(symbol => symbol != t)
+                && !combined.Nodes.Any(node => node is Powf(var radicand, var power) && radicand.ContainsNode(t) && power.Evaled is not Number.Integer))
             {
                 var (combinedAbove, combinedBelow) = Functions.SingleQuotient.Of(combined.InnerSimplified);
                 integrand = (WithDegenerateBasesLowered(WithWholePowersDistributed(combinedAbove), t)

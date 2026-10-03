@@ -664,9 +664,10 @@ poles of `tan(x/2)`, as every half-angle answer.
 **Answers where there were none.** Under `t = tan(x/2)` the integrand was simplified before it was
 integrated, and with symbols in it the simplifier's search grew past any budget:
 `sec(x)^2/(a + b cos(x))^3` spent 43 s in it and `sec(x)^2/(a + b cos(x))^4` more than two minutes,
-where integrating what it returned takes a tenth of a second. With a symbol in it the integrand is
-now put over one bar with its whole powers of products written as products of powers, and not
-simplified further; one without a symbol is simplified as before
+where integrating what it returned takes a tenth of a second. A rational function of `t` with a
+symbol in it is now put over one bar with its whole powers of products written as products of
+powers, and not simplified further; one without a symbol, or with a root of `t` in it, is
+simplified as before
 ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 
 | Input | Was (2.5.0) | Now |
