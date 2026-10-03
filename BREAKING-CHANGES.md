@@ -276,6 +276,21 @@ square and the cube keep the Hermite reduction's answers. Rubi's 1.1.3.8 `P(x) (
 | `"(c + d*x)/(a + b*x^3)^4".ToEntity().Integrate("x")` | `integral(...)` | the same at the roots of `a + b x^3` |
 | `"x^2/(a + b*x^5)^5".ToEntity().Integrate("x")` | `integral(...)` | four algebraic terms, and the integral of `x^2/(a + b x^5)` |
 
+### A polynomial over a power of a trinomial past the square is integrated
+
+`P(x)/(a + b x^n + c x^(2n))^k`, a polynomial over a power of a trinomial in `x^n` with symbols in
+it, was left unevaluated past the square, which the Hermite reduction answers in one linear solve.
+Now each monomial is taken down a power at a time by the trinomial's recurrence, two monomials a
+power up each step, and what reaches the first power is integrated once over the trinomial. Rubi's
+1.2.2.2 and 1.2.2.4 have these by the dozen
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^4/(a + b*x^2 + c*x^4)^3".ToEntity().Integrate("x")` | `integral(...)` | odd polynomials over `(a + b x^2 + c x^4)^2` and over it, and arctangents at its roots |
+| `"1/(a + b*x^2 + c*x^4)^3".ToEntity().Integrate("x")` | `integral(...)` | the same |
+| `"x/(a + b*x^3 + c*x^6)^2".ToEntity().Integrate("x")` | `integral(...)` | a polynomial over `a + b x^3 + c x^6`, and the integral of a polynomial over it |
+
 ### A symbolic parameter no longer stops a rational integrand being integrated
 
 `1/(8 + x^3)` and `1/(16 - x^4)` are answered at once. `1/(a^3 + x^3)` and `1/(a^4 - x^4)` were not,
