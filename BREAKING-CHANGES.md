@@ -295,6 +295,21 @@ power up each step, and what reaches the first power is integrated once over the
 | `"1/(a + b*x^2 + c*x^4)^3".ToEntity().Integrate("x")` | `integral(...)` | the same |
 | `"x/(a + b*x^3 + c*x^6)^2".ToEntity().Integrate("x")` | `integral(...)` | a polynomial over `a + b x^3 + c x^6`, and the integral of a polynomial over it |
 
+### The Hermite reduction's system is solved in one order whatever the spelling
+
+**Faster, and not a different value.** The reduction of a rational integrand with a repeated factor
+below the bar solves one linear system for the rational part, and took its rows in the order the
+powers of `x` were met, which follows how the factors are written. With symbols in the coefficients
+the elimination's pivots followed that order, and in one order the solution came out as quotients of
+polynomials of the thirty-sixth degree in the symbols that nothing reduced:
+`x/((1 + x^2)^3 (2 a x + b (x^2 + 1)))` took 42 s, and with `(x^2 + 1)^3` below the bar 1 s. The rows
+are ordered by their power of `x` now. Where the order mattered, the antiderivative's coefficients can
+come out reduced where they were not.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x/((1 + x^2)^3*(2*a*x + b*(x^2 + 1)))".ToEntity().Integrate("x")` | `integral(...)` | the antiderivative, in about half a second, as with `(x^2 + 1)^3` |
+
 ### A symbolic parameter no longer stops a rational integrand being integrated
 
 `1/(8 + x^3)` and `1/(16 - x^4)` are answered at once. `1/(a^3 + x^3)` and `1/(a^4 - x^4)` were not,

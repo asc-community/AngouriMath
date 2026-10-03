@@ -12615,7 +12615,12 @@ namespace AngouriMath.Functions.Algebra
                 ? PolynomialProduct(PolynomialProduct(abovePoly, dSquared), qSquared)
                 : PolynomialProduct(PolynomialProduct(abovePoly, dSquared), squarefreePoly);
 
-            var powers = columns.SelectMany(c => c.Keys).Concat(targetRead.Keys).Distinct().ToList();
+            // The rows by their power of x, not in the order the dictionaries met them: that order
+            // is the spelling's, and the elimination's pivots follow it. `(1 + x^2)^3` below the bar
+            // where `(x^2 + 1)^3` is written left the solution in coefficients of the thirty-sixth
+            // degree in the symbols that nothing cancelled, and the logarithmic part they made was
+            // forty seconds of declining; in the one order both are under a second.
+            var powers = columns.SelectMany(c => c.Keys).Concat(targetRead.Keys).Distinct().OrderBy(power => power).ToList();
             var width = columns.Count;
             var matrix = new Entity[powers.Count][];
             var rhs = new Entity[powers.Count];
