@@ -644,6 +644,11 @@ namespace AngouriMath.Functions.Algebra
                 return SolveByPartialFractions(reducedTop / reducedBottom, x, integrateByParts)
                     ?? Integration.ComputeIndefiniteIntegral(reducedTop / reducedBottom, x, integrateByParts);
 
+            // A polynomial over a power of one linear with a symbol in it, in powers of the linear at
+            // its root, before the division: see SolveByReducingThePolynomialOverALinearFactor.
+            if (SolveByReducingThePolynomialOverALinearFactor(expr, x, integrateByParts, alone: true) is { } overThePowersOfTheLinear)
+                return overThePowersOfTheLinear;
+
             // The helper answers null for a fraction that is already proper, so this cannot
             // fire on one and recurse into the problem it started from. The check on the
             // quotient is the second half of that guarantee: a division that came back with
@@ -2207,6 +2212,18 @@ namespace AngouriMath.Functions.Algebra
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveByReducingThePolynomialOverALinearFactor(Entity expr, Entity.Variable x, bool integrateByParts)
+            => SolveByReducingThePolynomialOverALinearFactor(expr, x, integrateByParts, alone: false);
+
+        /// <summary>
+        /// <see cref="SolveByReducingThePolynomialOverALinearFactor(Entity, Entity.Variable, bool)"/>,
+        /// or with <paramref name="alone"/> a polynomial over a power of one linear and nothing else,
+        /// that linear with a symbol in it: <c>t^9/(a + b t)^8</c> is a polynomial and eight powers of
+        /// <c>1/(a + b t)</c>, each the table's. <see cref="SolveByPartialFractions"/> asks it so before
+        /// it divides: divided out and decomposed with the symbols in it, that one went round the
+        /// substitution search a dozen levels deep and took forty-six seconds, and with numbers in
+        /// place of <c>a</c> and <c>b</c> it took sixty milliseconds.
+        /// </summary>
+        private static Entity? SolveByReducingThePolynomialOverALinearFactor(Entity expr, Entity.Variable x, bool integrateByParts, bool alone)
         {
             if (!TryReadAsQuotient(expr, out var numerator, out var denominator))
                 return null;
@@ -2241,10 +2258,12 @@ namespace AngouriMath.Functions.Algebra
                     somethingElse = true;
                 rest *= factor;
             }
-            if (linear is null || !somethingElse)
+            if (linear is null || (alone ? somethingElse || rest.ContainsNode(x) || multiplicity < 2 : !somethingElse))
                 return null;
 
             if (!TreeAnalyzer.TryGetPolynomial(linear, x, out var line))
+                return null;
+            if (alone && !line.Values.Any(coefficient => coefficient.Vars.Any()))
                 return null;
             var beta = line[EInteger.One];
             var alpha = line.TryGetValue(EInteger.Zero, out var constantTerm) ? constantTerm : Number.Integer.Zero;
