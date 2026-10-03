@@ -8473,9 +8473,13 @@ namespace AngouriMath.Functions.Algebra
                     : node);
 
             var tangent = MathS.Tan(x);
-            // Or a sine or a cosine under a root, for the writing by the sign below; a rational
-            // function of those is the half-angle substitution's.
-            if (!expr.ContainsNode(tangent) && !(HasARadicalOf(expr, x) && expr.Nodes.Any(node => node is Sinf or Cosf && node.ContainsNode(x))))
+            // Or a sine or a cosine under a root, for the writing by the sign below, or an even
+            // power of the secant or the cosecant under one, which the next step writes in the
+            // tangent: `sqrt(a + b csc(x)^2)` is `sqrt(a + b + b/tan(x)^2)`. A rational function
+            // of those is the half-angle substitution's.
+            if (!expr.ContainsNode(tangent) && !(HasARadicalOf(expr, x) && expr.Nodes.Any(node =>
+                    node is Sinf or Cosf && node.ContainsNode(x)
+                    || node is Powf(Secantf or Cosecantf, Number.Integer { EInteger.IsEven: true }) && node.ContainsNode(x))))
                 return null;
 
             // An even power of the secant, cosine, sine or cosecant of x is a rational function
@@ -12775,7 +12779,12 @@ namespace AngouriMath.Functions.Algebra
                 ? PolynomialProduct(PolynomialProduct(abovePoly, dSquared), qSquared)
                 : PolynomialProduct(PolynomialProduct(abovePoly, dSquared), squarefreePoly);
 
-            var powers = columns.SelectMany(c => c.Keys).Concat(targetRead.Keys).Distinct().ToList();
+            // The rows by their power of x, not in the order the dictionaries met them: that order
+            // is the spelling's, and the elimination's pivots follow it. `(1 + x^2)^3` below the bar
+            // where `(x^2 + 1)^3` is written left the solution in coefficients of the thirty-sixth
+            // degree in the symbols that nothing cancelled, and the logarithmic part they made was
+            // forty seconds of declining; in the one order both are under a second.
+            var powers = columns.SelectMany(c => c.Keys).Concat(targetRead.Keys).Distinct().OrderBy(power => power).ToList();
             var width = columns.Count;
             var matrix = new Entity[powers.Count][];
             var rhs = new Entity[powers.Count];
