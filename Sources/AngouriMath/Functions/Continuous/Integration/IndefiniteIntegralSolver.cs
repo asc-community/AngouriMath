@@ -3779,6 +3779,132 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A root of a quadratic binomial beside another, <c>1/((A + B x^2)^(1/3) (C + D x^2))</c>
+        /// with <c>B C + 3 A D = 0</c> or <c>B C - 9 A D = 0</c>, and
+        /// <c>1/((A + B x^2)^(1/4) (C + D x^2))</c> with <c>B C - 2 A D = 0</c>: the ratios at which
+        /// the integral, elliptic otherwise, is elementary, in closed form.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// With <c>y</c> the root, <c>a = A^(1/3)</c>, and <c>q = sqrt(B/A)</c> or <c>sqrt(-B/A)</c> by its sign:
+        /// <code>
+        /// B C + 3 A D = 0, B/A &gt; 0:  -2^(1/3) q/(4 a D) (atan(a q x/(a + 2^(1/3) y)) - atan(q x)/3
+        ///                                - (artanh(sqrt(3) (a - 2^(1/3) y)/(a q x)) + artanh(sqrt(3)/(q x)))/sqrt(3))
+        ///                  B/A &lt; 0:   2^(1/3) q/(4 a D) (artanh(a q x/(a + 2^(1/3) y)) - artanh(q x)/3
+        ///                                + (atan(sqrt(3) (a - 2^(1/3) y)/(a q x)) + atan(sqrt(3)/(q x)))/sqrt(3))
+        /// B C - 9 A D = 0, B/A &gt; 0:   q/(12 a D) (atan((a - y)^2/(3 a^2 q x)) + atan(q x/3)
+        ///                                - sqrt(3) artanh(sqrt(3) (a - y)/(a q x)))
+        ///                  B/A &lt; 0:   q/(12 a D) (artanh((a - y)^2/(3 a^2 q x)) - artanh(q x/3)
+        ///                                - sqrt(3) atan(sqrt(3) (a - y)/(a q x)))
+        /// </code>
+        /// and for the fourth root, with <c>s = sqrt(A + B x^2)</c> and <c>r = sqrt(|B|)</c>, times
+        /// <c>B/D</c>, which takes <c>C + D x^2</c> to <c>2 A + B x^2</c>:
+        /// <code>
+        /// A &gt; 0, B &gt; 0:  -(atan(A^(3/4) (1 + s/sqrt(A))/(x y r)) + artanh(A^(3/4) (1 - s/sqrt(A))/(x y r)))/(2 A^(3/4) r)
+        /// A &gt; 0, B &lt; 0:   (atan(A^(3/4) (1 - s/sqrt(A))/(x y r)) + artanh(A^(3/4) (1 + s/sqrt(A))/(x y r)))/(2 A^(3/4) r)
+        /// A &lt; 0:          -(atan(u) + artanh(u))/(2 (-A)^(3/4) sqrt(2) r),   u = x r/((-A)^(1/4) y sqrt(2))
+        /// </code>
+        /// Rubi's, from its 1.1.2.3, written for any constants with the ratio; each was checked by
+        /// differentiating it at points in every sign case. The derivative of each uses only that
+        /// the roots are roots, so for a sign that is a symbol's both forms are given, each where
+        /// it holds.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveAnEllipticLookingQuotientOfBinomials(Entity expr, Entity.Variable x)
+        {
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            if (numerator.ContainsNode(x))
+                return null;
+            Entity constant = numerator;
+            Entity? radicand = null;
+            var order = 0;
+            Entity? other = null;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                    constant = constant / factor;
+                else if (radicand is null && factor is Powf(var @base, Number.Rational power) && power.ERational.Numerator.Equals(EInteger.One)
+                    && (power.ERational.Denominator.Equals(EInteger.FromInt32(3)) || power.ERational.Denominator.Equals(EInteger.FromInt32(4))))
+                {
+                    radicand = @base;
+                    order = power.ERational.Denominator.ToInt32Unchecked();
+                }
+                else if (other is null && factor is not Powf)
+                    other = factor;
+                else
+                    return null;
+            }
+            if (radicand is null || other is null || EvenQuadratic(radicand) is not var (a0, b0) || EvenQuadratic(other) is not var (c0, d0))
+                return null;
+            var (A, B, C, D) = (a0, b0, c0, d0);
+            var y = MathS.Pow(radicand, Number.Rational.Create(1, order));
+            Entity? answer = null;
+            if (order == 3 && VanishesIdentically(B * C + 3 * A * D))
+            {
+                var a = MathS.Pow(A, Number.Rational.Create(1, 3));
+                var cube = MathS.Pow(2, Number.Rational.Create(1, 3));
+                var three = MathS.Sqrt(3);
+                var quarter = LowestOverTheSymbols(1 / (4 * D));
+                Entity Positive(Entity q) => -quarter * cube * q / a * (MathS.Arctan(a * q * x / (a + cube * y)) - MathS.Arctan(q * x) / 3
+                    - (MathS.Hyperbolic.Artanh(three * (a - cube * y) / (a * q * x)) + MathS.Hyperbolic.Artanh(three / (q * x))) / three);
+                Entity Negative(Entity q) => quarter * cube * q / a * (MathS.Hyperbolic.Artanh(a * q * x / (a + cube * y)) - MathS.Hyperbolic.Artanh(q * x) / 3
+                    + (MathS.Arctan(three * (a - cube * y) / (a * q * x)) + MathS.Arctan(three / (q * x))) / three);
+                var ratio = LowestOverTheSymbols(B / A);
+                answer = BySign(ratio, Positive(MathS.Sqrt(ratio)), Negative(MathS.Sqrt(LowestOverTheSymbols(-ratio))));
+            }
+            else if (order == 3 && VanishesIdentically(B * C - 9 * A * D))
+            {
+                var a = MathS.Pow(A, Number.Rational.Create(1, 3));
+                var three = MathS.Sqrt(3);
+                var twelfth = LowestOverTheSymbols(1 / (12 * D));
+                Entity Positive(Entity q) => twelfth * q / a * (MathS.Arctan(MathS.Pow(a - y, 2) / (3 * MathS.Pow(a, 2) * q * x)) + MathS.Arctan(q * x / 3)
+                    - three * MathS.Hyperbolic.Artanh(three * (a - y) / (a * q * x)));
+                Entity Negative(Entity q) => twelfth * q / a * (MathS.Hyperbolic.Artanh(MathS.Pow(a - y, 2) / (3 * MathS.Pow(a, 2) * q * x)) - MathS.Hyperbolic.Artanh(q * x / 3)
+                    - three * MathS.Arctan(three * (a - y) / (a * q * x)));
+                var ratio = LowestOverTheSymbols(B / A);
+                answer = BySign(ratio, Positive(MathS.Sqrt(ratio)), Negative(MathS.Sqrt(LowestOverTheSymbols(-ratio))));
+            }
+            else if (order == 4 && VanishesIdentically(B * C - 2 * A * D))
+            {
+                var s = MathS.Sqrt(radicand);
+                var threeQuarters = Number.Rational.Create(3, 4);
+                Entity BothPositive()
+                {
+                    var r = MathS.Sqrt(B);
+                    return -(MathS.Arctan(MathS.Pow(A, threeQuarters) * (1 + s / MathS.Sqrt(A)) / (x * y * r))
+                        + MathS.Hyperbolic.Artanh(MathS.Pow(A, threeQuarters) * (1 - s / MathS.Sqrt(A)) / (x * y * r))) / (2 * MathS.Pow(A, threeQuarters) * r);
+                }
+                Entity SlopeNegative()
+                {
+                    var r = MathS.Sqrt(-B);
+                    return (MathS.Arctan(MathS.Pow(A, threeQuarters) * (1 - s / MathS.Sqrt(A)) / (x * y * r))
+                        + MathS.Hyperbolic.Artanh(MathS.Pow(A, threeQuarters) * (1 + s / MathS.Sqrt(A)) / (x * y * r))) / (2 * MathS.Pow(A, threeQuarters) * r);
+                }
+                Entity ConstantNegative()
+                {
+                    var r = MathS.Sqrt(B);
+                    var u = x * r / (MathS.Pow(-A, Number.Rational.Create(1, 4)) * y * MathS.Sqrt(2));
+                    return -(MathS.Arctan(u) + MathS.Hyperbolic.Artanh(u)) / (2 * MathS.Pow(-A, threeQuarters) * MathS.Sqrt(2) * r);
+                }
+                var toTheRatio = LowestOverTheSymbols(B / D);
+                var form = BySigns(A, B, BothPositive(), SlopeNegative(), ConstantNegative());
+                answer = toTheRatio == Number.Integer.One ? form : toTheRatio * form;
+            }
+            return answer is null ? null : (constant * answer).InnerSimplified;
+
+            // A + B x^2, both nonzero.
+            (Entity, Entity)? EvenQuadratic(Entity polynomial)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, x, out var terms) || terms.Count != 2
+                    || !terms.TryGetValue(EInteger.Zero, out var free) || !terms.TryGetValue(EInteger.FromInt32(2), out var square)
+                    || free.ContainsNode(x) || square.ContainsNode(x) || VanishesIdentically(free) || VanishesIdentically(square))
+                    return null;
+                return (free, square);
+            }
+        }
+
+        /// <summary>
         /// A <b>binomial differential</b> <c>x^m (a + b x^n)^(p/q)</c>, in the two of Chebyshev's
         /// three cases that are not a whole power: <c>(m + 1)/n</c> whole, or
         /// <c>(m + 1)/n + p/q</c> whole.
