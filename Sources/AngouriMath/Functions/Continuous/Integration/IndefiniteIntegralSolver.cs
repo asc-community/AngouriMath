@@ -626,6 +626,24 @@ namespace AngouriMath.Functions.Algebra
             if (!TryReadAsQuotient(expr, out var numerator, out var denominator))
                 return null;
 
+            // A quotient with x below a bar inside it, `1/(a + b/x)`, written over one bar: every
+            // rule below reads the numerator and the denominator as polynomials, and `a + b/x` is
+            // not one, where `x/(a x + b)` is read at once. Once: what one bar gives has none.
+            // What the bars were cleared with is a power of x on both sides, `x^3/(x^2 Q L^2)` for
+            // `1/((a + b/x + c/x^2) x L^2)`, and it is cancelled: the rules below read a numerator
+            // and a denominator with a common factor as coprime, and answered that one wrongly.
+            // Only where both sides are then polynomials in x, which is what the rules below read:
+            // anything else, written over one bar, would be the whole question asked again a level
+            // down, from inside every search that passes through here.
+            if ((HasTheVariableBelowABar(numerator, x) || HasTheVariableBelowABar(denominator, x))
+                && Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr)) is var (top, bottom)
+                && !HasTheVariableBelowABar(top, x) && !HasTheVariableBelowABar(bottom, x)
+                && bottom.ContainsNode(x)
+                && TreeAnalyzer.TryGetPolynomial(top, x, out _) && TreeAnalyzer.TryGetPolynomial(bottom, x, out _)
+                && WithoutACommonPowerOfX(top, bottom, x) is var (reducedTop, reducedBottom))
+                return SolveByPartialFractions(reducedTop / reducedBottom, x, integrateByParts)
+                    ?? Integration.ComputeIndefiniteIntegral(reducedTop / reducedBottom, x, integrateByParts);
+
             // The helper answers null for a fraction that is already proper, so this cannot
             // fire on one and recurse into the problem it started from. The check on the
             // quotient is the second half of that guarantee: a division that came back with
@@ -802,6 +820,18 @@ namespace AngouriMath.Functions.Algebra
                     return termByTerm;
             }
 
+            // A power of x beside a block with a symbol in it that x does not divide:
+            // `1/(x (x^3 + c))`, which the written-factor split above declines for a block past
+            // the second degree. Split at the power of x, each part goes to a rule that reads it.
+            if (IntegrateOverAPowerOfXBesideABlock(numerator, denominator, x, integrateByParts) is { } besideABlock)
+                return besideABlock;
+
+            // Blocks that are each a polynomial in one power of x past the second,
+            // `1/((a + b x^3)(c + d x^3))`: split in `u = x^n`, where they are linear or quadratic,
+            // and each fraction back in x is over one block, which the rule for a binomial reads.
+            if (IntegrateOverBlocksInAPowerOfX(numerator, denominator, x, integrateByParts) is { } overBlocksInAPower)
+                return overBlocksInAPower;
+
             // Last, because everything above answers in exact arithmetic where it can: a
             // binomial denominator the splits above could not take apart -- `x^3 + 2`, `x^5 + 1`,
             // `a x^3 - b` -- decomposed at its roots of unity in closed form.
@@ -863,6 +893,236 @@ namespace AngouriMath.Functions.Algebra
             }
             return (total / b).Substitute(t, linear).InnerSimplified;
         }
+
+        /// <summary>
+        /// <c>N/(x^k B)</c>, where the block <c>B</c> has a symbol in it and a constant term that
+        /// is not zero, split at the power of x. <c>N/B</c> has a power series at 0, and its first
+        /// <c>k</c> terms <c>P</c> are the part over <c>x^k</c>: <c>N/(x^k B) = P/x^k + R/B</c>, with
+        /// <c>R = (N - P B)/x^k</c> exactly.
+        /// </summary>
+        /// <remarks>
+        /// <c>1/(x (x^3 + 2))</c> had an antiderivative and <c>1/(x (x^3 + c))</c> did not: the
+        /// first is split over the rationals, and the split over written factors takes linear
+        /// and quadratic blocks only. Rubi writes <c>x^m (a + b x^n)^p</c> by the hundred, and a
+        /// root of a square in it, <c>1/(x sqrt((a + b x^3)^2))</c>, is this once its modulus is
+        /// taken. The constant term is divided by, in the generic case as everywhere here.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static Entity? IntegrateOverAPowerOfXBesideABlock(Entity numerator, Entity denominator, Entity.Variable x, bool integrateByParts)
+        {
+            // For the question asked, or one substitution below it, as the blocks in a power of x
+            // are: the rest over the block is integrated again.
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            var k = 0;
+            Entity block = Number.Integer.One;
+            // Whether a factor of the block, or the base of a power of one, is past the second
+            // degree: linear and quadratic ones, and their powers, are the written-factor split's.
+            var pastTheSecondDegree = false;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (factor == x)
+                    k++;
+                else if (factor is Powf(var @base, Number.Integer e) && @base == x && e.EInteger.Sign > 0 && e.EInteger.CanFitInInt32())
+                    k += e.EInteger.ToInt32Unchecked();
+                else
+                {
+                    block = block == Number.Integer.One ? factor : block * factor;
+                    var written = factor is Powf(var raised, Number.Integer { EInteger.Sign: > 0 }) ? raised : factor;
+                    pastTheSecondDegree |= TreeAnalyzer.TryGetPolynomial(written, x, out var terms) && terms.Keys.Any(power => power.CompareTo(EInteger.FromInt32(2)) > 0);
+                }
+            }
+            if (k == 0 || k > MaximumPowerOfXBesideABlock || !pastTheSecondDegree || !block.ContainsNode(x) || !block.Vars.Any(symbol => symbol != x))
+                return null;
+            if (!TreeAnalyzer.TryGetPolynomial(block, x, out var below) || !TreeAnalyzer.TryGetPolynomial(numerator, x, out var above))
+                return null;
+            foreach (var term in below.Concat(above))
+                if (term.Key.Sign < 0 || !term.Key.CanFitInInt32() || term.Value.ContainsNode(x))
+                    return null;
+            // In lowest terms in x: where x divides the numerator as well, the part over x^k is
+            // nothing, and the rest is the whole question asked again a level down, out of reach
+            // of the rules that answer only the question asked. `(A x^3 + B x^4 + C x^5)/(x (a +
+            // b x^2 + c x^4)^2)` is answered at the top once the x is cancelled.
+            if (!above.TryGetValue(EInteger.Zero, out var numeratorConstant) || VanishesIdentically(numeratorConstant))
+                return null;
+            var degreeBelow = below.Keys.Max()!.ToInt32Unchecked();
+            var degreeAbove = above.Count == 0 ? 0 : above.Keys.Max()!.ToInt32Unchecked();
+            if (degreeBelow > MaximumPowerOfXBesideABlock || !below.TryGetValue(EInteger.Zero, out var constant) || VanishesIdentically(constant))
+                return null;
+            Entity Coefficient(Dictionary<EInteger, Entity> polynomial, int power)
+                => polynomial.TryGetValue(EInteger.FromInt32(power), out var coefficient) ? coefficient : Number.Integer.Zero;
+
+            // P: the first k terms of the power series of N/B at 0.
+            var series = new Entity[k];
+            for (var j = 0; j < k; j++)
+            {
+                var sum = Coefficient(above, j);
+                for (var i = 1; i <= j; i++)
+                    sum -= Coefficient(below, i) * series[j - i];
+                series[j] = Functions.PartialFractions.InLowestTermsOverTheSymbols(sum / constant);
+            }
+
+            // R = (N - P B)/x^k, whose coefficient of x^(m - k) is that of x^m in N - P B.
+            Entity remainder = Number.Integer.Zero;
+            for (var m = k; m <= System.Math.Max(degreeAbove, degreeBelow + k - 1); m++)
+            {
+                var coefficient = Coefficient(above, m);
+                for (var j = System.Math.Max(0, m - degreeBelow); j <= System.Math.Min(k - 1, m); j++)
+                    coefficient -= series[j] * Coefficient(below, m - j);
+                coefficient = Functions.PartialFractions.InLowestTermsOverTheSymbols(coefficient);
+                if (!VanishesIdentically(coefficient))
+                    remainder += m == k ? coefficient : coefficient * MathS.Pow(x, m - k);
+            }
+
+            // The part over x^k term by term, and the rest over the block as it is written.
+            Entity overX = Number.Integer.Zero;
+            for (var j = 0; j < k; j++)
+                if (!VanishesIdentically(series[j]))
+                    overX += j == k - 1
+                        ? series[j] * IntegralPatterns.AntiderivativeLog(x)
+                        : series[j] * MathS.Pow(x, j - k + 1) / (j - k + 1);
+            if (remainder == Number.Integer.Zero)
+                return overX;
+            return Integration.ComputeIndefiniteIntegral(remainder / block, x, integrateByParts) is { } overTheBlock
+                ? overX + overTheBlock
+                : null;
+        }
+
+        /// <summary>
+        /// <c>N/(B_1 ... B_m)</c> where every block <c>B_i</c> is a polynomial in <c>x^n</c> for one
+        /// <c>n >= 2</c>, linear or quadratic in it, with a symbol among them: split in
+        /// <c>u = x^n</c> by <see cref="Functions.PartialFractions.TrySplitOverWrittenFactors"/>,
+        /// one residue of the numerator's powers modulo <c>n</c> at a time, each fraction then
+        /// over one block in x.
+        /// </summary>
+        /// <remarks>
+        /// <c>1/((a + b x^3)(c + d x^3))</c> was declined: over the rationals it does not factor,
+        /// and the split over written factors reads a block of the third degree as nothing. In
+        /// <c>u = x^3</c> it is <c>1/((a + b u)(c + d u))</c>, two linear factors. A numerator
+        /// term <c>x^r M(x^n)</c> keeps its <c>x^r</c> outside the split, which is exact since
+        /// the blocks are polynomials in <c>x^n</c> alone.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static Entity? IntegrateOverBlocksInAPowerOfX(Entity numerator, Entity denominator, Entity.Variable x, bool integrateByParts, bool oneBlockAtItsRoots = false)
+        {
+            var blocks = new List<(Dictionary<EInteger, Entity> Polynomial, int Power)>();
+            Entity constant = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = constant == Number.Integer.One ? factor : constant * factor;
+                    continue;
+                }
+                var (@base, power) = factor is Powf(var b, Number.Integer e) && e.EInteger.Sign > 0 && e.EInteger.CanFitInInt32()
+                    ? (b, e.EInteger.ToInt32Unchecked())
+                    : (factor, 1);
+                if (!TreeAnalyzer.TryGetPolynomial(@base, x, out var polynomial) || polynomial.Count < 2)
+                    return null;
+                foreach (var term in polynomial)
+                    if (term.Key.Sign < 0 || !term.Key.CanFitInInt32() || term.Value.ContainsNode(x))
+                        return null;
+                // A block x divides is the content's to take apart, not one to split at roots:
+                // `b x^4 + c x^8`, read as quadratic in x^4 with no constant term, has
+                // `(-b ± sqrt(b^2))/(2 c)` for roots, one of them a zero that is not recognised.
+                if (!polynomial.TryGetValue(EInteger.Zero, out var blockConstant) || VanishesIdentically(blockConstant))
+                    return null;
+                blocks.Add((polynomial, power));
+            }
+            if (blocks.Count == 0 || !(numerator + denominator).Vars.Any(symbol => symbol != x))
+                return null;
+            // n, the greatest common divisor of every power the blocks hold.
+            var n = EInteger.Zero;
+            foreach (var (polynomial, _) in blocks)
+                foreach (var power in polynomial.Keys)
+                    n = n.Gcd(power);
+            // In x^2 for two blocks or more only: one quadratic in x^2 is the biquadratic rule's.
+            if (n.CompareTo(EInteger.FromInt32(2)) < 0 || n.Equals(EInteger.FromInt32(2)) && blocks.Count < 2
+                || n.CompareTo(EInteger.FromInt32(MaximumPowerOfXBesideABlock)) > 0)
+                return null;
+            var step = n.ToInt32Unchecked();
+            foreach (var (polynomial, _) in blocks)
+                if (polynomial.Keys.Max()!.ToInt32Unchecked() / step > 2)
+                    return null;
+            if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var above))
+                return null;
+            foreach (var term in above)
+                if (term.Key.Sign < 0 || !term.Key.CanFitInInt32() || term.Value.ContainsNode(x))
+                    return null;
+
+            var u = Entity.Variable.CreateUnique(numerator + denominator, "u");
+            Entity InU(Dictionary<EInteger, Entity> polynomial)
+            {
+                Entity sum = Number.Integer.Zero;
+                foreach (var entry in polynomial.OrderBy(term => term.Key))
+                {
+                    var (power, coefficient) = (entry.Key, entry.Value);
+                    var degree = power.ToInt32Unchecked() / step;
+                    var term = degree == 0 ? coefficient : coefficient * (degree == 1 ? u : MathS.Pow(u, degree));
+                    sum = sum == Number.Integer.Zero ? term : sum + term;
+                }
+                return sum;
+            }
+            var inUBlocks = blocks.Select(pair => (Block: InU(pair.Polynomial), pair.Power)).ToList();
+            // One block, quadratic in u, is two at its roots: `a + b u + c u^2` is
+            // `c (u - r_1)(u - r_2)` with `r = (-b ± sqrt(b^2 - 4 a c))/(2 c)`, exact wherever the
+            // two differ, which is the generic case; a discriminant that is zero as written declines.
+            if (inUBlocks.Count == 1)
+            {
+                // Last, from SolveByOneBlockInAPowerOfXAtItsRoots: the roots are complex where
+                // b^2 < 4ac, and a rule after the split that branches on the sign of one has no
+                // branch for it. `x (a + b x^4)/(c + d x^4 + e x^8)` comes to `x/(x^4 - r)`, and the
+                // table's piecewise on the sign of `r` has no value anywhere for a complex `r`,
+                // where the substitution `v = x^2` answers the block whole.
+                if (!oneBlockAtItsRoots)
+                    return null;
+                var (polynomial, power) = blocks[0];
+                if (polynomial.Keys.Max()!.ToInt32Unchecked() != 2 * step)
+                    return null;
+                Entity At(int degree) => polynomial.TryGetValue(EInteger.FromInt32(degree * step), out var coefficient) ? coefficient : Number.Integer.Zero;
+                var (a, b, c) = (At(0), At(1), At(2));
+                var discriminant = b * b - 4 * a * c;
+                if (VanishesIdentically(discriminant))
+                    return null;
+                var root = MathS.Sqrt(discriminant);
+                var first = Functions.PartialFractions.InLowestTermsOverTheSymbols((-b + root) / (2 * c));
+                var second = Functions.PartialFractions.InLowestTermsOverTheSymbols((-b - root) / (2 * c));
+                constant = constant == Number.Integer.One ? (power == 1 ? c : MathS.Pow(c, power)) : constant * (power == 1 ? c : MathS.Pow(c, power));
+                inUBlocks = new List<(Entity Block, int Power)> { (u - first, power), (u - second, power) };
+            }
+            Entity below = constant;
+            foreach (var (block, power) in inUBlocks)
+                below = below == Number.Integer.One ? (power == 1 ? block : MathS.Pow(block, power)) : below * (power == 1 ? block : MathS.Pow(block, power));
+
+            Entity total = Number.Integer.Zero;
+            foreach (var residue in above.GroupBy(term => term.Key.ToInt32Unchecked() % step))
+            {
+                Entity inU = Number.Integer.Zero;
+                foreach (var entry in residue)
+                {
+                    var (power, coefficient) = (entry.Key, entry.Value);
+                    var degree = power.ToInt32Unchecked() / step;
+                    inU += degree == 0 ? coefficient : coefficient * MathS.Pow(u, degree);
+                }
+                if (!Functions.PartialFractions.TrySplitOverWrittenFactors(inU, below, u, out var decomposition))
+                    return null;
+                var outside = residue.Key == 0 ? (Entity)Number.Integer.One : residue.Key == 1 ? x : MathS.Pow(x, residue.Key);
+                foreach (var fraction in Sumf.LinearChildren(decomposition))
+                {
+                    var inX = outside * fraction.Substitute(u, MathS.Pow(x, step));
+                    if (Integration.ComputeIndefiniteIntegral(inX, x, integrateByParts) is not { } integrated)
+                        return null;
+                    total += integrated;
+                }
+            }
+            return total;
+        }
+
+        /// <summary>
+        /// The largest power of x, and the largest degree of the block beside it, that
+        /// <see cref="IntegrateOverAPowerOfXBesideABlock"/> takes: Rubi's suite goes to twelve.
+        /// </summary>
+        private const int MaximumPowerOfXBesideABlock = 12;
 
         /// <summary>
         /// A polynomial over a power of a binomial, <c>P(x)/(a + b x^n)^k</c> with <c>n &gt;= 3</c>
@@ -1247,6 +1507,80 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             return RothsteinTrager.Integrate(numerator, denominator, x);
         }
+
+        /// <summary>
+        /// <paramref name="numerator"/> over <paramref name="denominator"/> with the greatest
+        /// power of <paramref name="x"/> that divides both taken out of each, the denominator's
+        /// factors kept as written; the two unchanged where none does, or where a side is not a
+        /// polynomial in <paramref name="x"/>.
+        /// </summary>
+        private static (Entity Numerator, Entity Denominator) WithoutACommonPowerOfX(Entity numerator, Entity denominator, Entity.Variable x)
+        {
+            static int LowestPower(Dictionary<EInteger, Entity> polynomial)
+                => polynomial.Keys.Min()!.ToInt32Unchecked();
+            if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var above) || above.Count == 0
+                || above.Keys.Any(power => power.Sign < 0 || !power.CanFitInInt32()))
+                return (numerator, denominator);
+            var factors = new List<(Dictionary<EInteger, Entity>? Polynomial, Entity Written, int Power, int Lowest)>();
+            var available = 0;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                var (@base, power) = factor is Powf(var b, Number.Integer e) && e.EInteger.Sign > 0 && e.EInteger.CanFitInInt32()
+                    ? (b, e.EInteger.ToInt32Unchecked())
+                    : (factor, 1);
+                if (!@base.ContainsNode(x))
+                {
+                    factors.Add((null, factor, 1, 0));
+                    continue;
+                }
+                if (!TreeAnalyzer.TryGetPolynomial(@base, x, out var polynomial) || polynomial.Count == 0
+                    || polynomial.Keys.Any(k => k.Sign < 0 || !k.CanFitInInt32()))
+                    return (numerator, denominator);
+                var lowest = LowestPower(polynomial);
+                factors.Add((polynomial, factor, power, lowest));
+                available += lowest * power;
+            }
+            var common = System.Math.Min(LowestPower(above), available);
+            if (common == 0)
+                return (numerator, denominator);
+            Entity Shifted(Dictionary<EInteger, Entity> polynomial, int by)
+            {
+                Entity sum = Number.Integer.Zero;
+                foreach (var entry in polynomial.OrderBy(term => term.Key))
+                {
+                    var (power, coefficient) = (entry.Key, entry.Value);
+                    var degree = power.ToInt32Unchecked() - by;
+                    var term = degree == 0 ? coefficient : coefficient * (degree == 1 ? x : MathS.Pow(x, degree));
+                    sum = sum == Number.Integer.Zero ? term : sum + term;
+                }
+                return sum;
+            }
+            var left = common;
+            Entity below = Number.Integer.One;
+            foreach (var (polynomial, written, power, lowest) in factors)
+            {
+                Entity kept = written;
+                if (polynomial is not null && lowest > 0 && left >= lowest * power)
+                {
+                    var @base = Shifted(polynomial, lowest);
+                    kept = power == 1 ? @base : MathS.Pow(@base, power);
+                    left -= lowest * power;
+                }
+                if (kept != Number.Integer.One)
+                    below = below == Number.Integer.One ? kept : below * kept;
+            }
+            // Whatever could not come out of a factor whole stays below the bar as written.
+            var taken = common - left;
+            return taken == 0 ? (numerator, denominator) : (Shifted(above, taken), below);
+        }
+
+        /// <summary>
+        /// Whether <paramref name="x"/> stands below a bar somewhere inside
+        /// <paramref name="expr"/>: in a divisor, or under a negative whole power.
+        /// </summary>
+        private static bool HasTheVariableBelowABar(Entity expr, Entity.Variable x)
+            => expr.Nodes.Any(node => node is Entity.Divf(_, var divisor) && divisor.ContainsNode(x)
+                || node is Entity.Powf(var @base, Number.Integer { EInteger.Sign: < 0 }) && @base.ContainsNode(x));
 
         private static bool TryReadAsQuotient(Entity expr, out Entity numerator, out Entity denominator)
         {
@@ -16908,6 +17242,79 @@ namespace AngouriMath.Functions.Algebra
                 return null;
 
             return Integration.ComputeIndefiniteIntegral(written, x, integrateByParts);
+        }
+
+        /// <summary>
+        /// A rational function over one block quadratic in a power of x, <c>a + b x^n + c x^(2n)</c>
+        /// with a symbol in it, split at the block's roots in <c>u = x^n</c>: the single block
+        /// <see cref="IntegrateOverBlocksInAPowerOfX"/> leaves to this.
+        /// </summary>
+        /// <remarks>
+        /// The roots are <c>(-b ± sqrt(b^2 - 4ac))/(2c)</c>, complex where <c>b^2 &lt; 4ac</c>, and
+        /// every fraction after the split is over a binomial <c>x^n - r</c> with that root in it.
+        /// Last, so that whatever answers the block whole answers first: a rule that branches on
+        /// the sign of <c>r</c> has no branch for a complex one.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByOneBlockInAPowerOfXAtItsRoots(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            return denominator.ContainsNode(x) && !numerator.Nodes.Any(node => node is Powf(_, Number.Rational r) && r is not Number.Integer)
+                ? IntegrateOverBlocksInAPowerOfX(numerator, denominator, x, integrateByParts, oneBlockAtItsRoots: true)
+                : null;
+        }
+
+        /// <summary>
+        /// A product of sums, of positive whole powers of sums and of powers of the variable,
+        /// written out and integrated term by term.
+        /// </summary>
+        /// <remarks>
+        /// <c>(a + b x^n)(c + d x^n)^3</c> had no antiderivative, and written out it is eight
+        /// powers of x, each answered at once: no rule reads a power of x whose exponent is a
+        /// symbol as a polynomial, and the rule above writes out one power and not a product of
+        /// them. As late as that one, and for the same reason: a product that a rule answers in
+        /// its own terms is not written out. Only where every factor with x in it is a sum of
+        /// powers of x, a positive whole power of one, or a power of x itself, so that writing it
+        /// out is a finite identity, bounded by <see cref="MathS.Settings.MaxExpansionTermCount"/>,
+        /// whose terms are each answered at once; and only for the question asked, not for what a
+        /// rule leaves over. A sum of exponentials is a sum too: integration by parts on
+        /// <c>x^2 Shi(a + b x) sinh(a + b x)</c> leaves a run of them beside powers of x, and
+        /// written out each term is a search of its own.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByExpandingAProductOfSums(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (expr is not Mulf || !Integration.AnsweringTheQuestionAsked)
+                return null;
+            var sums = 0;
+            foreach (var factor in Mulf.LinearChildren(expr))
+            {
+                if (!factor.ContainsNode(x))
+                    continue;
+                switch (factor)
+                {
+                    case Sumf or Minusf when IsASumOfPowersOfX(factor, x):
+                    case Powf((Sumf or Minusf) and var sum, Number.Integer power) when power.EInteger.CompareTo(EInteger.One) > 0 && IsASumOfPowersOfX(sum, x):
+                        sums++;
+                        break;
+                    case Entity.Variable when factor == x:
+                    case Powf(var @base, var exponent) when @base == x && !exponent.ContainsNode(x):
+                        break;
+                    default:
+                        return null;
+                }
+            }
+            if (sums == 0)
+                return null;
+            var written = expr.Expand();
+            if (written is not Sumf and not Minusf)
+                return null;
+            return Integration.ComputeIndefiniteIntegral(written, x, integrateByParts);
+
+            // Each term a constant times a power of x, the power's exponent free of x.
+            static bool IsASumOfPowersOfX(Entity sum, Entity.Variable x)
+                => Sumf.LinearChildren(sum).All(term => Mulf.LinearChildren(term).All(factor =>
+                    !factor.ContainsNode(x) || factor == x || factor is Powf(var @base, var exponent) && @base == x && !exponent.ContainsNode(x)));
         }
 
         /// <summary>

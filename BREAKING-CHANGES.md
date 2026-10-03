@@ -196,6 +196,38 @@ rules' already
 | `"asin(sqrt(1 + x) - sqrt(x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `arcsin(sqrt(1 + x) - sqrt(x))` |
 | `"x^3*atan(-sqrt(x)+sqrt(1+x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in the arctangent |
 
+### Rational functions of `x` and `x^n` with symbols in them are taken apart
+
+**Answers where there were none.** The partial fractions took apart a denominator with symbols in it
+only where its factors were linear or quadratic, so `1/(x (x^3 + c))` was declined where
+`1/(x (x^3 + 2))` was answered. Now:
+- a power of `x` beside a block `B` whose constant term is not zero is split off: the first `k`
+  terms of the power series of `N/B` at 0 are the part over `x^k`, and the rest is a polynomial
+  over `B` exactly;
+- blocks that are each a polynomial in one power `x^n` are split in `u = x^n`, where they are linear
+  or quadratic, for `n >= 3`, or `n = 2` with two blocks or more; one block quadratic in `u` is two
+  at its roots, as `a + b x^2 + c x^4` already was;
+- a quotient with `x` below a bar inside it, `1/(a + b/x)`, is written over one bar first, and the
+  power of `x` that cleared the bars is taken out of both sides again;
+- a product of sums in `x^n` with a symbol for `n` is written out, as a power of one already was.
+
+Rubi's `x^m (a + b x^n)^p` and `(a + b x^n)^p (c + d x^n)^q`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(x*(x^3 + c))".Integrate("x")` | left unevaluated | `ln(x)/c - ln(c x^3 + c^2)/(3 c)` |
+| `"1/(x^4*(a + b*x^3))".Integrate("x")` | left unevaluated | `-1/(3 a x^3) - b ln(x)/a^2 + b ln(a^2 b x^3 + a^3)/(3 a^2)` |
+| `"1/(x*(a + b*x^5))".Integrate("x")` | left unevaluated | `ln(x)/a - ln(a b x^5 + a^2)/(5 a)` |
+| `"1/(x^2*(x^3 + c))".Integrate("x")`, and `(c + d x + e x^2)/(x^2 (a + b x^3))` | left unevaluated | a logarithm and an arctangent in `c^(1/3)`, beside `-1/(c x)` |
+| `"1/((a+b*x^3)*(c+d*x^3))".Integrate("x")`, and `x/((a + b x^3)(c + d x^3))` | left unevaluated | logarithms and arctangents in `(-a/b)^(1/3)` and `(-c/d)^(1/3)`, over `a d - b c` |
+| `"1/((a+b*x^4)*(c+d*x^4))".Integrate("x")` | left unevaluated | arctangents and logarithms of each binomial's roots, over `a d - b c` |
+| `"1/(a+b*x^3+c*x^6)".Integrate("x")`, `(1 + x^4)/(1 + b x^4 + x^8)` | left unevaluated | the same, at the two roots of the quadratic in `x^n`, over `sqrt(b^2 - 4 a c)` |
+| `"1/(x^4*(d+e*x^2)*(a+c*x^4))".Integrate("x")` | left unevaluated | powers of `x`, an arctangent over `d + e x^2`, and the biquadratic's arctangents |
+| `"1/(a+b/x)".Integrate("x")` | left unevaluated | `x/a - b ln(a x + b)/a^2` |
+| `"1/(2+3/x^2)^3".Integrate("x")`, `1/(a + b/x^3)` | left unevaluated | an antiderivative |
+| `"(a+b*x^n)*(c+d*x^n)^3".Integrate("x")` | left unevaluated | written out, eight powers of `x` integrated: `a c^3 x + ... + b d^3 x^(4 n + 1)/(4 n + 1)` |
+
 ### The hyperbolic functions have antiderivatives, and so does anything rational in `e^(k x)`
 
 An integrand rational in `e^(k x)` becomes a rational function of one variable under
