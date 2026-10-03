@@ -760,6 +760,11 @@ namespace AngouriMath.Functions.Algebra
             if (IntegrateAPolynomialOverAPowerOfABinomial(numerator, denominator, x, integrateByParts) is { } downThePowers)
                 return downThePowers;
 
+            // And of a trinomial in x^n, `x^4/(a + b x^2 + c x^4)^3`: its recurrence, a power at a
+            // time, down to the trinomial itself.
+            if (IntegrateAPolynomialOverAPowerOfATrinomial(numerator, denominator, x, integrateByParts) is { } downTheTrinomialsPowers)
+                return downTheTrinomialsPowers;
+
             // Splitting into coprime blocks comes before peeling one root off, and the order is
             // load-bearing rather than a preference.
             //
@@ -1218,6 +1223,119 @@ namespace AngouriMath.Functions.Algebra
         /// takes down, one algebraic term a monomial a power.
         /// </summary>
         private const int MaximumPowerOfABinomial = 12;
+
+        /// <summary>
+        /// A polynomial over a power of a trinomial in <c>x^n</c>,
+        /// <c>P(x)/(a + b x^n + c x^(2n))^k</c> with <c>n &gt;= 2</c> and <c>k &gt;= 2</c>, a power at
+        /// a time down to a polynomial over the trinomial itself.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// For a monomial, with <c>w = x^n</c>, <c>T = a + b w + c w^2</c> and <c>D = 4 a c - b^2</c>,
+        /// the derivative of <c>x^(m+1) (beta0 + beta1 w) T^(p+1)</c> is
+        /// <c>x^m T^p + delta0 x^m T^(p+1) + delta1 x^(m+n) T^(p+1)</c>, where
+        /// <code>
+        /// beta0  = (b^2 - 2 a c)/(a n (p + 1) D),       beta1 = b c/(a n (p + 1) D),
+        /// delta0 = -((2 a c - b^2)(m + 1) + n (p + 1) D)/(a n (p + 1) D),
+        /// delta1 = b c (m + 2 n p + 3 n + 1)/(a n (p + 1) D),
+        /// </code>
+        /// which is what matching the powers of <c>w</c> in
+        /// <c>(m + 1)(beta0 + beta1 w) T + n beta1 w T + (p + 1) n w (b + 2 c w)(beta0 + beta1 w)</c>
+        /// against <c>1 + (delta0 + delta1 w) T</c> gives. So <c>int x^m T^p</c> is that algebraic
+        /// term, less <c>delta0 int x^m T^(p+1)</c> and <c>delta1 int x^(m+n) T^(p+1)</c>: two
+        /// monomials a power up. What reaches the first power is gathered into one polynomial
+        /// over <c>T</c> and integrated once.
+        /// </para>
+        /// <para>
+        /// After the Hermite reduction, which answers the square with symbols in it in one linear
+        /// solve and keeps those answers; its system grows with the degree, and
+        /// <c>x^4/(a + b x^2 + c x^4)^3</c> was declined. Rubi's 1.2.2.2 and 1.2.2.4 have these by the
+        /// dozen. <c>a</c> and <c>D</c> are divided by, which is the generic case, as everywhere in
+        /// the integrator: <c>D = 0</c> is a square, which the rules for one take.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// </remarks>
+        private static Entity? IntegrateAPolynomialOverAPowerOfATrinomial(Entity numerator, Entity denominator, Entity.Variable x, bool integrateByParts)
+        {
+            Entity constant = Number.Integer.One;
+            Entity? trinomial = null;
+            var power = 0;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                    constant = constant == Number.Integer.One ? factor : constant * factor;
+                else if (trinomial is null && factor is Powf(var @base, Number.Integer { EInteger: var e }) && e.CompareTo(EInteger.FromInt32(2)) >= 0 && e.CanFitInInt32())
+                {
+                    trinomial = @base;
+                    power = e.ToInt32Unchecked();
+                }
+                else
+                    return null;
+            }
+            if (trinomial is null || power > MaximumPowerOfABinomial
+                || !TreeAnalyzer.TryGetPolynomial(trinomial, x, out var below) || below.Count != 3
+                || below.Keys.Any(degree => !degree.CanFitInInt32()) || below.Values.Any(coefficient => coefficient.ContainsNode(x))
+                || !TreeAnalyzer.TryGetPolynomial(numerator, x, out var above)
+                || above.Keys.Any(degree => degree.Sign < 0 || !degree.CanFitInInt32())
+                || above.Values.Any(coefficient => coefficient.ContainsNode(x)))
+                return null;
+            var degrees = below.Keys.Select(degree => degree.ToInt32Unchecked()).OrderBy(degree => degree).ToArray();
+            var n = degrees[1];
+            if (degrees[0] != 0 || n < 2 || degrees[2] != 2 * n)
+                return null;
+            var (a, b, c) = (below[EInteger.Zero], below[EInteger.FromInt32(n)], below[EInteger.FromInt32(2 * n)]);
+            var discriminant = 4 * a * c - b * b;
+            if (VanishesIdentically(a) || VanishesIdentically(c) || VanishesIdentically(b) || VanishesIdentically(discriminant))
+                return null;
+
+            // Each monomial down the powers: the algebraic part over T^(j - 1) gathered by j, and
+            // what is left at the first power gathered by the monomial's degree.
+            var overPowers = new Dictionary<int, Entity>();
+            var atThisPower = new Dictionary<int, Entity>();
+            foreach (var pair in above)
+                atThisPower[pair.Key.ToInt32Unchecked()] = pair.Value;
+            for (var j = power; j >= 2; j--)
+            {
+                var p = -j;
+                var over = a * n * (p + 1) * discriminant;
+                var beta0 = Functions.PartialFractions.InLowestTermsOverTheSymbols((b * b - 2 * a * c) / over);
+                var beta1 = Functions.PartialFractions.InLowestTermsOverTheSymbols(b * c / over);
+                var atTheNext = new Dictionary<int, Entity>();
+                foreach (var pair in atThisPower)
+                {
+                    var (m, coefficient) = (pair.Key, pair.Value);
+                    if (VanishesIdentically(coefficient))
+                        continue;
+                    var term = Functions.PartialFractions.InLowestTermsOverTheSymbols(coefficient * beta0) * MathS.Pow(x, m + 1)
+                        + Functions.PartialFractions.InLowestTermsOverTheSymbols(coefficient * beta1) * MathS.Pow(x, m + 1 + n);
+                    overPowers[j - 1] = overPowers.TryGetValue(j - 1, out var so) ? so + term : term;
+                    var delta0 = -((2 * a * c - b * b) * (m + 1) + n * (p + 1) * discriminant) / over;
+                    var delta1 = b * c * (m + 2 * n * p + 3 * n + 1) / over;
+                    foreach (var (degree, times) in new[] { (m, delta0), (m + n, delta1) })
+                    {
+                        var next = Functions.PartialFractions.InLowestTermsOverTheSymbols(-coefficient * times);
+                        atTheNext[degree] = atTheNext.TryGetValue(degree, out var already)
+                            ? Functions.PartialFractions.InLowestTermsOverTheSymbols(already + next) : next;
+                    }
+                }
+                atThisPower = atTheNext;
+            }
+
+            Entity answer = Number.Integer.Zero;
+            foreach (var pair in overPowers.OrderByDescending(pair => pair.Key))
+                answer = answer + pair.Value / (pair.Key == 1 ? trinomial : MathS.Pow(trinomial, pair.Key));
+            Entity rest = Number.Integer.Zero;
+            foreach (var pair in atThisPower.OrderBy(pair => pair.Key))
+                if (!VanishesIdentically(pair.Value))
+                    rest = rest + pair.Value * (pair.Key == 0 ? Number.Integer.One : pair.Key == 1 ? x : MathS.Pow(x, pair.Key));
+            if (rest != Number.Integer.Zero)
+            {
+                if (Integration.ComputeIndefiniteIntegral(rest / trinomial, x, integrateByParts) is not { } overTheTrinomial)
+                    return null;
+                answer = answer + overTheTrinomial;
+            }
+            return (constant == Number.Integer.One ? answer : answer / constant).InnerSimplified;
+        }
 
         /// <summary>
         /// A polynomial over a binomial <c>a x^n + b</c>, <c>n >= 3</c>, decomposed at the
