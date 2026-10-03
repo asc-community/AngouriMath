@@ -326,6 +326,21 @@ improper fraction is declined before the first division rather than after the la
 | `"(1 - b*x^2)^3/(c*(1 - b*x^2) + a*d*x^2)^3".ToEntity().Integrate("x")` | no answer within a minute | the antiderivative |
 | `"(a + b*x)^(5/2)/(c + d*x)^4".ToEntity().Integrate("x")` | `integral(...)` | the antiderivative |
 
+### The Hermite reduction's system is solved in one order whatever the spelling
+
+**Faster, and not a different value.** The reduction of a rational integrand with a repeated factor
+below the bar solves one linear system for the rational part, and took its rows in the order the
+powers of `x` were met, which follows how the factors are written. With symbols in the coefficients
+the elimination's pivots followed that order, and in one order the solution came out as quotients of
+polynomials of the thirty-sixth degree in the symbols that nothing reduced:
+`x/((1 + x^2)^3 (2 a x + b (x^2 + 1)))` took 42 s, and with `(x^2 + 1)^3` below the bar 1 s. The rows
+are ordered by their power of `x` now. Where the order mattered, the antiderivative's coefficients can
+come out reduced where they were not.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x/((1 + x^2)^3*(2*a*x + b*(x^2 + 1)))".ToEntity().Integrate("x")` | `integral(...)` | the antiderivative, in about half a second, as with `(x^2 + 1)^3` |
+
 ### A symbolic parameter no longer stops a rational integrand being integrated
 
 `1/(8 + x^3)` and `1/(16 - x^4)` are answered at once. `1/(a^3 + x^3)` and `1/(a^4 - x^4)` were not,
