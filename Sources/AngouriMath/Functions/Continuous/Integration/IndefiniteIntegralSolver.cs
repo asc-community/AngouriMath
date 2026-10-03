@@ -7094,10 +7094,18 @@ namespace AngouriMath.Functions.Algebra
                     return node;
                 rewrote = true;
                 // The tangent's as two powers, `(1 + i L)^n (1 + L^2)^(-n/2)`, which the
-                // radical rules read where a power of the quotient is one node to them.
+                // radical rules read where a power of the quotient is one node to them; for an
+                // n that is not whole, as the power of the quotient,
+                // `((1 + i L)/(1 - i L))^(n/2)`, the same on the principal branch for a real L --
+                // the quotient is `e^(2 i arctan(L))` and `2 arctan(L)` is its principal
+                // argument -- and one power of a quotient of linears, which the substitution
+                // for it reads, where `(1 + i a x)^(3/2) (1 + a^2 x^2)^(-3/4)` is two radicals
+                // of different orders that nothing reads.
                 if (inverse is Arctanf)
                 {
                     var halfPower = Number.Rational.Create(n.ERational.Negate().Divide(2));
+                    if (n is not Number.Integer)
+                        return MathS.Pow((1 + MathS.i * argument) / (1 - MathS.i * argument), Number.Rational.Create(n.ERational.Divide(2)));
                     return (n == Number.Integer.One ? 1 + MathS.i * argument : MathS.Pow(1 + MathS.i * argument, n)) * MathS.Pow(1 + MathS.Sqr(argument), halfPower);
                 }
                 Entity unit = inverse is Arcsinf

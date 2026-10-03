@@ -436,6 +436,21 @@ read them as nonzero. They are now decided over one bar, expanded, and at pinned
 | `"e^(3*acoth(a*x))/(c-a*c*x)^3".Integrate("x")`, and over `(c - a c x)^4` | left unevaluated | an antiderivative in `sqrt((a x + 1)/(a x - 1))` |
 | `"e^(2*acoth(a*x))*sqrt(c-a*c*x)/x".Integrate("x")`, and over `x^2` | left unevaluated | an antiderivative in `sqrt(c - a c x)`, by cases on the sign of `c` |
 
+### `e^(n i arctan(a x))` to a power that is not whole is integrated
+
+**Answers where there were none.** `e^(n i arctan(L))` is written algebraically, as
+`(1 + i L)^n (1 + L^2)^(-n/2)`, and for an `n` that is not whole those are two radicals of different
+orders that nothing reads: `x^2 e^(3/2 i arctan(a x))` was left unevaluated. For such an `n` it is
+written `((1 + i L)/(1 - i L))^(n/2)`, the same on the principal branch for a real `L`, one power of a
+quotient of linears, which the substitution for that reads. Rubi's 5.3.6
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(3/2*i*arctan(a*x))*x^2".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `((1 + i a x)/(1 - i a x))^(1/4)` |
+| `"x^3/e^(3/2*i*arctan(a*x))".ToEntity().Integrate("x")` | `integral(...)` | the same |
+| `"e^(1/3*i*arctan(x))*x".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `((1 + i x)/(1 - i x))^(1/6)` |
+
 ### `NaN` again, from an exponent that was read as written rather than as a number
 
 **A wrong answer, and a second one of the same kind.** `(a^2 + 2abx^2 + b^2x^4)^3/x^7` came back as
