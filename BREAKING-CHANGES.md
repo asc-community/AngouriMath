@@ -699,6 +699,35 @@ they are written ([#718](https://github.com/asc-community/AngouriMath/issues/718
 | `"1/((a + b*x^2)^(9/2)*(1 + x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same, in 1 s |
 | `"x^2/((a + b*x^2)^(7/2)*(c + d*x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same by the sign of `c (a d - b c)`, in 1 s |
 
+### A binomial differential with symbols in it, or a power of `x` that is not whole, is integrated
+
+**Answers where there were none.** Chebyshev's theorem says when `x^m (a + b x^n)^(p/q)` has an
+elementary antiderivative, and it is about the exponents only. The rule for it read whole `m` and
+`n` and rational numbers for `a` and `b`, and declined the rest. It reads rational `m` and `n` and
+anything free of `x` for `a` and `b` now, and a power of a multiple of `x`, `(c x)^(5/2)`, as
+`x^(5/2)` times `(c x)^(5/2)/x^(5/2)`, which is constant on either side of zero. Where `m + 1 +
+n (p/q + 1)` is zero the answer is the one product of powers it is. With a symbol in the
+coefficients the rule is asked after the rules for a root of a quadratic and for a rational
+function of `x^n` beside the root of its binomial, which answer what they share with it more
+shortly. Rubi's 1.1.2.2 and 1.1.3.2, `(c x)^m (a + b x^n)^p`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2/(a + b*x^4)^(3/4)".ToEntity().Integrate("x")` | `integral(...)` | logarithms and an arctangent of `(a + b x^4)^(1/4)/x` |
+| `"x^6*(a + b*x^4)^(1/4)".ToEntity().Integrate("x")` | `integral(...)` | the same, beside a rational function of it |
+| `"x^(7/3)*(a + b*x^2)^(1/3)".ToEntity().Integrate("x")` | `integral(...)` | a rational function, two logarithms and an arctangent of `(a + b x^2)^(1/3)/x^(2/3)`, written in `x^(1/3)` |
+| `"(c*x)^(5/2)/(a - b*x^2)^(3/4)".ToEntity().Integrate("x")` | `integral(...)` | `(c x)^(5/2)/x^(5/2)` times the same in `(a - b x^2)^(1/4)/x^(1/2)` |
+| `"(a - b*x^2)^(1/4)/(c*x)^(15/2)".ToEntity().Integrate("x")` | `integral(...)` | powers of `(a - b x^2)^(1/4)/(c x)^(1/2)` |
+
+Of Rubi's 3,163 problems in those two files with an answer in functions the library has, 96 more
+are answered than on the unreleased master, and none fewer. Nine that the unreleased master answered
+are written otherwise: a rule ahead of this one takes the integrand apart and asks a sub-integral
+that this one answers now, so the rule ahead finishes where it used to decline. Four of the nine come
+out shorter and five longer -- `1/((c x)^(5/3) (a + b x^2)^(2/3))` was
+`-3/(2 a) x (c x)^(-5/3) (a + b x^2)^(1/3)` there, and is the same function written in `x^(1/3)`.
+2.5.0 declined all nine.
+
 ### A power of a multiple of a quadratic's derivative beside a power of the quadratic is a binomial
 
 **Improvement, not silent.** `(b d + 2 c d x)^m (a + b x + c x^2)^p`, with a power that is not whole,
