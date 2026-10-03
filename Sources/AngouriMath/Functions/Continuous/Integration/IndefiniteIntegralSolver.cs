@@ -23101,6 +23101,17 @@ namespace AngouriMath.Functions.Algebra
             return false;
         }
 
+        /// <summary>
+        /// Whether every function of <paramref name="u"/> in <paramref name="expr"/> is its tangent
+        /// or its cotangent: sums, products, quotients and powers of those, and of anything free of
+        /// <paramref name="u"/>.
+        /// </summary>
+        private static bool IsAFunctionOfTheTangentAlone(Entity expr, Entity.Variable u)
+            => expr.Nodes.All(node => node is Sumf or Minusf or Mulf or Divf or Powf or Number or Variable
+                || !node.ContainsNode(u)
+                || node is Tanf(var argument) && argument == u
+                || node is Cotanf(var cotangentArgument) && cotangentArgument == u);
+
         internal static Entity? SolveBySubstitution(Entity expr, Entity.Variable x, bool integrateByParts = true)
         {
             // A rational function over written linear factors with symbols in their
@@ -23253,13 +23264,17 @@ namespace AngouriMath.Functions.Algebra
                         ? WithThePowersOfXCollected(Functions.SingleQuotient.Combine(expr / duDx), x)
                         : source / duDx;
                     // Under a linear candidate the quotient is the integrand with its argument
-                    // renamed, over a constant, and there is nothing in it for the simplifier to
-                    // find: `(a + b tan(e + f x))(A + B tan(e + f x) + C tan(e + f x)^2)/(c + d tan(e + f x))^2`
+                    // renamed, over a constant, and where it is a function of the tangent alone
+                    // there is nothing in it for the simplifier to find:
+                    // `(a + b tan(e + f x))(A + B tan(e + f x) + C tan(e + f x)^2)/(c + d tan(e + f x))^2`
                     // under `u = e + f x` spent 28 of its 32 s being simplified, nine symbols and
-                    // nothing to cancel.
+                    // nothing to cancel. Only there: beside a sine, a secant, a logarithm or the
+                    // imaginary unit the simplified form is what the rules after this read, and
+                    // `cot(c + d x)^8/(a + a sin(c + d x))` went from one second to seventy without it.
                     var inTermsOfU = InTermsOf(quotient, u, uSub, x);
                     integrandInU = !inTermsOfU.ContainsNode(x)
                         && TreeAnalyzer.TryGetPolyLinear(u, x, out var slope, out var offset) && !slope.ContainsNode(x) && !offset.ContainsNode(x)
+                        && IsAFunctionOfTheTangentAlone(inTermsOfU, uSub) && !HoldsTheImaginaryUnit(inTermsOfU)
                         ? Functions.PartialFractions.Bare(inTermsOfU.InnerSimplified)
                         : SimplifiedWithoutTheImaginaryUnit(inTermsOfU, expr);
                     // A factor written on both sides of the bar cancelled, where x survived:

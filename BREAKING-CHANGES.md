@@ -656,8 +656,9 @@ taken apart into pieces each closed the same way
 **Answers where there were none.** The substitution search reaches `tan(g + h x)` through `u = g + h x`,
 and simplified the quotient of the integrand by `h` in `u` before asking for its integral: with the
 nine symbols of Rubi's 4.3.4.2 in it that took most of a minute, for an expression that is the
-integrand with its argument renamed and holds nothing to simplify. Under a linear candidate the
-quotient is handed on as it is
+integrand with its argument renamed and holds nothing to simplify. Under a linear candidate, where
+the integrand in `u` is a function of the tangent alone and holds no imaginary unit, the quotient
+is handed on as it is
 ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 
 | Input | Was (2.5.0) | Now |
