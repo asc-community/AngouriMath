@@ -611,6 +611,11 @@ namespace AngouriMath.Functions.Algebra
             // the question asked only, and the polynomial term below writes `1/u` as `u^(-1)` and
             // asks that a level down: `1/(e^atanh(a x) (c - c/(a x))^(3/2))` reached it nowhere.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingEachLinearOnce(expr, x, integrateByParts)) is { }) return answer;
+            // A linear under a power inside a sum, written as the variable: `x^3/(a + b (c + d x)^3)`.
+            // Before the polynomial term, which takes the leading coefficient out of a power of
+            // the sum and writes what is left out in powers of x, where the linear is gone; and
+            // before the substitution search, which reads one function at a time.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingAFunctionOfOneShiftedLinear(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x, integrateByParts)) is { }) return answer;
             // A product of powers of the variable with a power of a constant multiple of it
             // among them, `(c x)^m x^n`, by the power rule with the written power kept as
@@ -665,6 +670,9 @@ namespace AngouriMath.Functions.Algebra
             // And any power of a square in any power of x, as the power of its root times a factor
             // constant where the root is not zero: `x^2 (a^2 + 2 a b x^3 + b^2 x^6)^p`.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAPowerOfASquareAsAPowerOfItsRoot(expr, x, integrateByParts)) is { }) return answer;
+            // And a fractional power of a sum whose every term has x in it, the power of x taken out
+            // with the factor that is constant where it is not zero: `1/sqrt(a x^2 + b x^5)`.
+            if ((answer = IndefiniteIntegralSolver.SolveByTakingAPowerOfXOutOfAFractionalPower(expr, x, integrateByParts)) is { }) return answer;
             // A power of a multiple of a quadratic's derivative beside a power of the quadratic is
             // a binomial in the derivative: `(b d + 2 c d x)^m (a + b x + c x^2)^p`.
             if ((answer = IndefiniteIntegralSolver.SolveByTheDerivativeOfAQuadraticAsTheVariable(expr, x, integrateByParts)) is { }) return answer;
@@ -975,6 +983,9 @@ namespace AngouriMath.Functions.Algebra
             // `a + b x^n`. After the quadratic, which is the case `n = 2` and answers it through
             // the trigonometric substitution -- a shorter answer than a root of a root.
             if ((answer = IndefiniteIntegralSolver.SolveABinomialDifferential(expr, x)) is { }) return answer;
+            // And a root of a quadratic binomial beside another at the ratios where the integral is
+            // elementary: `1/((1 - x^2)^(1/3) (3 + x^2))`, which is no binomial differential.
+            if ((answer = IndefiniteIntegralSolver.SolveAnEllipticLookingQuotientOfBinomials(expr, x)) is { }) return answer;
             // A rational function of x^n beside `(c + d x^n)^(k - 1/n)`, rationalised by
             // `u = x/(c + d x^n)^(1/n)`: Timofeev's `1/((1 + x^4)(2 + x^4)^(1/4))` is `1/(1 + u^4)`.
             if ((answer = IndefiniteIntegralSolver.SolveByDividingByTheRoot(expr, x)) is { }) return answer;
