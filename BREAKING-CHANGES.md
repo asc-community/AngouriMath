@@ -411,6 +411,23 @@ antiderivative on each side of it, as Rubi's is
 | `"1/((2 + 3*x^2)^(1/4)*(4 + 3*x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same in `(2 + 3 x^2)^(1/4)` |
 | `"1/((-2 + 3*x^2)*(-1 + 3*x^2)^(1/4))".ToEntity().Integrate("x")` | `integral(...)` | `-(arctan(u) + artanh(u))/(2 sqrt(6))`, `u = sqrt(3) x/(sqrt(2) (-1 + 3 x^2)^(1/4))` |
 
+### The third case of a binomial differential is right for a negative `x` too
+
+**Answers where there were none.** Chebyshev's third case, `x^m (a + b x^n)^(p/q)` with
+`(m + 1)/n + p/q` whole, is integrated under `x = 1/y`, and came in after 2.5.0, which declined these.
+On the unreleased master it wrote its root back as `(b + a/x^n)^(1/q)`, which is that root for a
+positive `x`, and for a negative one only when `q` is odd: `1/(1 + x^4)^(5/4)` came out as
+`1/(1 + 1/x^4)^(1/4)`, an even function, whose derivative is the integrand's negative for every
+negative `x`. The root is written
+back as `(a + b x^n)^(1/q)/x^(n/q)` now, which has the same `q`-th power everywhere, and the answers
+are right on both sides of zero ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(1 + x^4)^(5/4)".ToEntity().Integrate("x")` | `integral(...)` | `1 / ((1 + x ^ 4) ^ (1/4) / x)`, which is `x/(1 + x^4)^(1/4)` |
+| `"x^2/(1 + x^4)^(3/4)".ToEntity().Integrate("x")` | `integral(...)` | logarithms and an arctangent of `(1 + x^4)^(1/4)/x` |
+| `"x^6*(3 + 4*x^4)^(1/4)".ToEntity().Integrate("x")` | `integral(...)` | the same in `(3 + 4 x^4)^(1/4)/x` |
+
 ### A rational function of the sine and cosine with symbols in it is integrated by the half angle
 
 `sin(x)^2/(a + b cos(x))` was left unevaluated while `sin(x)^2/(2 + 3 cos(x))` was answered. Under

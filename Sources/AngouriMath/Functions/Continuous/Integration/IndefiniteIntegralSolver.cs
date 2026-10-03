@@ -4470,7 +4470,13 @@ namespace AngouriMath.Functions.Algebra
         /// <c>x = 1/y</c> turns <c>x^m (a + b x^n)^(p/q) dx</c> into
         /// <c>-y^m' (b + a y^n)^(p/q) dy</c> with <c>m' = -m - 2 - n p/q</c>, a whole number, and
         /// <c>(m' + 1)/n = -(s + p/q)</c>, whole — so it is the second case in <c>y</c>, with the
-        /// roles of <c>a</c> and <c>b</c> exchanged, and <c>y = 1/x</c> put back afterwards.
+        /// roles of <c>a</c> and <c>b</c> exchanged. Its <c>u</c>, whose <c>q</c>-th power is
+        /// <c>b + a/x^n</c>, is put back as <c>(a + b x^n)^(1/q)/x^(n/q)</c>, which has that power
+        /// at every <c>x</c>. <c>(b + a/x^n)^(1/q)</c> is the same number for a positive <c>x</c>,
+        /// and for a negative one only under an odd root, which is real here:
+        /// <c>1/(1 + x^4)^(5/4)</c> came out as <c>1/(1 + 1/x^4)^(1/4)</c>, an even function
+        /// whose derivative is the integrand's negative for every negative <c>x</c>, where
+        /// <c>x/(1 + x^4)^(1/4)</c> is right on the whole line.
         /// <c>x^6 (3 + 4x^4)^(1/4)</c> and <c>(x^3 - 1)/(2 + x^3)^(1/3)</c> are this. Chebyshev
         /// proved there is no fourth case: outside these the integrand has no elementary
         /// antiderivative at all, which is worth knowing before anyone goes looking.
@@ -4490,11 +4496,15 @@ namespace AngouriMath.Functions.Algebra
             if (!TryReadABinomialDifferential(expr, x, out var power, out var exponent,
                     out var inner, out var free, out var leading, out var factor))
                 return null;
+            var u = Variable.CreateUnique(expr, "u_binom");
+            var bracket = (Number.Rational.Create(free)
+                           + Number.Rational.Create(leading) * MathS.Pow(x, Number.Integer.Create(inner))).InnerSimplified;
+            var root = MathS.Pow(bracket, Number.Rational.Create(EInteger.One, exponent.Denominator));
 
             // The second case: s = (m + 1)/n whole.
             if ((power + 1) % inner == 0)
                 return IntegrateABinomialDifferentialInTheSecondCase(
-                    power, inner, exponent, free, leading, x, factor);
+                    power, inner, exponent, free, leading, u, root, factor);
 
             // The third: s + p/q whole, taken to the second by x = 1/y.
             var sPlusP = ERational.Create(power + 1, inner).Add(exponent);
@@ -4504,21 +4514,23 @@ namespace AngouriMath.Functions.Algebra
             if (!nTimesP.IsInteger() || !nTimesP.Numerator.CanFitInInt32())
                 return null;
             var reflectedPower = -power - 2 - nTimesP.ToLowestTerms().Numerator.ToInt32Unchecked();
-            var y = Variable.CreateUnique(expr, "y_binom");
+            var back = root / MathS.Pow(x, Number.Rational.Create(ERational.Create(EInteger.FromInt32(inner), exponent.Denominator)));
             if (IntegrateABinomialDifferentialInTheSecondCase(
-                    reflectedPower, inner, exponent, leading, free, y, Number.Integer.MinusOne) is not { } inY)
+                    reflectedPower, inner, exponent, leading, free, u, back, Number.Integer.MinusOne) is not { } reflected)
                 return null;
-            return (factor * inY.Substitute(y, 1 / x)).InnerSimplified;
+            return (factor * reflected).InnerSimplified;
         }
 
         /// <summary>
-        /// <c>int factor * v^m (a + b v^n)^(p/q) dv</c> with <c>(m + 1)/n</c> whole: a polynomial
-        /// in <c>u = (a + b v^n)^(1/q)</c> expanded term by term for <c>s >= 1</c>, and a rational
-        /// function of <c>u</c> handed to the rational integrator for <c>s &lt;= 0</c>.
+        /// <c>int factor * v^m (a + b v^n)^(p/q) dv</c> with <c>(m + 1)/n</c> whole, in
+        /// <paramref name="u"/> and then written as <paramref name="back"/>, anything whose
+        /// <c>q</c>-th power is <c>a + b v^n</c>: a polynomial in <c>u</c> expanded term by term for
+        /// <c>s >= 1</c>, and a rational function of <c>u</c> handed to the rational integrator for
+        /// <c>s &lt;= 0</c>.
         /// </summary>
         private static Entity? IntegrateABinomialDifferentialInTheSecondCase(
             int power, int inner, ERational exponent, ERational free, ERational leading,
-            Entity.Variable v, Entity factor)
+            Entity.Variable u, Entity back, Entity factor)
         {
             if ((power + 1) % inner != 0)
                 return null;
@@ -4527,11 +4539,8 @@ namespace AngouriMath.Functions.Algebra
             var p = exponent.Numerator.ToInt32Checked();
             var a = Number.Rational.Create(free);
             var b = Number.Rational.Create(leading);
-            var u = Variable.CreateUnique(v + factor, "u_binom");
             var outside = Number.Integer.Create(q)
                         / (Number.Integer.Create(inner) * MathS.Pow(b, Number.Integer.Create(s)));
-            var bracket = (a + b * MathS.Pow(v, Number.Integer.Create(inner))).InnerSimplified;
-            var back = MathS.Pow(bracket, Number.Rational.Create(EInteger.One, exponent.Denominator));
 
             if (s < 1)
             {
