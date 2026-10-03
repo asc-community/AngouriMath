@@ -405,6 +405,20 @@ leading coefficient once expanded, and declined: it is read expanded and bare no
 | `"sin(x)/(a+b*sin(x))^3".Integrate("x")`, Rubi's 4.1.2.1 row 242 | `integral(...)` | the antiderivative |
 | `"4*x*(1+x^2)/(a*x^2+2*b*x+a)^3".Integrate("x")` | `integral(...)` | the antiderivative |
 
+### `x^2` over a three-quarter power of a quadratic binomial beside another is integrated where that is elementary
+
+**Answers where there were none.** `x^2/((A + B x^2)^(3/4) (C + D x^2))` at `B C - 2 A D = 0`, Rubi's
+1.1.2.4, is the difference of the two functions whose sum answers `1/((A + B x^2)^(1/4) (C + D x^2))`
+at that ratio (the entry below), with another constant, and was declined. It is answered by the
+signs of `A` and `B` now, each form checked at points in its sign case
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2/((a - b*x^2)^(3/4)*(2*a - b*x^2))".ToEntity().Integrate("x")` | `integral(...)` | an arctangent and an inverse hyperbolic tangent, by the signs of `a` and `b` |
+| `"x^2/((-2 + 3*x^2)*(-1 + 3*x^2)^(3/4))".ToEntity().Integrate("x")` | `integral(...)` | `(arctan(u) - artanh(u))/(3 sqrt(6))`, `u = sqrt(3) x/(sqrt(2) (-1 + 3 x^2)^(1/4))` |
+| `"x^2/((2 - 3*x^2)^(3/4)*(4 - 3*x^2))".ToEntity().Integrate("x")` | `integral(...)` | an arctangent and an inverse hyperbolic tangent |
+
 ### A cube or fourth root of a quadratic binomial beside another is integrated where that is elementary
 
 **Answers where there were none.** `1/((A + B x^2)^(1/3) (C + D x^2))` is an elliptic integral

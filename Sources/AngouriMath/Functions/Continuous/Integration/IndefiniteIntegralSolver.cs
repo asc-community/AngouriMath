@@ -4343,13 +4343,33 @@ namespace AngouriMath.Functions.Algebra
         /// it holds.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </para>
+        /// <para>
+        /// <c>x^2/((A + B x^2)^(3/4) (C + D x^2))</c> at the same ratio is the same two functions'
+        /// difference where the quarter power is their sum, with another constant -- Rubi's
+        /// 1.1.2.4, <c>x^2/((a - b x^2)^(3/4) (2 a - b x^2))</c>, which was declined:
+        /// <code>
+        /// A &gt; 0, B &gt; 0:  -(atan(A^(3/4) (1 + s/sqrt(A))/(x y r)) - artanh(A^(3/4) (1 - s/sqrt(A))/(x y r)))/(A^(1/4) r^3)
+        /// A &gt; 0, B &lt; 0:   (atan(A^(3/4) (1 - s/sqrt(A))/(x y r)) - artanh(A^(3/4) (1 + s/sqrt(A))/(x y r)))/(A^(1/4) r^3)
+        /// A &lt; 0:           (atan(u) - artanh(u))/((-A)^(1/4) sqrt(2) r^3)
+        /// </code>
+        /// each times <c>B/D</c> as before, the constants solved for from the two functions'
+        /// derivatives and checked at points in every sign case.
+        /// </para>
         /// </remarks>
         internal static Entity? SolveAnEllipticLookingQuotientOfBinomials(Entity expr, Entity.Variable x)
         {
             var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
-            if (numerator.ContainsNode(x))
-                return null;
+            // Or c x^2 above, beside a three-quarter power below.
+            var squareAbove = false;
             Entity constant = numerator;
+            if (numerator.ContainsNode(x))
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var above) || above.Count != 1
+                    || !above.TryGetValue(EInteger.FromInt32(2), out var squared) || squared.ContainsNode(x))
+                    return null;
+                squareAbove = true;
+                constant = squared;
+            }
             Entity? radicand = null;
             var order = 0;
             Entity? other = null;
@@ -4357,8 +4377,11 @@ namespace AngouriMath.Functions.Algebra
             {
                 if (!factor.ContainsNode(x))
                     constant = constant / factor;
-                else if (radicand is null && factor is Powf(var @base, Number.Rational power) && power.ERational.Numerator.Equals(EInteger.One)
-                    && (power.ERational.Denominator.Equals(EInteger.FromInt32(3)) || power.ERational.Denominator.Equals(EInteger.FromInt32(4))))
+                else if (radicand is null && factor is Powf(var @base, Number.Rational power)
+                    && (squareAbove
+                        ? power.ERational.Equals(ERational.Create(3, 4))
+                        : power.ERational.Numerator.Equals(EInteger.One)
+                          && (power.ERational.Denominator.Equals(EInteger.FromInt32(3)) || power.ERational.Denominator.Equals(EInteger.FromInt32(4)))))
                 {
                     radicand = @base;
                     order = power.ERational.Denominator.ToInt32Unchecked();
@@ -4398,7 +4421,34 @@ namespace AngouriMath.Functions.Algebra
                 var ratio = LowestOverTheSymbols(B / A);
                 answer = BySign(ratio, Positive(MathS.Sqrt(ratio)), Negative(MathS.Sqrt(LowestOverTheSymbols(-ratio))));
             }
-            else if (order == 4 && VanishesIdentically(B * C - 2 * A * D))
+            else if (order == 4 && squareAbove && VanishesIdentically(B * C - 2 * A * D))
+            {
+                var s = MathS.Sqrt(radicand);
+                var threeQuarters = Number.Rational.Create(3, 4);
+                var quarter = Number.Rational.Create(1, 4);
+                Entity BothPositive()
+                {
+                    var r = MathS.Sqrt(B);
+                    return -(MathS.Arctan(MathS.Pow(A, threeQuarters) * (1 + s / MathS.Sqrt(A)) / (x * y * r))
+                        - MathS.Hyperbolic.Artanh(MathS.Pow(A, threeQuarters) * (1 - s / MathS.Sqrt(A)) / (x * y * r))) / (MathS.Pow(A, quarter) * MathS.Pow(r, 3));
+                }
+                Entity SlopeNegative()
+                {
+                    var r = MathS.Sqrt(-B);
+                    return (MathS.Arctan(MathS.Pow(A, threeQuarters) * (1 - s / MathS.Sqrt(A)) / (x * y * r))
+                        - MathS.Hyperbolic.Artanh(MathS.Pow(A, threeQuarters) * (1 + s / MathS.Sqrt(A)) / (x * y * r))) / (MathS.Pow(A, quarter) * MathS.Pow(r, 3));
+                }
+                Entity ConstantNegative()
+                {
+                    var r = MathS.Sqrt(B);
+                    var u = x * r / (MathS.Pow(-A, quarter) * y * MathS.Sqrt(2));
+                    return (MathS.Arctan(u) - MathS.Hyperbolic.Artanh(u)) / (MathS.Pow(-A, quarter) * MathS.Sqrt(2) * MathS.Pow(r, 3));
+                }
+                var toTheRatio = LowestOverTheSymbols(B / D);
+                var form = BySigns(A, B, BothPositive(), SlopeNegative(), ConstantNegative());
+                answer = toTheRatio == Number.Integer.One ? form : toTheRatio * form;
+            }
+            else if (order == 4 && !squareAbove && VanishesIdentically(B * C - 2 * A * D))
             {
                 var s = MathS.Sqrt(radicand);
                 var threeQuarters = Number.Rational.Create(3, 4);
