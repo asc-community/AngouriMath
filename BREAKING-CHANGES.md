@@ -359,6 +359,27 @@ leading coefficient once expanded, and declined: it is read expanded and bare no
 | `"sin(x)/(a+b*sin(x))^3".Integrate("x")`, Rubi's 4.1.2.1 row 242 | `integral(...)` | the antiderivative |
 | `"4*x*(1+x^2)/(a*x^2+2*b*x+a)^3".Integrate("x")` | `integral(...)` | the antiderivative |
 
+### A cube or fourth root of a quadratic binomial beside another is integrated where that is elementary
+
+**Answers where there were none.** `1/((A + B x^2)^(1/3) (C + D x^2))` is an elliptic integral
+except where `B C + 3 A D = 0` or `B C - 9 A D = 0`, and `1/((A + B x^2)^(1/4) (C + D x^2))` except
+where `B C - 2 A D = 0`. At those ratios it is arctangents and logarithms of quotients in the root,
+as Rubi's 1.1.2.3 gives them, and it was left unevaluated. It is answered there now, with symbols
+in the constants too: by the sign of `B/A` for the cube root, and by the signs of `A` and `B` for
+the fourth. With `A` and `B` both positive, the fourth root's answer jumps at `x = 0`, and is an
+antiderivative on each side of it, as Rubi's is
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((1 - x^2)^(1/3)*(3 + x^2))".ToEntity().Integrate("x")` | `integral(...)` | arctangents and logarithms in `x` and `(1 - x^2)^(1/3)` |
+| `"1/((1 + x^2)^(1/3)*(9 + x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same in `(1 + x^2)^(1/3)` |
+| `"1/((a + b*x^2)^(1/3)*(3*a - b*x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same in `(a + b x^2)^(1/3)`, by the sign of `b/a` |
+| `"1/((a + b*x^2)^(1/3)*(9*a + b*x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same, by the sign of `b/a` |
+| `"1/((a + b*x^2)^(1/4)*(2*a + b*x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same in `(a + b x^2)^(1/4)`, by the signs of `a` and `b` |
+| `"1/((2 + 3*x^2)^(1/4)*(4 + 3*x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same in `(2 + 3 x^2)^(1/4)` |
+| `"1/((-2 + 3*x^2)*(-1 + 3*x^2)^(1/4))".ToEntity().Integrate("x")` | `integral(...)` | `-(arctan(u) + artanh(u))/(2 sqrt(6))`, `u = sqrt(3) x/(sqrt(2) (-1 + 3 x^2)^(1/4))` |
+
 ### A rational function of the sine and cosine with symbols in it is integrated by the half angle
 
 `sin(x)^2/(a + b cos(x))` was left unevaluated while `sin(x)^2/(2 + 3 cos(x))` was answered. Under
