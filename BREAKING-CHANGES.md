@@ -232,6 +232,20 @@ Rubi's `x^m (a + b x^n)^p` and `(a + b x^n)^p (c + d x^n)^q`
 | `"1/(2+3/x^2)^3".Integrate("x")`, `1/(a + b/x^3)` | left unevaluated | an antiderivative |
 | `"(a+b*x^n)*(c+d*x^n)^3".Integrate("x")` | left unevaluated | written out, eight powers of `x` integrated: `a c^3 x + ... + b d^3 x^(4 n + 1)/(4 n + 1)` |
 
+### A polynomial with symbols in it that is a binomial or an even quartic in a shifted variable is integrated in it
+
+**Answers where there were none.** `1/(c^2 x^3 + 3 b c x^2 + 3 b^2 x + 3 a b)` was left unevaluated,
+although its denominator is `((c x + b)^3 + 3 a b c - b^3)/c`, which the rule for a binomial reads at
+once: nothing factors a polynomial with a symbol among its coefficients. A polynomial below the bar
+of the third to the sixth degree, with a symbol in it, that written in `y = x + s` with
+`s = a_(n-1)/(n a_n)` is a binomial, or a quartic even in `y`, is integrated in `y`. Rubi's 1.3.1
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(3*a*b + 3*b^2*x + 3*b*c*x^2 + c^2*x^3)".ToEntity().Integrate("x")`, and its square | `integral(...)` | two logarithms and an arctangent in `x + b/c` |
+| `"x/(a + 8*x - 8*x^2 + 4*x^3 - x^4)".ToEntity().Integrate("x")`, and `1` over it | `integral(...)` | the antiderivative in `x - 1` |
+
 ### The hyperbolic functions have antiderivatives, and so does anything rational in `e^(k x)`
 
 An integrand rational in `e^(k x)` becomes a rational function of one variable under
@@ -2404,6 +2418,27 @@ rule answers, where the imaginary unit in the coefficient is read by nothing els
 | `"x*e^(2*x)*cos(3*x+1)".Integrate("x")` | left unevaluated | the antiderivative |
 | `"x/(2+2*i*tan(x))".Integrate("x")` | left unevaluated | the antiderivative |
 | `"(c+d*x)/(a+i*a*tan(pe+f*x))".Integrate("x")` | left unevaluated | the antiderivative |
+
+### A tangent above an imaginary tangent below is written in sines and cosines, and those as exponentials
+
+**Answers where there were none.** `tan(c + d x)/(a + i a tan(c + d x))` ran past the corpus's budget
+and `1/(a + i a tan(c + d x))` was declined. With `A + i A tan(z)` below the bar written as
+`A e^(i z)/cos(z)`, a tangent of `z` above it stayed one, so `tan(z) cos(z)` was handed on as
+written, and with `z = c + d x` the phase was expanded into `sin(c)` and `cos(c)` beside `d x`. The
+tangent or cotangent above is written in sines and cosines now, what the identity puts below
+cancels against it, and the sines and cosines of `z` that are left are written as the exponentials
+they are, so that the whole is a rational function of `e^(i z)`. Only where nothing of `x` stands
+beside them but exponentials of linears and polynomials in `x`: `sec(z)^8/(a + i a tan(z))^4` and
+`sqrt(tan(z))/(a + i a tan(z))^(5/2)` are read through the tangent as before. Rubi's 4.3.2.1 and
+4.4.2.1 ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"tan(c+d*x)/(a+i*a*tan(c+d*x))".Integrate("x")` | `integral(...)` | `x` and `e^(-2 i (c + d x))`, over `a` |
+| `"1/(a+i*a*tan(c+d*x))".Integrate("x")` | `integral(...)` | the same |
+| `"tan(c+d*x)^3/(a+i*a*tan(c+d*x))^4".Integrate("x")` | `integral(...)` | `x` and powers of `e^(-2 i (c + d x))` |
+| `"cot(c+d*x)/(a+i*a*cot(c+d*x))".Integrate("x")` | `integral(...)` | `x` and `e^(2 i (c + d x))` |
+| `"tan(c+d*x)^2/(a+i*a*tan(c+d*x))".Integrate("x")` | `integral(...)` | a power of `e^(-i (c + d x))` and logarithms of `e^(+/-2 i (c + d x)) + 1` |
 
 ### A symbolic constant factor no longer stops the rounds of parts
 
