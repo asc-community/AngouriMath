@@ -465,6 +465,24 @@ interval between the poles of the tangent, as the substitution's are
 | `"(A + B*tan(x))/(a + i*a*tan(x))^2".ToEntity().Integrate("x")` | `integral(...)` | the same |
 | `"1/(a + i*a*tan(c + d*x))^3".ToEntity().Integrate("x")` | `integral(...)` | the same in `tan(c + d x)` |
 
+### An integrand with the imaginary unit in it is not simplified by the rule that scales the variable
+
+**Answers where there were none.** The rule that scales the variable by the integrand's one symbol
+simplified the scaled integrand three times, to separate the whole power of the scale it is
+homogeneous of. With the imaginary unit beside the symbol that search ran past any budget: on the
+unreleased master `((1 + i a x)/(1 - i a x))^(-5/4)/x^2` took more than two minutes to be declined,
+and the rules after this one never had their turn on integrands that it held up. Such an integrand is
+inner-simplified now, and declined in seconds where the parts do not separate
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sec(c + d*x)^3/(a + i*a*tan(c + d*x))".ToEntity().Integrate("x")` | `integral(...)` | logarithms of `tan((c + d x)/2) ± 1` and a quotient |
+| `"tan(c + d*x)^(8/3)/(a + i*a*tan(c + d*x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `tan(c + d x)^(1/3)` |
+| `"1/(a + b*csc(c + d*x)^2)^4".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative, by the signs of `a` and `b` |
+| `"x^4*e^(2*i*atan(a + b*x))".ToEntity().Integrate("x")` | `integral(...)` | a polynomial, logarithms and arctangents of `a + b x` |
+| `"sec(c + d*x)^2/(a + i*a*tan(c + d*x))".ToEntity().Integrate("x")` | `ln(i a d tan(c + d x) + a d)/(i a d)` | `ln(i tan(c + d x) + 1)/(i a d)`, the same up to a constant |
+
 ### `NaN` was returned as the antiderivative of something that has one
 
 **A wrong answer, not a missing one.** `1/(a*x^2)` came back as `NaN + C`, and `NaN` is this
