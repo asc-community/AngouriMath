@@ -2762,18 +2762,19 @@ measured on a build, `v2.5.0` against this change.
 | `"x^3*e^(2*x)/((x+1)*(x-2))".Integrate("x")` | `integral(x ^ 3 * e ^ (2 * x) / ((x + 1) * (x - 2)), x)` | `e ^ (2 * x) * (-1/4 + 1/2 * x) + e ^ (2 * x) / 2 + 1/3 * e ^ (-2) * Ei(2 * (x + 1)) + 8/3 * e ^ 4 * Ei(2 * (x - 2)) + C` |
 | `"x*sin(x)/((c+d*x)*(x-2))".Integrate("x")` | `integral(x * sin(x) / ((c + d * x) * (x - 2)), x)` | in `Si` and `Ci` of `(c + d x)/d` and `x - 2` |
 
-### An exponential or a hyperbolic function over a quadratic is split at the quadratic's roots
+### An exponential, hyperbolic or trigonometric function over a quadratic or a binomial is split at its roots
 
 **Answers where there were none.** `sin(c + d x)/(a + b x^2)` was answered, the rule for a sine or a
 cosine writing the quadratic as its leading coefficient times the linears of its two roots, and
 `cosh(c + d x)/(a + b x^2)` was declined, as was `e^x/(x^2 + x + 1)`: the rule for an exponential or
-`sinh` and `cosh` over several linears read linears only. It writes a quadratic the same way now.
-The roots are complex where the discriminant is negative, and the integrals at the two conjugate
-arguments add up to a real answer. An exponential that is not of a linear is not split:
+`sinh` and `cosh` over several linears read linears only. It writes a quadratic the same way now,
+and both rules write a binomial `a + b x^3` or `a + b x^4` as the linears of its roots,
+`(a/b)^(1/n)` times the n-th roots of -1. The roots are complex where the discriminant is negative,
+and the integrals at conjugate arguments add up to a real answer. An exponential that is not of a linear is not split:
 `sinh(sqrt((1 - a x)/(1 + a x)))/(1 - a^2 x^2)` is still answered whole, by its substitution. And
 both rules divided a numerator past the degree by the linears of the roots, which with a symbol in
 the quadratic left a remainder in the squares of its roots that nothing read: `x^2 sin(c + d x)/(a + b x^2)`
-was declined. They divide by the quadratic as it is written now. Rubi's 6.2.2,
+was declined. They divide by the denominator as it is written now. Rubi's 6.2.2,
 `(e x)^m (a + b x^n)^p cosh(c + d x)`, its 4.1.11, and exponentials in its 2.3
 ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 
@@ -2787,6 +2788,9 @@ was declined. They divide by the quadratic as it is written now. Rubi's 6.2.2,
 | `"e^(c + d*x)/(a + b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | `Ei` of `d (x -/+ sqrt(-4 a b)/(2 b))` |
 | `"e^x/(x^2 + x + 1)".ToEntity().Integrate("x")` | `integral(...)` | `Ei` of `x + (1 -/+ sqrt(-3))/2` |
 | `"x^2*sin(c + d*x)/(a + b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | `cos(d x)` and `sin(d x)`, and `Si` and `Ci` of `d (x -/+ sqrt(-4 a b)/(2 b))` |
+| `"sin(c + d*x)/(a + b*x^3)".ToEntity().Integrate("x")` | `integral(...)` | `Si` and `Ci` of `d` times `x` less each root of `a + b x^3` |
+| `"cosh(c + d*x)/(a + b*x^3)".ToEntity().Integrate("x")` | `integral(...)` | `Chi` and `Shi` the same |
+| `"e^x/(a + b*x^4)".ToEntity().Integrate("x")` | `integral(...)` | `Ei` of `x` less each root of `a + b x^4` |
 
 ### An inverse trigonometric function below the bar is integrated to the sine and cosine integrals
 

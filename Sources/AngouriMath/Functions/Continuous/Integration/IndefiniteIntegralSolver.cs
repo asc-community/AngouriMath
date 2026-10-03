@@ -4395,6 +4395,15 @@ namespace AngouriMath.Functions.Algebra
                     written *= MathS.Pow(Monic(leading, middle, last, x), -exponent);
                     continue;
                 }
+                // And a binomial past the quadratic the linears of its roots: `cosh(c + d x)/(a + b x^3)`.
+                if (exponent < 0 && TheRootsOfABinomial(@base, x) is { } binomial)
+                {
+                    constant /= MathS.Pow(binomial.Leading, -exponent);
+                    foreach (var root in binomial.Roots)
+                        AddALinear(LessTheRoot(root, x), -exponent);
+                    written *= MathS.Pow(binomial.Monic, -exponent);
+                    continue;
+                }
                 if (underneath)
                     return null;
                 if (factor.Nodes.Any(node => node is Powf(var b, var e) && !b.ContainsNode(x) && e.ContainsNode(x)))
@@ -5131,6 +5140,26 @@ namespace AngouriMath.Functions.Algebra
         private static Entity Monic(Entity leading, Entity middle, Entity last, Entity.Variable x) =>
             Functions.PartialFractions.Bare((MathS.Sqr(x) + middle / leading * x + last / leading).InnerSimplified);
 
+        // `a + b x^n` for an n of 3 or 4, as its leading coefficient, its n roots, and itself monic in
+        // the generic case. The roots are `(a/b)^(1/n)` times the n-th roots of -1, `e^(i pi (2k + 1)/n)`:
+        // only their n-th power is used, so they are the roots whichever branch the n-th root takes.
+        private static (Entity Leading, Entity[] Roots, Entity Monic)? TheRootsOfABinomial(Entity binomial, Entity.Variable x)
+        {
+            if (!TreeAnalyzer.TryGetPolynomial(binomial, x, out var terms) || terms.Count != 2
+                || !terms.TryGetValue(EInteger.Zero, out var free) || free.ContainsNode(x) || TreeAnalyzer.IsZero(free))
+                return null;
+            var top = terms.First(term => !term.Key.IsZero);
+            if (top.Value.ContainsNode(x) || TreeAnalyzer.IsZero(top.Value) || !top.Key.CanFitInInt32() || top.Key.ToInt32Checked() is not (3 or 4))
+                return null;
+            var n = top.Key.ToInt32Checked();
+            var scale = MathS.Pow(Functions.PartialFractions.InLowestTermsOverTheSymbols(free / top.Value), Number.Rational.Create(1, n));
+            Entity[] rootsOfMinusOne = n == 3
+                ? new Entity[] { -1, (1 + MathS.i * MathS.Sqrt(3)) / 2, (1 - MathS.i * MathS.Sqrt(3)) / 2 }
+                : new Entity[] { (1 + MathS.i) / MathS.Sqrt(2), (1 - MathS.i) / MathS.Sqrt(2), (-1 + MathS.i) / MathS.Sqrt(2), (-1 - MathS.i) / MathS.Sqrt(2) };
+            return (top.Value, rootsOfMinusOne.Select(root => (root * scale).InnerSimplified).ToArray(),
+                Functions.PartialFractions.Bare((MathS.Pow(x, n) + free / top.Value).InnerSimplified));
+        }
+
         /// <summary>
         /// <paramref name="numerator"/> over a denominator as terms each over one linear: the
         /// polynomial part first, divided by the denominator as it is <paramref name="written"/>,
@@ -5240,6 +5269,14 @@ namespace AngouriMath.Functions.Algebra
                         AddALinear(LessTheRoot(first, x), -exponent);
                         AddALinear(LessTheRoot(second, x), -exponent);
                         written *= MathS.Pow(Monic(leading, middle, last, x), -exponent);
+                    }
+                    // And a binomial past the quadratic the linears of its roots: `sin(c + d x)/(a + b x^3)`.
+                    else if (TheRootsOfABinomial(@base, x) is { } binomial)
+                    {
+                        constant /= MathS.Pow(binomial.Leading, -exponent);
+                        foreach (var root in binomial.Roots)
+                            AddALinear(LessTheRoot(root, x), -exponent);
+                        written *= MathS.Pow(binomial.Monic, -exponent);
                     }
                     else
                         return null;

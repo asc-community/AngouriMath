@@ -97,9 +97,10 @@ namespace AngouriMath.Tests.Calculus
         /// A quadratic below the bar is its leading coefficient times the linears of its two
         /// roots, complex where its discriminant is negative, and the sine and cosine integrals of
         /// the two conjugate arguments add up to a real answer. Rubi's 4.1.11 and 4.7.7,
-        /// <c>sin(c + d x)/(a + b x^2)</c> and <c>sin(a + b x)/(c + d x + e x^2)</c>. A numerator past
-        /// the degree is divided by the quadratic as it is written, since the remainder of a division
-        /// by the linears of symbolic roots was left in their squares.
+        /// <c>sin(c + d x)/(a + b x^2)</c> and <c>sin(a + b x)/(c + d x + e x^2)</c>, and a binomial past
+        /// it, <c>a + b x^3</c> or <c>a + b x^4</c>, the linears of its roots. A numerator past the degree
+        /// is divided by the denominator as it is written, since the remainder of a division by the
+        /// linears of symbolic roots was left in their powers.
         /// </summary>
         [Theory]
         [InlineData("sin(x)/(1 + x^2)")]
@@ -110,6 +111,11 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("sin(x)/(1 + x^2)^2")]
         [InlineData("x^2*sin(c + d*x)/(a + b*x^2)")]
         [InlineData("x^3*cos(c + d*x)/(a + b*x^2)")]
+        [InlineData("sin(c + d*x)/(a + b*x^3)")]
+        [InlineData("x^3*sin(c + d*x)/(a + b*x^3)")]
+        [InlineData("sin(c + d*x)/(a + b*x^3)^2")]
+        [InlineData("sin(x)/(1 + x^4)")]
+        [InlineData("x*sin(x)/(1 + x^3)")]
         public void OverAQuadratic(string integrand)
             => DifferentiatesBack(integrand, AroundZero, Pins);
 

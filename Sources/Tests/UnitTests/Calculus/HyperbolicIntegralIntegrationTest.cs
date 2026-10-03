@@ -99,6 +99,19 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, AroundZero, Pins);
 
         /// <summary>
+        /// And over a binomial past the quadratic, <c>a + b x^3</c> or <c>a + b x^4</c>, which is the
+        /// linears of its roots, <c>(a/b)^(1/n)</c> times the n-th roots of -1.
+        /// </summary>
+        [Theory]
+        [InlineData("cosh(c + d*x)/(a + b*x^3)")]
+        [InlineData("x*cosh(c + d*x)/(a + b*x^3)")]
+        [InlineData("cosh(c + d*x)/(x*(a + b*x^3))")]
+        [InlineData("cosh(x)/(1 + x^3)")]
+        [InlineData("e^x/(a + b*x^4)")]
+        public void ASumOfExponentialsOverABinomial(string integrand)
+            => DifferentiatesBack(integrand, AroundZero, Pins);
+
+        /// <summary>
         /// An exponential of something other than a linear is not split over the linears below
         /// it: <c>sinh(sqrt((1 - a x)/(1 + a x)))/(1 - a^2 x^2)</c> is a substitution's, answered
         /// whole, where each term of the split would go to the whole integrator.
