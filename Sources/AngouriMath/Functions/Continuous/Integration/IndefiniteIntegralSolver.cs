@@ -7855,8 +7855,14 @@ namespace AngouriMath.Functions.Algebra
         /// <para>
         /// <b>Where the answer holds.</b> <c>u = ln(x)</c> is a bijection from the positive reals
         /// to the whole line, so the answer is an antiderivative for <c>x &gt; 0</c> — which is
-        /// where an integrand built from <c>ln(x)</c> is real in the first place. Nothing is
-        /// assumed that the integrand did not already assume.
+        /// where an integrand built from <c>ln(x)</c> is real, with one kind of exception. A
+        /// radical function of whole powers of <c>x = e^u</c>, <c>sqrt(sinh(2 ln(x)))</c> or
+        /// <c>1/csch(2 ln(x))^(1/2)</c>, is real for a negative <c>x</c> too, where <c>ln(x)</c>
+        /// is <c>ln(-x) + i pi</c>; and the rules that integrate it in <c>u</c> take <c>e^u</c> to
+        /// be positive, which it is for every real <c>u</c>. That answer is given
+        /// <c>provided x &gt; 0</c>. Written in powers of <c>x</c>, which
+        /// <see cref="SolveByFoldingAnExponentialOfALogarithm"/> does before this, the same
+        /// integrand is answered on both sides of zero where the rules read it.
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
@@ -7882,9 +7888,32 @@ namespace AngouriMath.Functions.Algebra
             if (integrand is Providedf(var inner, _))
                 integrand = inner;
 
-            return Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is { } result
-                ? result.Substitute(u, MathS.Ln(x))
-                : null;
+            if (Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is not { } result)
+                return null;
+            var back = result.Substitute(u, MathS.Ln(x));
+            return IsARadicalFunctionOfWholePowersOfTheExponential(inU, u) ? back.Provided(x > Number.Integer.Zero) : back;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="expr"/> holds <paramref name="t"/> only in exponentials
+        /// <c>e^(k t + a)</c> with a whole <c>k</c>, some of them under a power that is not
+        /// whole: a radical function of whole powers of <c>e^t</c>. At <c>t = s + i pi</c>,
+        /// where a substitution <c>t = ln(c x^n)</c> lands for a negative <c>c x^n</c>, it is the
+        /// same function of <c>-e^s</c>, real again wherever its radicands are positive; and an
+        /// integral of it in <c>t</c> is found for a real <c>t</c>, under which <c>e^t</c> is
+        /// positive and gives up its powers from under a root.
+        /// </summary>
+        private static bool IsARadicalFunctionOfWholePowersOfTheExponential(Entity expr, Entity.Variable t)
+        {
+            var exponential = Variable.CreateUnique(expr, "w_exp");
+            var inExponentials = expr.Replace(node =>
+                node is Powf(var @base, var exponent) && @base == MathS.e && exponent.ContainsNode(t)
+                && TreeAnalyzer.TryGetPolyLinear(exponent, t, out var slope, out var offset)
+                && slope.Evaled is Number.Integer && !offset.ContainsNode(t)
+                    ? exponential
+                    : node);
+            return !inExponentials.ContainsNode(t)
+                && inExponentials.Nodes.Any(node => node is Powf(var @base, var power) && @base.ContainsNode(exponential) && power.Evaled is not Number.Integer);
         }
 
         /// <summary>
@@ -7892,9 +7921,13 @@ namespace AngouriMath.Functions.Algebra
         /// under <c>t = ln(c x^n)</c>: <c>dx = x dt/n</c>, and <c>x^(m + 1)</c> is
         /// <c>K e^((m + 1) t/n)</c> with <c>K = x^(m + 1) (c x^n)^(-(m + 1)/n)</c>, whose derivative
         /// is 0 wherever it is defined. So the answer is <c>K/n</c> times the integral of
-        /// <c>e^((m + 1) t/n) G(t)</c> at <c>t = ln(c x^n)</c>, an antiderivative on the whole of
-        /// the real line where the integrand is real -- for an even <c>n</c> that includes negative
-        /// <c>x</c>, where <c>ln(c x^n)</c> is not <c>ln(c) + n ln(x)</c>. A power of a monomial,
+        /// <c>e^((m + 1) t/n) G(t)</c> at <c>t = ln(c x^n)</c>, an antiderivative wherever
+        /// <c>c x^n</c> is positive -- for an even <c>n</c> and a positive <c>c</c> the whole line,
+        /// negative <c>x</c> included, where <c>ln(c x^n)</c> is not <c>ln(c) + n ln(x)</c>. Where
+        /// <c>c x^n</c> is negative, <c>t</c> is <c>ln(-c x^n) + i pi</c>, and a function of whole
+        /// powers of <c>e^t</c>, <c>sqrt(sinh(2 t))</c> say, is real there as well; a radical one
+        /// has its integral in <c>t</c> found for a real <c>t</c>, under which <c>e^t</c> is
+        /// positive, so that answer is given <c>provided c x^n &gt; 0</c>. A power of a monomial,
         /// <c>(e x)^p</c>, is <c>x^p</c> times a factor of the same kind. What by parts leaves of
         /// <c>(e x)^m Si(d (a + b ln(c x^n)))</c> is this, with <c>G(t)</c> a sine over a linear in
         /// <c>t</c>. Rubi's answers to 8.3 to 8.5 are written in exactly this <c>K</c>.
@@ -7951,7 +7984,14 @@ namespace AngouriMath.Functions.Algebra
             var k = logarithms[0].Antilogarithm == x ? Number.Integer.One
                 : MathS.Pow(x, mPlusOne) * MathS.Pow(logarithms[0].Antilogarithm, (-mPlusOne / n).InnerSimplified);
             var back = constant * locallyConstant * k / n * inTIntegral.Substitute(t, logarithms[0]);
-            return back.Nodes.Any(node => node == MathS.NaN) ? null : back;
+            if (back.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            // Positive for every x other than 0 when n is even and c a positive number, and
+            // nothing to say then.
+            var positiveEverywhere = n.Evaled is Number.Integer whole && whole.EInteger.IsEven && c.Evaled is Number.Real { IsPositive: true };
+            return !positiveEverywhere && IsARadicalFunctionOfWholePowersOfTheExponential(inT, t)
+                ? back.Provided(logarithms[0].Antilogarithm > Number.Integer.Zero)
+                : back;
         }
 
         /// <summary>
