@@ -896,6 +896,26 @@ its sign on its own, so an answer through two says `provided cos(y) >= 0`
 | `"sqrt(a - a*sec(x))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm in `tan(x/2)`, times `sgn(tan(x/2))` |
 | `"sqrt(1 + csc(x))".ToEntity().Integrate("x")` | `integral(...)` | an arctangent in `tan(pi/4 - x/2)` |
 
+### An even power of the secant or the cosecant under a root is written in the tangent
+
+**Answers where there were none.** `sqrt(a + b csc(x)^2)`, `(a + b sec(x)^2)^(3/2)` and their kin,
+Rubi's 4.5.7 and 4.6.7, were declined, while `sqrt(a + b tan(x)^2)` and `sqrt(a + b cot(x)^2)` were
+answered through `u = tan(x)`. That substitution writes an even power of the secant or the
+cosecant in the tangent, `sec^2 = 1 + tan^2` and `csc^2 = (1 + tan^2)/tan^2`, but went on to do so
+only where the tangent, or a sine or a cosine under a root, was already in the integrand. An even
+power of the secant or the cosecant under a root goes on now too. The cosecant's answers carry
+`sgn(tan(x))`, from the root of `1/tan(x)^2`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(a + b*csc(x)^2)".ToEntity().Integrate("x")` | `integral(...)` | arctangents in `sqrt((a + b) tan(x)^2 + b)`, times `sgn(tan(x))` |
+| `"(a + b*csc(c + d*x)^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | the same in `tan(c + d x)` and an algebraic part, by the signs of `a` and `b` |
+| `"sqrt(a + b*sec(x)^2)".ToEntity().Integrate("x")` | `integral(...)` | arctangents in `tan(x)/sqrt(a + b (1 + tan(x)^2))` |
+| `"1/sqrt(a + b*sec(x)^2)".ToEntity().Integrate("x")` | `integral(...)` | an arctangent or a logarithm in the same, by the sign of `a` |
+| `"sqrt(1 + csc(x)^2)".ToEntity().Integrate("x")` | `integral(...)` | logarithms and an arctangent in `sqrt(2 tan(x)^2 + 1)`, times `sgn(tan(x))` |
+| `"1/sqrt(-1 + csc(x)^2)".ToEntity().Integrate("x")` | `integral(...)` | `sgn(tan(x)) ln(1 + tan(x)^2)/2` |
+
 ### A partial-fraction coefficient with symbols in it is in lowest terms, its rational content included
 
 **Improvement, not silent.** The decomposition over written factors with symbols among their
