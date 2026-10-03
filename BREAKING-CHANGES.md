@@ -475,6 +475,22 @@ one reads a numeric slope, and writes an offset out by the addition formula, whi
 | `"csc(1+x)*csc(2+2*x)^2".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `cos(1 + x)` |
 | `"sin(a+b*x)^3/sin(2*a+2*b*x)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `tan(a + b x)` |
 
+### A function of one linear under a power inside a sum is written in that linear
+
+`x^3/(a + b (c + d x)^3)` was left unevaluated, and `(c + d x)^4/(a + b (c + d x)^3)` ran for more
+than eighty seconds. Written in `x`, the sum is a polynomial whose roots are those of a binomial
+moved and scaled, which the partial fractions do not read. Where one linear `c + d x` stands under
+the powers inside sums, and `x` elsewhere only in sums, products and powers, the integrand is
+written in `u = c + d x` first. Rubi's 1.1.3.2, 1.2.3.2 and 1.3.1 write whole sections so
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^3/(a + b*(c + d*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | powers and logarithms of `c + d x` and of a quadratic in it, and an arctangent |
+| `"(c + d*x)^4/(a + b*(c + d*x)^3)".ToEntity().Integrate("x")` | ran for more than eighty seconds | `(c + d x)^2/(2 b)`, and the same logarithms and arctangent |
+| `"(c*m + d*m*x)^3/(a + b*(c + d*x)^3)^2".ToEntity().Integrate("x")` | `integral(...)` | `m^3` times a rational function of `c + d x`, the logarithms and the arctangent |
+| `"(c + d*x)^4/(a + b*(c + d*x)^2 + k*(c + d*x)^4)^2".ToEntity().Integrate("x")` | `integral(...)` | a rational function of `c + d x` and arctangents |
+
 ### A root of an even power is the modulus, and is no longer read as the power
 
 **Wrong answers, silent.** `(u^2)^(3/2)` is `|u|^3`, and two readers took it for `u^3`: the
