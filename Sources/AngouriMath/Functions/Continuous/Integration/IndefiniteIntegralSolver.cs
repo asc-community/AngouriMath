@@ -21949,6 +21949,7 @@ namespace AngouriMath.Functions.Algebra
             var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr));
             if (!below.ContainsNode(x))
                 return null;
+            var arguments = new List<Entity>();
             var rewritten = below.Replace(node =>
             {
                 if (node is not Sumf and not Minusf || !node.ContainsNode(x))
@@ -21998,12 +21999,53 @@ namespace AngouriMath.Functions.Algebra
                 if (!plus && ratio.Evaled != (-MathS.i).Evaled)
                     return node;
                 var exponential = MathS.Pow(MathS.e, ((plus == isTangent ? MathS.i : -MathS.i) * argument).InnerSimplified);
+                arguments.Add(argument);
                 // A + i A tan(z) is A e^(iz)/cos(z); A + i A cot(z) is i A e^(-iz)/sin(z).
                 return isTangent
                     ? constant * exponential / MathS.Cos(argument)
                     : (plus ? MathS.i : -MathS.i) * constant * exponential / MathS.Sin(argument);
             });
-            return rewritten == below ? null : Integration.ComputeAsTheSameQuestion((above / rewritten).InnerSimplified, x, integrateByParts);
+            if (rewritten == below)
+                return null;
+            // A tangent or a cotangent of the same argument above the bar in sines and cosines, so that
+            // the cosine or sine the identity puts below cancels it: `tan(z)/(A + i A tan(z))` is
+            // `sin(z) e^(-i z)/A`, an exponential times a sine, where `tan(z) cos(z) e^(-i z)/A` was
+            // a search past the budget with `z = c + d x`.
+            var inSinesAndCosines = above.Replace(node => node switch
+            {
+                Tanf(var inner) when arguments.Contains(inner) => MathS.Sin(inner) / MathS.Cos(inner),
+                Cotanf(var inner) when arguments.Contains(inner) => MathS.Cos(inner) / MathS.Sin(inner),
+                _ => node,
+            });
+            var (numerator, denominator) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(inSinesAndCosines / rewritten));
+            var (top, bottom) = CancelledWithFunctionsAsIndeterminates(numerator, denominator, x, expr);
+            // Only where what is left is made of those sines and cosines, exponentials of linears and
+            // polynomials in x: a secant or a root beside them, `sec(z)^8/(A + i A tan(z))^4`, is read
+            // through the tangent as written, and rewritten it was a search of minutes.
+            bool Plain(Entity node) => node switch
+            {
+                _ when !node.ContainsNode(x) => true,
+                Entity.Variable => true,
+                Sinf(var sineOf) => arguments.Contains(sineOf),
+                Cosf(var cosineOf) => arguments.Contains(cosineOf),
+                Powf(var @base, Number.Integer) => Plain(@base),
+                Powf(var @base, var exponent) => @base == MathS.e && TreeAnalyzer.TryGetPolyLinear(exponent, x, out _, out _),
+                Mulf or Divf or Sumf or Minusf => node.DirectChildren.All(Plain),
+                _ => false,
+            };
+            if (!Plain(top) || !Plain(bottom))
+                return Integration.ComputeAsTheSameQuestion((above / rewritten).InnerSimplified, x, integrateByParts);
+            // And what sines and cosines of it are left, as the exponentials they are, so that the whole is
+            // a rational function of `e^(i z)`: `tan(z)^2/(A + i A tan(z))` leaves `sin(z)^2/(A cos(z) e^(i z))`.
+            var inExponentials = (top / bottom).Replace(node => node switch
+            {
+                Sinf(var inner) when arguments.Contains(inner)
+                    => (MathS.Pow(MathS.e, MathS.i * inner) - MathS.Pow(MathS.e, -MathS.i * inner)) / (2 * MathS.i),
+                Cosf(var inner) when arguments.Contains(inner)
+                    => (MathS.Pow(MathS.e, MathS.i * inner) + MathS.Pow(MathS.e, -MathS.i * inner)) / 2,
+                _ => node,
+            });
+            return Integration.ComputeAsTheSameQuestion(inExponentials.InnerSimplified, x, integrateByParts);
         }
 
         /// <summary>
