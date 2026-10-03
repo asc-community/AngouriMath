@@ -22842,7 +22842,25 @@ namespace AngouriMath.Functions.Algebra
             // 1/(1 - sin(x)) rewrote to 2/((t^2 + 1)(1 + (-2)t/(t^2 + 1))) and stopped there, one
             // distribution short of 2/(t^2 - 2t + 1), which is integrated at once.
             // https://github.com/asc-community/AngouriMath/issues/1239
-            var integrand = Functions.SingleQuotient.Combine(inT * 2 / (rate * (1 + tSquared))).Simplify();
+            // Once combined, a quotient with a symbol in its coefficients is not simplified: the
+            // simplifier's search grows with the symbols, and `sec(x)^2/(a + b cos(x))^3` spent 43 s
+            // in it where integrating what it returned took a tenth of a second. Two things the
+            // simplifier did are done here, since what follows reads them. Whole powers of
+            // products are written as products of powers: `((1 + t^2)(1 - t^2))^6` keeps the
+            // `1 + t^2` the division below takes off as a factor out of its sight, and
+            // `tan(x)^6/(a + b sec(x))` was declined that way. And a base of a lower degree than it
+            // is written in is written as its polynomial: `a (1 + t^2) + a (1 - t^2)` is `2 a`, and
+            // read as a quadratic its leading coefficient is zero as a value only.
+            var combined = Functions.SingleQuotient.Combine(inT * 2 / (rate * (1 + tSquared)));
+            Entity integrand;
+            if (combined.Vars.Any(symbol => symbol != t))
+            {
+                var (combinedAbove, combinedBelow) = Functions.SingleQuotient.Of(combined.InnerSimplified);
+                integrand = (WithDegenerateBasesLowered(WithWholePowersDistributed(combinedAbove), t)
+                    / WithDegenerateBasesLowered(WithWholePowersDistributed(combinedBelow), t)).InnerSimplified;
+            }
+            else
+                integrand = combined.Simplify();
 
             // Collapsing the nesting attaches a condition saying the denominator it cleared is
             // non-zero, and that denominator is 1 + t^2 -- so 1/(1 + cos(x)) comes out as
@@ -22898,6 +22916,61 @@ namespace AngouriMath.Functions.Algebra
             return Integration.ComputeIndefiniteIntegral(integrand, t, integrateByParts) is { } result
                 ? result.Substitute(t, MathS.Tan(argument / 2))
                 : null;
+        }
+
+        /// <summary>
+        /// <paramref name="product"/> with each whole power of a product written as the product
+        /// of the powers, the rest as written: <c>((1 + t^2)(1 - t^2))^6</c> is
+        /// <c>(1 + t^2)^6 (1 - t^2)^6</c>.
+        /// </summary>
+        private static Entity WithWholePowersDistributed(Entity product)
+        {
+            Entity written = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(product))
+            {
+                if (factor is Powf(Mulf inner, Number.Integer { EInteger.Sign: > 0 } power))
+                    foreach (var innerFactor in Mulf.LinearChildren(WithWholePowersDistributed(inner)))
+                        written *= innerFactor is Powf(var @base, Number.Integer exponent)
+                            ? MathS.Pow(@base, Number.Integer.Create(exponent.EInteger.Multiply(power.EInteger)))
+                            : MathS.Pow(innerFactor, power);
+                else
+                    written *= factor;
+            }
+            return written;
+        }
+
+        /// <summary>
+        /// <paramref name="product"/> with each base that is a sum written as its polynomial in
+        /// <paramref name="t"/> where that is of a lower degree than the base is written in, and
+        /// as written otherwise: <c>a (1 + t^2) + a (1 - t^2)</c> is <c>2 a</c>.
+        /// </summary>
+        private static Entity WithDegenerateBasesLowered(Entity product, Entity.Variable t)
+        {
+            Entity written = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(product))
+            {
+                var (@base, power) = factor is Powf(var raised, Number.Integer exponent) ? (raised, (Entity)exponent) : (factor, Number.Integer.One);
+                if (@base is Sumf or Minusf && @base.ContainsNode(t) && TreeAnalyzer.TryGetPolynomial(@base, t, out var terms)
+                    && terms.Count > 0 && terms.All(term => term.Key.Sign >= 0 && !term.Value.ContainsNode(t)))
+                {
+                    var writtenDegree = @base.Nodes.Select(node => node is Powf(var raised, Number.Integer exponent) && raised == t ? exponent.EInteger
+                        : node == t ? EInteger.One : EInteger.Zero).Max()!;
+                    var kept = terms.Where(term => !Functions.PartialFractions.IsZeroAsAValue(term.Value)).ToList();
+                    var degree = kept.Select(term => term.Key).DefaultIfEmpty(EInteger.Zero).Max()!;
+                    if (degree.CompareTo(writtenDegree) < 0)
+                    {
+                        Entity polynomial = Number.Integer.Zero;
+                        foreach (var term in kept.OrderByDescending(term => term.Key))
+                        {
+                            var coefficient = term.Value.InnerSimplified;
+                            polynomial += term.Key.IsZero ? coefficient : coefficient * MathS.Pow(t, Number.Integer.Create(term.Key));
+                        }
+                        @base = polynomial.InnerSimplified;
+                    }
+                }
+                written *= power == Number.Integer.One ? @base : MathS.Pow(@base, power);
+            }
+            return written;
         }
 
         /// <summary>

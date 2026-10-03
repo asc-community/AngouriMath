@@ -630,6 +630,22 @@ poles of `tan(x/2)`, as every half-angle answer.
 | `"1/(a+b*cos(x)+c*cos(x)^2)".Integrate("x")` | unevaluated | the cosine form |
 | `"csc(x)^2/(a-a*sin(x)^2)".Integrate("x")` | unevaluated | `-cot(x)/a` and two terms rational in `tan(x/2)` |
 
+### A rational function of the sine and cosine with symbols in it is no longer simplified under the half angle
+
+**Answers where there were none.** Under `t = tan(x/2)` the integrand was simplified before it was
+integrated, and with symbols in it the simplifier's search grew past any budget:
+`sec(x)^2/(a + b cos(x))^3` spent 43 s in it and `sec(x)^2/(a + b cos(x))^4` more than two minutes,
+where integrating what it returned takes a tenth of a second. With a symbol in it the integrand is
+now put over one bar with its whole powers of products written as products of powers, and not
+simplified further; one without a symbol is simplified as before
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sec(x)^2/(a + b*cos(x))^3".ToEntity().Integrate("x")` | `integral(...)` | a piecewise antiderivative in `tan(x/2)` |
+| `"sec(x)^2/(a + b*cos(x))^4".ToEntity().Integrate("x")` | `integral(...)` | the same |
+| `"sec(c + d*x)^2/(a + b*cos(c + d*x))^4".ToEntity().Integrate("x")` | `integral(...)` | the same in `tan((c + d x)/2)` |
+
 ### A linear over a quadratic beside the root of another quadratic is integrated
 
 `(g + h x)/(A sqrt(B))`, `A` and `B` two different quadratics, was left unevaluated wherever a
