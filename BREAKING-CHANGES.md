@@ -3001,6 +3001,24 @@ leaves are read as quotients of the sine and the cosine
 | `"1/(a+b*asin(c*x))".Integrate("x")` | `integral(1 / (a + b * arcsin(c * x)), x)` | `Si` and `Ci` of `(a + b arcsin(c x))/b` |
 | `"x/((c+a^2*c*x^2)^2*atan(a*x))".Integrate("x")` | `integral(x / ((c + a ^ 2 * c * x ^ 2) ^ 2 * arctan(a * x)), x)` | `1/2 * Si(2 * arctan(a * x)) / (a ^ 2 * c ^ 2) + C` |
 
+### The arcsecant beside a root of `x^2 - 1` is integrated right below `-1` too
+
+**Answers where there were none.** Under `x = sec(u)`, the substitution that undoes the arcsecant,
+`sqrt(x^2 - 1)` is `|tan(u)|`, and on the arcsecant's range the tangent has the sign of `x`. It was
+written `tan(u)`, so that on the unreleased master `x arcsec(x)/sqrt(x^2 - 1)` and its kin were
+answered right for `x > 1` and with the integrand's negative for a derivative at every `x < -1`,
+where they are as real; 2.5.0 declined them. The root is `tan(u) sgn(x)` now, as the cosecant's and
+the cotangent's carry their signs, and a first power of the arcsecant beside it is by parts. The sign
+written back is the argument's, which is that of `x` only for a positive slope and no constant:
+`arcsec(x + 3)` has the sign of `x + 3` ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x*asec(x)/sqrt(-1 + x^2)".ToEntity().Integrate("x")` | `integral(...)` | right for `x > 1` and for `x < -1` |
+| `"asec(x)/(x^2*sqrt(-1 + x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same |
+| `"asec(x)^2/(x*sqrt(x^2 - 1))".ToEntity().Integrate("x")` | `integral(...)` | the same |
+| `"asec(x + 3)^2/((x + 3)*sqrt((x + 3)^2 - 1))".ToEntity().Integrate("x")` | `integral(...)` | right for `x > -2` and for `x < -4` |
+
 ### A perfect square in a power of the variable is read as one
 
 `sqrt(a^2 + 2 a b x^2 + b^2 x^4) sqrt(c + e x + d x^2)` was left unevaluated. The radicand is

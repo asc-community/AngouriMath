@@ -7064,10 +7064,12 @@ namespace AngouriMath.Functions.Algebra
         /// and the cosine is not negative; substituting and simplifying instead would leave
         /// <c>sqrt(1 - sin(u)^2)</c>, which the simplifier is right not to call <c>cos(u)</c>.
         /// So <c>(1 - x^2)^(k/2)</c> becomes <c>cos(u)^k</c> directly, and likewise
-        /// <c>(1 + x^2)^(k/2)</c> into <c>sec(u)^k</c> for the tangent and <c>(x^2 - 1)^(k/2)</c>
-        /// into <c>tan(u)^k</c> for the secant, each on its principal branch. That branch is the
-        /// one the inverse function is defined on, so the answer holds wherever the integrand
-        /// is read through it.
+        /// <c>(1 + x^2)^(k/2)</c> into <c>sec(u)^k</c> for the tangent, each on its principal
+        /// branch. That branch is the one the inverse function is defined on, so the answer holds
+        /// wherever the integrand is read through it. For the secant <c>(x^2 - 1)^(k/2)</c> is
+        /// <c>|tan(u)|^k</c>, and on the arcsecant's range the tangent has the sign of the
+        /// argument, so it becomes <c>tan(u)^k</c> times that sign to the <c>k</c>, as the
+        /// cosecant's and the cotangent's roots carry theirs.
         /// </para>
         /// <para>
         /// Exactly one inverse function, of the variable or of a linear <c>c x + d</c> in it,
@@ -7120,9 +7122,10 @@ namespace AngouriMath.Functions.Algebra
             }
 
             var u = Variable.CreateUnique(expr, "u_inv");
-            // The sign of u, where the root's sign is that: a constant on each half of the
-            // range, carried through the integration as a symbol and written back as the sign
-            // of x, which it is for the cosecant and the cotangent.
+            // The sign the root has, where it has one: a constant on each half of the range,
+            // carried through the integration as a symbol and written back as the sign of the
+            // argument, which it is -- the sign of u for the cosecant and the cotangent, and of
+            // tan(u) for the secant.
             var signOfU = Variable.CreateUnique(expr, "s_inv");
             // x in terms of u, dx/du, the quadratic whose root goes by construction and what it
             // becomes, and the way back.
@@ -7152,7 +7155,11 @@ namespace AngouriMath.Functions.Algebra
                     (xInU, dxdu, radicandBase, root) = (MathS.Cosec(u), -MathS.Cosec(u) * MathS.Cotan(u), MathS.Sqr(argument) - 1, MathS.Cotan(u) * signOfU);
                     break;
                 default:
-                    (xInU, dxdu, radicandBase, root) = (MathS.Sec(u), MathS.Sec(u) * MathS.Tan(u), MathS.Sqr(argument) - 1, MathS.Tan(u));
+                    // arcsec has the range [0, pi/2) ∪ (pi/2, pi], where the tangent has the sign
+                    // of the argument: `sqrt(x^2 - 1)` is `tan(u) sgn(x)`. Taken as `tan(u)`, the
+                    // answer was right for x > 1 and its derivative the integrand's negative for
+                    // every x < -1, where the integrand is as real: `x arcsec(x)/sqrt(x^2 - 1)`.
+                    (xInU, dxdu, radicandBase, root) = (MathS.Sec(u), MathS.Sec(u) * MathS.Tan(u), MathS.Sqr(argument) - 1, MathS.Tan(u) * signOfU);
                     break;
             }
             if (linear)
@@ -7225,10 +7232,10 @@ namespace AngouriMath.Functions.Algebra
             {
                 if (radicalsRemoved == 0 && !exponentialOfTheInverse && !powerOfTheInverse)
                     return null;
-                // The cosecant and the cotangent carry the sign of u into the root, and a first
-                // power of either beside a root is parts' -- `arccot(x)/(1 + x^2)^(3/2)` is
-                // `x arccot(x)/sqrt(1 + x^2) + 1/sqrt(1 + x^2)` there, with no sign in it.
-                if (inverse is Arccosecantf or Arccotanf && !exponentialOfTheInverse && !powerOfTheInverse)
+                // The cosecant, the cotangent and the secant carry a sign into the root, and a
+                // first power of any of them beside a root is parts' -- `arccot(x)/(1 + x^2)^(3/2)`
+                // is `x arccot(x)/sqrt(1 + x^2) + 1/sqrt(1 + x^2)` there, with no sign in it.
+                if (inverse is Arccosecantf or Arccotanf or Arcsecantf && !exponentialOfTheInverse && !powerOfTheInverse)
                     return null;
             }
             // And nothing else of `x` under a root, which the construction did not reach:
@@ -7281,10 +7288,11 @@ namespace AngouriMath.Functions.Algebra
             if (result is null)
                 return null;
             if (result.ContainsNode(signOfU))
-                // The sign squared is one, and the sign itself is the sign of x.
+                // The sign squared is one, and the sign itself is the argument's: `arccsc(c x + d)`
+                // has the sign of `c x + d`, which is the sign of x only for a positive c and no d.
                 result = result
                     .Replace(node => node is Powf(var b, Number.Integer k) && b == signOfU ? (k.EInteger.IsEven ? Number.Integer.One : signOfU) : node)
-                    .Substitute(signOfU, MathS.Signum(x));
+                    .Substitute(signOfU, MathS.Signum(argument));
             return TrigonometryOfTheInverseInX(result.Substitute(u, inverse), inverse, argument);
         }
 
