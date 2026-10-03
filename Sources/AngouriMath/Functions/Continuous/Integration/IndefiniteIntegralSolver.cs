@@ -23252,7 +23252,16 @@ namespace AngouriMath.Functions.Algebra
                         && expr.Complexity <= (expr.Vars.Any(v => v != x) ? LargestSymbolicIntegrandCollected : LargestIntegrandOfferedSums)
                         ? WithThePowersOfXCollected(Functions.SingleQuotient.Combine(expr / duDx), x)
                         : source / duDx;
-                    integrandInU = SimplifiedWithoutTheImaginaryUnit(InTermsOf(quotient, u, uSub, x), expr);
+                    // Under a linear candidate the quotient is the integrand with its argument
+                    // renamed, over a constant, and there is nothing in it for the simplifier to
+                    // find: `(a + b tan(e + f x))(A + B tan(e + f x) + C tan(e + f x)^2)/(c + d tan(e + f x))^2`
+                    // under `u = e + f x` spent 28 of its 32 s being simplified, nine symbols and
+                    // nothing to cancel.
+                    var inTermsOfU = InTermsOf(quotient, u, uSub, x);
+                    integrandInU = !inTermsOfU.ContainsNode(x)
+                        && TreeAnalyzer.TryGetPolyLinear(u, x, out var slope, out var offset) && !slope.ContainsNode(x) && !offset.ContainsNode(x)
+                        ? Functions.PartialFractions.Bare(inTermsOfU.InnerSimplified)
+                        : SimplifiedWithoutTheImaginaryUnit(inTermsOfU, expr);
                     // A factor written on both sides of the bar cancelled, where x survived:
                     // the one-level simplification leaves `u/((a w + b)^2 p u)` as it is, and
                     // the candidate was refused for the u it did not cancel.
