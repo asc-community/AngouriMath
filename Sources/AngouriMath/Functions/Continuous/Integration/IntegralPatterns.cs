@@ -1134,6 +1134,14 @@ namespace AngouriMath.Functions.Algebra
             if (power < 2)
                 return null;
 
+            // An improper fraction comes down to the first power with a numerator of the second
+            // degree, and is declined there, after a division at every power above it: declined
+            // before the first. With symbols in the quadratic each division is a simplification
+            // of every coefficient.
+            if (TreeAnalyzer.TryGetPolynomial(numerator, x, out var terms) && terms.Count > 0
+                && terms.Keys.Max()!.CompareTo(EInteger.FromInt32(2 * power)) >= 0)
+                return null;
+
             var division = TreeAnalyzer.PolynomialLongDivision(numerator, quadratic, genericCase: true, inTermsOf: x);
             if (division is null)
                 return null;
@@ -1150,6 +1158,15 @@ namespace AngouriMath.Functions.Algebra
             var remainder = Functions.PartialFractions.Bare((numerator - quotient * quadratic).InnerSimplified);
             if (remainder.ContainsNode(x) && !TreeAnalyzer.TryGetPolyLinear(remainder, x, out _, out _))
                 remainder = Functions.PartialFractions.Bare((numerator - quotient * quadratic).Expand().InnerSimplified);
+            // The division writes the quotient's coefficients simplified, and the quadratic is
+            // subtracted as it is written, so a term the division took away can come back as the
+            // difference of two spellings of one value: `x^4` over `1/(-b + a) + x^2` left
+            // `(1/(a - b) - 1/(-b + a)) x^2`, and the reduction declined where over `1/(a - b) + x^2`
+            // it answered. The remainder the division reports over the divisor has no such term.
+            if (remainder.ContainsNode(x) && !TreeAnalyzer.TryGetPolyLinear(remainder, x, out _, out _)
+                && division.Value.Remainder is Entity.Divf(var reportedAbove, var reportedBelow) && reportedBelow == quadratic
+                && (!reportedAbove.ContainsNode(x) || TreeAnalyzer.TryGetPolyLinear(reportedAbove, x, out _, out _)))
+                remainder = Functions.PartialFractions.Bare(reportedAbove.InnerSimplified);
             // The remainder of a division by a quadratic is linear or a constant; one that
             // still has the variable to a higher power -- the division declined in its own
             // way, on `csch(29/10 + 13/10 x)^3 (17/10 + 23/10 sech(...)^2)^3` through the

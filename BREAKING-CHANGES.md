@@ -309,6 +309,23 @@ power up each step, and what reaches the first power is integrated once over the
 | `"1/(a + b*x^2 + c*x^4)^3".ToEntity().Integrate("x")` | `integral(...)` | the same |
 | `"x/(a + b*x^3 + c*x^6)^2".ToEntity().Integrate("x")` | `integral(...)` | a polynomial over `a + b x^3 + c x^6`, and the integral of a polynomial over it |
 
+### A polynomial over a power of a quadratic with a sum of symbols in it is reduced
+
+**Answers where there were none.** The reduction of `N(x)/Q(x)^n` divides `N` by the quadratic a
+power at a time. With a sum of symbols among the quadratic's coefficients, the remainder it computed
+held the terms the division had taken away, written two ways, and read as of the second degree it
+stopped the reduction: `x^4/(d x^2 + b c - a d)^5` was declined where `x^4/(d x^2 + k)^5` was
+answered. The remainder the division reports is taken where the computed one is not linear, and an
+improper fraction is declined before the first division rather than after the last. This is what
+`t = sqrt(a + b x)` makes of Rubi's 1.1.1.2 `(a + b x)^(m/2)/(c + d x)^n`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^4/(d*x^2 + b*c - a*d)^5".ToEntity().Integrate("x")`, and `x^6` over the fourth power | `integral(...)` | the antiderivative |
+| `"(1 - b*x^2)^3/(c*(1 - b*x^2) + a*d*x^2)^3".ToEntity().Integrate("x")` | no answer within a minute | the antiderivative |
+| `"(a + b*x)^(5/2)/(c + d*x)^4".ToEntity().Integrate("x")` | `integral(...)` | the antiderivative |
+
 ### A symbolic parameter no longer stops a rational integrand being integrated
 
 `1/(8 + x^3)` and `1/(16 - x^4)` are answered at once. `1/(a^3 + x^3)` and `1/(a^4 - x^4)` were not,
@@ -411,6 +428,27 @@ that `sec(x)^2/(a + b sin(x))` is rational in them rather than declined at once
 | `"sec(x)^2/(a + b*sin(x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `tan(x/2)` |
 | `"tan(x)^4/(a + a*cos(x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `tan(x/2)` |
 | `"csc(x)^2/(a + a*cos(x))".ToEntity().Integrate("x")` | `integral(...)` | `(tan(x/2)^3/12 + tan(x/2)/2 - 1/(4 tan(x/2)))/a` |
+
+### A rational function with complex coefficients is integrated through its real and imaginary parts
+
+**Answers where there were none.** `1/((1 + i x)^2 (1 + x^2))` was declined: the rational
+integrator reads coefficients that are rational numbers, and `i` is not one. Times the conjugate
+of its denominator over itself, `N/D = N D'/(D D')` with `D'` the polynomial whose coefficients are
+those of `D` conjugated, the denominator has rational coefficients and the numerator is `P + i S`
+with `P` and `S` rational: the integral is that of `P/(D D')` and `i` times that of `S/(D D')`. A
+product of symbols common to a polynomial's coefficients, `a + i a x`, comes out with the
+constants. The tangent substitution makes such a function of Rubi's `(a + i a tan(c + d x))^n`, by
+the hundred in its 4.3.2.1, 4.3.3.1 and 4.3.1.2; their answers are in `tan(c + d x)`, on each
+interval between the poles of the tangent, as the substitution's are
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((1 + i*x)^2*(1 + x^2))".ToEntity().Integrate("x")` | `integral(...)` | a rational function of `x` and an arctangent |
+| `"1/(a + i*a*tan(x))^2".ToEntity().Integrate("x")` | `integral(...)` | the same in `tan(x)` |
+| `"tan(x)^3/(a + i*a*tan(x))^4".ToEntity().Integrate("x")` | `integral(...)` | the same |
+| `"(A + B*tan(x))/(a + i*a*tan(x))^2".ToEntity().Integrate("x")` | `integral(...)` | the same |
+| `"1/(a + i*a*tan(c + d*x))^3".ToEntity().Integrate("x")` | `integral(...)` | the same in `tan(c + d x)` |
 
 ### `NaN` was returned as the antiderivative of something that has one
 

@@ -909,6 +909,9 @@ namespace AngouriMath.Functions.Algebra
             // cubic. The residues decide the field the answer needs, not the roots of the
             // denominator, and the Rothstein-Trager resultant finds them.
             if ((answer = IndefiniteIntegralSolver.SolveByRothsteinTrager(expr, x)) is { }) return answer;
+            // A rational function with complex coefficients, written as its real and imaginary parts
+            // over a real denominator, which the rules above read.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionWithComplexCoefficients(expr, x, integrateByParts)) is { }) return answer;
             // The tangent substitution again, and this time for a *rational* function: a repeated
             // irreducible quadratic beside a negative power of the variable is `sin^p cos^q` with
             // both exponents whole, which the recurrences close. Below partial fractions rather
