@@ -525,6 +525,23 @@ either now; and the secant quotient was simplified to `cos/(b^(5/2) d)` through
 `(1/cos)^(3/2) = cos^(-3/2)`, which is wrong for every negative cosine and cancelled against the
 same wrong step on the denominator. On the 1774-problem independent suites this is 1707 to 1705, the two `asin` rows, with the sign error gone.
 
+### A power of x comes out of a fractional power of a sum whose every term has it
+
+`(a x^j + b x^n)^p` with a fractional `p`, the power of x common to every term inside the power,
+was integrated only where the sum factored over the rationals. Now `x^j` comes out:
+`(a x^j + b x^n)^p` is `K x^(j p) (a + b x^(n - j))^p` with `K = (a x^j + b x^n)^p / (x^(j p) (a + b x^(n - j))^p)`,
+which is constant wherever x and the sum are not zero and goes in front of the integral. For an even
+whole `j` and a whole `j p` it is `sgn(x)^(j p)`. An odd whole `j` out of a sum of whole powers is
+left as it was, since the sum is real on both sides of 0 and `x^(j p)` is not. Rubi's 1.1.4.2 and
+1.1.4.3, `(c x)^m (a x^j + b x^n)^p` ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/sqrt(a*x^2 + b*x^5)".ToEntity().Integrate("x")` | `integral(...)` | `sgn(x)` times the integral of `1/(x sqrt(a + b x^3))` |
+| `"x*sqrt(x^2*(a + b*x^3))".ToEntity().Integrate("x")` | `(a + b x^3)^(3/2)/(9/2 b)`, wrong where `x < 0` | `sgn(x) (a + b x^3)^(3/2)/(9/2 b)` |
+| `"1/(x*sqrt(b*x^(2/3) + a*x))".ToEntity().Integrate("x")` | `integral(...)` | `K` times an antiderivative in `sqrt(b + a x^(1/3))` |
+| `"x/sqrt(1 + 1/(c*x)^2)".ToEntity().Integrate("x")` | `integral(...)` | `sgn(x) (x sqrt(x^2 + 1/c^2)/2 - ln(2 x + 2 sqrt(x^2 + 1/c^2))/(2 c^2))`, for any `c` but 0 |
+
 ### A rational function of a sine over a symbolic quadratic in it is integrated over the two roots
 
 **Improvement, not silent.** `sin(x)/(a + b sin(x) + c sin(x)^2)` and everything rational in

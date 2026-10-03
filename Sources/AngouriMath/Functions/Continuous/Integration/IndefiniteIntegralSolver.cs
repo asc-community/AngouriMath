@@ -15518,6 +15518,156 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A fractional power of a sum whose every term has x to a power in it,
+        /// <c>(a x^j + b x^n)^p</c> with <c>0 &lt; j &lt; n</c>, as <c>K x^(j p) (a + b x^(n - j))^p</c>:
+        /// the integral is <c>K</c> times the integral with <c>x^(j p) (a + b x^(n - j))^p</c> in its
+        /// place, where <c>K = (a x^j + b x^n)^p / (x^(j p) (a + b x^(n - j))^p)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>K</c> is constant on every interval where x and the sum are not zero: with
+        /// <c>S = x^j T</c>, its logarithmic derivative is <c>p (S'/S - j/x - T'/T)</c>, and
+        /// <c>S'/S = j/x + T'/T</c>. So it goes in front of the integral, as the factor of a square
+        /// does in <see cref="SolveByWritingAPowerOfASquareAsAPowerOfItsRoot"/>. For an even whole
+        /// <c>j</c> and a whole <c>j p</c> it is <c>sgn(x)^(j p)</c>: <c>x^j</c> is not negative for a
+        /// real x, so <c>(x^j T)^p</c> is <c>|x|^(j p) T^p</c>.
+        /// </para>
+        /// <para>
+        /// Rubi's 1.1.4.2 and 1.1.4.3 write these by the hundred: <c>1/sqrt(a x^2 + b x^5)</c> and
+        /// <c>1/(x sqrt(b x^(2/3) + a x))</c> were declined, the first since the factorization
+        /// over the rationals does not read a symbol, and the second since nothing took the power
+        /// of x out of the root. With it out, the binomial is what the rules for
+        /// <c>x^m (a + b x^n)^p</c> read. At the top only, where the answer is the caller's.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveByTakingAPowerOfXOutOfAFractionalPower(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            // The sum as a factor of the integrand, above the bar or below it.
+            var (above, below) = Functions.SingleQuotient.Of(expr);
+            (Entity Sum, Entity Exponent, Number.Rational Lowest, Entity Quotient, bool Below)? found = null;
+            foreach (var (side, isBelow) in new[] { (above, false), (below, true) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (factor is not Powf(var sum, var power) || power is Number.Integer || power.ContainsNode(x)
+                        || !sum.ContainsNode(x) || sum.Complexity > 60)
+                        continue;
+                    if ((OutOfASum(sum) ?? OutOfAProduct(sum)) is not var (lowest, rest))
+                        continue;
+                    // An odd whole power of x out of a sum of whole powers: the sum is real on both
+                    // sides of 0 and x^(j p) is not, and the rules for the sum as written answer it
+                    // on both. An even one comes out as its sign, and a fractional one is real for a
+                    // positive x only, as the sum already was.
+                    if (lowest is Number.Integer { EInteger.IsEven: false } && !sum.Nodes.Any(node => node is Powf(var @base, Number.Rational r) && @base == x && r is not Number.Integer))
+                        continue;
+                    // Two such would want two factors.
+                    if (found is { })
+                        return null;
+                    found = (sum, power, lowest, rest, isBelow);
+                }
+            if (found is not var (theSum, exponentOfTheSum, j, theRest, sumIsBelow)
+                || above.Nodes.Concat(below.Nodes).Count(node => node == theSum) != 1)
+                return null;
+            var outside = (j * exponentOfTheSum).InnerSimplified;
+            Entity Without(Entity side)
+            {
+                Entity product = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(side))
+                    if (!(factor is Powf(var sum, var power) && sum == theSum && power == exponentOfTheSum))
+                        product = product == Number.Integer.One ? factor : product * factor;
+                return product;
+            }
+            var replacement = MathS.Pow(x, outside) * MathS.Pow(theRest, exponentOfTheSum);
+            var written = sumIsBelow ? Without(above) / (replacement * Without(below)) : replacement * Without(above) / below;
+            if (Integration.ComputeIndefiniteIntegral(written.InnerSimplified, x, integrateByParts) is not { } integral)
+                return null;
+            // K: the sign of x to the power j p where that is all it is, which is its own reciprocal,
+            // and the quotient otherwise.
+            var aSign = j is Number.Integer { EInteger.IsEven: true } && outside is Number.Integer;
+            Entity constant = aSign
+                ? (((Number.Integer)outside).EInteger.IsEven ? Number.Integer.One : MathS.Signum(x))
+                : MathS.Pow(theSum, exponentOfTheSum) / replacement;
+            var answer = constant == Number.Integer.One ? integral : sumIsBelow && !aSign ? integral / constant : constant * integral;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+
+            // A sum, each term a coefficient times a rational power of x: the lowest power, not 0,
+            // and what is left with it taken out of every term.
+            (Number.Rational, Entity)? OutOfASum(Entity sum)
+            {
+                if (sum is not (Sumf or Minusf))
+                    return null;
+                var terms = new List<(Entity Coefficient, Number.Rational Exponent)>();
+                foreach (var term in Sumf.LinearChildren(sum))
+                {
+                    if (PowerOfX(term, x) is not { } read)
+                        return null;
+                    terms.Add(read);
+                }
+                if (terms.Count < 2)
+                    return null;
+                var lowest = terms.Select(term => term.Exponent).Aggregate((least, next) => next.ERational.CompareTo(least.ERational) < 0 ? next : least);
+                if (lowest.ERational.IsZero)
+                    return null;
+                Entity rest = Number.Integer.Zero;
+                foreach (var (coefficient, exponent) in terms)
+                {
+                    var shifted = Number.Rational.Create(exponent.ERational.Subtract(lowest.ERational));
+                    rest += shifted is Number.Integer { EInteger.IsZero: true } ? coefficient
+                        : coefficient * (shifted == Number.Integer.One ? x : MathS.Pow(x, shifted));
+                }
+                return (lowest, rest);
+            }
+            // A product or a quotient with powers of x among its factors and something else of x:
+            // `x^2 (a + b x^3)`, `(a + b x^3)/x`.
+            (Number.Rational, Entity)? OutOfAProduct(Entity product)
+            {
+                if (product is not (Mulf or Divf))
+                    return null;
+                var (numerator, denominator) = Functions.SingleQuotient.Of(product);
+                var exponent = ERational.Zero;
+                Entity rest = Number.Integer.One;
+                foreach (var (side, sign) in new[] { (numerator, 1), (denominator, -1) })
+                    foreach (var factor in Mulf.LinearChildren(side))
+                    {
+                        if (factor == x)
+                            exponent = sign > 0 ? exponent.Add(ERational.One) : exponent.Subtract(ERational.One);
+                        else if (factor is Powf(var @base, Number.Rational power) && @base == x)
+                            exponent = sign > 0 ? exponent.Add(power.ERational) : exponent.Subtract(power.ERational);
+                        else
+                            rest = sign > 0 ? rest * factor : rest / factor;
+                    }
+                return exponent.IsZero || !rest.ContainsNode(x) ? null : (Number.Rational.Create(exponent), rest);
+            }
+
+            // A term as a coefficient free of x and a rational exponent of x, through products and
+            // quotients.
+            static (Entity Coefficient, Number.Rational Exponent)? PowerOfX(Entity term, Entity.Variable x)
+            {
+                if (!term.ContainsNode(x))
+                    return (term, Number.Integer.Zero);
+                switch (term)
+                {
+                    case Entity.Variable v when v == x:
+                        return (Number.Integer.One, Number.Integer.One);
+                    case Powf(var @base, Number.Rational power) when @base == x:
+                        return (Number.Integer.One, power);
+                    case Mulf(var left, var right):
+                        if (PowerOfX(left, x) is not var (lc, le) || PowerOfX(right, x) is not var (rc, re))
+                            return null;
+                        return (lc * rc, Number.Rational.Create(le.ERational.Add(re.ERational)));
+                    case Divf(var left, var right):
+                        if (PowerOfX(left, x) is not var (nc, ne) || PowerOfX(right, x) is not var (dc, de))
+                            return null;
+                        return (nc / dc, Number.Rational.Create(ne.ERational.Subtract(de.ERational)));
+                    default:
+                        return null;
+                }
+            }
+        }
+
+        /// <summary>
         /// A power of a square written out, <c>(A + B w + C w^2)^p</c> with <c>B^2 = 4 A C</c> and
         /// <c>w = x^k</c>, as the power of its root, <c>L = w + B/(2 C)</c>: the integral is
         /// <c>F</c> times the integral with <c>L^(2p)</c> in its place, where
