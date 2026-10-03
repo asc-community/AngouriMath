@@ -3741,10 +3741,16 @@ namespace AngouriMath.Functions.Algebra
             var uToTheN = MathS.Pow(u, n);
             var oneMinusDUToTheN = 1 - d * uToTheN;
             var binomialInU = c / oneMinusDUToTheN;
-            var integrand = Functions.SingleQuotient.Combine(
+            // The factor the substitution leaves on both sides cancelled as it is written, not simplified:
+            // `(1 - u^4)/((1 + u^4)(1 - u^4))` for Timofeev's above, which the rational integrator does
+            // not cancel, and the search for a simpler form that did grows with the power of the binomial
+            // while the symbols are in it: `1/((a + b x^2)^(7/2) (1 + x^2))` ran past 90 s on it. The
+            // other factors stay as they are written, which the rules after this read better than
+            // their expansion.
+            var integrand = WithTheFactorsWrittenOnBothSidesCancelled(Functions.SingleQuotient.Combine(
                 inXToTheN.Substitute(xToTheN, c * uToTheN / oneMinusDUToTheN)
                 * (k.IsZero ? Number.Integer.One : MathS.Pow(binomialInU, Number.Integer.Create(k)))
-                / oneMinusDUToTheN).Simplify();
+                / oneMinusDUToTheN).InnerSimplified);
             if (integrand is Providedf(var inner, _))
                 integrand = inner;
             if (integrand.ContainsNode(x) || integrand.Nodes.Any(node => node == MathS.NaN))
@@ -3753,6 +3759,51 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             var answer = result.Substitute(u, x * MathS.Pow(radicand, Number.Rational.Create(-1, n)));
             return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
+        /// <paramref name="quotient"/> with each factor written alike above and below the bar cancelled,
+        /// power for power, and the rest as written; unchanged where none is.
+        /// </summary>
+        private static Entity WithTheFactorsWrittenOnBothSidesCancelled(Entity quotient)
+        {
+            var (top, bottom) = Functions.SingleQuotient.Of(quotient);
+            static List<(Entity Base, EInteger Power)> Factors(Entity side)
+            {
+                var factors = new List<(Entity Base, EInteger Power)>();
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    var (@base, power) = factor is Powf(var raised, Number.Integer exponent) && exponent.EInteger.Sign > 0
+                        ? (raised, exponent.EInteger) : (factor, EInteger.One);
+                    var at = factors.FindIndex(written => written.Base == @base);
+                    if (at < 0)
+                        factors.Add((@base, power));
+                    else
+                        factors[at] = (@base, factors[at].Power.Add(power));
+                }
+                return factors;
+            }
+            var above = Factors(top);
+            var below = Factors(bottom);
+            var cancelled = false;
+            for (var i = 0; i < above.Count; i++)
+            {
+                if (above[i].Base is Number)
+                    continue;
+                var j = below.FindIndex(written => written.Base == above[i].Base);
+                if (j < 0)
+                    continue;
+                var common = EInteger.Min(above[i].Power, below[j].Power);
+                above[i] = (above[i].Base, above[i].Power.Subtract(common));
+                below[j] = (below[j].Base, below[j].Power.Subtract(common));
+                cancelled = true;
+            }
+            if (!cancelled)
+                return quotient;
+            static Entity Product(List<(Entity Base, EInteger Power)> factors)
+                => factors.Where(written => !written.Power.IsZero).Aggregate((Entity)Number.Integer.One,
+                    (product, written) => product * (written.Power.Equals(EInteger.One) ? written.Base : MathS.Pow(written.Base, Number.Integer.Create(written.Power))));
+            return (Product(above) / Product(below)).InnerSimplified;
         }
 
         /// <summary>

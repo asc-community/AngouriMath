@@ -540,6 +540,23 @@ taken apart into pieces each closed the same way
 | `"(2 + x)/((2 + 4*x - 3*x^2)*(1 + 3*x + 2*x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative |
 | `"1/((x^2 + 1)*sqrt(x^2 + x + 1))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm and an arctangent |
 
+### A rational function of `x^n` beside a power of a symbolic binomial is integrated without a search
+
+**Answers where there were none.** A rational function of `x^n` beside `(c + d x^n)^(k - 1/n)` is a
+rational function of `u = x/(c + d x^n)^(1/n)`, and the integrand in `u` was simplified before it
+was integrated. With symbols in it the search for a simpler form grew with the power of the
+binomial: `1/((a + b x^2)^(5/2) (1 + x^2))` took 5 s on the unreleased master, the `7/2` power ran
+past 30 s, and both were declined on 2.5.0. What the search found was the factor the substitution
+leaves on both sides of the bar, which is cancelled as it is written now, the other factors left as
+they are written ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((a + b*x^2)^(5/2)*(1 + x^2))".ToEntity().Integrate("x")` | `integral(...)` | powers of `x/sqrt(a + b x^2)`, and an arctangent or a logarithm by the sign of `a - b`, in 0.6 s |
+| `"1/((a + b*x^2)^(7/2)*(1 + x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same, in 0.7 s |
+| `"1/((a + b*x^2)^(9/2)*(1 + x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same, in 1 s |
+| `"x^2/((a + b*x^2)^(7/2)*(c + d*x^2))".ToEntity().Integrate("x")` | `integral(...)` | the same by the sign of `c (a d - b c)`, in 1 s |
+
 ### A power of a multiple of a quadratic's derivative beside a power of the quadratic is a binomial
 
 **Improvement, not silent.** `(b d + 2 c d x)^m (a + b x + c x^2)^p`, with a power that is not whole,
