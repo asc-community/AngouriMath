@@ -398,6 +398,27 @@ that `sec(x)^2/(a + b sin(x))` is rational in them rather than declined at once
 | `"tan(x)^4/(a + a*cos(x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `tan(x/2)` |
 | `"csc(x)^2/(a + a*cos(x))".ToEntity().Integrate("x")` | `integral(...)` | `(tan(x/2)^3/12 + tan(x/2)/2 - 1/(4 tan(x/2)))/a` |
 
+### A rational function with complex coefficients is integrated through its real and imaginary parts
+
+**Answers where there were none.** `1/((1 + i x)^2 (1 + x^2))` was declined: the rational
+integrator reads coefficients that are rational numbers, and `i` is not one. Times the conjugate
+of its denominator over itself, `N/D = N D'/(D D')` with `D'` the polynomial whose coefficients are
+those of `D` conjugated, the denominator has rational coefficients and the numerator is `P + i S`
+with `P` and `S` rational: the integral is that of `P/(D D')` and `i` times that of `S/(D D')`. A
+product of symbols common to a polynomial's coefficients, `a + i a x`, comes out with the
+constants. The tangent substitution makes such a function of Rubi's `(a + i a tan(c + d x))^n`, by
+the hundred in its 4.3.2.1, 4.3.3.1 and 4.3.1.2; their answers are in `tan(c + d x)`, on each
+interval between the poles of the tangent, as the substitution's are
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((1 + i*x)^2*(1 + x^2))".ToEntity().Integrate("x")` | `integral(...)` | a rational function of `x` and an arctangent |
+| `"1/(a + i*a*tan(x))^2".ToEntity().Integrate("x")` | `integral(...)` | the same in `tan(x)` |
+| `"tan(x)^3/(a + i*a*tan(x))^4".ToEntity().Integrate("x")` | `integral(...)` | the same |
+| `"(A + B*tan(x))/(a + i*a*tan(x))^2".ToEntity().Integrate("x")` | `integral(...)` | the same |
+| `"1/(a + i*a*tan(c + d*x))^3".ToEntity().Integrate("x")` | `integral(...)` | the same in `tan(c + d x)` |
+
 ### `NaN` was returned as the antiderivative of something that has one
 
 **A wrong answer, not a missing one.** `1/(a*x^2)` came back as `NaN + C`, and `NaN` is this
