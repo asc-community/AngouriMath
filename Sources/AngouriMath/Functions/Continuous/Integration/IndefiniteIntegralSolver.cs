@@ -825,6 +825,10 @@ namespace AngouriMath.Functions.Algebra
             // the second degree. Split at the power of x, each part goes to a rule that reads it.
             if (IntegrateOverAPowerOfXBesideABlock(numerator, denominator, x, integrateByParts) is { } besideABlock)
                 return besideABlock;
+            // And a power of another linear beside such a block, split at its root the same way:
+            // `1/((u - c)(a + b u^3))`, which writing `1/(x (a + b (c + d x)^3))` in `c + d x` makes.
+            if (IntegrateOverAPowerOfALinearBesideABlock(numerator, denominator, x, integrateByParts) is { } besideABlockAtARoot)
+                return besideABlockAtARoot;
 
             // Blocks that are each a polynomial in one power of x past the second,
             // `1/((a + b x^3)(c + d x^3))`: split in `u = x^n`, where they are linear or quadratic,
@@ -986,6 +990,141 @@ namespace AngouriMath.Functions.Algebra
             return Integration.ComputeIndefiniteIntegral(remainder / block, x, integrateByParts) is { } overTheBlock
                 ? overX + overTheBlock
                 : null;
+        }
+
+        /// <summary>
+        /// <c>N/(L^k B)</c> for a linear <c>L = g + h x</c> other than x, beside a block <c>B</c>
+        /// with a symbol in it, past the second degree, that does not vanish at the root of L:
+        /// split there as <see cref="IntegrateOverAPowerOfXBesideABlock"/> splits at 0. With
+        /// <c>s = x - r</c>, <c>r = -g/h</c>, <c>N/B</c> has a power series in <c>s</c>, and its first
+        /// <c>k</c> terms <c>P</c> are the part over <c>s^k</c>: <c>N/(s^k B) = P/s^k + R/B</c>, with
+        /// <c>R = (N - P B)/s^k</c> exactly.
+        /// </summary>
+        /// <remarks>
+        /// <c>1/(x (a + b (c + d x)^3))</c> is <c>1/((u - c)(a + b u^3))</c> in <c>u = c + d x</c>: a
+        /// linear beside a binomial, which nothing took apart, since the split over written
+        /// factors takes linear and quadratic blocks only. The coefficients of N and B at the
+        /// root are read by Taylor's formula, and the block is left as it is written, for the
+        /// rules that read it. Rubi's 1.3.1.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static Entity? IntegrateOverAPowerOfALinearBesideABlock(Entity numerator, Entity denominator, Entity.Variable x, bool integrateByParts)
+        {
+            // For the question asked, or one substitution below it: the rest over the block is
+            // integrated again.
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            Entity? linear = null;
+            var k = 0;
+            Entity block = Number.Integer.One;
+            var pastTheSecondDegree = false;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                var (@base, power) = factor is Powf(var raised, Number.Integer e) && e.EInteger.Sign > 0 && e.EInteger.CanFitInInt32()
+                    ? (raised, e.EInteger.ToInt32Unchecked())
+                    : (factor, 1);
+                if (@base != x && @base.ContainsNode(x) && TreeAnalyzer.TryGetPolyLinear(@base, x, out var slope, out var offset)
+                    && !slope.ContainsNode(x) && !offset.ContainsNode(x))
+                {
+                    if (linear is { } && linear != @base)
+                        return null;
+                    linear = @base;
+                    k += power;
+                }
+                else
+                {
+                    block = block == Number.Integer.One ? factor : block * factor;
+                    pastTheSecondDegree |= TreeAnalyzer.TryGetPolynomial(@base, x, out var terms) && terms.Keys.Any(degree => degree.CompareTo(EInteger.FromInt32(2)) > 0);
+                }
+            }
+            if (linear is null || k > MaximumPowerOfXBesideABlock || !pastTheSecondDegree || !block.ContainsNode(x) || !block.Vars.Any(symbol => symbol != x)
+                || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var h, out var g) || VanishesIdentically(h)
+                || !TreeAnalyzer.TryGetPolynomial(block, x, out var below) || !TreeAnalyzer.TryGetPolynomial(numerator, x, out var above))
+                return null;
+            foreach (var term in below.Concat(above))
+                if (term.Key.Sign < 0 || !term.Key.CanFitInInt32() || term.Value.ContainsNode(x))
+                    return null;
+            var degreeBelow = below.Keys.Max()!.ToInt32Unchecked();
+            var degreeAbove = above.Count == 0 ? 0 : above.Keys.Max()!.ToInt32Unchecked();
+            if (degreeBelow > MaximumPowerOfXBesideABlock || degreeAbove > MaximumPowerOfXBesideABlock)
+                return null;
+            var root = Functions.PartialFractions.InLowestTermsOverTheSymbols(-g / h);
+            // N and B in s = x - r, by Taylor's formula.
+            Entity[] InS(Dictionary<EInteger, Entity> polynomial, int degree)
+            {
+                var shifted = new Entity[degree + 1];
+                for (var i = 0; i <= degree; i++)
+                {
+                    Entity sum = Number.Integer.Zero;
+                    for (var m = i; m <= degree; m++)
+                        if (polynomial.TryGetValue(EInteger.FromInt32(m), out var coefficient))
+                            sum += coefficient * Binomial(m, i) * (m == i ? Number.Integer.One : MathS.Pow(root, m - i));
+                    shifted[i] = Functions.PartialFractions.InLowestTermsOverTheSymbols(sum);
+                }
+                return shifted;
+            }
+            var n = InS(above, degreeAbove);
+            var b = InS(below, degreeBelow);
+            // Where s divides N, the part over s^k is nothing and the rest is the question asked
+            // again; where it divides B, the block shares the root.
+            if (VanishesIdentically(n[0]) || VanishesIdentically(b[0]))
+                return null;
+            Entity At(Entity[] polynomial, int power) => power < polynomial.Length ? polynomial[power] : Number.Integer.Zero;
+
+            // P: the first k terms of the power series of N/B at r.
+            var series = new Entity[k];
+            for (var j = 0; j < k; j++)
+            {
+                var sum = At(n, j);
+                for (var i = 1; i <= j; i++)
+                    sum -= At(b, i) * series[j - i];
+                series[j] = Functions.PartialFractions.InLowestTermsOverTheSymbols(sum / b[0]);
+            }
+
+            // R = (N - P B)/s^k in s, and then in x.
+            var top = System.Math.Max(degreeAbove, degreeBelow + k - 1);
+            var inS = new Entity[System.Math.Max(top - k + 1, 0)];
+            for (var m = k; m <= top; m++)
+            {
+                var coefficient = At(n, m);
+                for (var j = System.Math.Max(0, m - degreeBelow); j <= System.Math.Min(k - 1, m); j++)
+                    coefficient -= series[j] * At(b, m - j);
+                inS[m - k] = Functions.PartialFractions.InLowestTermsOverTheSymbols(coefficient);
+            }
+            Entity remainder = Number.Integer.Zero;
+            for (var j = 0; j < inS.Length; j++)
+            {
+                Entity sum = Number.Integer.Zero;
+                for (var m = j; m < inS.Length; m++)
+                    if (!VanishesIdentically(inS[m]))
+                        sum += inS[m] * Binomial(m, j) * (m == j ? Number.Integer.One : MathS.Pow(-root, m - j));
+                var coefficient = Functions.PartialFractions.InLowestTermsOverTheSymbols(sum);
+                if (!VanishesIdentically(coefficient))
+                    remainder += j == 0 ? coefficient : coefficient * (j == 1 ? x : MathS.Pow(x, j));
+            }
+
+            // L^k is h^k s^k, and s is L/h: the part over L^k term by term, and the rest over the
+            // block as it is written.
+            Entity overTheLinear = Number.Integer.Zero;
+            for (var j = 0; j < k; j++)
+                if (!VanishesIdentically(series[j]))
+                    overTheLinear += j == k - 1
+                        ? series[j] * IntegralPatterns.AntiderivativeLog(linear)
+                        : series[j] * MathS.Pow(h, k - 1 - j) * MathS.Pow(linear, j - k + 1) / (j - k + 1);
+            var scale = k == 1 ? h : MathS.Pow(h, k);
+            if (remainder == Number.Integer.Zero)
+                return overTheLinear / scale;
+            return Integration.ComputeIndefiniteIntegral(remainder / block, x, integrateByParts) is { } overTheBlock
+                ? (overTheLinear + overTheBlock) / scale
+                : null;
+
+            static Entity Binomial(int n, int k)
+            {
+                var result = EInteger.One;
+                for (var i = 1; i <= k; i++)
+                    result = result.Multiply(EInteger.FromInt32(n - k + i)).Divide(EInteger.FromInt32(i));
+                return Number.Integer.Create(result);
+            }
         }
 
         /// <summary>
