@@ -295,6 +295,23 @@ power up each step, and what reaches the first power is integrated once over the
 | `"1/(a + b*x^2 + c*x^4)^3".ToEntity().Integrate("x")` | `integral(...)` | the same |
 | `"x/(a + b*x^3 + c*x^6)^2".ToEntity().Integrate("x")` | `integral(...)` | a polynomial over `a + b x^3 + c x^6`, and the integral of a polynomial over it |
 
+### A polynomial over a power of a quadratic with a sum of symbols in it is reduced
+
+**Answers where there were none.** The reduction of `N(x)/Q(x)^n` divides `N` by the quadratic a
+power at a time. With a sum of symbols among the quadratic's coefficients, the remainder it computed
+held the terms the division had taken away, written two ways, and read as of the second degree it
+stopped the reduction: `x^4/(d x^2 + b c - a d)^5` was declined where `x^4/(d x^2 + k)^5` was
+answered. The remainder the division reports is taken where the computed one is not linear, and an
+improper fraction is declined before the first division rather than after the last. This is what
+`t = sqrt(a + b x)` makes of Rubi's 1.1.1.2 `(a + b x)^(m/2)/(c + d x)^n`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^4/(d*x^2 + b*c - a*d)^5".ToEntity().Integrate("x")`, and `x^6` over the fourth power | `integral(...)` | the antiderivative |
+| `"(1 - b*x^2)^3/(c*(1 - b*x^2) + a*d*x^2)^3".ToEntity().Integrate("x")` | no answer within a minute | the antiderivative |
+| `"(a + b*x)^(5/2)/(c + d*x)^4".ToEntity().Integrate("x")` | `integral(...)` | the antiderivative |
+
 ### A symbolic parameter no longer stops a rational integrand being integrated
 
 `1/(8 + x^3)` and `1/(16 - x^4)` are answered at once. `1/(a^3 + x^3)` and `1/(a^4 - x^4)` were not,
