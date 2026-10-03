@@ -4740,7 +4740,8 @@ namespace AngouriMath.Functions.Algebra
         /// <see cref="SolveAHyperbolicOfALinearOverAPowerOfALinear"/>. <c>e^x/(x (x + 1))</c> is
         /// <c>e^x/x - e^x/(x + 1)</c>, which is <c>Ei(x) - Ei(x + 1)/e</c>; the trigonometric rule
         /// splits the same way (<see cref="OverAPowerOfALinear"/>). It is also what by parts leaves
-        /// of <c>Ei(a + b x)/x^2</c>, <c>e^(a + b x)/((a + b x) x)</c>.
+        /// of <c>Ei(a + b x)/x^2</c>, <c>e^(a + b x)/((a + b x) x)</c>. A quadratic below the bar is
+        /// the linears of its two roots: Rubi's 6.2.2, <c>cosh(c + d x)/(a + b x^2)</c>.
         /// https://github.com/asc-community/AngouriMath/issues/1501
         /// </summary>
         internal static Entity? SolveAnExponentialOverSeveralLinears(Entity expr, Entity.Variable x)
@@ -4751,6 +4752,16 @@ namespace AngouriMath.Functions.Algebra
             var linears = new List<(Entity Linear, int Power)>();
             Entity? polynomial = null;
             Entity? exponentials = null;
+            // The denominator as it is written, each quadratic monic, for the division.
+            Entity written = Number.Integer.One;
+            void AddALinear(Entity linear, int power)
+            {
+                var at = linears.FindIndex(pair => pair.Linear == linear);
+                if (at < 0)
+                    linears.Add((linear, power));
+                else
+                    linears[at] = (linear, linears[at].Power + power);
+            }
             foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
             {
                 if (!factor.ContainsNode(x))
@@ -4764,11 +4775,30 @@ namespace AngouriMath.Functions.Algebra
                     exponent = -exponent;
                 if (exponent < 0 && TreeAnalyzer.TryGetPolyLinear(@base, x, out var slopeOfIt, out _) && !TreeAnalyzer.IsZero(slopeOfIt))
                 {
-                    var at = linears.FindIndex(pair => pair.Linear == @base);
-                    if (at < 0)
-                        linears.Add((@base, -exponent));
-                    else
-                        linears[at] = (@base, linears[at].Power - exponent);
+                    AddALinear(@base, -exponent);
+                    written *= MathS.Pow(@base, -exponent);
+                    continue;
+                }
+                // A quadratic is its leading coefficient times the linears of its two roots, complex
+                // where its discriminant is negative, as the trigonometric rule writes it:
+                // `cosh(c + d x)/(a + b x^2)` is a sum over `x -/+ sqrt(-a/b)`, each the one-linear
+                // question, and the integrals of the two conjugate arguments add up to a real answer.
+                if (exponent < 0 && TreeAnalyzer.TryGetPolyQuadratic(@base, x, out var leading, out var middle, out var last) && !TreeAnalyzer.IsZero(leading))
+                {
+                    var discriminant = MathS.Sqrt(middle * middle - 4 * leading * last);
+                    constant /= MathS.Pow(leading, -exponent);
+                    AddALinear(LessTheRoot(((-middle + discriminant) / (2 * leading)).InnerSimplified, x), -exponent);
+                    AddALinear(LessTheRoot(((-middle - discriminant) / (2 * leading)).InnerSimplified, x), -exponent);
+                    written *= MathS.Pow(Monic(leading, middle, last, x), -exponent);
+                    continue;
+                }
+                // And a binomial past the quadratic the linears of its roots: `cosh(c + d x)/(a + b x^3)`.
+                if (exponent < 0 && TheRootsOfABinomial(@base, x) is { } binomial)
+                {
+                    constant /= MathS.Pow(binomial.Leading, -exponent);
+                    foreach (var root in binomial.Roots)
+                        AddALinear(LessTheRoot(root, x), -exponent);
+                    written *= MathS.Pow(binomial.Monic, -exponent);
                     continue;
                 }
                 if (underneath)
@@ -4787,31 +4817,15 @@ namespace AngouriMath.Functions.Algebra
             }
             if (exponentials is null || linears.Count < 2 || linears.Count > 4 || linears.Sum(pair => pair.Power) > 12)
                 return null;
-            // Over each linear by partial fractions, the polynomial part first, since the split is
-            // of a proper fraction -- as the trigonometric rule does it. Only where the fraction is
-            // not proper already: divided, `x` over `(c + d x)(x - 2)` came back as a quotient and a
-            // remainder `2 provided not c + d x = 0`, which nothing splits.
+            // Exponentials of linears only, which is what the one-linear rules read: split, a term of
+            // `sinh(sqrt((1 - a x)/(1 + a x)))/(1 - a^2 x^2)` goes to the whole integrator, and the
+            // substitution that answers the question whole in a tenth of a second is not reached.
+            if (!Sumf.LinearChildren(exponentials.Expand()).All(term => ReadAnExponentialTerm(term, x) is not null))
+                return null;
+            // Over each linear by partial fractions, as the trigonometric rule does it.
             var denominator = linears.Aggregate((Entity)Number.Integer.One, (product, pair) => product * MathS.Pow(pair.Linear, pair.Power));
-            Entity numerator = polynomial ?? Number.Integer.One;
-            var terms = new List<Entity>();
-            if (numerator.ContainsNode(x)
-                && TreeAnalyzer.TryGetPolynomial(numerator, x, out var monomialsAbove)
-                && monomialsAbove.Keys.Any(degree => degree.CompareTo(EInteger.FromInt32(linears.Sum(pair => pair.Power))) >= 0)
-                && TreeAnalyzer.PolynomialLongDivision(numerator, denominator, genericCase: true, inTermsOf: x) is var (quotient, remainder))
-            {
-                if (!TreeAnalyzer.IsZero(quotient))
-                    terms.Add(quotient);
-                numerator = remainder is Divf(var left, _) ? left : (numerator - quotient * denominator).Expand().InnerSimplified;
-            }
-            if (!TreeAnalyzer.IsZero(numerator))
-            {
-                if (!Functions.PartialFractions.TrySplitOverWrittenFactors(numerator, denominator, x, out var decomposition))
-                    return null;
-                var fractions = decomposition.InnerSimplified;
-                if (fractions is Divf(var over, var by) && !by.ContainsNode(x))
-                    fractions = Sumf.LinearChildren(over).Aggregate((Entity)Number.Integer.Zero, (all, one) => all + one / by);
-                terms.AddRange(Sumf.LinearChildren(fractions));
-            }
+            if (OverEachLinear(polynomial ?? Number.Integer.One, written, denominator, linears.Sum(pair => pair.Power), x) is not { } terms)
+                return null;
             Entity sum = Number.Integer.Zero;
             foreach (var term in terms)
             {
@@ -5513,6 +5527,72 @@ namespace AngouriMath.Functions.Algebra
             return UnderAPowerOfTheVariable(expr, x, argument);
         }
 
+        // x - r, written x + |r| where the root is a negative number: x + 1 for the root -1.
+        private static Entity LessTheRoot(Entity root, Entity.Variable x) =>
+            root is Number.Complex { RealPart.IsNegative: true } or Number.Complex { RealPart.EDecimal.IsZero: true, ImaginaryPart.IsNegative: true }
+                ? x + (-root).InnerSimplified : (x - root).InnerSimplified;
+
+        // A quadratic divided by its leading coefficient, `x^2 + (b/a) x + c/a`, in the generic
+        // case: the division declines a divisor with a condition on it.
+        private static Entity Monic(Entity leading, Entity middle, Entity last, Entity.Variable x) =>
+            Functions.PartialFractions.Bare((MathS.Sqr(x) + middle / leading * x + last / leading).InnerSimplified);
+
+        // `a + b x^n` for an n of 3 or 4, as its leading coefficient, its n roots, and itself monic in
+        // the generic case. The roots are `(a/b)^(1/n)` times the n-th roots of -1, `e^(i pi (2k + 1)/n)`:
+        // only their n-th power is used, so they are the roots whichever branch the n-th root takes.
+        private static (Entity Leading, Entity[] Roots, Entity Monic)? TheRootsOfABinomial(Entity binomial, Entity.Variable x)
+        {
+            if (!TreeAnalyzer.TryGetPolynomial(binomial, x, out var terms) || terms.Count != 2
+                || !terms.TryGetValue(EInteger.Zero, out var free) || free.ContainsNode(x) || TreeAnalyzer.IsZero(free))
+                return null;
+            var top = terms.First(term => !term.Key.IsZero);
+            if (top.Value.ContainsNode(x) || TreeAnalyzer.IsZero(top.Value) || !top.Key.CanFitInInt32() || top.Key.ToInt32Checked() is not (3 or 4))
+                return null;
+            var n = top.Key.ToInt32Checked();
+            var scale = MathS.Pow(Functions.PartialFractions.InLowestTermsOverTheSymbols(free / top.Value), Number.Rational.Create(1, n));
+            Entity[] rootsOfMinusOne = n == 3
+                ? new Entity[] { -1, (1 + MathS.i * MathS.Sqrt(3)) / 2, (1 - MathS.i * MathS.Sqrt(3)) / 2 }
+                : new Entity[] { (1 + MathS.i) / MathS.Sqrt(2), (1 - MathS.i) / MathS.Sqrt(2), (-1 + MathS.i) / MathS.Sqrt(2), (-1 - MathS.i) / MathS.Sqrt(2) };
+            return (top.Value, rootsOfMinusOne.Select(root => (root * scale).InnerSimplified).ToArray(),
+                Functions.PartialFractions.Bare((MathS.Pow(x, n) + free / top.Value).InnerSimplified));
+        }
+
+        /// <summary>
+        /// <paramref name="numerator"/> over a denominator as terms each over one linear: the
+        /// polynomial part first, divided by the denominator as it is <paramref name="written"/>,
+        /// and the proper rest split into partial fractions over <paramref name="overTheLinears"/>,
+        /// the same denominator with each quadratic in it written as the linears of its roots.
+        /// Divided by those linears, `x^2` over `(x - r)(x + r)`, `r = sqrt(-a/b)`, left a remainder
+        /// in `r^2` that nothing read as `-a/b`. Only where the fraction is not proper already:
+        /// divided, `x` over `(c + d x)(x - 2)` came back as a quotient and a remainder
+        /// `2 provided not c + d x = 0`, which nothing splits. Null where the split declines.
+        /// </summary>
+        private static List<Entity>? OverEachLinear(Entity numerator, Entity written, Entity overTheLinears, int degreeBelow, Entity.Variable x)
+        {
+            var terms = new List<Entity>();
+            if (numerator.ContainsNode(x)
+                && TreeAnalyzer.TryGetPolynomial(numerator, x, out var monomialsAbove)
+                && monomialsAbove.Keys.Any(degree => degree.CompareTo(EInteger.FromInt32(degreeBelow)) >= 0)
+                && TreeAnalyzer.PolynomialLongDivision(numerator, written, genericCase: true, inTermsOf: x) is var (quotient, remainder))
+            {
+                if (!TreeAnalyzer.IsZero(quotient))
+                    terms.Add(quotient);
+                // The remainder comes over the divisor already.
+                numerator = remainder is Divf(var left, _) ? left : (numerator - quotient * written).Expand().InnerSimplified;
+            }
+            if (!TreeAnalyzer.IsZero(numerator))
+            {
+                if (!Functions.PartialFractions.TrySplitOverWrittenFactors(numerator, overTheLinears, x, out var decomposition))
+                    return null;
+                // The sum of the fractions, over a constant it may come divided by.
+                var fractions = decomposition.InnerSimplified;
+                if (fractions is Divf(var over, var by) && !by.ContainsNode(x))
+                    fractions = Sumf.LinearChildren(over).Aggregate((Entity)Number.Integer.Zero, (all, one) => all + one / by);
+                terms.AddRange(Sumf.LinearChildren(fractions));
+            }
+            return terms;
+        }
+
         /// <summary>
         /// <see cref="SolveATrigonometricOfALinearOverAPowerOfALinear"/> where the argument is
         /// <paramref name="argument"/>, linear in <paramref name="x"/>. Two or more linears below
@@ -5529,6 +5609,8 @@ namespace AngouriMath.Functions.Algebra
             var linears = new List<(Entity Linear, int Power)>();
             Entity? polynomial = null;
             Entity? trigonometric = null;
+            // The denominator as it is written, each quadratic monic, for the division.
+            Entity written = Number.Integer.One;
             void AddALinear(Entity linear, int power)
             {
                 var at = linears.FindIndex(pair => pair.Linear == linear);
@@ -5537,10 +5619,6 @@ namespace AngouriMath.Functions.Algebra
                 else
                     linears[at] = (linear, linears[at].Power + power);
             }
-            // x - r, written x + |r| where the root is a negative number: x + 1 for the root -1.
-            Entity LessTheRoot(Entity root) =>
-                root is Number.Complex { RealPart.IsNegative: true } or Number.Complex { RealPart.EDecimal.IsZero: true, ImaginaryPart.IsNegative: true }
-                    ? x + (-root).InnerSimplified : (x - root).InnerSimplified;
             foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
             {
                 if (!factor.ContainsNode(x))
@@ -5571,7 +5649,10 @@ namespace AngouriMath.Functions.Algebra
                 if (exponent < 0)
                 {
                     if (TreeAnalyzer.TryGetPolyLinear(@base, x, out var slopeOfIt, out _) && !TreeAnalyzer.IsZero(slopeOfIt))
+                    {
                         AddALinear(@base, -exponent);
+                        written *= MathS.Pow(@base, -exponent);
+                    }
                     // A quadratic is its leading coefficient times the linears of its two roots,
                     // complex where its discriminant is negative: `sin(c + d x)/(a + b x^2)` is a
                     // sum over `x -/+ sqrt(-a/b)`, each the one-linear question, and the sine and
@@ -5582,8 +5663,17 @@ namespace AngouriMath.Functions.Algebra
                         var first = ((-middle + discriminant) / (2 * leading)).InnerSimplified;
                         var second = ((-middle - discriminant) / (2 * leading)).InnerSimplified;
                         constant /= MathS.Pow(leading, -exponent);
-                        AddALinear(LessTheRoot(first), -exponent);
-                        AddALinear(LessTheRoot(second), -exponent);
+                        AddALinear(LessTheRoot(first, x), -exponent);
+                        AddALinear(LessTheRoot(second, x), -exponent);
+                        written *= MathS.Pow(Monic(leading, middle, last, x), -exponent);
+                    }
+                    // And a binomial past the quadratic the linears of its roots: `sin(c + d x)/(a + b x^3)`.
+                    else if (TheRootsOfABinomial(@base, x) is { } binomial)
+                    {
+                        constant /= MathS.Pow(binomial.Leading, -exponent);
+                        foreach (var root in binomial.Roots)
+                            AddALinear(LessTheRoot(root, x), -exponent);
+                        written *= MathS.Pow(binomial.Monic, -exponent);
                     }
                     else
                         return null;
@@ -5603,32 +5693,10 @@ namespace AngouriMath.Functions.Algebra
                 return AgainstAPowerOfALinear(polynomial, linears[0].Linear, linears[0].Power, angles, argument, x, needsAnIntegral: true) is var (one, _) && one is not null
                     ? Functions.PartialFractions.Bare((constant * one).InnerSimplified)
                     : null;
-            // Over each linear by partial fractions, and each term the one-linear question; the
-            // polynomial part first, since the split is of a proper fraction -- and only where it is
-            // not proper already, as in SolveAnExponentialOverSeveralLinears.
+            // Over each linear by partial fractions, and each term the one-linear question.
             var denominator = linears.Aggregate((Entity)Number.Integer.One, (product, pair) => product * MathS.Pow(pair.Linear, pair.Power));
-            Entity numerator = polynomial ?? Number.Integer.One;
-            var terms = new List<Entity>();
-            if (numerator.ContainsNode(x)
-                && TreeAnalyzer.TryGetPolynomial(numerator, x, out var monomialsAbove)
-                && monomialsAbove.Keys.Any(degree => degree.CompareTo(EInteger.FromInt32(linears.Sum(pair => pair.Power))) >= 0)
-                && TreeAnalyzer.PolynomialLongDivision(numerator, denominator, genericCase: true, inTermsOf: x) is var (quotient, remainder))
-            {
-                if (!TreeAnalyzer.IsZero(quotient))
-                    terms.Add(quotient);
-                // The remainder comes over the divisor already.
-                numerator = remainder is Divf(var left, _) ? left : (numerator - quotient * denominator).Expand().InnerSimplified;
-            }
-            if (!TreeAnalyzer.IsZero(numerator))
-            {
-                if (!Functions.PartialFractions.TrySplitOverWrittenFactors(numerator, denominator, x, out var decomposition))
-                    return null;
-                // The sum of the fractions, over a constant it may come divided by.
-                var fractions = decomposition.InnerSimplified;
-                if (fractions is Divf(var over, var by) && !by.ContainsNode(x))
-                    fractions = Sumf.LinearChildren(over).Aggregate((Entity)Number.Integer.Zero, (all, one) => all + one / by);
-                terms.AddRange(Sumf.LinearChildren(fractions));
-            }
+            if (OverEachLinear(polynomial ?? Number.Integer.One, written, denominator, linears.Sum(pair => pair.Power), x) is not { } terms)
+                return null;
             Entity sum = Number.Integer.Zero;
             var special = false;
             foreach (var term in terms)
