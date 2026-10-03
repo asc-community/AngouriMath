@@ -745,6 +745,17 @@ namespace AngouriMath.Functions.Algebra
                     ?? Integration.ComputeIndefiniteIntegral(numerator / respelled, x, integrateByParts)) is { } overPolynomials)
                 return overPolynomials;
 
+            // A polynomial below the bar that is a binomial, or a quartic even in its variable, once
+            // written in `y = x + s` with `s = a_(n-1)/(n a_n)`: `c^2 x^3 + 3 b c x^2 + 3 b^2 x + 3 a b`
+            // is `((c x + b)^3 + 3 a b c - b^3)/c`, and `a + 8 x - 8 x^2 + 4 x^3 - x^4` is
+            // `a + 3 - 2 y^2 - y^4` in `y = x - 1`. Nothing above factors a polynomial with a symbol
+            // in it, and the rules for a binomial and for an even quartic read it in y at once.
+            // Once: in y the term that s takes away is gone.
+            if (InTheVariableThatDepressesIt(numerator, denominator, x) is var (inY, y, shift)
+                && (SolveByPartialFractions(inY, y, integrateByParts)
+                    ?? Integration.ComputeIndefiniteIntegral(inY, y, integrateByParts)) is { } inTheShiftedVariable)
+                return inTheShiftedVariable.Substitute(y, (x + shift).InnerSimplified);
+
             // A denominator with a written repeated factor takes the Hermite reduction first:
             // the rational part of the answer in one linear solve, and what is left is a proper
             // fraction over a squarefree denominator for the splits below. `(1 + x^2)/(x (1 + x^3)^2)`
@@ -848,6 +859,79 @@ namespace AngouriMath.Functions.Algebra
                 return atTheRootsOfUnity;
 
             return null;
+        }
+
+        /// <summary>
+        /// <paramref name="numerator"/> over <paramref name="denominator"/> written in <c>y = x + s</c>,
+        /// where the denominator is a constant times a power of one polynomial in x of the third to
+        /// the sixth degree, written as a sum of its monomials, that in y is a binomial or, of the
+        /// fourth degree, even; <c>s = a_(n-1)/(n a_n)</c> is what takes its term of degree
+        /// <c>n - 1</c> away. Null otherwise, and where that term is not there to take away.
+        /// </summary>
+        private static (Entity InY, Entity.Variable Y, Entity Shift)? InTheVariableThatDepressesIt(Entity numerator, Entity denominator, Entity.Variable x)
+        {
+            Entity? polynomial = null;
+            var power = 0;
+            Entity constant = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant *= factor;
+                    continue;
+                }
+                if (polynomial is not null)
+                    return null;
+                (polynomial, power) = factor is Powf(var raised, Number.Integer { EInteger.Sign: > 0 } exponent) && exponent.EInteger.CanFitInInt32()
+                    ? (raised, exponent.EInteger.ToInt32Unchecked()) : (factor, 1);
+            }
+            // With a symbol among its coefficients, since a polynomial over the rationals is split
+            // over its factors above; and written out, since one written in a linear,
+            // `a + (b + c x)^3`, is read as it stands.
+            if (polynomial is null || !polynomial.Vars.Any(symbol => symbol != x)
+                || polynomial.Nodes.Any(node => node is Powf(Sumf or Minusf, _) && node.ContainsNode(x))
+                || !TreeAnalyzer.TryGetPolynomial(polynomial, x, out var terms)
+                || terms.Any(term => term.Key.Sign < 0 || !term.Key.CanFitInInt32() || term.Value.ContainsNode(x)))
+                return null;
+            if (numerator.ContainsNode(x)
+                && (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var above) || above.Any(term => term.Key.Sign < 0 || term.Value.ContainsNode(x))))
+                return null;
+            var degree = terms.Keys.Max()!.ToInt32Unchecked();
+            if (degree < 3 || degree > 6)
+                return null;
+            Entity Coefficient(int k) => terms.TryGetValue(EInteger.FromInt32(k), out var coefficient) ? coefficient : Number.Integer.Zero;
+            if (VanishesIdentically(Coefficient(degree)) || VanishesIdentically(Coefficient(degree - 1)))
+                return null;
+            var shift = Functions.PartialFractions.InLowestTermsOverTheSymbols(Coefficient(degree - 1) / (degree * Coefficient(degree)));
+            // P(y - s) has at y^i the sum over m >= i of a_m C(m, i) (-s)^(m - i).
+            var inY = new Entity[degree + 1];
+            for (var i = 0; i <= degree; i++)
+            {
+                Entity sum = Number.Integer.Zero;
+                var choose = EInteger.One;
+                for (var m = i; m <= degree; m++)
+                {
+                    if (m > i)
+                        choose = choose.Multiply(EInteger.FromInt32(m)).Divide(EInteger.FromInt32(m - i));
+                    sum += Coefficient(m) * Number.Integer.Create(choose) * (m == i ? Number.Integer.One : MathS.Pow(-shift, m - i));
+                }
+                inY[i] = Functions.PartialFractions.InLowestTermsOverTheSymbols(sum);
+            }
+            var vanishing = inY.Select(VanishesIdentically).ToArray();
+            var aBinomial = Enumerable.Range(1, degree - 1).All(i => vanishing[i]);
+            var anEvenQuartic = degree == 4 && vanishing[1] && vanishing[3];
+            if (!aBinomial && !anEvenQuartic)
+                return null;
+            var y = Variable.CreateUnique(numerator + denominator, "y_shift");
+            Entity depressed = Number.Integer.Zero;
+            for (var i = degree; i >= 0; i--)
+                if (!vanishing[i])
+                {
+                    var monomial = i == 0 ? inY[i] : inY[i] * (i == 1 ? y : MathS.Pow(y, i));
+                    depressed = depressed == Number.Integer.Zero ? monomial : depressed + monomial;
+                }
+            var below = power == 1 ? depressed : MathS.Pow(depressed, power);
+            return (numerator.Substitute(x, y - shift) / (constant == Number.Integer.One ? below : constant * below), y, shift);
         }
 
         /// <summary>
