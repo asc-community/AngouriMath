@@ -18462,7 +18462,13 @@ namespace AngouriMath.Functions.Algebra
 
             // dx = c dt.
             var t = Variable.CreateUnique(expr, "u_scale");
-            var scaled = (expr.Substitute(x, scale * t) * scale).Simplify();
+            // With the imaginary unit in the integrand the simplifier's search beside the symbol
+            // does not end within any budget, and inner simplification separates what a whole
+            // power of the scale does: `((1 + i a x)/(1 - i a x))^(-5/4)/x^2` under its radical's
+            // substitution was minutes here before it was declined. Where the parts do not
+            // separate so, the check below declines it.
+            Entity Simplified(Entity e) => HoldsTheImaginaryUnit(expr) ? Functions.PartialFractions.Bare(e.InnerSimplified) : e.Simplify();
+            var scaled = Simplified(expr.Substitute(x, scale * t) * scale);
             if (scaled.ContainsNode(x))
                 return null;
 
@@ -18471,11 +18477,11 @@ namespace AngouriMath.Functions.Algebra
             // The integrand with the scale set to one is the candidate h(t), and what is left
             // over when the scaled integrand is divided by it is the candidate factor. Read off
             // rather than searched for: if the two do separate, the quotient *is* the factor.
-            var withoutScale = scaled.Substitute(scale, Number.Integer.One).Simplify();
+            var withoutScale = Simplified(scaled.Substitute(scale, Number.Integer.One));
             if (withoutScale.ContainsNode(scale) || withoutScale == Number.Integer.Zero)
                 return null;
 
-            var factor = (scaled / withoutScale).Simplify();
+            var factor = Simplified(scaled / withoutScale);
             // Collapsing the quotient attaches the condition that the denominator it cleared is
             // non-zero. That denominator is the integrand's own, so the condition says where the
             // integrand is defined and nothing about this rewrite; it is dropped for the same
