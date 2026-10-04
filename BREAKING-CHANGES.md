@@ -843,6 +843,21 @@ those now. Each answer holds on both sides of zero, an odd root of a negative be
 | `"x^4*(a + b*x^3)^(1/3)/(c + d*x^3)".ToEntity().Integrate("x")` | `integral(...)` | the same, beside a rational function of it |
 | `"x/((1 + x^3)^(2/3)*(2 + x^3))".ToEntity().Integrate("x")` | `integral(...)` | the same with numbers |
 
+### A rational function of the tangent of a linear argument with symbols in it is not simplified under the linear substitution
+
+**Answers where there were none.** The substitution search reaches `tan(g + h x)` through `u = g + h x`,
+and simplified the quotient of the integrand by `h` in `u` before asking for its integral: with the
+nine symbols of Rubi's 4.3.4.2 in it that took about half a minute, for an expression that is the
+integrand with its argument renamed and holds nothing to simplify. Under a linear candidate, where
+the integrand in `u` is a function of the tangent alone and holds no imaginary unit, the quotient
+is handed on as it is
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a + b*tan(g + h*x))*(A + B*tan(g + h*x) + K*tan(g + h*x)^2)/(c + d*tan(g + h*x))^2".ToEntity().Integrate("x")` | `integral(...)` after 33 s | the antiderivative, in 4.5 s |
+| `"(c + d*tan(g + h*x))^3*(A + B*tan(g + h*x) + K*tan(g + h*x)^2)/(a + b*tan(g + h*x))^3".ToEntity().Integrate("x")` | no answer within a minute and a half | the antiderivative, in 18 s |
+
 ### A rational function of `x^n` beside a power of a symbolic binomial is integrated without a search
 
 **Answers where there were none.** A rational function of `x^n` beside `(c + d x^n)^(k - 1/n)` is a
