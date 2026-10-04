@@ -830,7 +830,7 @@ those now. Each answer holds on both sides of zero, an odd root of a negative be
 
 **Answers where there were none.** The substitution search reaches `tan(g + h x)` through `u = g + h x`,
 and simplified the quotient of the integrand by `h` in `u` before asking for its integral: with the
-nine symbols of Rubi's 4.3.4.2 in it that took most of a minute, for an expression that is the
+nine symbols of Rubi's 4.3.4.2 in it that took about half a minute, for an expression that is the
 integrand with its argument renamed and holds nothing to simplify. Under a linear candidate, where
 the integrand in `u` is a function of the tangent alone and holds no imaginary unit, the quotient
 is handed on as it is
