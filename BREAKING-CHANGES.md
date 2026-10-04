@@ -665,6 +665,25 @@ written in `u = c + d x` first. Rubi's 1.1.3.2, 1.2.3.2 and 1.3.1 write whole se
 | `"(c*m + d*m*x)^3/(a + b*(c + d*x)^3)^2".ToEntity().Integrate("x")` | `integral(...)` | `m^3` times a rational function of `c + d x`, the logarithms and the arctangent |
 | `"(c + d*x)^4/(a + b*(c + d*x)^2 + k*(c + d*x)^4)^2".ToEntity().Integrate("x")` | `integral(...)` | a rational function of `c + d x` and arctangents |
 
+### A root of a square inside a sum is integrated on each side of the square's zero
+
+**Answers where there were none.** `1/(1 + (x^2)^(3/2))` is `1/(1 + x^3)` for a positive `x` and
+`1/(1 - x^3)` for a negative one; 2.5.0 declined it. The unreleased master wrote the root as
+`sgn(x) x^3` and took the sign out in front of the integral, which holds for a factor of the
+integrand and not inside a sum, and its answer was the first one's on both sides of zero. A sign
+goes in front only where every occurrence of the root is a factor now; otherwise the integrand is
+integrated with the sign 1 and with it -1, and the answer is the piecewise of the two on the sign of
+the root's linear. The same where a square factor is taken out of a root: `x/(x + sqrt(x^6))` is
+`1/(1 + x^2)` for a positive `x` and `1/(1 - x^2)` for a negative one, and was `sgn(x) arctan(x)`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(1+(x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | the integral of `1/(1 + x^3)` where `x > 0`, of `1/(1 - x^3)` otherwise |
+| `"1/(1+sqrt(x^2))".ToEntity().Integrate("x")` | `integral(...)` | `ln(x + 1)` where `x > 0`, `-ln(1 - x)` otherwise |
+| `"1/(2+sqrt(x^2+2*x+1))".ToEntity().Integrate("x")` | `integral(...)` | `ln(x + 3)` where `x + 1 > 0`, `-ln(1 - x)` otherwise |
+| `"x/(x+sqrt(x^6))".ToEntity().Integrate("x")` | `integral(...)` | `arctan(x)` where `x > 0`, a logarithm of `(1 + x)/(1 - x)` otherwise |
+
 ### A root of an even power is the modulus, and is no longer read as the power
 
 **Wrong answers, silent.** `(u^2)^(3/2)` is `|u|^3`, and two readers took it for `u^3`: the

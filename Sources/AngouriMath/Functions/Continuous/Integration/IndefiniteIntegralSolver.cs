@@ -16189,6 +16189,16 @@ namespace AngouriMath.Functions.Algebra
             var changed = false;
             Entity assumed = Entity.Boolean.True;
             Entity signs = Number.Integer.One;
+            // A sign goes in front of the integral only from a factor of the integrand. Inside a
+            // sum it is a factor of nothing: `1/(1 + (x^2)^(3/2))` is `1/(1 + x^3)` for a positive
+            // x and `1/(1 - x^3)` for a negative one, and with the sign taken out in front the
+            // answer was the first's for both. There the root is written with a sign of its own,
+            // and the integrand is integrated with it 1 and with it -1, each on its side of the
+            // linear's zero. One such linear only.
+            var factors = FactorsOfTheIntegrand(expr).Select(pair => pair.Factor).ToList();
+            var sign = Variable.CreateUnique(expr, "s_sgn");
+            Entity? signedLinear = null;
+            var signsOfMoreThanOneLinear = false;
             var written = expr.Replace(node =>
             {
                 if (!MayBeARootOfASquare(node, x))
@@ -16260,14 +16270,45 @@ namespace AngouriMath.Functions.Algebra
                 // `sqrt(a^2 + 2abx + b^2x^2) sqrt(c + ex + dx^2)` threw with it left in place.
                 // None where it is plainly one: an even power of x plus a positive number, or a
                 // root of x of an even order plus one, `sqrt(x) + 1`.
+                var modulus = leading == Number.Integer.One ? power : MathS.Pow(leading, r) * power;
                 if (!whole && !((half.IsEven || wBase is Powf(_, Number.Rational { ERational.Denominator.IsEven: true }))
                                 && h.Evaled is Number.Real { IsPositive: true }))
+                {
+                    // Each occurrence a factor, or the sign of none of them goes in front: the
+                    // two cases are exact for a factor as well, and `(x^2)^(3/2)/(1 + (x^2)^(3/2))`
+                    // holds the one root as a factor and inside the sum both.
+                    if (factors.Count(factor => factor == node) < expr.Nodes.Count(inner => inner == node))
+                    {
+                        if (signedLinear is not null && signedLinear != linear)
+                        {
+                            signsOfMoreThanOneLinear = true;
+                            return node;
+                        }
+                        signedLinear = linear;
+                        changed = true;
+                        return sign * modulus;
+                    }
                     signs = signs * MathS.Signum(linear);
+                }
                 changed = true;
-                return leading == Number.Integer.One ? power : MathS.Pow(leading, r) * power;
+                return modulus;
             });
-            if (!changed || Integration.ComputeAsTheSameQuestion(written, x, integrateByParts) is not { } answer)
+            if (!changed || signsOfMoreThanOneLinear)
                 return null;
+            Entity answer;
+            if (signedLinear is null)
+            {
+                if (Integration.ComputeAsTheSameQuestion(written, x, integrateByParts) is not { } unsigned)
+                    return null;
+                answer = unsigned;
+            }
+            else
+            {
+                if (Integration.ComputeAsTheSameQuestion(written.Substitute(sign, Number.Integer.One).InnerSimplified, x, integrateByParts) is not { } above
+                    || Integration.ComputeAsTheSameQuestion(written.Substitute(sign, Number.Integer.MinusOne).InnerSimplified, x, integrateByParts) is not { } below)
+                    return null;
+                answer = MathS.Piecewise(new[] { new Providedf(above, signedLinear > Number.Integer.Zero) }, below);
+            }
             if (signs != Number.Integer.One)
                 answer = signs * answer;
             return assumed == Entity.Boolean.True ? answer : answer.Provided(assumed);
@@ -18894,13 +18935,24 @@ namespace AngouriMath.Functions.Algebra
             var atTheTop = Integration.AnsweringTheQuestionAsked;
             // The signs are constants, one on each side of a factor's root, so they come out
             // in front of the integral: the integrand is asked without them, and the answer
-            // is the product of the signs to their powers, an even power being one.
+            // is the product of the signs to their powers, an even power being one. From a root
+            // that is a factor of the integrand only: inside a sum the sign is a factor of
+            // nothing, `x/(x + sqrt(x^6))` being `1/(1 + x^2)` for a positive x and `1/(1 - x^2)`
+            // for a negative one. There the root is written with a sign of its own, and the
+            // integrand is integrated with it 1 and with it -1, each on its side of the
+            // factor's root; one such factor only.
             Entity signs = Number.Integer.One;
+            var factorsOfTheIntegrand = FactorsOfTheIntegrand(expr).Select(pair => pair.Factor).ToList();
+            var sign = Variable.CreateUnique(expr, "s_sgn");
+            Entity? signedFactor = null;
+            var signsOfMoreThanOneFactor = false;
             var rewritten = expr.Replace(node =>
             {
                 if (node is not Powf(var radicand, Number.Rational exponent) || exponent is Number.Integer
                     || !exponent.ERational.Denominator.Equals(EInteger.FromInt32(2)) || !radicand.ContainsNode(x))
                     return node;
+                var asAFactor = factorsOfTheIntegrand.Count(factor => factor == node) == expr.Nodes.Count(inner => inner == node);
+                var signsHere = new List<Entity>();
                 if (Functions.PolynomialFactorization.FactorComplete(radicand, x) is not { } factorization
                     || factorization.Parts.All(part => part.Multiplicity < 2))
                     return node;
@@ -18928,19 +18980,46 @@ namespace AngouriMath.Functions.Algebra
                         }
                         outside = outside * (half == 1 ? factor : MathS.Pow(factor, half));
                         if (withASign)
-                            signs = signs * MathS.Signum(factor);
+                            signsHere.Add(factor);
                     }
                     if (part.Multiplicity % 2 == 1)
                         inside = inside * factor;
                 }
                 if (!outside.ContainsNode(x))
                     return node;
-                return MathS.Pow(outside, Number.Integer.Create(numerator)) * MathS.Pow(inside, exponent);
+                var taken = MathS.Pow(outside, Number.Integer.Create(numerator)) * MathS.Pow(inside, exponent);
+                if (signsHere.Count == 0)
+                    return taken;
+                if (asAFactor)
+                {
+                    foreach (var signed in signsHere)
+                        signs = signs * MathS.Signum(signed);
+                    return taken;
+                }
+                if (signsHere.Count > 1 || signedFactor is not null && signedFactor != signsHere[0])
+                {
+                    signsOfMoreThanOneFactor = true;
+                    return node;
+                }
+                signedFactor = signsHere[0];
+                return sign * taken;
             });
-            if (rewritten == expr)
+            if (rewritten == expr || signsOfMoreThanOneFactor)
                 return null;
-            if (Integration.ComputeAsAQuestionOfItsOwn(rewritten, x, integrateByParts) is not { } result)
-                return null;
+            Entity result;
+            if (signedFactor is null)
+            {
+                if (Integration.ComputeAsAQuestionOfItsOwn(rewritten, x, integrateByParts) is not { } unsigned)
+                    return null;
+                result = unsigned;
+            }
+            else
+            {
+                if (Integration.ComputeAsAQuestionOfItsOwn(rewritten.Substitute(sign, Number.Integer.One).InnerSimplified, x, integrateByParts) is not { } above
+                    || Integration.ComputeAsAQuestionOfItsOwn(rewritten.Substitute(sign, Number.Integer.MinusOne).InnerSimplified, x, integrateByParts) is not { } below)
+                    return null;
+                result = MathS.Piecewise(new[] { new Providedf(above, signedFactor > Number.Integer.Zero) }, below);
+            }
             var answer = signs == Number.Integer.One ? result : signs * result;
             return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
         }
