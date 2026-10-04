@@ -309,6 +309,20 @@ power up each step, and what reaches the first power is integrated once over the
 | `"1/(a + b*x^2 + c*x^4)^3".ToEntity().Integrate("x")` | `integral(...)` | the same |
 | `"x/(a + b*x^3 + c*x^6)^2".ToEntity().Integrate("x")` | `integral(...)` | a polynomial over `a + b x^3 + c x^6`, and the integral of a polynomial over it |
 
+### A polynomial over a power of one linear with a symbol in it is written in powers of the linear
+
+**Answers where there were none.** `t^9/(a + b t)^8` is a polynomial and eight powers of `1/(a + b t)`,
+and was declined by 2.5.0. On the unreleased master it was answered after forty-six seconds: divided
+out and decomposed with the symbols in it, it went round the substitution search a dozen levels deep.
+With nothing else below the bar and a symbol in the linear, the polynomial is written in powers of
+the linear at its root now, and each piece is the table's
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"t^9/(a + b*t)^8".ToEntity().Integrate("t")` | `integral(...)` | powers of `a/b + t` and a logarithm, in 0.03 s |
+| `"x^4/(a + b*sqrt(x))^8".ToEntity().Integrate("x")` | `integral(...)` | the same in `sqrt(x)`, in 0.5 s; a minute on the unreleased master |
+
 ### A polynomial over a power of a quadratic with a sum of symbols in it is reduced
 
 **Answers where there were none.** The reduction of `N(x)/Q(x)^n` divides `N` by the quadratic a
