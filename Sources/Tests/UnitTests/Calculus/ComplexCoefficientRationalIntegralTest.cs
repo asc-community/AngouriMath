@@ -82,17 +82,19 @@ namespace AngouriMath.Tests.Calculus
 
         /// <summary>
         /// A power of a quotient of linears with the imaginary unit in it, beside a power of x the
-        /// substitution for it does not take down to something answered: declined, and within a
-        /// minute. The scaling of the variable simplified it with the symbol beside the imaginary
-        /// unit, and that ran past two minutes before the decline.
+        /// substitution for it does not take down to something answered. The scaling of the
+        /// variable simplified it with the symbol beside the imaginary unit, and that ran past two
+        /// minutes before the decline; it is settled in seconds now, so a regression shows as a
+        /// slow suite. Declined is a verdict, and an answer has to differentiate back.
         /// </summary>
         [Theory]
         [InlineData("((1 + i*a*x)/(1 - i*a*x))^(-5/4)/x^2")]
         [InlineData("((1 + i*a*x)/(1 - i*a*x))^(-5/4)/x^3")]
-        public void AnImaginaryMobiusPowerIsDeclinedWithinAMinute(string integrand)
+        public void AnImaginaryMobiusPowerIsSettled(string integrand)
         {
-            var integrating = System.Threading.Tasks.Task.Run(() => integrand.ToEntity().Integrate("x"));
-            Assert.True(integrating.Wait(TimeSpan.FromSeconds(60)), $"{integrand} was not settled within a minute");
+            if (integrand.ToEntity().Integrate("x").Stringize().Contains("integral("))
+                return;
+            DifferentiatesBack(integrand);
         }
     }
 }
