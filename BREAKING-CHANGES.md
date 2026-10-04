@@ -583,6 +583,24 @@ Each of these was checked by differentiating it back with the parameters pinned 
 four points. The Rubi sample is unchanged at 231 of 463 with no wrong answers, so nothing that
 already had an antiderivative moves.
 
+### `NaN` a fourth time, from an exponent that is `-1` only as a value
+
+**A wrong answer.** `x^(-1 - 3n) (a + b x^n)^3` came back as a sum whose last term was `x^0/0`, so
+that it had no value anywhere, and `x^(-n/n)` as `NaN + C`. Expanded, the integrand's last term is
+`x^(-1 - 3n + 3n)`, which is `x^(-1)` for every `n`; `InnerSimplified` keeps `-3n + 3n` as two
+terms, and the power rule, which reads `-1` once the exponent is a number (the entry above), read
+this one as written and divided by its zero. It asks whether the exponent plus one vanishes as a
+value now, and gives the logarithm where it does. A symbolic exponent that is `-1` for one value
+only is the power rule's as before. Rubi's 1.1.3.2 has four of these
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^(-1 - 3*n)*(a + b*x^n)^3".ToEntity().Integrate("x")` | three powers and `x^0/0`, no value anywhere | the three powers and `b^3 ln(x)` |
+| `"x^(-1 - 3*n + 3*n)".ToEntity().Integrate("x")` | `x^(-1 - 3n + 3n + 1)/(-1 - 3n + 3n + 1)`, no value anywhere | `ln(x)` |
+| `"x^(-n/n)".ToEntity().Integrate("x")` | `NaN` | `ln(x)` |
+| `"1/(a*(b*x^m)^n)^(1/(m*n))".ToEntity().Integrate("x")` | `integral(...)` | `(a b^n)^(-1/(m n)) ln(x)`, provided `b > 0` and `a b^n > 0` |
+
 ### `NaN` a third time, from a quadratic with a coefficient off the real line
 
 The integrals of `1/sqrt(Q)`, `1/Q` and `1/Q^n` over a quadratic `Q` choose their form by the sign

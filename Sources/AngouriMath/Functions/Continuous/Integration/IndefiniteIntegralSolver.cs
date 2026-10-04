@@ -2486,6 +2486,14 @@ namespace AngouriMath.Functions.Algebra
         /// whether an undecidable <c>n</c> is that one; what it fixes is an exponent that
         /// <em>is</em> decidable and was read as though it were not.
         /// </para>
+        /// <para>
+        /// Decidable includes a symbol that cancels: <c>x^(-1 - 3n + 3n)</c> is <c>x^(-1)</c> for
+        /// every <c>n</c>, and is what expanding <c>x^(-1 - 3n) (a + b x^n)^3</c> leaves for its
+        /// last term, but <see cref="Entity.InnerSimplified"/> keeps <c>-3n + 3n</c> as two terms,
+        /// so the exponent plus one is asked whether it vanishes as a value. Read as written it
+        /// was <c>x^0/0</c> again, and the whole answer had no value anywhere; Rubi's 1.1.3.2
+        /// has four such and <c>1/(a (b x^m)^n)^(1/(m n))</c>, which is <c>x^(-m n/(m n))</c>.
+        /// </para>
         /// </remarks>
         private static Entity IntegrateAPowerOfTheVariable(Entity @base, Entity power, Entity.Variable x)
         {
@@ -2493,6 +2501,8 @@ namespace AngouriMath.Functions.Algebra
             if (exponent == -1)
                 return IntegralPatterns.AntiderivativeLog(@base);
             var raised = (exponent + 1).InnerSimplified;
+            if (raised.Vars.Any() && VanishesIdentically(raised))
+                return IntegralPatterns.AntiderivativeLog(@base);
             return MathS.Pow(x, raised) / raised;
         }
 
