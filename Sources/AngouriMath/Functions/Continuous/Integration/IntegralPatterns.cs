@@ -1135,13 +1135,16 @@ namespace AngouriMath.Functions.Algebra
         /// With symbols in both <c>a</c> and <c>c</c> the divisions by the quadratic leave
         /// remainders the reduction cannot read as linear: <c>x^5/(a + b x + c x^2)^4</c> was
         /// declined, where <c>x^5/(k + m x + x^2)^4</c> and <c>x^5/(2 + b x + c x^2)^4</c> are
-        /// answered in a few hundred milliseconds. Rubi's 1.2.1.2.
+        /// answered in a few hundred milliseconds. Rubi's 1.2.1.2. A leading coefficient that is a
+        /// number as written, such as the <c>1 * 1^2</c> a substitution leaves, is not one: the
+        /// substitution that wrote <c>(b d + 2 c d x)^8/(a + b x + c x^2)^3</c> in the quadratic
+        /// asks with one, and naming its other two took the answer from 65,236 characters to 202,057.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         private static Entity? OverThePowerOfTheMonicQuadraticInNamedCoefficients(
             Entity numerator, Entity a, Entity b, Entity c, int power, Entity.Variable x)
         {
-            if (a is Entity.Number)
+            if (a.InnerSimplified is Entity.Number)
                 return null;
             Entity everything = numerator + a + b + c;
             var named = new List<(Entity.Variable Name, Entity Value)>();
