@@ -28241,6 +28241,62 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>A cos(y) + i A sin(y)</c> below the bar, with nothing but cosines of <c>y</c> and their
+        /// reciprocals beside it, written as <c>A cos(y) (1 + i tan(y))</c>, and <c>A cos(y) - i A sin(y)</c>
+        /// as <c>A cos(y) (1 - i tan(y))</c>: a power of the secant over a power of <c>1 ± i tan(y)</c>,
+        /// which the rules for that sum answer.
+        /// </summary>
+        /// <remarks>
+        /// Where the exponential <see cref="SolveByWritingAnImaginarySumOfACosineAndASineAsAnExponential"/>
+        /// writes declines: an odd power of the secant beside it, `sec(y)^5/(a cos(y) + i a sin(y))^2`,
+        /// is a half-odd power of `1 + tan(y)^2` in the tangent, and that is `(1 - i t)^(5/2) (1 + i t)^(1/2)`
+        /// over the sum, which the rules for `a + i a tan` take. Rubi's 4.7.2.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByWritingAnImaginarySumOfACosineAndASineOverTheCosine(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr));
+            if (!below.ContainsNode(x))
+                return null;
+            Entity? argumentOfThePair = null;
+            var rewritten = below.Replace(node =>
+            {
+                if (node is not (Sumf or Minusf) || !node.ContainsNode(x)
+                    || !TryReadACosineAndASine(node, x, out var cosineCoefficient, out var sineCoefficient, out var argument)
+                    || argumentOfThePair is { } && argumentOfThePair != argument)
+                    return node;
+                var ratio = Functions.PartialFractions.Bare((sineCoefficient / cosineCoefficient).InnerSimplified);
+                if (ratio.Evaled is not Number.Complex)
+                    ratio = Functions.PartialFractions.Bare(ratio.Simplify());
+                var plus = ratio.Evaled == MathS.i.Evaled;
+                if (!plus && ratio.Evaled != (-MathS.i).Evaled)
+                    return node;
+                argumentOfThePair = argument;
+                return cosineCoefficient * MathS.Cos(argument) * (1 + (plus ? MathS.i : -MathS.i) * MathS.Tan(argument));
+            });
+            if (rewritten == below || argumentOfThePair is not { } y)
+                return null;
+            // Nothing beside the pair but cosines and secants of its argument: a sine elsewhere is the
+            // exponential's.
+            bool OnlyCosines(Entity side, bool andTheTangent) => side.Nodes.All(node => node switch
+            {
+                Tanf(var a) => andTheTangent && a == y,
+                Sinf or Tanf or Cotanf or Cosecantf => false,
+                Cosf(var a) => a == y,
+                Secantf(var a) => a == y,
+                _ => true,
+            });
+            if (!OnlyCosines(above, andTheTangent: false) || !OnlyCosines(rewritten, andTheTangent: true))
+                return null;
+            // A whole power of the product split, so that the power of the sum stands on its own.
+            rewritten = rewritten.Replace(node =>
+                node is Powf(Mulf(var left, var right), Number.Integer power) && (left.Nodes.Any(n => n is Tanf) || right.Nodes.Any(n => n is Tanf))
+                    ? MathS.Pow(left, power) * MathS.Pow(right, power)
+                    : node);
+            return Integration.ComputeAsTheSameQuestion((above / rewritten).InnerSimplified, x, integrateByParts);
+        }
+
+        /// <summary>
         /// Bioche's first two rules for the hyperbolic functions: a rational function of
         /// <c>sinh(y)</c> and <c>cosh(y)</c> that is odd in the hyperbolic sine is a rational
         /// function of <c>u = cosh(y)</c> times <c>sinh(y) dy = du</c>, with <c>sinh^2</c> as
