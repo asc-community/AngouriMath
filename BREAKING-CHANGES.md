@@ -177,6 +177,18 @@ the division's; with it on, the rounding is the setting's own and stays
 | `"(-60.5)!"` at 30 digits, downcasting off | `5.86118478907722232671451280188E-81` | `2.93059239453861116335725639905E-81` |
 | `"abs(75 + 316.22776601683796i)"`, downcasting off | `325` | `325.000000000000026076735749…` |
 
+### A power of a quadratic with symbols in its outer coefficients is integrated over the monic quadratic
+
+**Answers where there were none.** `x^5/(a + b x + c x^2)^4` was declined, and so were `x^6` and `x^7` over the
+fourth power and `x^5` and `x^7` over the fifth, Rubi's 1.2.1.2, while `x^5/(2 + b x + c x^2)^4` and
+`x^5/(k + m x + x^2)^4` were answered. Where the reduction declines the quadratic as written, it is integrated as
+`1/c^n` times the integral over `(x^2 + k x + m)^n`, with `k = b/c` and `m = a/c` fresh symbols while it is, and put
+back after ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^5/(a + b*x + c*x^2)^4".ToEntity().Integrate("x")` | `integral(...)` | the antiderivative, in three cases by the sign of `4 a/c - (b/c)^2`, with arctangents and logarithms |
+
 ### `a + i a tan` beside the tangent's differential is lowered over its conjugate
 
 **Answers where there were none.** `sqrt(a + i a tan(x))/(c + d tan(x))^(3/2)` ran past thirty seconds:
