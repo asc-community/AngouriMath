@@ -1682,6 +1682,47 @@ namespace AngouriMath.Functions.Algebra
         private const int MaximumPowerOfABinomial = 12;
 
         /// <summary>
+        /// <paramref name="dividend"/> divided by <paramref name="divisor"/> as polynomials in all
+        /// their symbols, each over its own bar, where the division of what is above the bars is
+        /// exact; <see langword="null"/> where it is not, or where either is not a polynomial
+        /// over a bar free of <paramref name="x"/>.
+        /// </summary>
+        /// <remarks>
+        /// The bars are there because the partial fractions make a block monic before this reads
+        /// it: `a + b x^2 + c x^4` arrives as `a/c + b/c x^2 + x^4`.
+        /// </remarks>
+        private static Entity? ExactlyDivided(Entity dividend, Entity divisor, Entity.Variable x)
+        {
+            var (above, aboveBar) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(dividend));
+            var (below, belowBar) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(divisor));
+            if (aboveBar.ContainsNode(x) || belowBar.ContainsNode(x))
+                return null;
+            var variables = above.Vars.Concat(below.Vars).Distinct().OrderBy(v => v.Name, System.StringComparer.Ordinal).ToList();
+            if (variables.Count == 0 || variables.Count > MultivariatePolynomial.MaxVariables)
+                return null;
+            var indices = new Dictionary<Variable, int>();
+            for (var i = 0; i < variables.Count; i++)
+                indices[variables[i]] = i;
+            if (MultivariatePolynomial.TryParse(above, indices) is not { IsZero: false } top
+                || MultivariatePolynomial.TryParse(below, indices) is not { IsConstant: false } bottom
+                || !indices.TryGetValue(x, out var at))
+                return null;
+            // Its content in x goes below the bar: the quotient `a/c + b/c x^2 + x^4` is combined as
+            // `c (a + b x^2 + c x^4)` over `c^2`, and the numerator holds the trinomial, not the c.
+            var rest = Enumerable.Range(0, variables.Count).Where(variable => variable != at).ToList();
+            Entity content = Number.Integer.One;
+            if (Functions.PolynomialGcd.ContentIn(bottom, at, rest, 0) is { IsConstant: false } inTheSymbols
+                && bottom.DivideExact(inTheSymbols) is { } primitive)
+            {
+                bottom = primitive;
+                content = inTheSymbols.ToEntity(variables);
+            }
+            if (top.DivideExact(bottom) is not { } quotient)
+                return null;
+            return (quotient.ToEntity(variables) * belowBar / (aboveBar * content)).InnerSimplified;
+        }
+
+        /// <summary>
         /// A polynomial over a power of a trinomial in <c>x^n</c>,
         /// <c>P(x)/(a + b x^n + c x^(2n))^k</c> with <c>n &gt;= 2</c> and <c>k &gt;= 2</c>, a power at
         /// a time down to a polynomial over the trinomial itself.
@@ -1728,6 +1769,14 @@ namespace AngouriMath.Functions.Algebra
                 }
                 else
                     return null;
+            }
+            // A numerator the trinomial divides is divided by it first: Rubi's 1.2.2.5 writes
+            // `(d + e x + f x^2)(a + b x^2 + c x^4)` multiplied out over the fourth power, and over it
+            // the answer was 99,000 characters where over the third it is 20,000.
+            while (trinomial is { } && power > 1 && ExactlyDivided(numerator, trinomial, x) is { } fewer)
+            {
+                numerator = fewer;
+                power--;
             }
             if (trinomial is null || power > MaximumPowerOfABinomial
                 || !TreeAnalyzer.TryGetPolynomial(trinomial, x, out var below) || below.Count != 3

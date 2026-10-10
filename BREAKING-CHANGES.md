@@ -249,6 +249,19 @@ by the linear's coefficients, `(b d + 2c d x)^9`, which ran past a minute
 | `"(b + 2*c*x)^9/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | past a minute; 76,153 characters on the unreleased master | 607 characters |
 | `"(b*d + 2*c*d*x)^9/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | past a minute | 611 characters |
 
+### A trinomial the numerator holds is divided out of a power of it
+
+**An answer where there was none.** `(d + e x + f x^2)(a + b x^2 + c x^4)/(a + b x^2 + c x^4)^4`, written multiplied out
+as Rubi's 1.2.2.5 writes it, was declined after a minute, and answered on the unreleased master after 85 s in 153,000
+characters. The reduction of a
+polynomial over a power of a trinomial in `x^n` divides the trinomial out of the numerator first now, wherever it
+divides exactly, with the trinomial's content in the symbols taken out of it, since it arrives made monic
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a*d + a*g*x + (b*d + a*f)*x^2 + b*g*x^3 + (c*d + b*f)*x^4 + c*g*x^5 + c*f*x^6)/(a + b*x^2 + c*x^4)^4".ToEntity().Integrate("x")` | `integral(...)` | the antiderivative of `(d + g x + f x^2)/(a + b x^2 + c x^4)^3`, in 20,000 characters and 4 s |
+
 ### Half-odd powers of `a + a sec` and `c + d sec` together are integrated in the half angle's sine
 
 **Answers where there were none.** `sec(e + f x) sqrt(a + a sec(e + f x))/sqrt(c + d sec(e + f x))` was declined,
