@@ -1057,6 +1057,14 @@ namespace AngouriMath.Functions.Algebra
                     ?? Integration.ComputeIndefiniteIntegral(numerator / overTheConjugates, x, integrateByParts)) is { } overConjugates)
                 return overConjugates;
 
+            // A power of x beside two blocks or more in one power of x, `1/(x^7 (a + b x^3)(c + d x^3))`:
+            // split in `u = x^3` over the blocks, each fraction then a power of x over one block.
+            // Before the Hermite reduction, which reads the power of x as a repeated factor: what it
+            // leaves went to the split at the power of x, whose rest over both blocks had coefficients
+            // pages long, and the answer was 265,499 characters.
+            if (IntegrateOverBlocksInAPowerOfX(numerator, denominator, x, integrateByParts, besideAPowerOfX: true) is { } besideBlocksInAPower)
+                return besideBlocksInAPower;
+
             // A denominator with a written repeated factor takes the Hermite reduction first:
             // the rational part of the answer in one linear solve, and what is left is a proper
             // fraction over a squarefree denominator for the splits below. `(1 + x^2)/(x (1 + x^3)^2)`
@@ -1622,7 +1630,8 @@ namespace AngouriMath.Functions.Algebra
         /// <c>n >= 2</c>, linear or quadratic in it, with a symbol among them: split in
         /// <c>u = x^n</c> by <see cref="Functions.PartialFractions.TrySplitOverWrittenFactors"/>,
         /// one residue of the numerator's powers modulo <c>n</c> at a time, each fraction then
-        /// over one block in x.
+        /// over one block in x. With <paramref name="besideAPowerOfX"/>, a power of x beside two
+        /// blocks or more as well, and only then.
         /// </summary>
         /// <remarks>
         /// <c>1/((a + b x^3)(c + d x^3))</c> was declined: over the rationals it does not factor,
@@ -1630,11 +1639,18 @@ namespace AngouriMath.Functions.Algebra
         /// <c>u = x^3</c> it is <c>1/((a + b u)(c + d u))</c>, two linear factors. A numerator
         /// term <c>x^r M(x^n)</c> keeps its <c>x^r</c> outside the split, which is exact since
         /// the blocks are polynomials in <c>x^n</c> alone.
+        /// <para>
+        /// A power of x beside the blocks stays outside the split: <c>1/(x^7 (a + b x^3)(c + d x^3))</c>
+        /// is <c>(b/(x^7 (a + b x^3)) - d/(x^7 (c + d x^3)))/(b c - a d)</c>, a power of x over one
+        /// block twice. Split at the power of x first, the rest over both blocks had coefficients
+        /// that were pages of symbols, and the answer came to 265,499 characters.
+        /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
-        private static Entity? IntegrateOverBlocksInAPowerOfX(Entity numerator, Entity denominator, Entity.Variable x, bool integrateByParts, bool oneBlockAtItsRoots = false)
+        private static Entity? IntegrateOverBlocksInAPowerOfX(Entity numerator, Entity denominator, Entity.Variable x, bool integrateByParts, bool oneBlockAtItsRoots = false, bool besideAPowerOfX = false)
         {
             var blocks = new List<(Dictionary<EInteger, Entity> Polynomial, int Power)>();
+            var powerOfX = 0;
             Entity constant = Number.Integer.One;
             foreach (var factor in Mulf.LinearChildren(denominator))
             {
@@ -1646,6 +1662,13 @@ namespace AngouriMath.Functions.Algebra
                 var (@base, power) = factor is Powf(var b, Number.Integer e) && e.EInteger.Sign > 0 && e.EInteger.CanFitInInt32()
                     ? (b, e.EInteger.ToInt32Unchecked())
                     : (factor, 1);
+                if (@base == x)
+                {
+                    if (!besideAPowerOfX)
+                        return null;
+                    powerOfX += power;
+                    continue;
+                }
                 if (!TreeAnalyzer.TryGetPolynomial(@base, x, out var polynomial) || polynomial.Count < 2)
                     return null;
                 foreach (var term in polynomial)
@@ -1659,6 +1682,8 @@ namespace AngouriMath.Functions.Algebra
                 blocks.Add((polynomial, power));
             }
             if (blocks.Count == 0 || !(numerator + denominator).Vars.Any(symbol => symbol != x))
+                return null;
+            if (besideAPowerOfX && (powerOfX == 0 || blocks.Count < 2 || powerOfX > MaximumPowerOfXOverABlock))
                 return null;
             // n, the greatest common divisor of every power the blocks hold.
             var n = EInteger.Zero;
@@ -1678,6 +1703,8 @@ namespace AngouriMath.Functions.Algebra
             foreach (var term in above)
                 if (term.Key.Sign < 0 || !term.Key.CanFitInInt32() || term.Value.ContainsNode(x))
                     return null;
+            if (besideAPowerOfX && above.Values.Any(coefficient => coefficient is not (Number or Variable)))
+                return null;
 
             var u = Entity.Variable.CreateUnique(numerator + denominator, "u");
             Entity InU(Dictionary<EInteger, Entity> polynomial)
@@ -1735,11 +1762,33 @@ namespace AngouriMath.Functions.Algebra
                 }
                 if (!Functions.PartialFractions.TrySplitOverWrittenFactors(inU, below, u, out var decomposition))
                     return null;
-                var outside = residue.Key == 0 ? (Entity)Number.Integer.One : residue.Key == 1 ? x : MathS.Pow(x, residue.Key);
-                foreach (var fraction in Sumf.LinearChildren(decomposition))
+                // The power of x below stays outside the split, so each fraction is a power of x
+                // over one block, which the split at a power of x beside a block reads.
+                var outside = (residue.Key - powerOfX) switch
                 {
+                    0 => (Entity)Number.Integer.One,
+                    1 => x,
+                    var power => MathS.Pow(x, power),
+                };
+                // The split comes as a sum over a constant. Beside a power of x it is taken term by
+                // term: whole, it is the power of x over both blocks again, for the split at that
+                // power, whose coefficients run to `a^54 b^6 c^46 d^14`.
+                var (terms, scale) = besideAPowerOfX && decomposition is Divf(var sum, var divisor) && !divisor.ContainsNode(u)
+                    ? (sum, divisor)
+                    : (decomposition, (Entity)Number.Integer.One);
+                foreach (var term in Sumf.LinearChildren(terms))
+                {
+                    if (term == Number.Integer.Zero)
+                        continue;
+                    var fraction = scale == Number.Integer.One ? term : term / scale;
                     var inX = outside * fraction.Substitute(u, MathS.Pow(x, step));
-                    if (Integration.ComputeIndefiniteIntegral(inX, x, integrateByParts) is not { } integrated)
+                    // Beside a power of x, each piece is a part of the question asked, over one block
+                    // fewer, and answered at its level: the split at the power of x that reads it
+                    // answers only the question asked or one below.
+                    var integrated = besideAPowerOfX
+                        ? Integration.ComputeAsTheSameQuestion(inX, x, integrateByParts)
+                        : Integration.ComputeIndefiniteIntegral(inX, x, integrateByParts);
+                    if (integrated is null)
                         return null;
                     total += integrated;
                 }
