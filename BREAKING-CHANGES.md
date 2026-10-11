@@ -381,6 +381,25 @@ two more of Rubi's 4.5.2.3. The two sums multiply to `-a c tan^2`, so in `u = a 
 | `"sec(e + f*x)*(a + a*sec(e + f*x))^m*(c - c*sec(e + f*x))^(5/2)".ToEntity().Integrate("x")` | `integral(...)` | 469 characters |
 | `"sec(e + f*x)*(a + a*sec(e + f*x))^m*sqrt(c - c*sec(e + f*x))".ToEntity().Integrate("x")` | `integral(...)` | 268 characters |
 
+### `a cos + i a sin` beside powers of the secant is written over the cosine
+
+**Answers where there were none, and shorter ones.** `sec(c + d x)^5/(a cos(c + d x) + i a sin(c + d x))^2` was declined,
+and so were `sec^4` over the cube, and `sec^6` over the sum and over its cube, Rubi's 4.7.2. `A cos(y) ± i A sin(y)` below
+the bar, with nothing but cosines and secants of `y` beside it, is written `A cos(y) (1 ± i tan(y))` now, where the
+exponential it also is gave nothing the rules read: a power of the secant over a power of `1 ± i tan(y)` is what the
+rules for `a + i a tan` take. 2.5.0 declined all six below; where the unreleased master answered, `sec^4` over the sum
+and `sec^2` over its cube, the answers are a quarter and three-fifths the size
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sec(c + d*x)^6/(a*cos(c + d*x) + i*a*sin(c + d*x))".ToEntity().Integrate("x")` | `integral(...)` | 419 characters |
+| `"sec(c + d*x)^5/(a*cos(c + d*x) + i*a*sin(c + d*x))^2".ToEntity().Integrate("x")` | `integral(...)` | 668 characters |
+| `"sec(c + d*x)^4/(a*cos(c + d*x) + i*a*sin(c + d*x))^3".ToEntity().Integrate("x")` | `integral(...)` | 639 characters |
+| `"sec(c + d*x)^6/(a*cos(c + d*x) + i*a*sin(c + d*x))^3".ToEntity().Integrate("x")` | `integral(...)` | 771 characters |
+| `"sec(c + d*x)^4/(a*cos(c + d*x) + i*a*sin(c + d*x))".ToEntity().Integrate("x")` | `integral(...)` | 209 characters, where the unreleased master gave 780 |
+| `"sec(c + d*x)^2/(a*cos(c + d*x) + i*a*sin(c + d*x))^3".ToEntity().Integrate("x")` | `integral(...)` | 488 characters, where the unreleased master gave 810 |
+
 ### An even rational function with symbols in it is not searched for a substitution
 
 **Answers where there were none.** `(d + e x^2 + f x^4)/(x^4 (a + b x^2 + c x^4)^2)` ran past a minute: the
