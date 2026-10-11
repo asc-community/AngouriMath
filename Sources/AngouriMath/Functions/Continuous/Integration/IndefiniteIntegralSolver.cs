@@ -8146,12 +8146,24 @@ namespace AngouriMath.Functions.Algebra
                 // `e^(i arctan(a x))/sqrt(c + a^2 c x^2)` under `x = tan(u)/a` is `e^(i u) cos(u)`.
                 var plus = ((onTheCosine - MathS.i * onTheSine) / 2).InnerSimplified;
                 var minus = ((onTheCosine + MathS.i * onTheSine) / 2).InnerSimplified;
+                var towardsPlus = (rate + MathS.i * frequency).InnerSimplified;
+                var towardsMinus = (rate - MathS.i * frequency).InnerSimplified;
+                static bool Vanishes(Entity exponent) => exponent.Evaled is Number.Complex { IsZero: true }
+                    || exponent.Vars.Any() && Functions.PartialFractions.Bare(exponent.Simplify()).Evaled is Number.Complex { IsZero: true };
+                var plusVanishes = Vanishes(towardsPlus);
+                var minusVanishes = Vanishes(towardsMinus);
+                // One of the two vanishes, since their product is the scale, and which one can rest on
+                // a sign: with `a = 1/n` and `b = sqrt(-1/n^2)`, `a + i b` is zero for a positive `n`
+                // and `a - i b` for a negative one. Neither seen to, the term over it divides by zero
+                // on one side of the sign, and the answer had no value anywhere.
+                if (!plusVanishes && !minusVanishes)
+                    return null;
                 Entity resonant = Number.Integer.Zero;
-                foreach (var (coefficient, exponent) in new[] { (plus, (rate + MathS.i * frequency).InnerSimplified), (minus, (rate - MathS.i * frequency).InnerSimplified) })
+                foreach (var (coefficient, exponent, vanishes) in new[] { (plus, towardsPlus, plusVanishes), (minus, towardsMinus, minusVanishes) })
                 {
                     if (coefficient.Evaled is Number.Complex { IsZero: true })
                         continue;
-                    var term = exponent.Evaled is Number.Complex { IsZero: true } ? polynomial : polynomial * MathS.Pow(MathS.e, exponent * x);
+                    var term = vanishes ? polynomial : polynomial * MathS.Pow(MathS.e, exponent * x);
                     if (Integration.ComputeIndefiniteIntegral(term.InnerSimplified, x, integrateByParts: false) is not { } termIntegral || termIntegral.Nodes.Any(node => node == MathS.NaN))
                         return null;
                     resonant += coefficient * termIntegral;
@@ -9820,10 +9832,81 @@ namespace AngouriMath.Functions.Algebra
             if (integrand is Providedf(var inner, _))
                 integrand = inner;
 
-            if (Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is not { } result)
+            if (TheIntegrandInTheLogarithm(integrand, u, integrateByParts) is not { } result)
                 return null;
             var back = result.Substitute(u, MathS.Ln(x));
             return IsARadicalFunctionOfWholePowersOfTheExponential(inU, u) ? back.Provided(x > Number.Integer.Zero) : back;
+        }
+
+        /// <summary>
+        /// The integral of what a logarithm's substitution makes of the integrand, in the logarithm
+        /// <paramref name="t"/>; an exponential times whole powers of sines and cosines asked at the top.
+        /// </summary>
+        /// <remarks>
+        /// <c>x^m sin(a + b ln(c x^n))^3</c> is <c>e^((m + 1) t/n) sin(a + b t)^3</c> in <c>t</c>, which the
+        /// closed rule for an exponential times a trigonometric answers only when asked, and as the
+        /// substitution's integrand it is one level down: the cube was declined where the first and
+        /// second powers, which other rules answer, were not. The substitution is exact, so its integrand
+        /// is the question asked in another variable. Once: an integrand asked so does not lift its own
+        /// substitution again. Rubi's 4.7.5.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static Entity? TheIntegrandInTheLogarithm(Entity integrand, Entity.Variable t, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked || !IsAnExponentialTimesPowersOfSinesAndCosines(integrand, t))
+                return Integration.ComputeIndefiniteIntegral(integrand, t, integrateByParts);
+            if (askingTheIntegrandInTheLogarithm)
+            {
+                var answer = Integration.ComputeIndefiniteIntegral(integrand, t, integrateByParts);
+                if (answer is null)
+                    Integration.DeclinedForItsScope();
+                return answer;
+            }
+            askingTheIntegrandInTheLogarithm = true;
+            try
+            {
+                return Integration.ComputeAsAQuestionOfItsOwn(integrand, t, integrateByParts);
+            }
+            finally
+            {
+                askingTheIntegrandInTheLogarithm = false;
+            }
+        }
+
+        /// <summary>Whether <see cref="TheIntegrandInTheLogarithm"/> is asking at the top already.</summary>
+        [System.ThreadStatic] private static bool askingTheIntegrandInTheLogarithm;
+
+        /// <summary>
+        /// Whether <paramref name="expr"/> is a constant times an exponential of a linear in
+        /// <paramref name="t"/> times whole positive powers of sines and cosines of linears in it.
+        /// </summary>
+        private static bool IsAnExponentialTimesPowersOfSinesAndCosines(Entity expr, Entity.Variable t)
+        {
+            if (expr is Divf(var above, var below))
+            {
+                if (below.ContainsNode(t))
+                    return false;
+                expr = above;
+            }
+            var exponential = false;
+            var trigonometric = false;
+            foreach (var factor in Mulf.LinearChildren(expr))
+            {
+                if (!factor.ContainsNode(t))
+                    continue;
+                if (factor is Powf(var @base, var exponent) && !@base.ContainsNode(t))
+                {
+                    if (!TreeAnalyzer.TryGetPolyLinear(exponent, t, out _, out _))
+                        return false;
+                    exponential = true;
+                    continue;
+                }
+                var function = factor is Powf(var raised, Number.Integer power) && power.EInteger.Sign > 0 ? raised : factor;
+                if (function is not (Sinf or Cosf) || !TreeAnalyzer.TryGetPolyLinear(function.DirectChildren.First(), t, out _, out _))
+                    return false;
+                trigonometric = true;
+            }
+            return exponential && trigonometric;
         }
 
         /// <summary>
@@ -9910,7 +9993,7 @@ namespace AngouriMath.Functions.Algebra
             var integrand = Functions.SingleQuotient.Combine(inT * MathS.Pow(MathS.e, (mPlusOne / n).InnerSimplified * t)).InnerSimplified;
             if (integrand is Providedf(var bare, _))
                 integrand = bare;
-            if (Integration.ComputeIndefiniteIntegral(integrand, t, integrateByParts) is not { } inTIntegral)
+            if (TheIntegrandInTheLogarithm(integrand, t, integrateByParts) is not { } inTIntegral)
                 return null;
             // Of ln(x) itself, K is 1, and written as x^(m + 1) x^(-(m + 1)) it is not seen to be.
             var k = logarithms[0].Antilogarithm == x ? Number.Integer.One
