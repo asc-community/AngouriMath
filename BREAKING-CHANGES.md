@@ -194,6 +194,24 @@ back after. Each answer is in three cases by the sign of `4 a/c - (b/c)^2`
 | `"x^5/(a + b*x + c*x^2)^5".ToEntity().Integrate("x")` | `integral(...)` | 4,066 characters |
 | `"x^7/(a + b*x + c*x^2)^5".ToEntity().Integrate("x")` | `integral(...)` | 5,602 characters |
 
+### A power of x below the bar beside a root of a binomial is rationalised by dividing by the root
+
+**Answers where there were none.** `(a + b x^3)^(1/3)/(x^2 (c + d x^3))` was declined, and so were sixteen more of Rubi's
+1.1.3.4 with `x^2`, `x^5`, `x^8`, `x^11` or `x^14` below the bar beside `(a + b x^3)^(1/3)`, `^(4/3)` or `^(-2/3)`.
+`u = x/(a + b x^3)^(1/3)` makes each rational, and was used where the power of x stood above the bar only:
+`x^(-2)` is `x` times `x^(-3)`, and the second is a function of `x^3` like the rest
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a + b*x^3)^(1/3)/(x^2*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 857 characters |
+| `"(a + b*x^3)^(1/3)/(x^11*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 4,974 characters |
+| `"(a + b*x^3)^(4/3)/(x^2*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,562 characters |
+| `"(a + b*x^3)^(4/3)/(x^14*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 6,092 characters |
+| `"1/(x^2*(a + b*x^3)^(2/3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,586 characters |
+| `"(a + b*x^3)^(1/3)/(x^2*(a*d - b*d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 773 characters |
+| `"1/(x^2*(1 - x^3)^(2/3)*(1 + x^3))".ToEntity().Integrate("x")` | `integral(...)` | 471 characters |
+
 ### `a + i a tan` beside the tangent's differential is lowered over its conjugate
 
 **Answers where there were none.** `sqrt(a + i a tan(x))/(c + d tan(x))^(3/2)` ran past thirty seconds:
