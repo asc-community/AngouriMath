@@ -8146,12 +8146,24 @@ namespace AngouriMath.Functions.Algebra
                 // `e^(i arctan(a x))/sqrt(c + a^2 c x^2)` under `x = tan(u)/a` is `e^(i u) cos(u)`.
                 var plus = ((onTheCosine - MathS.i * onTheSine) / 2).InnerSimplified;
                 var minus = ((onTheCosine + MathS.i * onTheSine) / 2).InnerSimplified;
+                var towardsPlus = (rate + MathS.i * frequency).InnerSimplified;
+                var towardsMinus = (rate - MathS.i * frequency).InnerSimplified;
+                static bool Vanishes(Entity exponent) => exponent.Evaled is Number.Complex { IsZero: true }
+                    || exponent.Vars.Any() && Functions.PartialFractions.Bare(exponent.Simplify()).Evaled is Number.Complex { IsZero: true };
+                var plusVanishes = Vanishes(towardsPlus);
+                var minusVanishes = Vanishes(towardsMinus);
+                // One of the two vanishes, since their product is the scale, and which one can rest on
+                // a sign: with `a = 1/n` and `b = sqrt(-1/n^2)`, `a + i b` is zero for a positive `n`
+                // and `a - i b` for a negative one. Neither seen to, the term over it divides by zero
+                // on one side of the sign, and the answer had no value anywhere.
+                if (!plusVanishes && !minusVanishes)
+                    return null;
                 Entity resonant = Number.Integer.Zero;
-                foreach (var (coefficient, exponent) in new[] { (plus, (rate + MathS.i * frequency).InnerSimplified), (minus, (rate - MathS.i * frequency).InnerSimplified) })
+                foreach (var (coefficient, exponent, vanishes) in new[] { (plus, towardsPlus, plusVanishes), (minus, towardsMinus, minusVanishes) })
                 {
                     if (coefficient.Evaled is Number.Complex { IsZero: true })
                         continue;
-                    var term = exponent.Evaled is Number.Complex { IsZero: true } ? polynomial : polynomial * MathS.Pow(MathS.e, exponent * x);
+                    var term = vanishes ? polynomial : polynomial * MathS.Pow(MathS.e, exponent * x);
                     if (Integration.ComputeIndefiniteIntegral(term.InnerSimplified, x, integrateByParts: false) is not { } termIntegral || termIntegral.Nodes.Any(node => node == MathS.NaN))
                         return null;
                     resonant += coefficient * termIntegral;

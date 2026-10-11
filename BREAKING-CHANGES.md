@@ -400,6 +400,27 @@ whose denominator in the tangent is a product of linears
 | `"sec(c + d*x)^3/(a*cos(c + d*x) + b*sin(c + d*x))^4".ToEntity().Integrate("x")` | `integral(...)` | answered, in 9,322 characters |
 | `"1/(a*sec(x) + b*tan(x))^4".ToEntity().Integrate("x")` | `integral(...)` | answered, in 6,548 characters |
 
+### An odd power of a sine or a cosine of a logarithm is integrated, and a resonance on a sign is declined
+
+**Answers where there were none.** `x^m sin(a + b ln(k x^n))^3` and the cosine's cube were declined, though the first
+and second powers were answered (Rubi's 4.7.5). Under `t = ln(k x^n)` each one is an exponential times a power of a
+sine, `e^((m + 1) t/n) sin(a + b t)^3`. The rule that closes that answers only the question asked, and the
+substitution asked it one level down. A logarithm's substitution now asks that integrand as the question
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+**No answer where there was a wrong one.** `e^(x/n) sin(x sqrt(-1/n^2))` is resonant: `1/n + i sqrt(-1/n^2)` is zero
+for a positive `n`, and `1/n - i sqrt(-1/n^2)` is zero for a negative one. The answer divided by one of them, and had
+no value at any point. It is declined now ([#1852](https://github.com/asc-community/AngouriMath/issues/1852)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sin(ln(x))^3".ToEntity().Integrate("x")` | `integral(...)` | 130 characters |
+| `"sin(a + b*ln(x))^3".ToEntity().Integrate("x")` | `integral(...)` | 909 characters |
+| `"x^2*sin(a + b*ln(k*x^n))^3".ToEntity().Integrate("x")` | `integral(...)` | 1,605 characters |
+| `"x^m*cos(a + b*ln(k*x^n))^3".ToEntity().Integrate("x")` | `integral(...)` | 1,907 characters |
+| `"sin(a + b*ln(k*x^n))^4/x^2".ToEntity().Integrate("x")` | `integral(...)` | 2,083 characters |
+| `"exp(x/n)*sin(x*sqrt((-1)/n^2))".ToEntity().Integrate("x")` | an answer with no value anywhere, divided by `1/n^2 + (-1/n^2)` | `integral(...)` |
+
 ### An odd power of a quadratic's derivative over a power of the quadratic is integrated in the quadratic
 
 **Shorter answers, and answers where there were none.** `(b + 2c x)^9/(a + b x + c x^2)^3` was answered through the

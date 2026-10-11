@@ -44,5 +44,17 @@ namespace AngouriMath.Tests.Calculus
                     $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
             }
         }
+
+        /// <summary>
+        /// <c>a + i b</c> or <c>a - i b</c> is zero, which one by the sign of <c>n</c>, and an answer
+        /// dividing by either had no value anywhere.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1852">#1852</a>
+        /// </summary>
+        [Theory]
+        [InlineData("exp(x/n)*sin(x*sqrt((-1)/n^2))")]
+        [InlineData("exp(x/n)*sin(a + x*sqrt((-1)/n^2))")]
+        [InlineData("sin(a + ln(k*x^n)*sqrt((-1)/n^2))")]
+        public void AResonanceOnASignIsDeclined(string integrand) =>
+            Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
     }
 }
