@@ -23731,8 +23731,57 @@ namespace AngouriMath.Functions.Algebra
                     return null;
                 if (OverASymbolicQuadraticInTheFunction(inS, s, w, function == sine, argument, rate, x, integrateByParts) is { } answer)
                     return answer;
+                if (WithASymbolicBinomialCubeFactored(inS, s, w) is { } cube
+                    && OverASymbolicQuadraticInTheFunction(cube.Factored, s, w, function == sine, argument, rate, x, integrateByParts) is { } inR)
+                    return inR.Substitute(cube.R, cube.Root);
             }
             return null;
+        }
+
+        /// <summary>
+        /// <paramref name="inS"/> with one factor <c>a + b s^3</c> below the bar, a symbol in it,
+        /// written <c>b (s + r)(s^2 - r s + r^2)</c> for a fresh <c>r</c> whose cube is <c>a/b</c>:
+        /// a linear and a quadratic with a symbol in it, which the rule above splits over. Null
+        /// where there is no such factor or more than one.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's 4.1.7: <c>csc(x)/(a + b sin(x)^3)</c> and its even powers of the cosecant and
+        /// the secant were declined. Under the half-angle the cube is a sextic in <c>t</c> with
+        /// symbols in every coefficient. The identity holds for any cube root of <c>a/b</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static (Entity Factored, Variable R, Entity Root)? WithASymbolicBinomialCubeFactored(Entity inS, Variable s, Variable w)
+        {
+            var combined = Functions.SingleQuotient.Combine(inS).InnerSimplified;
+            if (combined is Providedf(var bare, _))
+                combined = bare;
+            var (numerator, denominator) = Functions.SingleQuotient.Of(combined);
+            Entity? cube = null;
+            Entity rest = Number.Integer.One;
+            Entity free = Number.Integer.Zero, leading = Number.Integer.Zero;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (factor is not (Sumf or Minusf) || factor.ContainsNode(w)
+                    || !TreeAnalyzer.TryGetPolynomial(factor, s, out var read)
+                    || read.Count != 2 || !read.ContainsKey(EInteger.Zero) || !read.ContainsKey(EInteger.FromInt32(3))
+                    || read.Values.Any(coefficient => coefficient.ContainsNode(s))
+                    || !factor.Vars.Any(v => v != s))
+                {
+                    rest = rest == Number.Integer.One ? factor : rest * factor;
+                    continue;
+                }
+                if (cube is not null)
+                    return null;
+                cube = factor;
+                free = read[EInteger.Zero];
+                leading = read[EInteger.FromInt32(3)];
+            }
+            if (cube is null || Functions.PartialFractions.IsZeroAsAValue(free) || Functions.PartialFractions.IsZeroAsAValue(leading))
+                return null;
+            var r = Variable.CreateUnique(inS, "r_cube");
+            var factored = leading * (s + r) * (MathS.Pow(s, 2) - r * s + MathS.Pow(r, 2));
+            var below = rest == Number.Integer.One ? factored : rest * factored;
+            return (numerator / below, r, MathS.Pow(free / leading, Number.Rational.Create(1, 3)));
         }
 
         /// <summary>

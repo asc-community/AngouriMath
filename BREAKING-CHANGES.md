@@ -231,6 +231,24 @@ roots, `1 - x^2`, is taken as its two ([#718](https://github.com/asc-community/A
 | `"1/((1 - x^2)*(a + b*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,600 characters |
 | `"1/(x*(1 - x^2)*(a + b*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,637 characters |
 
+### A sine's binomial cube below the bar is split over the cube's two factors
+
+**Answers where there were none.** `csc(c + d x)/(a + b sin(c + d x)^3)` was declined, and so were the second to fifth
+powers of the cosecant and the second and fourth powers of the secant over the same block (Rubi's 4.1.7). With `a`
+and `b` symbols the block has no rational factor, so the split over a symbolic quadratic in the sine had nothing to
+split. It is written `b (s + r)(s^2 - r s + r^2)` now, with `r = (a/b)^(1/3)`, which that split answers
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"csc(c + d*x)/(a + b*sin(c + d*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 5,058 characters |
+| `"csc(c + d*x)^2/(a + b*sin(c + d*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 4,866 characters |
+| `"csc(c + d*x)^3/(a + b*sin(c + d*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 5,382 characters |
+| `"csc(c + d*x)^4/(a + b*sin(c + d*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 5,426 characters |
+| `"csc(c + d*x)^5/(a + b*sin(c + d*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 5,958 characters |
+| `"sec(c + d*x)^2/(a + b*sin(c + d*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 7,010 characters |
+| `"sec(c + d*x)^4/(a + b*sin(c + d*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 11,646 characters |
+
 ### A symbol shared by a numerator sum's coefficients is taken out before the partial fractions
 
 **Answers where there were none.** `(b d + 2c d x)^9/(a + b x + c x^2)^3` ran past a minute, where
