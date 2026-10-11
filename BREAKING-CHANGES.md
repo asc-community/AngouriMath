@@ -206,7 +206,7 @@ back after. Each answer is in three cases by the sign of `4 a/c - (b/c)^2`
 |---|---|---|
 | `"(a + b*x^3)^(1/3)/(x^2*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 857 characters |
 | `"(a + b*x^3)^(1/3)/(x^11*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 4,974 characters |
-| `"(a + b*x^3)^(4/3)/(x^2*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,583 characters |
+| `"(a + b*x^3)^(4/3)/(x^2*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,562 characters |
 | `"(a + b*x^3)^(4/3)/(x^14*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 6,092 characters |
 | `"1/(x^2*(a + b*x^3)^(2/3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,586 characters |
 | `"(a + b*x^3)^(1/3)/(x^2*(a*d - b*d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 773 characters |
