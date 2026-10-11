@@ -28954,10 +28954,12 @@ namespace AngouriMath.Functions.Algebra
             bool ASum(Entity node) => node is Sumf or Minusf && node.ContainsNode(reciprocal);
             if (partners.Count == 0 && (above.Nodes.Any(ASum) || below.Nodes.Where(ASum).Distinct().Count() < 2))
                 return null;
-            // Beside the cosine, each sum below to the first power only: `cos(x)/(a + b sec(x))^4` in the
-            // cosine is a partial fraction search past five seconds, which the secant's rules answer in
-            // a third of one.
-            if (partners.Count > 0 && Mulf.LinearChildren(below).Any(factor => factor is Powf(var @base, _) && ASum(@base)))
+            // Beside the cosine, a sum in the secant below, each to the first power only:
+            // `cos(x)/(a + b sec(x))^4` in the cosine is a partial fraction search past five seconds,
+            // which the secant's rules answer in a third of one, and with the sum in the sine instead,
+            // `csc(x)^3/(a + b sin(x)^3)` is a question for the rules of the sine's binomial.
+            if (partners.Count > 0
+                && (!below.Nodes.Any(ASum) || Mulf.LinearChildren(below).Any(factor => factor is Powf(var @base, _) && ASum(@base))))
                 return null;
             var rewritten = Functions.SingleQuotient.Combine(expr.Replace(node => node == reciprocal ? 1 / function : node));
             return Integration.ComputeAsTheSameQuestion(rewritten, x, integrateByParts);
