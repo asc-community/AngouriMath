@@ -28902,12 +28902,14 @@ namespace AngouriMath.Functions.Algebra
         /// <remarks>
         /// The half-angle substitution read the secant's spelling into a rational function of the
         /// half-angle tangent that a substitution search expanded past thirty seconds, where the
-        /// cosine's is answered in half of one. Only for two sums or more, all below the bar. Rubi's 4.5.2.3.
+        /// cosine's is answered in half of one. Only for two sums or more, all below the bar, or beside the
+        /// cosine itself. Rubi's 4.5.2.3 and 4.5.4.2.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveByWritingARationalFunctionOfTheSecantInTheCosine(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             Entity? reciprocal = null;
+            var partners = new List<Entity>();
             foreach (var node in expr.Nodes)
             {
                 if (!node.ContainsNode(x) || node is Entity.Variable)
@@ -28919,6 +28921,9 @@ namespace AngouriMath.Functions.Algebra
                             reciprocal = node;
                         else if (reciprocal != node)
                             return null;
+                        break;
+                    case Cosf or Sinf:
+                        partners.Add(node);
                         break;
                     case Sumf or Minusf or Mulf or Divf or Powf(_, Number.Integer):
                         break;
@@ -28933,15 +28938,27 @@ namespace AngouriMath.Functions.Algebra
             }
             if (reciprocal is null || !TreeAnalyzer.TryGetPolyLinear(reciprocal.DirectChildren.First(), x, out _, out _))
                 return null;
-            // Only two sums in the secant or more, all below the bar: one, or one above, the rules for
-            // the secant answer as written, and in the cosine `sec(x)^5/(a + b sec(x))^3` ran past five
-            // seconds where it is half of one.
-            var (above, below) = Functions.SingleQuotient.Of(expr);
-            bool ASum(Entity node) => node is Sumf or Minusf && node.ContainsNode(reciprocal);
-            if (above.Nodes.Any(ASum) || below.Nodes.Where(ASum).Distinct().Count() < 2)
-                return null;
             var argument = reciprocal.DirectChildren.First();
             var function = reciprocal is Secantf ? MathS.Cos(argument) : MathS.Sin(argument);
+            // The cosine of the same argument beside the secant, or the sine beside the cosecant, is
+            // what the rewritten integrand is in already; any other is a second function.
+            if (partners.Any(partner => partner != function))
+                return null;
+            // Only two sums in the secant or more, all below the bar: one, or one above, the rules for
+            // the secant answer as written, and in the cosine `sec(x)^5/(a + b sec(x))^3` ran past five
+            // seconds where it is half of one. Beside the cosine itself, though, the secant's rules have
+            // two functions to read, and in the cosine alone it is one quotient: the half-angle
+            // substitution wrote `cos(x)^2/(a + b sec(x))` in 117,409 characters where
+            // `cos(x)^3/(a cos(x) + b)` is 873. Rubi's 4.5.4.2.
+            var (above, below) = Functions.SingleQuotient.Of(expr);
+            bool ASum(Entity node) => node is Sumf or Minusf && node.ContainsNode(reciprocal);
+            if (partners.Count == 0 && (above.Nodes.Any(ASum) || below.Nodes.Where(ASum).Distinct().Count() < 2))
+                return null;
+            // Beside the cosine, each sum below to the first power only: `cos(x)/(a + b sec(x))^4` in the
+            // cosine is a partial fraction search past five seconds, which the secant's rules answer in
+            // a third of one.
+            if (partners.Count > 0 && Mulf.LinearChildren(below).Any(factor => factor is Powf(var @base, _) && ASum(@base)))
+                return null;
             var rewritten = Functions.SingleQuotient.Combine(expr.Replace(node => node == reciprocal ? 1 / function : node));
             return Integration.ComputeAsTheSameQuestion(rewritten, x, integrateByParts);
         }
