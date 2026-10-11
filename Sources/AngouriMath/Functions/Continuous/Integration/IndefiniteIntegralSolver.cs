@@ -5479,7 +5479,10 @@ namespace AngouriMath.Functions.Algebra
         /// <c>u^j</c> times the same in <c>u</c>, since <c>x^j (c + d x^n)^(-j/n)</c> is
         /// <c>u^j</c>. Rubi's 1.1.3.4: <c>x/((a + b x^3)^(2/3) (c + d x^3))</c> is
         /// <c>u/(c - (b c - a d) u^3)</c>, and <c>x^4 (a + b x^3)^(1/3)/(c + d x^3)</c> is the
-        /// same with <c>x^3</c> beside it; each was declined.
+        /// same with <c>x^3</c> beside it; each was declined. A power of x below the bar is read
+        /// the same way, with the multiple of <c>n</c> it leaves going into the rational function:
+        /// <c>(a + b x^3)^(1/3)/(x^2 (c + d x^3))</c> is <c>x</c> times <c>1/(x^3 (c + d x^3))</c>
+        /// times <c>(a + b x^3)^(1 - 2/3)</c>, Rubi's 1.1.3.4:763.
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
@@ -5528,20 +5531,30 @@ namespace AngouriMath.Functions.Algebra
             // stand-in for x^n where every power of x is a multiple of n, and declined otherwise.
             if (j != 0)
             {
-                // Out of the polynomial above the bar, each of whose powers is then a multiple of n.
+                // Out of the polynomial above the bar together with the power of x below it, each
+                // power then a multiple of n, below zero too: `x^(-2)` is `x` times `x^(-3)`.
                 var (restAbove, restBelow) = Functions.SingleQuotient.Of(rest);
                 if (!TreeAnalyzer.TryGetPolynomial(restAbove, x, out var aboveTerms) || aboveTerms.Count == 0)
                     return null;
+                var belowX = 0;
+                Entity belowOtherwise = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(restBelow))
+                    if (factor == x)
+                        belowX++;
+                    else if (factor is Powf(var xAgain, Number.Integer power) && xAgain == x && power.EInteger.Sign > 0 && power.EInteger.CanFitInInt32())
+                        belowX += power.EInteger.ToInt32Checked();
+                    else
+                        belowOtherwise = belowOtherwise == Number.Integer.One ? factor : belowOtherwise * factor;
                 Entity lowered = Number.Integer.Zero;
                 foreach (var term in aboveTerms)
                 {
-                    var power = term.Key.Subtract(EInteger.FromInt32(j));
-                    if (power.Sign < 0 || term.Value.ContainsNode(x))
+                    var power = term.Key.Subtract(EInteger.FromInt32(j + belowX));
+                    if ((belowX == 0 && power.Sign < 0) || term.Value.ContainsNode(x))
                         return null;
                     var monomial = power.IsZero ? term.Value : term.Value * MathS.Pow(x, Number.Integer.Create(power));
                     lowered = lowered == Number.Integer.Zero ? monomial : lowered + monomial;
                 }
-                rest = restBelow == Number.Integer.One ? lowered : lowered / restBelow;
+                rest = belowOtherwise == Number.Integer.One ? lowered : lowered / belowOtherwise;
             }
             var xToTheN = Variable.CreateUnique(expr, "x_n");
             var inXToTheN = rest.Replace(node =>
