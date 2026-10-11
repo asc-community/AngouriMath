@@ -312,6 +312,23 @@ takes 6 s for 265,499 now ([#718](https://github.com/asc-community/AngouriMath/i
 | `"(d + f*x + g*x^2 + h*x^3 + k*x^4 + m*x^5 + n*x^8 + p*x^11)/(a + b*x^2 + c*x^4)^3".ToEntity().Integrate("x")` | `integral(...)` | 77,389 characters |
 | `"csc(c + d*x)^2/(a - b*sin(c + d*x)^4)^3".ToEntity().Integrate("x")` | `integral(...)` | 157,787 characters |
 
+### A power of x beside two blocks in one power of x is split over the blocks first
+
+**Shorter answers, and sooner.** `1/(x^7 (a + b x^3)(c + d x^3))` came to 265,499 characters on the unreleased
+master: the Hermite reduction read `x^7` as a repeated factor, and what it left went to the split at the power of x,
+whose rest over both blocks had coefficients pages long. The blocks are split in `u = x^3` first now, with the power
+of x kept outside, and each piece is a power of x over one block: 351 characters. The other `1/(x^m (a + b x^n)(c + d x^n))`
+in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take milliseconds
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(x*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 185 characters |
+| `"1/(x^4*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 259 characters |
+| `"1/(x^7*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 351 characters |
+| `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
+| `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
+
 ### One linear twice is not two linear powers
 
 **Answers that had no value.** `(a c + b c x)^(-3 - 2 p) (f + g x) (a^2 + 2 a b x + b^2 x^2)^p` was answered
