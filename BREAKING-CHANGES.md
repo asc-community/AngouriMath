@@ -347,6 +347,25 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### A power of the cosine beside a secant binomial is integrated in the cosine
+
+**Answers where there were none.** `cos(c + d x)^2/(a + b sec(c + d x))` was declined, and so were the cosine's powers
+beside `A + B sec + C sec^2` over the same binomial (Rubi's 4.5.1.2, 4.5.3.1 and 4.5.4.2). Wherever the secant is
+defined, the integrand is one quotient in the cosine, `cos(c + d x)^3/(a cos(c + d x) + b)`, and it is integrated
+in that spelling now. The same holds for a power of the sine beside a cosecant binomial. Only for the binomial to
+the first power: for a higher power the secant's own rules answer
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"cos(c + d*x)^2/(a + b*sec(c + d*x))".ToEntity().Integrate("x")` | `integral(...)` | 1,091 characters |
+| `"cos(c + d*x)^2*(A + B*sec(c + d*x))/(a + b*sec(c + d*x))".ToEntity().Integrate("x")` | `integral(...)` | 4,347 characters |
+| `"cos(c + d*x)^2*(A + C*sec(c + d*x)^2)/(a + b*sec(c + d*x))".ToEntity().Integrate("x")` | `integral(...)` | 3,999 characters |
+| `"cos(c + d*x)^3*(B*sec(c + d*x) + C*sec(c + d*x)^2)/(a + b*sec(c + d*x))".ToEntity().Integrate("x")` | `integral(...)` | 4,349 characters |
+| `"cos(c + d*x)^4*(B*sec(c + d*x) + C*sec(c + d*x)^2)/(a + b*sec(c + d*x))".ToEntity().Integrate("x")` | `integral(...)` | 5,579 characters |
+| `"cos(c + d*x)^2*(A + B*sec(c + d*x) + C*sec(c + d*x)^2)/(a + b*sec(c + d*x))".ToEntity().Integrate("x")` | `integral(...)` | 12,065 characters |
+| `"sin(x)^2/(a + b*csc(x))".ToEntity().Integrate("x")` | `integral(...)` | 898 characters |
+
 ### One linear twice is not two linear powers
 
 **Answers that had no value.** `(a c + b c x)^(-3 - 2 p) (f + g x) (a^2 + 2 a b x + b^2 x^2)^p` was answered
