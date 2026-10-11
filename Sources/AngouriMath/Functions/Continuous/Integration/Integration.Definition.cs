@@ -692,6 +692,7 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAnImaginaryTangentAsAnExponential(expr, x, integrateByParts)) is { }) return answer;
             // And `A cos(z) + i A sin(z)`, which is `A e^(i z)`, where no rotation is real.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAnImaginarySumOfACosineAndASineAsAnExponential(expr, x, integrateByParts)) is { }) return answer;
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingAnImaginarySumOfACosineAndASineOverTheCosine(expr, x, integrateByParts)) is { }) return answer;
             // Exponentials of quadratics, with sines, cosines and sums of them multiplied out:
             // each term is the Gaussian's, where the search would take the product by parts.
             if ((answer = IndefiniteIntegralSolver.SolveAProductOfExponentialsOfQuadratics(expr, x)) is { }) return answer;

@@ -528,8 +528,9 @@ namespace AngouriMath.Functions.Algebra
                 && repetitions.EInteger.ToInt32Checked() is var n and >= 2
                 && TreeAnalyzer.TryGetPolyQuadratic(repeated, x, out var qa, out var qb, out var qc)
                 && (!numerator.ContainsNode(x) || !TreeAnalyzer.IsZero(qa))
-                && IntegrateRationalOverPowerOfQuadratic(numerator, qa, qb, qc, repeated, n, x,
-                        withoutTheFirstPower: TheFirstPowerCancels(numerator, qa, qb, qc, repeated, n, x)) is { } repeatedAnswer
+                && (IntegrateRationalOverPowerOfQuadratic(numerator, qa, qb, qc, repeated, n, x,
+                        withoutTheFirstPower: TheFirstPowerCancels(numerator, qa, qb, qc, repeated, n, x))
+                    ?? OverThePowerOfTheMonicQuadraticInNamedCoefficients(numerator, qa, qb, qc, n, x)) is { } repeatedAnswer
                     => repeatedAnswer,
 
             // ∫ (px + q)/(bx + c) dx, the same rewrite one degree down: the quotient is the
@@ -1122,6 +1123,49 @@ namespace AngouriMath.Functions.Algebra
                 a,
                 alongTheDerivative,
                 LinearOverPowerOfLinear(p, q, b, c, power, x));
+        }
+
+        /// <summary>
+        /// ∫ N(x)/(a x^2 + b x + c)^n dx as <c>1/a^n</c> times the integral over
+        /// <c>(x^2 + k x + m)^n</c>, with <c>k = b/a</c> and <c>m = c/a</c> each a fresh symbol
+        /// while it is integrated, where <see cref="IntegrateRationalOverPowerOfQuadratic"/>
+        /// declined the quadratic as written.
+        /// </summary>
+        /// <remarks>
+        /// With symbols in both <c>a</c> and <c>c</c> the divisions by the quadratic leave
+        /// remainders the reduction cannot read as linear: <c>x^5/(a + b x + c x^2)^4</c> was
+        /// declined, where <c>x^5/(k + m x + x^2)^4</c> and <c>x^5/(2 + b x + c x^2)^4</c> are
+        /// answered in a few hundred milliseconds. Rubi's 1.2.1.2. A leading coefficient that is a
+        /// number as written, such as the <c>1 * 1^2</c> a substitution leaves, is not one: the
+        /// substitution that wrote <c>(b d + 2 c d x)^8/(a + b x + c x^2)^3</c> in the quadratic
+        /// asks with one, and naming its other two took the answer from 65,236 characters to 202,057.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static Entity? OverThePowerOfTheMonicQuadraticInNamedCoefficients(
+            Entity numerator, Entity a, Entity b, Entity c, int power, Entity.Variable x)
+        {
+            if (a.InnerSimplified is Entity.Number)
+                return null;
+            Entity everything = numerator + a + b + c;
+            var named = new List<(Entity.Variable Name, Entity Value)>();
+            Entity Named(Entity value)
+            {
+                var written = value.InnerSimplified;
+                if (written is Entity.Variable or Entity.Number)
+                    return written;
+                var name = Entity.Variable.CreateUnique(everything, "k_q");
+                everything += name;
+                named.Add((name, written));
+                return name;
+            }
+            var linear = Named(b / a);
+            var constant = Named(c / a);
+            var monic = MathS.Pow(x, 2) + linear * x + constant;
+            if (IntegrateRationalOverPowerOfQuadratic(numerator, Entity.Number.Integer.One, linear, constant, monic, power, x) is not { } answer)
+                return null;
+            foreach (var (name, value) in named)
+                answer = answer.Substitute(name, value);
+            return answer / MathS.Pow(a, power);
         }
 
         /// <summary>

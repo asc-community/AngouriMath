@@ -1906,6 +1906,47 @@ namespace AngouriMath.Functions.Algebra
         private const int MaximumPowerOfABinomial = 12;
 
         /// <summary>
+        /// <paramref name="dividend"/> divided by <paramref name="divisor"/> as polynomials in all
+        /// their symbols, each over its own bar, where the division of what is above the bars is
+        /// exact; <see langword="null"/> where it is not, or where either is not a polynomial
+        /// over a bar free of <paramref name="x"/>.
+        /// </summary>
+        /// <remarks>
+        /// The bars are there because the partial fractions make a block monic before this reads
+        /// it: `a + b x^2 + c x^4` arrives as `a/c + b/c x^2 + x^4`.
+        /// </remarks>
+        private static Entity? ExactlyDivided(Entity dividend, Entity divisor, Entity.Variable x)
+        {
+            var (above, aboveBar) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(dividend));
+            var (below, belowBar) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(divisor));
+            if (aboveBar.ContainsNode(x) || belowBar.ContainsNode(x))
+                return null;
+            var variables = above.Vars.Concat(below.Vars).Distinct().OrderBy(v => v.Name, System.StringComparer.Ordinal).ToList();
+            if (variables.Count == 0 || variables.Count > MultivariatePolynomial.MaxVariables)
+                return null;
+            var indices = new Dictionary<Variable, int>();
+            for (var i = 0; i < variables.Count; i++)
+                indices[variables[i]] = i;
+            if (MultivariatePolynomial.TryParse(above, indices) is not { IsZero: false } top
+                || MultivariatePolynomial.TryParse(below, indices) is not { IsConstant: false } bottom
+                || !indices.TryGetValue(x, out var at))
+                return null;
+            // Its content in x goes below the bar: the quotient `a/c + b/c x^2 + x^4` is combined as
+            // `c (a + b x^2 + c x^4)` over `c^2`, and the numerator holds the trinomial, not the c.
+            var rest = Enumerable.Range(0, variables.Count).Where(variable => variable != at).ToList();
+            Entity content = Number.Integer.One;
+            if (Functions.PolynomialGcd.ContentIn(bottom, at, rest, 0) is { IsConstant: false } inTheSymbols
+                && bottom.DivideExact(inTheSymbols) is { } primitive)
+            {
+                bottom = primitive;
+                content = inTheSymbols.ToEntity(variables);
+            }
+            if (top.DivideExact(bottom) is not { } quotient)
+                return null;
+            return (quotient.ToEntity(variables) * belowBar / (aboveBar * content)).InnerSimplified;
+        }
+
+        /// <summary>
         /// A polynomial over a power of a trinomial in <c>x^n</c>,
         /// <c>P(x)/(a + b x^n + c x^(2n))^k</c> with <c>n &gt;= 2</c> and <c>k &gt;= 2</c>, a power at
         /// a time down to a polynomial over the trinomial itself.
@@ -1952,6 +1993,14 @@ namespace AngouriMath.Functions.Algebra
                 }
                 else
                     return null;
+            }
+            // A numerator the trinomial divides is divided by it first: Rubi's 1.2.2.5 writes
+            // `(d + e x + f x^2)(a + b x^2 + c x^4)` multiplied out over the fourth power, and over it
+            // the answer was 99,000 characters where over the third it is 20,000.
+            while (trinomial is { } && power > 1 && ExactlyDivided(numerator, trinomial, x) is { } fewer)
+            {
+                numerator = fewer;
+                power--;
             }
             if (trinomial is null || power > MaximumPowerOfABinomial
                 || !TreeAnalyzer.TryGetPolynomial(trinomial, x, out var below) || below.Count != 3
@@ -28599,6 +28648,62 @@ namespace AngouriMath.Functions.Algebra
             rewritten = rewritten.Replace(node =>
                 node is Powf(Mulf(var left, var right), Number.Integer power)
                 && (left is Powf(var leftBase, _) && leftBase == MathS.e || right is Powf(var rightBase, _) && rightBase == MathS.e)
+                    ? MathS.Pow(left, power) * MathS.Pow(right, power)
+                    : node);
+            return Integration.ComputeAsTheSameQuestion((above / rewritten).InnerSimplified, x, integrateByParts);
+        }
+
+        /// <summary>
+        /// <c>A cos(y) + i A sin(y)</c> below the bar, with nothing but cosines of <c>y</c> and their
+        /// reciprocals beside it, written as <c>A cos(y) (1 + i tan(y))</c>, and <c>A cos(y) - i A sin(y)</c>
+        /// as <c>A cos(y) (1 - i tan(y))</c>: a power of the secant over a power of <c>1 ± i tan(y)</c>,
+        /// which the rules for that sum answer.
+        /// </summary>
+        /// <remarks>
+        /// Where the exponential <see cref="SolveByWritingAnImaginarySumOfACosineAndASineAsAnExponential"/>
+        /// writes declines: an odd power of the secant beside it, `sec(y)^5/(a cos(y) + i a sin(y))^2`,
+        /// is a half-odd power of `1 + tan(y)^2` in the tangent, and that is `(1 - i t)^(5/2) (1 + i t)^(1/2)`
+        /// over the sum, which the rules for `a + i a tan` take. Rubi's 4.7.2.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByWritingAnImaginarySumOfACosineAndASineOverTheCosine(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr));
+            if (!below.ContainsNode(x))
+                return null;
+            Entity? argumentOfThePair = null;
+            var rewritten = below.Replace(node =>
+            {
+                if (node is not (Sumf or Minusf) || !node.ContainsNode(x)
+                    || !TryReadACosineAndASine(node, x, out var cosineCoefficient, out var sineCoefficient, out var argument)
+                    || argumentOfThePair is { } && argumentOfThePair != argument)
+                    return node;
+                var ratio = Functions.PartialFractions.Bare((sineCoefficient / cosineCoefficient).InnerSimplified);
+                if (ratio.Evaled is not Number.Complex)
+                    ratio = Functions.PartialFractions.Bare(ratio.Simplify());
+                var plus = ratio.Evaled == MathS.i.Evaled;
+                if (!plus && ratio.Evaled != (-MathS.i).Evaled)
+                    return node;
+                argumentOfThePair = argument;
+                return cosineCoefficient * MathS.Cos(argument) * (1 + (plus ? MathS.i : -MathS.i) * MathS.Tan(argument));
+            });
+            if (rewritten == below || argumentOfThePair is not { } y)
+                return null;
+            // Nothing beside the pair but cosines and secants of its argument: a sine elsewhere is the
+            // exponential's.
+            bool OnlyCosines(Entity side, bool andTheTangent) => side.Nodes.All(node => node switch
+            {
+                Tanf(var a) => andTheTangent && a == y,
+                Sinf or Tanf or Cotanf or Cosecantf => false,
+                Cosf(var a) => a == y,
+                Secantf(var a) => a == y,
+                _ => true,
+            });
+            if (!OnlyCosines(above, andTheTangent: false) || !OnlyCosines(rewritten, andTheTangent: true))
+                return null;
+            // A whole power of the product split, so that the power of the sum stands on its own.
+            rewritten = rewritten.Replace(node =>
+                node is Powf(Mulf(var left, var right), Number.Integer power) && (left.Nodes.Any(n => n is Tanf) || right.Nodes.Any(n => n is Tanf))
                     ? MathS.Pow(left, power) * MathS.Pow(right, power)
                     : node);
             return Integration.ComputeAsTheSameQuestion((above / rewritten).InnerSimplified, x, integrateByParts);
