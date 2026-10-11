@@ -183,11 +183,16 @@ the division's; with it on, the rounding is the setting's own and stays
 fourth power and `x^5` and `x^7` over the fifth, Rubi's 1.2.1.2, while `x^5/(2 + b x + c x^2)^4` and
 `x^5/(k + m x + x^2)^4` were answered. Where the reduction declines the quadratic as written, it is integrated as
 `1/c^n` times the integral over `(x^2 + k x + m)^n`, with `k = b/c` and `m = a/c` fresh symbols while it is, and put
-back after ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+back after. Each answer is in three cases by the sign of `4 a/c - (b/c)^2`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
-| `"x^5/(a + b*x + c*x^2)^4".ToEntity().Integrate("x")` | `integral(...)` | the antiderivative, in three cases by the sign of `4 a/c - (b/c)^2`, with arctangents and logarithms |
+| `"x^5/(a + b*x + c*x^2)^4".ToEntity().Integrate("x")` | `integral(...)` | 3,474 characters |
+| `"x^6/(a + b*x + c*x^2)^4".ToEntity().Integrate("x")` | `integral(...)` | 4,142 characters |
+| `"x^7/(a + b*x + c*x^2)^4".ToEntity().Integrate("x")` | `integral(...)` | 4,823 characters |
+| `"x^5/(a + b*x + c*x^2)^5".ToEntity().Integrate("x")` | `integral(...)` | 4,066 characters |
+| `"x^7/(a + b*x + c*x^2)^5".ToEntity().Integrate("x")` | `integral(...)` | 5,602 characters |
 
 ### `a + i a tan` beside the tangent's differential is lowered over its conjugate
 
