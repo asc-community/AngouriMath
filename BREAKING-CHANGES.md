@@ -1796,6 +1796,21 @@ closed form now, by the sign of `c`
 | `"x/((4*c + d*x^3)*sqrt(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | the same in `sqrt(c + d x^3)` and `q = (d/c)^(1/3)`, by the sign of `c` |
 | `"x/((8 - d*x^3)*sqrt(1 + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | `(artanh((1 + d^(1/3) x)^2/(3 sqrt(1 + d x^3))) - artanh(sqrt(1 + d x^3)/3))/(18 d^(2/3)) - atan(sqrt(3) (1 + d^(1/3) x)/sqrt(1 + d x^3))/(6 sqrt(3) d^(2/3))`, written with logarithms |
 
+### `x` over a cubic binomial beside the root of another is integrated at its third elementary ratio
+
+**Answers where there were none.** `x/((b x^3 + 2 a (5 + 3 sqrt(3))) sqrt(a + b x^3))` was declined, with its
+seven variants in Rubi's 1.1.3.4, and so were four numeric ones in its Welz problems.
+`x/((a + b x^3) sqrt(c + d x^3))` is elementary at a third ratio as well, `a^2 d^2 - 20 a b c d - 8 b^2 c^2 = 0`, where `r = (a d - 10 b c)/(6 b c)` is `sqrt(3)` or `-sqrt(3)`, as two
+arctangents and two inverse hyperbolic tangents for each sign of `c r`
+([#718](https://github.com/asc-community/AngouriMath/issues/718), PR
+[#1862](https://github.com/asc-community/AngouriMath/pull/1862)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x/((b*x^3 + 2*a*(5 + 3*sqrt(3)))*sqrt(a + b*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,663 characters, by the sign of `a` |
+| `"x/((b*x^3 + 2*a*(5 - 3*sqrt(3)))*sqrt(a + b*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,703 characters, by the sign of `a` |
+| `"x/((x^3 + 10 + 6*sqrt(3))*sqrt(1 + x^3))".ToEntity().Integrate("x")` | `integral(...)` | 626 characters |
+
 ### `x^2` over a three-quarter power of a quadratic binomial beside another is integrated where that is elementary
 
 **Answers where there were none.** `x^2/((A + B x^2)^(3/4) (C + D x^2))` at `B C - 2 A D = 0`, Rubi's
