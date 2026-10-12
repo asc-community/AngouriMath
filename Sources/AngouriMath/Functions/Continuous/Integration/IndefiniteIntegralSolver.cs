@@ -5223,7 +5223,7 @@ namespace AngouriMath.Functions.Algebra
             var order = sums[0].Exponent is Number.Rational { ERational.Sign: > 0 } && IsHalfOdd(sums[0].Exponent) ? new[] { 0, 1 } : new[] { 1, 0 };
             var (half, other) = (sums[order[0]], sums[order[1]]);
             if (!IsHalfOdd(half.Exponent))
-                return null;
+                return WherePowersOfConjugateSumsAddToANegativeWhole(expr, x, function, sums[0], sums[1]);
             var n = ((Number.Rational)half.Exponent).ERational;
             // With u the other sum, the half-odd one is c (2 - u/a), whatever the signs.
             var u = Variable.CreateUnique(expr, "u_conjugate");
@@ -5244,6 +5244,45 @@ namespace AngouriMath.Functions.Algebra
                 || inTermsOfU.Nodes.Any(node => node == MathS.NaN))
                 return null;
             return expr * inTermsOfU.Substitute(u, other.Radicand) / inX;
+        }
+
+        /// <summary>
+        /// <c>sec(y) (a ± a sec(y))^m (c ∓ c sec(y))^n</c> with <c>m + n</c> a negative whole
+        /// number <c>-k</c> and neither half-odd: with <c>u = a ± a sec(y)</c>, the antiderivative is
+        /// the integrand over <c>u'</c> times the polynomial
+        /// <c>(2a)^(-k) Σ_j C(k - 1, j) u^(j + 1) (2a - u)^(k - j)/(m + j + 1/2)</c>, for any <c>m</c>.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's <c>sec(e + f x) (a + a sec(e + f x))^m (c - c sec(e + f x))^(-1 - m)</c> and its
+        /// <c>-2 - m</c> and <c>-3 - m</c>, 4.5.2.3, were declined. In <c>u</c> the integrand is
+        /// <c>u^(m - 1/2) (2 - u/a)^(n - 1/2)</c> up to a constant, which is <c>v^(m - 1/2) (1 + v)^(k - 1)</c>
+        /// in <c>v = u/(2a - u)</c>, a finite sum; written back, the powers of <c>u</c> and
+        /// <c>2a - u</c> the integrand has divide out and leave the polynomial. For <c>k = 1</c> that is
+        /// <c>-tan(y) (a + a sec(y))^m (c - c sec(y))^(-1 - m)/(2m + 1)</c>. Kept only where it
+        /// differentiates back to the integrand at the sampled points.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static Entity? WherePowersOfConjugateSumsAddToANegativeWhole(Entity expr, Entity.Variable x, Entity function,
+            (Entity Radicand, Entity Exponent, Entity A, bool Plus) first, (Entity Radicand, Entity Exponent, Entity A, bool Plus) second)
+        {
+            // Simplified, not InnerSimplified, which leaves `m + -1 - m` as it is.
+            if ((first.Exponent + second.Exponent).Simplify() is not Number.Integer { EInteger.Sign: < 0 } total
+                || total.EInteger.CompareTo(EInteger.FromInt32(-12)) < 0)
+                return null;
+            var k = -total.EInteger.ToInt32Checked();
+            var (u, a) = (first.Radicand, first.A);
+            // `2a - u`, written as the conjugate sum: `a - a sec(y)` for `u = a + a sec(y)`.
+            var conjugate = first.Plus ? a - a * function : a + a * function;
+            Entity polynomial = Number.Integer.Zero;
+            var binomial = EInteger.One;
+            for (var j = 0; j < k; j++)
+            {
+                polynomial += Number.Integer.Create(binomial) * MathS.Pow(u, j + 1) * MathS.Pow(conjugate, k - j)
+                    / (first.Exponent + j + Number.Rational.Create(1, 2)).Simplify();
+                binomial = binomial.Multiply(EInteger.FromInt32(k - 1 - j)).Divide(EInteger.FromInt32(j + 1));
+            }
+            var antiderivative = expr / u.Differentiate(x) * (MathS.Pow(2 * a, total) * polynomial).InnerSimplified;
+            return Functions.PartialFractions.HoldsAtSampledPoints(antiderivative.Differentiate(x), expr, x) ? antiderivative : null;
         }
 
         /// <summary>
