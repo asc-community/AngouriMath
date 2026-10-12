@@ -736,6 +736,18 @@ of one argument in it reads a numeric slope and bounds the degree it writes. A s
 | `"csc(a + b*x)^3*sin(2*a + 2*b*x)^7".ToEntity().Integrate("x")` | `integral(...)` | 127 characters |
 | `"csc(a + b*x)*sin(2*a + 2*b*x)^8".ToEntity().Integrate("x")` | `integral(...)` | 134 characters |
 
+### A cosecant of a double argument beside the argument is written as a product
+
+**Answers where there were none.** `csc(2x) ln(tan(x))` was declined, Rubi's 4.7.7: the rule that writes
+`sin(2A)` as `2 sin(A) cos(A)` beside functions of `A` declined any other function of `2A`. The cosecant is
+`1/(2 sin(A) cos(A))`, one product as well, and is written so now, which leaves `ln(tan(x))` beside its derivative
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"csc(2*x)*ln(tan(x))".ToEntity().Integrate("x")` | `integral(...)` | `1/2 * ln(tan(x)) ^ 2 / 2` |
+| `"csc(2*x)*ln(tan(x))^2".ToEntity().Integrate("x")` | `integral(...)` | `1/2 * ln(tan(x)) ^ 3 / 3` |
+
 ### A sine or a cosine of a shifted argument is written in the other
 
 **Answers where there were none.** `sin(a + b x) sec(c + b x)^3` was declined, with the rest of Rubi's 4.7.1
