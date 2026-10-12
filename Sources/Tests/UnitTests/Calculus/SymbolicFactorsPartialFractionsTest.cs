@@ -321,6 +321,9 @@ namespace AngouriMath.Tests.Calculus
         /// iteration. <c>1/((a + b x)^2 (c + d x)^(3/2))</c> is, under <c>u = sqrt(c + d x)</c>,
         /// <c>1/(u^2 (K + u^2)^2)</c> with a symbolic <c>K</c>, and went to the Hermite reduction
         /// for a hundred kilobytes in thirty seconds; it is eight kilobytes in half a second now.
+        /// Beside a cube of a linear, the norm of the other factors' residue is a power of a
+        /// product with a sum in it, which is multiplied out as a polynomial: expanded term by
+        /// term it took 27 of the 29 seconds of <c>1/((d + e x)^3 (a + b x + c x^2)^2)</c>.
         /// </summary>
         [Theory]
         [InlineData("1/((a + b*x)^2*(c + d*x)^(3/2))", 10000)]
@@ -328,6 +331,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("1/(x^3*(a + b*x + c*x^2)^2)", 10000)]
         [InlineData("x/((a + b*x)*(c + x^2)^2)", 4000)]
         [InlineData("(A + B*x)/((a + b*x)*(1 + x^2)^3)", 4000)]
+        [InlineData("1/((d + B*x)^3*(a + b*x + c*x^2)^2)", 12000)]
         public void ARepeatedSymbolicQuadraticBesideALinear(string integrand, int atMost)
         {
             DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1), ("A", 0.5), ("B", 1.3));

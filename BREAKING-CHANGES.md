@@ -435,6 +435,20 @@ by the linear's coefficients, `(b d + 2c d x)^9`, which ran past a minute
 | `"(b + 2*c*x)^9/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | past a minute; 76,153 characters on the unreleased master | 607 characters |
 | `"(b*d + 2*c*d*x)^9/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | past a minute | 611 characters |
 
+### A square of a symbolic quadratic beside two linears is answered within the budget
+
+**Answers where there were none in time.** `1/((d + k x)(f + g x)(a + b x + c x^2)^2)` was declined by
+2.5.0, and on the unreleased master it did not return in 300 seconds. The norm of the other factors
+modulo the quadratic is a power of a product with a sum in it, and it was multiplied out term by term;
+it is multiplied out as a polynomial in the symbols now. `1/((d + k x)^3 (a + b x + c x^2)^2)` gives the
+same answer as on the unreleased master, in 1.4 seconds rather than 30
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((d + k*x)*(f + g*x)*(a + b*x + c*x^2)^2)".ToEntity().Integrate("x")` | `integral(...)` | 24,143 characters |
+| `"1/((d + k*x)^3*(a + b*x + c*x^2)^2)".ToEntity().Integrate("x")` | `integral(...)` | 9,593 characters |
+
 ### A trinomial the numerator holds is divided out of a power of it
 
 **A shorter answer, where 2.5.0 had none.** `(d + g x + f x^2)(a + b x^2 + c x^4)/(a + b x^2 + c x^4)^4`, written

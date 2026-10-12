@@ -674,8 +674,11 @@ namespace AngouriMath.Functions
         private static Entity ExpandedOverTheSymbols(Entity expr)
         {
             // Only where there is a product to multiply out: a sum or a quotient of sums already
-            // written term by term keeps the spelling every other step reads it in.
-            if (!expr.Nodes.Any(node => node is Powf(Sumf or Minusf, Integer { EInteger: var power }) && power.CompareTo(EInteger.One) > 0
+            // written term by term keeps the spelling every other step reads it in. A power of a
+            // product with a sum in it is one: the norm a repeated quadratic's inverse takes
+            // beside `(d + e x)^3` is `(S c)^2` for a sum `S` of 28 terms, and its expansion
+            // took 27 of the 29 seconds of `1/((d + e x)^3 (a + b x + c x^2)^2)`.
+            if (!expr.Nodes.Any(node => node is Powf(var @base, Integer { EInteger: var power }) && power.CompareTo(EInteger.One) > 0 && @base.Nodes.Any(n => n is Sumf or Minusf)
                     || node is Mulf(var left, var right) && left.Nodes.Any(n => n is Sumf or Minusf) && right.Nodes.Any(n => n is Sumf or Minusf)))
                 return expr.Expand();
             var variables = expr.Vars.OrderBy(v => v.Name, System.StringComparer.Ordinal).ToList();
