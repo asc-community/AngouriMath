@@ -505,6 +505,21 @@ two more of Rubi's 4.5.2.3. The two sums multiply to `-a c tan^2`, so in `u = a 
 | `"sec(e + f*x)*(a + a*sec(e + f*x))^m*(c - c*sec(e + f*x))^(5/2)".ToEntity().Integrate("x")` | `integral(...)` | 469 characters |
 | `"sec(e + f*x)*(a + a*sec(e + f*x))^m*sqrt(c - c*sec(e + f*x))".ToEntity().Integrate("x")` | `integral(...)` | 268 characters |
 
+### Powers of `a + a sec` and `c - c sec` that add to a negative whole number are integrated in the first sum
+
+**Answers where there were none.** `sec(e + f x) (a + a sec(e + f x))^m (c - c sec(e + f x))^(-1 - m)` was declined,
+with two more of Rubi's 4.5.2.3. When the two powers add to `-k`, a whole number up to 12, the integral is the
+integrand over the derivative of `u = a + a sec` times a polynomial in `u` and `a - a sec`, of degree `k + 1`, for a
+symbolic `m` too, and the cosecant's is the same
+([#718](https://github.com/asc-community/AngouriMath/issues/718), PR
+[#1861](https://github.com/asc-community/AngouriMath/pull/1861)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sec(e + f*x)*(a + a*sec(e + f*x))^m*(c - c*sec(e + f*x))^(-1 - m)".ToEntity().Integrate("x")` | `integral(...)` | 245 characters |
+| `"sec(e + f*x)*(a + a*sec(e + f*x))^m*(c - c*sec(e + f*x))^(-3 - m)".ToEntity().Integrate("x")` | `integral(...)` | 402 characters |
+| `"csc(x)*(2 + 2*csc(x))^m*(3 - 3*csc(x))^(-2 - m)".ToEntity().Integrate("x")` | `integral(...)` | 233 characters |
+
 ### A secant and a tangent in one sum below the bar are integrated in the half angle
 
 **Answers where there were none.** `1/(a + c sec(x) + b tan(x))` was declined, and so was
