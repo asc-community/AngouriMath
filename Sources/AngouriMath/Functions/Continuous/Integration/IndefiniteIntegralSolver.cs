@@ -99,6 +99,8 @@ namespace AngouriMath.Functions.Algebra
             // corpus for nothing.
             if (!Integration.AnsweringTheQuestionAsked)
                 return null;
+            if (integrateByParts && ByPartsAgainstThePowersOfX(splitted, x) is { } byPartsOverTheSum)
+                return byPartsOverTheSum;
             // What is polynomial in a term is what has no root of the variable in it: a
             // logarithm or an exponential of x is an indeterminate as far as gathering and
             // cancelling go. Bronstein's
@@ -141,6 +143,224 @@ namespace AngouriMath.Functions.Algebra
                     (null, _) or (_, null) => null,
                     (var int1, var int2) => int1 + int2
                 });
+        }
+
+        /// <summary>
+        /// A sum whose terms are not elementary apart, integrated by parts against the power
+        /// of <paramref name="x"/> in each term that has one, with what parts leaves and the
+        /// other terms asked together as one integrand: <c>x^k f + g</c> is
+        /// <c>x^k F + ∫(g - k x^(k - 1) F)</c> for <c>F</c> the antiderivative of <c>f</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>sqrt(csc(x)) (x cos(x) - 4 sec(x) tan(x))</c>, Rubi's 4.7.7, is
+        /// <c>(2 x sqrt(sin(x)) - 4 sin(x)^(3/2)/cos(x))'</c>. Split into its two terms, neither is
+        /// elementary: parts on the first leaves <c>-2 sqrt(sin(x))</c>, and that and the second
+        /// term are elementary only together, as <c>sqrt(sin(x)) (-2 - 4/cos(x)^2)</c>. So the
+        /// remainder is gathered into one quotient with the factors its terms share taken out,
+        /// which is the spelling the rules read; and where it is zero, as for
+        /// <c>x cos(x) e^sin(x) + e^sin(x)</c>, the parts are the answer.
+        /// </para>
+        /// <para>
+        /// Only where some term with a power of <paramref name="x"/> beside something else in
+        /// <paramref name="x"/> has an elementary <c>F</c>, and only at the question asked: the
+        /// remainder is a new question, and the powers of <paramref name="x"/> of the terms
+        /// integrated are lower in it, so asking it again descends.
+        /// </para>
+        /// </remarks>
+        private static Entity? ByPartsAgainstThePowersOfX(IReadOnlyList<Entity> terms, Entity.Variable x)
+        {
+            Entity parts = Number.Integer.Zero;
+            var remainder = new List<Entity>();
+            var any = false;
+            foreach (var term in terms)
+            {
+                var power = EInteger.Zero;
+                Entity rest = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(term))
+                    if (factor == x)
+                        power = power.Add(EInteger.One);
+                    else if (factor is Powf(var @base, Number.Integer { EInteger.Sign: > 0 } exponent) && @base == x)
+                        power = power.Add(exponent.EInteger);
+                    else
+                        rest *= factor;
+                if (power.IsZero || !rest.ContainsNode(x))
+                {
+                    remainder.Add(term);
+                    continue;
+                }
+                // A term whose cofactor is not elementary goes into the remainder as it is: in
+                // `x^2 cos(x) e^sin(x) + 2 x e^sin(x)` the second is what parts on the first leaves.
+                if (Integration.ComputeAsAQuestionOfItsOwn(rest, x, integrateByParts: true) is not { } antiderivative)
+                {
+                    remainder.Add(term);
+                    continue;
+                }
+                var monomial = power.Equals(EInteger.One) ? (Entity)x : MathS.Pow(x, Number.Integer.Create(power));
+                parts += monomial * antiderivative;
+                // No `x^0` for a first power: it would bring its `provided not x = 0` along.
+                var lower = power.Equals(EInteger.One) ? Number.Integer.One : MathS.Pow(x, Number.Integer.Create(power.Subtract(EInteger.One)));
+                remainder.Add(-Number.Integer.Create(power) * lower * antiderivative);
+                any = true;
+            }
+            if (!any)
+                return null;
+            var left = remainder.Aggregate((l, r) => l + r).InnerSimplified;
+            if (TreeAnalyzer.IsZero(left))
+                return parts;
+            var gathered = OverTheLeastPowersOfTheSineAndTheCosine(left, x, out var closed);
+            if (closed is not null)
+                return parts + closed;
+            if (gathered is null)
+            {
+                var (above, below) = Functions.SingleQuotient.Of(left);
+                gathered = WithTheFactorsEveryTermSharesOut(above.InnerSimplified, x) / below;
+            }
+            return Integration.ComputeAsAQuestionOfItsOwn(gathered, x, integrateByParts: true) is { } integrated
+                ? parts + integrated
+                : null;
+        }
+
+        /// <summary>
+        /// <paramref name="sum"/> with each term read as a number times powers of
+        /// <c>sin(u)</c> and <c>cos(u)</c> for one argument <c>u</c>, and written as the least
+        /// power of each times the sum of what is left; <see langword="null"/> where a term
+        /// is not such a product.
+        /// </summary>
+        /// <remarks>
+        /// What parts leaves is spelled the way the antiderivative came back, and the other
+        /// terms the way they were written: <c>(1/sin(x))^(-1/2)</c> beside
+        /// <c>sqrt(csc(x)) sec(x) tan(x)</c> share nothing as written, and are
+        /// <c>sqrt(sin(x))</c> and <c>sqrt(sin(x))/cos(x)^2</c> as powers. Reading
+        /// <c>(1/f)^p</c> as <c>f^(-p)</c> holds wherever <c>f</c> is positive or <c>p</c> is
+        /// whole; where neither, the integrand is not real.
+        /// <para>
+        /// And <paramref name="antiderivative"/> where the sum is the derivative of one such
+        /// product, which the rules otherwise answer in the half angle's tangent at four times
+        /// the size: <c>(K sin(u)^(a + 1) cos(u)^(b + 1))'</c> is
+        /// <c>K u' sin(u)^a cos(u)^b ((a + b + 2) cos(u)^2 - (b + 1))</c>, and
+        /// <c>K u' sin(u)^a cos(u)^b ((a + 1) - (a + b + 2) sin(u)^2)</c> the other way, so
+        /// <c>sqrt(sin(x)) (-2 - 4/cos(x)^2)</c> is <c>(-4 sin(x)^(3/2)/cos(x))'</c>.
+        /// </para>
+        /// </remarks>
+        private static Entity? OverTheLeastPowersOfTheSineAndTheCosine(Entity sum, Entity.Variable x, out Entity? antiderivative)
+        {
+            antiderivative = null;
+            Entity? argument = null;
+            var read = new List<(Entity Coefficient, Number.Rational Sine, Number.Rational Cosine)>();
+            foreach (var term in TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(sum, e => e.ContainsNode(x)) ?? new List<Entity> { sum })
+                if (Read(term) is { } powers)
+                    read.Add(powers);
+                else
+                    return null;
+            if (argument is null || read.Count < 2)
+                return null;
+            var leastSine = read.Select(r => r.Sine).Aggregate((l, r) => r < l ? r : l);
+            var leastCosine = read.Select(r => r.Cosine).Aggregate((l, r) => r < l ? r : l);
+            Entity Power(Entity @base, Number.Rational power)
+                => power == Number.Integer.Zero ? Number.Integer.One : power == Number.Integer.One ? @base : MathS.Pow(@base, power);
+            var slope = argument.Differentiate(x).InnerSimplified;
+            var two = Number.Integer.Create(2);
+            if (!slope.ContainsNode(x))
+            {
+                Entity Total(System.Func<(Entity Coefficient, Number.Rational Sine, Number.Rational Cosine), bool> which)
+                    => read.Where(which).Select(r => r.Coefficient).Aggregate((Entity)Number.Integer.Zero, (l, r) => l + r).InnerSimplified;
+                var (a, b) = (leastSine, leastCosine);
+                Entity? k = null;
+                if (read.All(r => r.Sine == a && (r.Cosine == b || r.Cosine == b + two)) && b + Number.Integer.One != Number.Integer.Zero)
+                {
+                    var (squared, alone) = (Total(r => r.Cosine != b), Total(r => r.Cosine == b));
+                    var candidate = (-alone / ((b + Number.Integer.One) * slope)).InnerSimplified;
+                    if (TreeAnalyzer.IsZero((squared - candidate * slope * (a + b + two)).InnerSimplified))
+                        k = candidate;
+                }
+                else if (read.All(r => r.Cosine == b && (r.Sine == a || r.Sine == a + two)) && a + Number.Integer.One != Number.Integer.Zero)
+                {
+                    var (squared, alone) = (Total(r => r.Sine != a), Total(r => r.Sine == a));
+                    var candidate = (alone / ((a + Number.Integer.One) * slope)).InnerSimplified;
+                    if (TreeAnalyzer.IsZero((squared + candidate * slope * (a + b + two)).InnerSimplified))
+                        k = candidate;
+                }
+                if (k is not null)
+                {
+                    var (sinePower, cosinePower) = (a + Number.Integer.One, b + Number.Integer.One);
+                    Entity product = k;
+                    if (sinePower < Number.Integer.Zero) product /= Power(MathS.Sin(argument), -sinePower); else product *= Power(MathS.Sin(argument), sinePower);
+                    if (cosinePower < Number.Integer.Zero) product /= Power(MathS.Cos(argument), -cosinePower); else product *= Power(MathS.Cos(argument), cosinePower);
+                    antiderivative = product;
+                }
+            }
+            var left = read.Select(r => r.Coefficient * Power(MathS.Sin(argument), r.Sine - leastSine) * Power(MathS.Cos(argument), r.Cosine - leastCosine))
+                .Aggregate((l, r) => l + r);
+            Entity above = left, below = Number.Integer.One;
+            if (leastSine < Number.Integer.Zero) below *= Power(MathS.Sin(argument), -leastSine); else above = Power(MathS.Sin(argument), leastSine) * above;
+            if (leastCosine < Number.Integer.Zero) below *= Power(MathS.Cos(argument), -leastCosine); else above = Power(MathS.Cos(argument), leastCosine) * above;
+            return below == Number.Integer.One ? above : above / below;
+
+            (Entity Coefficient, Number.Rational Sine, Number.Rational Cosine)? Read(Entity node)
+            {
+                if (!node.ContainsNode(x))
+                    return (node, Number.Integer.Zero, Number.Integer.Zero);
+                switch (node)
+                {
+                    case Sinf(var u): return Base(u, Number.Integer.One, Number.Integer.Zero);
+                    case Cosf(var u): return Base(u, Number.Integer.Zero, Number.Integer.One);
+                    case Secantf(var u): return Base(u, Number.Integer.Zero, Number.Integer.MinusOne);
+                    case Cosecantf(var u): return Base(u, Number.Integer.MinusOne, Number.Integer.Zero);
+                    case Tanf(var u): return Base(u, Number.Integer.One, Number.Integer.MinusOne);
+                    case Cotanf(var u): return Base(u, Number.Integer.MinusOne, Number.Integer.One);
+                    case Mulf(var l, var r):
+                        return (Read(l), Read(r)) is ({ } a, { } b) ? ((a.Coefficient * b.Coefficient).InnerSimplified, a.Sine + b.Sine, a.Cosine + b.Cosine) : null;
+                    case Divf(var l, var r):
+                        return (Read(l), Read(r)) is ({ } n, { } d) ? ((n.Coefficient / d.Coefficient).InnerSimplified, n.Sine - d.Sine, n.Cosine - d.Cosine) : null;
+                    case Powf(var @base, Number.Rational power) when Read(@base) is { } inner:
+                        // A whole power of anything read; a fractional one only of a single
+                        // power of the sine or of the cosine with nothing beside it, so that
+                        // no root of a product is split.
+                        if (power is Number.Integer)
+                            return (MathS.Pow(inner.Coefficient, power).InnerSimplified, inner.Sine * power, inner.Cosine * power);
+                        if (inner.Coefficient == Number.Integer.One && (inner.Sine == Number.Integer.Zero || inner.Cosine == Number.Integer.Zero))
+                            return (Number.Integer.One, inner.Sine * power, inner.Cosine * power);
+                        return null;
+                    default:
+                        return null;
+                }
+            }
+
+            (Entity Coefficient, Number.Rational Sine, Number.Rational Cosine)? Base(Entity u, Number.Rational sine, Number.Rational cosine)
+            {
+                if (argument is not null && argument != u)
+                    return null;
+                argument = u;
+                return (Number.Integer.One, sine, cosine);
+            }
+        }
+
+        /// <summary>
+        /// <paramref name="sum"/> as the factors with <paramref name="x"/> in them that every
+        /// term has, as written, times the sum of what is left; as written where there are none.
+        /// </summary>
+        private static Entity WithTheFactorsEveryTermSharesOut(Entity sum, Entity.Variable x)
+        {
+            var terms = Sumf.LinearChildren(sum).Select(term => Mulf.LinearChildren(term).ToList()).ToList();
+            if (terms.Count < 2)
+                return sum;
+            var shared = new List<Entity>();
+            foreach (var factor in terms[0])
+                if (factor.ContainsNode(x) && terms.Skip(1).All(other => other.Contains(factor)))
+                {
+                    shared.Add(factor);
+                    foreach (var other in terms.Skip(1))
+                        other.Remove(factor);
+                }
+            if (shared.Count == 0)
+                return sum;
+            var firstLeft = new List<Entity>(terms[0]);
+            foreach (var factor in shared)
+                firstLeft.Remove(factor);
+            Entity Product(List<Entity> factors) => factors.Count == 0 ? Number.Integer.One : factors.Aggregate((l, r) => l * r);
+            var left = new[] { Product(firstLeft) }.Concat(terms.Skip(1).Select(Product)).Aggregate((l, r) => l + r);
+            return Product(shared) * left;
         }
 
         /// <summary>The largest term a sum is split over as written, before the expanding gather.</summary>
