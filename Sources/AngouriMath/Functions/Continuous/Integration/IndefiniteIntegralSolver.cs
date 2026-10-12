@@ -12968,9 +12968,11 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
-        /// A sine of twice an argument beside functions of the argument, written as the product it is:
-        /// <c>sin(2A) = 2 sin(A) cos(A)</c>, so that every trigonometric function is of <c>A</c>.
-        /// <c>csc(a + b x)^3 sin(2a + 2b x)^7</c> is <c>2^7 sin(a + b x)^4 cos(a + b x)^7</c>.
+        /// A sine or a cosecant of twice an argument beside functions of the argument, written as the
+        /// product it is: <c>sin(2A) = 2 sin(A) cos(A)</c>, so that every trigonometric function is of
+        /// <c>A</c>. <c>csc(a + b x)^3 sin(2a + 2b x)^7</c> is <c>2^7 sin(a + b x)^4 cos(a + b x)^7</c>,
+        /// and <c>csc(2x) ln(tan(x))</c> is <c>ln(tan(x))/(2 sin(x) cos(x))</c>, which is
+        /// <c>ln(tan(x))</c> beside its derivative.
         /// </summary>
         /// <remarks>
         /// The rule that writes multiples of one argument in it reads a numeric slope, and bounds the
@@ -12992,10 +12994,15 @@ namespace AngouriMath.Functions.Algebra
                 if (!TreeAnalyzer.TryGetPolyLinear(single, x, out var slope, out _) || slope.ContainsNode(x)
                     || (twice - 2 * single).Expand().InnerSimplified.Evaled is not Number.Complex { IsZero: true })
                     continue;
-                // Only sines of the double, so that each is one product.
-                if (expr.Nodes.Any(node => node is Cosf or Tanf or Cotanf or Secantf or Cosecantf && node.DirectChildren.First() == twice))
+                // Only sines and cosecants of the double, so that each is one product.
+                if (expr.Nodes.Any(node => node is Cosf or Tanf or Cotanf or Secantf && node.DirectChildren.First() == twice))
                     return null;
-                var rewritten = expr.Replace(node => node is Sinf(var a) && a == twice ? 2 * MathS.Sin(single) * MathS.Cos(single) : node);
+                var rewritten = expr.Replace(node => node switch
+                {
+                    Sinf(var a) when a == twice => 2 * MathS.Sin(single) * MathS.Cos(single),
+                    Cosecantf(var a) when a == twice => 1 / (2 * MathS.Sin(single) * MathS.Cos(single)),
+                    _ => node
+                });
                 return Integration.ComputeAsTheSameQuestion(rewritten, x, integrateByParts);
             }
             return null;
