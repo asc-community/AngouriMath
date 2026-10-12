@@ -29431,8 +29431,8 @@ namespace AngouriMath.Functions.Algebra
             if (!shared.Keys.Any(@base => @base is Sumf or Minusf))
                 return terms.Aggregate((left, right) => left + right);
             Entity common = Number.Integer.One;
-            foreach (var (@base, power) in shared)
-                common *= power.Equals(EInteger.One) ? @base : MathS.Pow(@base, Number.Integer.Create(power));
+            foreach (var pair in shared)
+                common *= pair.Value.Equals(EInteger.One) ? pair.Key : MathS.Pow(pair.Key, Number.Integer.Create(pair.Value));
             Entity rest = Number.Integer.Zero;
             foreach (var term in terms)
             {
