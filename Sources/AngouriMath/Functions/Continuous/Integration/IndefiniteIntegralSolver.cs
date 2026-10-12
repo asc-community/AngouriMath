@@ -14889,8 +14889,9 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// A rational function of <c>x</c> and of <c>sin(x)</c> and <c>cos(x)</c> together, with
-        /// an exponential <c>e^(a x)</c> in front or not, closed by the ansatz
-        /// <c>F = e^(a x) P/Q</c> with <c>P</c> and <c>Q</c> polynomials in the three.
+        /// an exponential <c>e^h</c> in front or not, <c>h</c> linear in <c>x</c> or a polynomial in
+        /// the three, closed by the ansatz <c>F = e^h P/Q</c> with <c>P</c> and <c>Q</c> polynomials
+        /// in the three.
         /// </summary>
         /// <remarks>
         /// <para>
@@ -14912,6 +14913,12 @@ namespace AngouriMath.Functions.Algebra
         /// tower first, and every substitution of it leaves powers of <c>1 + t^2</c> above and
         /// below that nothing cancels; the ring needs no substitution.
         /// </para>
+        /// <para>
+        /// An exponent in the ring has its derivative there too, so the bracket is
+        /// <c>(h' P Q + P' Q - P Q') D</c> and nothing else changes. Rubi's 4.7.7
+        /// <c>e^sin(x) sec(x)^2 (x cos(x)^3 - sin(x))</c> is <c>(e^sin(x) (x - sec(x)))'</c> so, a sum
+        /// of two terms neither of which has an elementary antiderivative.
+        /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveByTrigonometricTowerAnsatz(Entity expr, Entity.Variable x)
@@ -14927,11 +14934,15 @@ namespace AngouriMath.Functions.Algebra
             if (ReadOneExponentialTimesTheRest(expr, x) is not var (exponent, rest))
                 return null;
             Entity a = Number.Integer.Zero;
+            // Or an exponent that is itself a polynomial in the three, read below: `e^sin(x)`'s
+            // derivative is `cos(x) e^sin(x)`, and the bracket takes `h' m Q` for `a m Q`.
+            var curved = false;
             if (exponent is not null)
             {
-                if (!TreeAnalyzer.TryGetPolyLinear(exponent, x, out var slope, out _) || slope.ContainsNode(x))
-                    return null;
-                a = slope;
+                if (TreeAnalyzer.TryGetPolyLinear(exponent, x, out var slope, out _) && !slope.ContainsNode(x))
+                    a = slope;
+                else
+                    curved = true;
             }
             var overTheTwo = rest.Replace(node => node switch
             {
@@ -14977,6 +14988,23 @@ namespace AngouriMath.Functions.Algebra
             var (above, below) = Functions.SingleQuotient.Of(inTheThree);
             if (!TrigonometricPolynomial.TryRead(above, x, s, c, out var n) || !TrigonometricPolynomial.TryRead(below, x, s, c, out var d))
                 return null;
+            TrigonometricPolynomial? exponentPrime = null;
+            if (curved)
+            {
+                var exponentInTheThree = exponent!.Replace(node =>
+                {
+                    if (node is Sinf(var argument) && IsAWholeMultiple(argument, x, out var k))
+                        return MultipleAngle(k, s, c).Sine;
+                    if (node is Cosf(var argument2) && IsAWholeMultiple(argument2, x, out var k2))
+                        return MultipleAngle(k2, s, c).Cosine;
+                    return node;
+                });
+                if (exponentInTheThree.Nodes.Any(node => node is Sinf or Cosf && node.ContainsNode(x))
+                    || !TrigonometricPolynomial.TryRead(exponentInTheThree, x, s, c, out var h)
+                    || h.DegreeInX > MaximumTrigonometricTowerDegree || h.TrigonometricDegree > MaximumTrigonometricTowerDegree)
+                    return null;
+                exponentPrime = h.Derivative();
+            }
             if (n.DegreeInX > MaximumTrigonometricTowerDegree || d.DegreeInX > MaximumTrigonometricTowerDegree
                 || n.TrigonometricDegree > MaximumTrigonometricTowerDegree || d.TrigonometricDegree > MaximumTrigonometricTowerDegree)
                 return null;
@@ -15020,6 +15048,8 @@ namespace AngouriMath.Functions.Algebra
                             var bracket = m.Derivative().Times(q).Minus(m.Times(qPrime));
                             if (a.Evaled is not Number.Complex { IsZero: true })
                                 bracket = bracket.Plus(m.Times(q).Scaled(a));
+                            if (exponentPrime is not null)
+                                bracket = bracket.Plus(m.Times(q).Times(exponentPrime));
                             columns.Add(bracket.Times(d));
                             monomialsOfP.Add((i, k, flag));
                         }
