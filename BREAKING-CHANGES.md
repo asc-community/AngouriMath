@@ -586,6 +586,20 @@ symbol in it and a denominator past a sextic is now left to the partial fraction
 | `"(d + e*x^2 + f*x^4)/(x^4*(a + b*x^2 + c*x^4)^2)".ToEntity().Integrate("x")` | `integral(...)`; past a minute on the unreleased master | 3,715 characters |
 | `"cos(e + f*x)^5/(a + b*sec(e + f*x)^2)^3".ToEntity().Integrate("x")` | `integral(...)`; past a minute on the unreleased master | 27,944 characters |
 
+### An exponential of the sine or the cosine beside a polynomial in `x`, the sine and the cosine is integrated
+
+**Answers where there were none.** `e^sin(x) sec(x)^2 (x cos(x)^3 - sin(x))` was declined, Rubi's 4.7.7, and so were
+`e^cos(x) (x sin(x) - 1)` and `e^sin(x) (x cos(x) + 1)`. The ansatz for an exponential beside the trigonometric
+functions read the exponent only when it was linear in `x`; it now also takes an exponent that is a polynomial in
+the sine and the cosine, whose derivative joins each term the ansatz differentiates
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^sin(x)*sec(x)^2*(x*cos(x)^3 - sin(x))".ToEntity().Integrate("x")` | `integral(...)` | `e ^ sin(x) * (-1 + x * cos(x)) / cos(x)` |
+| `"e^cos(x)*(x*sin(x) - 1)".ToEntity().Integrate("x")` | `integral(...)` | `e ^ cos(x) * -x` |
+| `"e^sin(x)*(x*cos(x) + 1)".ToEntity().Integrate("x")` | `integral(...)` | `e ^ sin(x) * x` |
+
 ### A symbolic quartic in `x^2` with a square discriminant is split into its two quadratics
 
 **Answers where there were none.** `cot(c + d x)^3 sqrt(a + b sec(c + d x))` ran past a minute: the root of the
