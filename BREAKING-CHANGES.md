@@ -554,6 +554,24 @@ and `sec^2` over its cube, the answers are a quarter and three-fifths the size
 | `"sec(c + d*x)^4/(a*cos(c + d*x) + i*a*sin(c + d*x))".ToEntity().Integrate("x")` | `integral(...)` | 209 characters, where the unreleased master gave 780 |
 | `"sec(c + d*x)^2/(a*cos(c + d*x) + i*a*sin(c + d*x))^3".ToEntity().Integrate("x")` | `integral(...)` | 488 characters, where the unreleased master gave 810 |
 
+### A root of a sum of the cosine and the sine beside a half power of one of them is read in the tangent
+
+**Answers where there were none.** `csc(x) sqrt(cos(x) + sin(x))/cos(x)^(3/2)` was declined, Rubi's 4.7.7, and so
+were its respellings below. `sqrt(a cos + b sin)` beside `cos^(n/2)` is `sqrt(a + b tan) cos^((n + 1)/2)` wherever
+both sides are real, since the root of a product of two non-negative numbers is the product of their roots, and
+when the sum and the cosine are both negative the two signs cancel the same way; the sine reads as `a/tan + b`. What
+is left is a function of the tangent times a whole power of the cosine. Where the integrand is not real the answer
+takes the branches of that respelling
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"csc(x)*sqrt(cos(x) + sin(x))/cos(x)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 94 characters |
+| `"sqrt(cos(x) + sin(x))/cos(x)^(5/2)".ToEntity().Integrate("x")` | `integral(...)` | `(1 + tan(x)) ^ (3/2) / (3/2)` |
+| `"sqrt(2*cos(x) + 3*sin(x))/(sin(x)*cos(x)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | 138 characters |
+| `"sec(x)*sqrt(cos(x) - sin(x))/sin(x)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 74 characters |
+| `"1/(cos(x)^(3/2)*sqrt(3*cos(x) + sin(x)))".ToEntity().Integrate("x")` | `integral(...)` | `2 * sqrt(tan(x) + 3)` |
+
 ### An even rational function with symbols in it is not searched for a substitution
 
 **Answers where there were none.** `(d + e x^2 + f x^4)/(x^4 (a + b x^2 + c x^4)^2)` ran past a minute: the
