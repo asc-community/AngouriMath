@@ -614,6 +614,22 @@ polynomial in the symbols is written as the two quadratics first
 | `"cot(e + f*x)^3*sqrt(a + b*sec(e + f*x))".ToEntity().Integrate("x")` | `integral(...)`; past a minute on the unreleased master | 36,760 characters, a case for each sign of the roots |
 | `"sec(e + f*x)^2/(a*sin(e + f*x) + b*tan(e + f*x))^2".ToEntity().Integrate("x")` | `integral(...)`; past a minute on the unreleased master | 68,854 characters |
 
+### A term with a power of `x` is integrated by parts with the rest of the sum in its remainder
+
+**Answers where there were none.** `sqrt(csc(x)) (x cos(x) - 4 sec(x) tan(x))`, Rubi's 4.7.7, was declined: neither
+of its two terms is elementary alone. Where a sum's terms are not integrated one by one, a term `x^k f` whose `f`
+has `x` only inside transcendental functions is now integrated by parts, and what parts leaves is asked together
+with the other terms. Here that is `-2 sqrt(sin(x)) - 4 sqrt(sin(x))/cos(x)^2`, a power of the sine over a power of
+the cosine, which is integrated in closed form
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(csc(x))*(x*cos(x) - 4*sec(x)*tan(x))".ToEntity().Integrate("x")` | `integral(...)` | `x * -(1 / sin(x)) ^ (-1/2) / (-1/2) + (-4) * sin(x) ^ (3/2) / cos(x)` |
+| `"x*sin(x)/sqrt(cos(x)) + 4*sqrt(cos(x))/sin(x)^2".ToEntity().Integrate("x")` | `integral(...)` | `x * -sqrt(cos(x)) / (1/2) + (-4) / sin(x) * cos(x) ^ (3/2)` |
+| `"x^2*cos(x)*e^sin(x) + 2*x*e^sin(x)".ToEntity().Integrate("x")` | `integral(...)` | `x ^ 2 * e ^ sin(x)` |
+| `"(c + d*x)*erfc(a + b*x)^2".ToEntity().Integrate("x")` | 187 characters, reading `erfc` as a symbol; `integral(...)` on the unreleased master | 1,196 characters |
+
 ### An odd power of the tangent beside a function of the secant is integrated in the secant
 
 **Answers where there were none.** `cot(c + d x)^3/(a + b sec(c + d x))^(3/2)` ran past a minute. In `u = sec(y)`,
