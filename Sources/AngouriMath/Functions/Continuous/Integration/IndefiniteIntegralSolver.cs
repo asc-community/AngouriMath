@@ -10998,6 +10998,101 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>(a cos(x) + b sin(x))^(m/2) cos(x)^(n/2)</c>, <c>m</c> and <c>n</c> odd, written as
+        /// <c>(a + b tan(x))^(m/2) cos(x)^((m + n)/2)</c>, and the sine's the same way with
+        /// <c>a cot(x) + b</c>; <see langword="null"/> where the integrand is not that shape.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>A^(m/2) c^(n/2)</c> is <c>(sqrt(A)/sqrt(c))^m c^((m + n)/2)</c> for principal roots,
+        /// and <c>sqrt(A)/sqrt(c)</c> is <c>sqrt(A/c)</c> where <c>A</c> and <c>c</c> have one
+        /// sign: both roots real, or both imaginary. Where the signs differ the product is
+        /// imaginary, so with no other root of <c>x</c> in the integrand to make it real again,
+        /// the two agree wherever the integrand is real. Rubi's 4.7.7
+        /// <c>csc(x) sqrt(cos(x) + sin(x))/cos(x)^(3/2)</c> is
+        /// <c>sqrt(1 + tan(x)) csc(x) sec(x)</c> so, and that is the tangent substitution's.
+        /// </para>
+        /// <para>
+        /// Only a linear <c>A</c>: <c>sqrt(c^3)</c> and <c>c^(3/2)</c> differ in sign where
+        /// <c>c</c> is negative, so a cubic over the cube of the cosine is not the same quotient.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// </remarks>
+        private static Entity? WithARootOverTheCosineOrTheSine(Entity expr, Entity.Variable x)
+        {
+            var factors = FactorsOfTheIntegrand(expr);
+            int trigonometric = -1, root = -1;
+            for (var i = 0; i < factors.Count; i++)
+            {
+                var factor = factors[i].Factor;
+                if (factor is Powf(var @base, Number.Rational fraction) && fraction is not Number.Integer && @base.ContainsNode(x))
+                {
+                    if (!fraction.ERational.Denominator.Equals(EInteger.FromInt32(2)))
+                        return null;
+                    if (@base is Cosf or Sinf && @base.DirectChildren[0] == x)
+                    {
+                        if (trigonometric >= 0)
+                            return null;
+                        trigonometric = i;
+                    }
+                    else
+                    {
+                        if (root >= 0)
+                            return null;
+                        root = i;
+                    }
+                }
+                else if (factor.Nodes.Any(node => node is Powf(var b, var p) && b.ContainsNode(x) && p is not Number.Integer))
+                    return null;
+            }
+            if (trigonometric < 0 || root < 0)
+                return null;
+            var (trigonometricPower, trigonometricUnderneath) = factors[trigonometric];
+            var (rootPower, rootUnderneath) = factors[root];
+            if (trigonometricPower is not Powf(var function, Number.Rational trigonometricExponent)
+                || rootPower is not Powf(var sum, Number.Rational rootExponent))
+                return null;
+
+            var cosine = MathS.Cos(x);
+            var sine = MathS.Sin(x);
+            var c = Variable.CreateUnique(expr, "c_cos");
+            var s = Variable.CreateUnique(expr * c, "s_sin");
+            var inCs = sum.Substitute(cosine, c).Substitute(sine, s);
+            if (inCs.ContainsNode(x)
+                || !TreeAnalyzer.TryGetPolyLinear(inCs, c, out var a, out var rest)
+                || !TreeAnalyzer.TryGetPolyLinear(rest, s, out var b, out var free)
+                || a.ContainsNode(c) || a.ContainsNode(s) || b.ContainsNode(c) || b.ContainsNode(s)
+                || free.Evaled != Number.Integer.Zero || a.Evaled == Number.Integer.Zero || b.Evaled == Number.Integer.Zero)
+                return null;
+
+            var m = rootUnderneath ? rootExponent.ERational.Numerator.Negate() : rootExponent.ERational.Numerator;
+            var n = trigonometricUnderneath ? trigonometricExponent.ERational.Numerator.Negate() : trigonometricExponent.ERational.Numerator;
+            var tangent = MathS.Tan(x);
+            var quotient = function is Cosf ? a + b * tangent : a / tangent + b;
+            var whole = m.Add(n).Divide(EInteger.FromInt32(2));
+
+            Entity above = Number.Integer.One, below = Number.Integer.One;
+            for (var i = 0; i < factors.Count; i++)
+                if (i != trigonometric && i != root)
+                {
+                    if (factors[i].Underneath)
+                        below *= factors[i].Factor;
+                    else
+                        above *= factors[i].Factor;
+                }
+            var halfOfM = Number.Rational.Create(m.Abs(), EInteger.FromInt32(2));
+            if (m.Sign > 0)
+                above *= MathS.Pow(quotient, halfOfM);
+            else
+                below *= MathS.Pow(quotient, halfOfM);
+            if (whole.Sign > 0)
+                above *= MathS.Pow(function, Number.Integer.Create(whole));
+            else if (whole.Sign < 0)
+                below *= MathS.Pow(function, Number.Integer.Create(whole.Abs()));
+            return above / below;
+        }
+
+        /// <summary>
         /// An integrand that is a function of <c>tan(x)</c> and of nothing else, integrated by
         /// the substitution <c>u = tan(x)</c>, under which <c>dx</c> is <c>du/(1 + u^2)</c>.
         /// </summary>
@@ -11060,6 +11155,11 @@ namespace AngouriMath.Functions.Algebra
                 && WithTheOddRootOnEachFactor(product, fraction, x) is { } apart
                     ? apart
                     : node);
+
+            // A half-odd power of `a cos(x) + b sin(x)` beside a half-odd power of the cosine is
+            // a root of their quotient, a function of the tangent; the sine the same way.
+            if (WithARootOverTheCosineOrTheSine(expr, x) is { } combined)
+                expr = combined;
 
             var tangent = MathS.Tan(x);
             // Or a sine or a cosine under a root, for the writing by the sign below, or an even
