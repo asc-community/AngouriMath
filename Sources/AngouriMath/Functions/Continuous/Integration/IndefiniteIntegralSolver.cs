@@ -170,6 +170,48 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         private static Entity? ByPartsAgainstThePowersOfX(IReadOnlyList<Entity> terms, Entity.Variable x)
         {
+            // Once: the cofactors and the remainder are asked at the top, where this runs again,
+            // and `(c + d x) erfc(a + b x)^2` went from a 13-second decline to a hang that way.
+            if (integratingASumByParts)
+            {
+                Integration.DeclinedForItsScope();
+                return null;
+            }
+            integratingASumByParts = true;
+            try
+            {
+                return ByPartsAgainstThePowersOfXOnce(terms, x);
+            }
+            finally
+            {
+                integratingASumByParts = false;
+            }
+        }
+
+        /// <summary>
+        /// Whether a term of <paramref name="antiderivative"/> has a factor that is a polynomial
+        /// in <paramref name="x"/> of positive degree.
+        /// </summary>
+        private static bool HasAPolynomialFactorIn(Entity antiderivative, Entity.Variable x)
+            => Sumf.LinearChildren(antiderivative).Any(term => Mulf.LinearChildren(term).Any(factor =>
+                factor.ContainsNode(x) && TreeAnalyzer.TryGetPolynomial(factor, x, out var powers)
+                && powers.Keys.All(power => power.Sign >= 0) && powers.Values.All(coefficient => !coefficient.ContainsNode(x))));
+
+        /// <summary>
+        /// Whether every occurrence of <paramref name="x"/> in <paramref name="expr"/> is inside
+        /// the argument of a function that is not algebraic: <c>cos(x)/sqrt(sin(x))</c>, not
+        /// <c>sqrt(x^2 + 3)</c> or <c>atanh(x)/(1 - x^2)</c>.
+        /// </summary>
+        private static bool OnlyInsideTranscendentalFunctions(Entity expr, Entity.Variable x)
+            => !expr.ContainsNode(x)
+               || expr is not (Sumf or Minusf or Mulf or Divf or Powf or Entity.Variable or Number)
+               || expr is not Entity.Variable && expr.DirectChildren.All(child => OnlyInsideTranscendentalFunctions(child, x));
+
+        /// <summary>Set while <see cref="ByPartsAgainstThePowersOfX"/> asks its questions.</summary>
+        [System.ThreadStatic] private static bool integratingASumByParts;
+
+        private static Entity? ByPartsAgainstThePowersOfXOnce(IReadOnlyList<Entity> terms, Entity.Variable x)
+        {
             Entity parts = Number.Integer.Zero;
             var remainder = new List<Entity>();
             var any = false;
@@ -184,14 +226,24 @@ namespace AngouriMath.Functions.Algebra
                         power = power.Add(exponent.EInteger);
                     else
                         rest *= factor;
-                if (power.IsZero || !rest.ContainsNode(x))
+                // Only a cofactor with x in it nowhere but inside transcendental functions. A power
+                // of x beside an algebraic one is what the algebraic reductions answer, and asking
+                // each such cofactor and the remainder took `(x^2 + 3)^2/(x + sqrt(x^2 + 3))` from a
+                // half-second decline past two minutes; and beside a rational function of x as
+                // well, `x^3 atanh(c x^2)/(1 - c^2 x^4)` in what parts leaves of
+                // `(a + b atanh(c x^2))^2/x^5`, the cofactor is a slow decline that doubled its time.
+                if (power.IsZero || !rest.ContainsNode(x) || !OnlyInsideTranscendentalFunctions(rest, x))
                 {
                     remainder.Add(term);
                     continue;
                 }
                 // A term whose cofactor is not elementary goes into the remainder as it is: in
                 // `x^2 cos(x) e^sin(x) + 2 x e^sin(x)` the second is what parts on the first leaves.
-                if (Integration.ComputeAsAQuestionOfItsOwn(rest, x, integrateByParts: true) is not { } antiderivative)
+                // And one with a polynomial in x beside something in its antiderivative: what parts
+                // leaves then has the power it took away, and asking it does not descend --
+                // `x erfc(a + b x)^2`, whose cofactor's antiderivative has `x erfc(a + b x)^2` in it.
+                if (Integration.ComputeAsAQuestionOfItsOwn(rest, x, integrateByParts: true) is not { } antiderivative
+                    || HasAPolynomialFactorIn(antiderivative, x))
                 {
                     remainder.Add(term);
                     continue;
