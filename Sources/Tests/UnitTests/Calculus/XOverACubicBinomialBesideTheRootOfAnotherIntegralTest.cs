@@ -12,9 +12,9 @@ using Xunit;
 namespace AngouriMath.Tests.Calculus
 {
     /// <summary>
-    /// <c>x/((a + b x^3) sqrt(c + d x^3))</c> at the two ratios where its integral is elementary,
-    /// Rubi's 1.1.3.4: <c>4 b c = a d</c>, in closed form by the sign of <c>c</c>, and
-    /// <c>8 b c + a d = 0</c>, as three integrals.
+    /// <c>x/((a + b x^3) sqrt(c + d x^3))</c> at the three ratios where its integral is elementary,
+    /// Rubi's 1.1.3.4: <c>4 b c = a d</c>, in closed form by the sign of <c>c</c>,
+    /// <c>8 b c + a d = 0</c>, as three integrals, and <c>a^2 d^2 - 20 a b c d - 8 b^2 c^2 = 0</c>.
     /// <a href="https://github.com/asc-community/AngouriMath/issues/718">#718</a>
     /// </summary>
     /// <remarks>
@@ -37,6 +37,12 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x/((8*c - d*x^3)*sqrt(c + d*x^3))", 1.3)]
         [InlineData("x/((8*c - d*x^3)*sqrt(c + d*x^3))", -1.3)]
         [InlineData("3*x/((8 + x^3)*sqrt(-1 + x^3))", 1.3)]
+        // a^2 d^2 - 20 a b c d - 8 b^2 c^2 = 0, at both of its roots.
+        [InlineData("x/((d*x^3 + 2*c*(5 + 3*sqrt(3)))*sqrt(c + d*x^3))", 1.3)]
+        [InlineData("x/((d*x^3 + 2*c*(5 + 3*sqrt(3)))*sqrt(c + d*x^3))", -1.3)]
+        [InlineData("x/((d*x^3 + 2*c*(5 - 3*sqrt(3)))*sqrt(c + d*x^3))", 1.3)]
+        [InlineData("x/((d*x^3 + 2*c*(5 - 3*sqrt(3)))*sqrt(c + d*x^3))", -1.3)]
+        [InlineData("x/((-x^3 + 2*(5 - 3*sqrt(3)))*sqrt(1 - x^3))", 1.3)]
         public void IsIntegrated(string integrand, double c)
         {
             var integral = integrand.ToEntity().Integrate("x");

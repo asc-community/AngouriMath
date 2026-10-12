@@ -6137,8 +6137,9 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
-        /// <c>x/((a + b x^3) sqrt(c + d x^3))</c> at the two ratios where its integral is elementary,
-        /// Rubi's 1.1.3.4: <c>4 b c = a d</c> and <c>8 b c + a d = 0</c>, in closed form.
+        /// <c>x/((a + b x^3) sqrt(c + d x^3))</c> at the three ratios where its integral is elementary,
+        /// Rubi's 1.1.3.4: <c>4 b c = a d</c>, <c>8 b c + a d = 0</c> and
+        /// <c>a^2 d^2 - 20 a b c d - 8 b^2 c^2 = 0</c>, in closed form.
         /// </summary>
         /// <remarks>
         /// <para>
@@ -6160,10 +6161,25 @@ namespace AngouriMath.Functions.Algebra
         /// Rubi splits the second into three integrals, a substitution's in <c>x^3</c>, a linear
         /// over a linear and a quadratic over a quadratic, each elementary, and their sum is the
         /// form above; asked as three, two come back piecewise in the symbols and their sum holds
-        /// every combination of the arms. Every condition is decided as a value, and the answer is
-        /// differentiated back at sampled points before it is returned.
+        /// every combination of the arms.
+        /// </para>
+        /// <para>
+        /// At the third, <c>r = (a d - 10 b c)/(6 b c)</c> is <c>sqrt(3)</c> or <c>-sqrt(3)</c>, the
+        /// condition's two roots, and with <c>s = sqrt(c r)</c> Rubi's four terms are
+        /// <code>
+        /// -q (2 - r)/(sqrt(2) b) (atan(s (1 - r) y/(sqrt(2) c r^2))/(3 r s) + atan(s (1 + r) (1 + q x)/(sqrt(2) y))/(2 r s)
+        ///                        + artanh(s (1 - r) (1 + q x)/(sqrt(2) y))/(6 s) + artanh(s (1 + r - 2 q x)/(sqrt(2) y))/(3 s))
+        /// </code>
+        /// Each is <c>atan(s v)/s</c> or <c>artanh(s v)/s</c>, which depends on <c>s^2</c> alone, so
+        /// where <c>c r</c> is negative the same terms are written with <c>t = sqrt(-c r)</c>, each
+        /// <c>atan</c> becoming an <c>artanh</c> and each <c>artanh</c> an <c>atan</c>: one real form
+        /// for each sign, where Rubi has one for each sign of <c>c</c> and a power of <c>r</c> that is
+        /// complex at <c>r = -sqrt(3)</c>.
+        /// Every condition is decided as a value, and the answer is differentiated back at sampled
+        /// points before it is returned.
         /// Welz's <c>x/((4 - x^3) sqrt(1 - x^3))</c> and <c>x/((8 - d x^3) sqrt(1 + d x^3))</c> were
-        /// declined, with the rest of 1.1.3.4 at those ratios.
+        /// declined, with the rest of 1.1.3.4 at those ratios, and
+        /// <c>x/((b x^3 + 2 a (5 + 3 sqrt(3))) sqrt(a + b x^3))</c> with its seven variants after them.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </para>
         /// </remarks>
@@ -6218,6 +6234,28 @@ namespace AngouriMath.Functions.Algebra
                 var whereNegative = -(MathS.Arctan(s * MathS.Sqr(1 + q * x) / (3 * y)) / 18 + MathS.Arctan(y / (3 * s)) / 18
                     - MathS.Hyperbolic.Artanh(sqrtOfThree * s * (1 + q * x) / y) / (6 * sqrtOfThree)) / (MathS.Pow(s, 3) * MathS.Sqr(q));
                 answer = LowestOverTheSymbols(-d / b) * BySign(c, wherePositive, whereNegative);
+            }
+            else if (Zero(MathS.Sqr(a * d) - 20 * a * b * c * d - 8 * MathS.Sqr(b * c))
+                && ((a * d - 10 * b * c) / (6 * b * c)) is var ratio
+                && (Zero(ratio - sqrtOfThree) ? sqrtOfThree : Zero(ratio + sqrtOfThree) ? -sqrtOfThree : null) is { } r)
+            {
+                // Each term is atan(s v)/s or atanh(s v)/s for s = sqrt(c r), which depends on s^2
+                // alone, so the sign of c r picks the real form.
+                var k = LowestOverTheSymbols(c * r);
+                var w = 1 + q * x;
+                Entity Terms(bool positive, Entity s)
+                    => -q * (2 - r) / (Sqr2() * b) * (
+                        Circular(positive, s * (1 - r) * y / (Sqr2() * c * MathS.Sqr(r))) / (3 * r * s)
+                        + Circular(positive, s * (1 + r) * w / (Sqr2() * y)) / (2 * r * s)
+                        + Hyperbolic(positive, s * (1 - r) * w / (Sqr2() * y)) / (6 * s)
+                        + Hyperbolic(positive, s * (1 + r - 2 * q * x) / (Sqr2() * y)) / (3 * s));
+                var sPositive = MathS.Sqrt(k);
+                var sNegative = MathS.Sqrt(LowestOverTheSymbols(-k));
+                // atan(i t v)/(i t) = atanh(t v)/t, and atanh(i t v)/(i t) = atan(t v)/t.
+                answer = BySign(k, Terms(true, sPositive), Terms(false, sNegative));
+                static Entity Sqr2() => MathS.Sqrt(2);
+                static Entity Circular(bool positive, Entity v) => positive ? MathS.Arctan(v) : MathS.Hyperbolic.Artanh(v);
+                static Entity Hyperbolic(bool positive, Entity v) => positive ? MathS.Hyperbolic.Artanh(v) : MathS.Arctan(v);
             }
             if (answer is null)
                 return null;
