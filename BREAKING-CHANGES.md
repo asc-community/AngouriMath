@@ -519,6 +519,22 @@ left ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 | `"1/(a + b*cot(x) + c*csc(x))".ToEntity().Integrate("x")` | `integral(...)` | 2,738 characters |
 | `"1/(a + c*sec(2*x + 1) + b*tan(2*x + 1))".ToEntity().Integrate("x")` | `integral(...)`; past 290 s on the unreleased master | 2,890 characters |
 
+### A secant or a cosecant beside a power of a sum of them is read as a power of the cosine or the sine
+
+**Answers where there were none.** `sec(x) sqrt(sec(x) + tan(x))` was declined, with the rest of Rubi's 4.7.7
+that puts a secant beside a power of `sec + tan`: the rule that recognises a product of powers as a derivative
+read `sec(x)` as a function of its own, not as `cos(x)^(-1)`, and the tangent substitution wrote an odd power of
+the secant through the root of `1 + t^2` but not one of the cosecant. Both are read so now, and the integrand is
+the derivative of a power of the sum
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sec(x)*sqrt(sec(x) + tan(x))".ToEntity().Integrate("x")` | `integral(...)` | `2 * sqrt(sec(x) + tan(x))` |
+| `"csc(x)*sqrt(csc(x) + cot(x))".ToEntity().Integrate("x")` | `integral(...)` | `(-2) * sqrt(csc(x) + cotan(x))` |
+| `"sec(a + b*x)*(sec(a + b*x) + tan(a + b*x))^c".ToEntity().Integrate("x")` | `integral(...)` | `1 / (b * c) * (sec(a + b * x) + tan(a + b * x)) ^ c` |
+| `"sqrt(1 + tan(x))*csc(x)*sec(x)".ToEntity().Integrate("x")` | `integral(...)` | 94 characters |
+
 ### `a cos + i a sin` beside powers of the secant is written over the cosine
 
 **Answers where there were none, and shorter ones.** `sec(c + d x)^5/(a cos(c + d x) + i a sin(c + d x))^2` was declined,

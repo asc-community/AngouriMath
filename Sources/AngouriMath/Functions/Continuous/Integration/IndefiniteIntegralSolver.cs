@@ -11134,6 +11134,11 @@ namespace AngouriMath.Functions.Algebra
                     Secantf(var a) when a == x => sign * rootOfSecantSquared,
                     Powf(Secantf(var a), Number.Integer k) when a == x && k.EInteger.CanFitInInt32() && !k.EInteger.IsEven
                         => MathS.Pow(sign * rootOfSecantSquared, k),
+                    // And the cosecant the sine: `sqrt(1 + tan(x)) csc(x) sec(x)` is
+                    // `sqrt(1 + u) (1 + u^2)/u`, the two signs one.
+                    Cosecantf(var a) when a == x => sign * rootOfSecantSquared / tangent,
+                    Powf(Cosecantf(var a), Number.Integer k) when a == x && k.EInteger.CanFitInInt32() && !k.EInteger.IsEven
+                        => MathS.Pow(sign * rootOfSecantSquared / tangent, k),
                     _ => node,
                 }).Substitute(tangent, uSub);
                 if (odd.ContainsNode(x) || !IsAlgebraicIn(odd, uSub))
@@ -14097,8 +14102,20 @@ namespace AngouriMath.Functions.Algebra
             var raisable = new List<(Entity Base, Entity Exponent)>();
             var logarithmicDerivativesKept = new List<Entity>();
             Entity kept = Number.Integer.One;
-            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            foreach (var (written, writtenUnderneath) in FactorsOfTheIntegrand(expr))
             {
+                // A secant is a power of the cosine, and a cosecant of the sine, below the bar,
+                // where raising it by one takes it out of the candidate: `sec(x) sqrt(sec(x) + tan(x))`
+                // is `(2 sqrt(sec(x) + tan(x)))'`, and read as a power of the secant it could
+                // only be raised to a square.
+                var (factor, underneath) = written switch
+                {
+                    Secantf(var a) => (MathS.Cos(a), !writtenUnderneath),
+                    Cosecantf(var a) => (MathS.Sin(a), !writtenUnderneath),
+                    Powf(Secantf(var a), var p) when !p.ContainsNode(x) => (MathS.Pow(MathS.Cos(a), p), !writtenUnderneath),
+                    Powf(Cosecantf(var a), var p) when !p.ContainsNode(x) => (MathS.Pow(MathS.Sin(a), p), !writtenUnderneath),
+                    _ => (written, writtenUnderneath)
+                };
                 if (!factor.ContainsNode(x))
                 {
                     constant = underneath ? constant / factor : constant * factor;
