@@ -77,22 +77,29 @@ namespace AngouriMath.Tests.Calculus
         /// Multiples of one linear with an offset or a symbolic slope, written in that linear:
         /// <c>csc(1 + x) csc(2 + 2x)^2</c> ran twenty seconds with the offsets written out by the
         /// addition formula, and <c>csc(a + b x) csc(2a + 2b x)^2</c> was declined for its slope.
-        /// Rubi's 4.7.1.
+        /// Rubi's 4.7.1; and with x beside them in a linear, <c>csc(a + b x) sin(3a + 3b x)/(c + d x)</c>,
+        /// which was declined whatever the slope, Rubi's 4.7.3.
         /// </summary>
         [Theory]
         [InlineData("csc(1 + x)*csc(2 + 2*x)^2")]
         [InlineData("sin(3 + 3*x)/sin(1 + x)")]
+        [InlineData("csc(2 + 3*x)*sin(6 + 9*x)/(1 + x)")]
+        [InlineData("csc(2 + 3*x)*sin(6 + 9*x)/(1 + x)^2")]
         public void MultiplesOfOneLinearArgument(string integrand) => DifferentiatesBack(integrand);
 
         [Theory]
         [InlineData("csc(a + b*x)*csc(2*a + 2*b*x)^2")]
         [InlineData("cos(a + b*x)^2/sin(2*a + 2*b*x)^5")]
+        [InlineData("csc(a + b*x)*sin(3*a + 3*b*x)/(c + d*x)")]
+        [InlineData("csc(a + b*x)*sin(3*a + 3*b*x)/(c + d*x)^2")]
+        [InlineData("csc(a + b*x)*sin(3*a + 3*b*x)/(c + d*x)^4")]
         public void MultiplesOfOneLinearArgumentWithASymbolicSlope(string integrand)
         {
             var integral = integrand.ToEntity().Integrate("x");
             Assert.DoesNotContain("integral(", integral.Stringize());
-            var derivative = integral.Substitute("C", 0).Differentiate("x").Substitute("a", 0.3).Substitute("b", 1.2);
-            var original = integrand.ToEntity().Substitute("a", 0.3).Substitute("b", 1.2);
+            var derivative = integral.Substitute("C", 0).Differentiate("x")
+                .Substitute("a", 0.3).Substitute("b", 1.2).Substitute("c", 0.7).Substitute("d", 1.3);
+            var original = integrand.ToEntity().Substitute("a", 0.3).Substitute("b", 1.2).Substitute("c", 0.7).Substitute("d", 1.3);
             var compared = 0;
             foreach (var at in new[] { 0.3, 0.5, 0.9, 1.1 })
             {
