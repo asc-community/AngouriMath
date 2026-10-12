@@ -12973,9 +12973,11 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
-        /// A sine of twice an argument beside functions of the argument, written as the product it is:
-        /// <c>sin(2A) = 2 sin(A) cos(A)</c>, so that every trigonometric function is of <c>A</c>.
-        /// <c>csc(a + b x)^3 sin(2a + 2b x)^7</c> is <c>2^7 sin(a + b x)^4 cos(a + b x)^7</c>.
+        /// A sine or a cosecant of twice an argument beside functions of the argument, written as the
+        /// product it is: <c>sin(2A) = 2 sin(A) cos(A)</c>, so that every trigonometric function is of
+        /// <c>A</c>. <c>csc(a + b x)^3 sin(2a + 2b x)^7</c> is <c>2^7 sin(a + b x)^4 cos(a + b x)^7</c>,
+        /// and <c>csc(2x) ln(tan(x))</c> is <c>ln(tan(x))/(2 sin(x) cos(x))</c>, which is
+        /// <c>ln(tan(x))</c> beside its derivative.
         /// </summary>
         /// <remarks>
         /// The rule that writes multiples of one argument in it reads a numeric slope, and bounds the
@@ -12997,10 +12999,15 @@ namespace AngouriMath.Functions.Algebra
                 if (!TreeAnalyzer.TryGetPolyLinear(single, x, out var slope, out _) || slope.ContainsNode(x)
                     || (twice - 2 * single).Expand().InnerSimplified.Evaled is not Number.Complex { IsZero: true })
                     continue;
-                // Only sines of the double, so that each is one product.
-                if (expr.Nodes.Any(node => node is Cosf or Tanf or Cotanf or Secantf or Cosecantf && node.DirectChildren.First() == twice))
+                // Only sines and cosecants of the double, so that each is one product.
+                if (expr.Nodes.Any(node => node is Cosf or Tanf or Cotanf or Secantf && node.DirectChildren.First() == twice))
                     return null;
-                var rewritten = expr.Replace(node => node is Sinf(var a) && a == twice ? 2 * MathS.Sin(single) * MathS.Cos(single) : node);
+                var rewritten = expr.Replace(node => node switch
+                {
+                    Sinf(var a) when a == twice => 2 * MathS.Sin(single) * MathS.Cos(single),
+                    Cosecantf(var a) when a == twice => 1 / (2 * MathS.Sin(single) * MathS.Cos(single)),
+                    _ => node
+                });
                 return Integration.ComputeAsTheSameQuestion(rewritten, x, integrateByParts);
             }
             return null;
@@ -29325,7 +29332,7 @@ namespace AngouriMath.Functions.Algebra
             {
                 var (combinedAbove, combinedBelow) = Functions.SingleQuotient.Of(combined.InnerSimplified);
                 integrand = (WithDegenerateBasesLowered(WithWholePowersDistributed(combinedAbove), t)
-                    / WithDegenerateBasesLowered(WithWholePowersDistributed(combinedBelow), t)).InnerSimplified;
+                    / WithDegenerateBasesLowered(WithTheSharedFactorsOutOfEachSum(WithWholePowersDistributed(combinedBelow), t), t)).InnerSimplified;
             }
             else
                 integrand = combined.Simplify();
@@ -29384,6 +29391,96 @@ namespace AngouriMath.Functions.Algebra
             return Integration.ComputeIndefiniteIntegral(integrand, t, integrateByParts) is { } result
                 ? result.Substitute(t, MathS.Tan(argument / 2))
                 : null;
+        }
+
+        /// <summary>
+        /// <paramref name="product"/> with each factor that is a sum of products written as the
+        /// factors every term shares, with <paramref name="t"/> in them, times the sum of what
+        /// is left: <c>A (1 + t^2)(1 - t^2) + 2 b t (1 + t^2)(1 - t^2)</c> is
+        /// <c>(1 + t^2)(1 - t^2)(A + 2 b t)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <c>1/(a + c sec(x) + b tan(x))</c> combines over <c>cos(x)</c> into a denominator
+        /// with both of the half angle's factors in each term, and read as a quartic with a
+        /// symbol in every coefficient it was declined after five seconds. Its numerator is
+        /// <c>2 (1 - t^2)^2</c>: with the factors out, the division below takes off the
+        /// <c>1 + t^2</c>, the partial fractions cancel the <c>1 - t^2</c>, and what is left
+        /// is a quadratic beside <c>1 + t^2</c>.
+        /// </remarks>
+        private static Entity WithTheSharedFactorsOutOfEachSum(Entity product, Entity.Variable t)
+        {
+            Entity written = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(product))
+                written *= factor is Sumf ? WithTheSharedFactorsOut(factor, t) : factor;
+            return written;
+        }
+
+        /// <summary>
+        /// <paramref name="sum"/> as the factors with <paramref name="t"/> in them that every
+        /// term has, each to the least power any term has it in, times the sum of what is left;
+        /// as written where no term shares one.
+        /// </summary>
+        private static Entity WithTheSharedFactorsOut(Entity sum, Entity.Variable t)
+        {
+            static Dictionary<Entity, EInteger> Powers(Entity term, Entity.Variable t)
+            {
+                var powers = new Dictionary<Entity, EInteger>();
+                foreach (var factor in Mulf.LinearChildren(term))
+                {
+                    var (@base, power) = factor is Powf(var raised, Number.Integer { EInteger.Sign: > 0 } exponent)
+                        ? (raised, exponent.EInteger) : (factor, EInteger.One);
+                    if (@base.ContainsNode(t))
+                        powers[@base] = powers.TryGetValue(@base, out var before) ? before.Add(power) : power;
+                }
+                return powers;
+            }
+            // Inner sums first: in `(a (1 + t^2) 2 t + b (1 - t^2)(1 + t^2)) 2 t + c (1 + t^2)^2 2 t`,
+            // which `1/(a + b cot(x) + c csc(x))` combines into, the first term has its
+            // `1 + t^2` inside a sum of its own.
+            var terms = Sumf.LinearChildren(sum).Select(term => WithTheSharedFactorsOutOfEachSum(term, t)).ToList();
+            if (terms.Count < 2)
+                return sum;
+            var shared = Powers(terms[0], t);
+            foreach (var term in terms.Skip(1))
+            {
+                var powers = Powers(term, t);
+                foreach (var @base in shared.Keys.ToList())
+                    if (powers.TryGetValue(@base, out var power))
+                        shared[@base] = EInteger.Min(shared[@base], power);
+                    else
+                        shared.Remove(@base);
+            }
+            // A bare `t` shared by every term is a root at zero, which the partial fractions
+            // find on their own; only a sum is worth taking out.
+            if (!shared.Keys.Any(@base => @base is Sumf or Minusf))
+                return terms.Aggregate((left, right) => left + right);
+            Entity common = Number.Integer.One;
+            foreach (var pair in shared)
+                common *= pair.Value.Equals(EInteger.One) ? pair.Key : MathS.Pow(pair.Key, Number.Integer.Create(pair.Value));
+            Entity rest = Number.Integer.Zero;
+            foreach (var term in terms)
+            {
+                var left = new Dictionary<Entity, EInteger>(shared);
+                Entity kept = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(term))
+                {
+                    var (@base, power) = factor is Powf(var raised, Number.Integer { EInteger.Sign: > 0 } exponent)
+                        ? (raised, exponent.EInteger) : (factor, EInteger.One);
+                    if (left.TryGetValue(@base, out var owed) && owed.Sign > 0)
+                    {
+                        var taken = EInteger.Min(owed, power);
+                        left[@base] = owed.Subtract(taken);
+                        power = power.Subtract(taken);
+                        if (power.IsZero)
+                            continue;
+                        kept *= power.Equals(EInteger.One) ? @base : MathS.Pow(@base, Number.Integer.Create(power));
+                    }
+                    else
+                        kept *= factor;
+                }
+                rest += kept;
+            }
+            return common * rest;
         }
 
         /// <summary>

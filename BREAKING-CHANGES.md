@@ -505,6 +505,20 @@ two more of Rubi's 4.5.2.3. The two sums multiply to `-a c tan^2`, so in `u = a 
 | `"sec(e + f*x)*(a + a*sec(e + f*x))^m*(c - c*sec(e + f*x))^(5/2)".ToEntity().Integrate("x")` | `integral(...)` | 469 characters |
 | `"sec(e + f*x)*(a + a*sec(e + f*x))^m*sqrt(c - c*sec(e + f*x))".ToEntity().Integrate("x")` | `integral(...)` | 268 characters |
 
+### A secant and a tangent in one sum below the bar are integrated in the half angle
+
+**Answers where there were none.** `1/(a + c sec(x) + b tan(x))` was declined, and so was
+`1/(a + b cot(x) + c csc(x))`, Rubi's 4.7.7. Combined over the cosine, the half-angle tangent `t` gives a denominator
+with `1 + t^2` and `1 - t^2` in every term, which was read as a quartic with a symbol in every coefficient. Those
+shared factors are now taken out of the sum first, so the numerator cancels them and a quadratic beside `1 + t^2` is
+left ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(a + c*sec(x) + b*tan(x))".ToEntity().Integrate("x")` | `integral(...)` | 2,211 characters |
+| `"1/(a + b*cot(x) + c*csc(x))".ToEntity().Integrate("x")` | `integral(...)` | 2,738 characters |
+| `"1/(a + c*sec(2*x + 1) + b*tan(2*x + 1))".ToEntity().Integrate("x")` | `integral(...)`; past 290 s on the unreleased master | 2,890 characters |
+
 ### `a cos + i a sin` beside powers of the secant is written over the cosine
 
 **Answers where there were none, and shorter ones.** `sec(c + d x)^5/(a cos(c + d x) + i a sin(c + d x))^2` was declined,
@@ -721,6 +735,18 @@ of one argument in it reads a numeric slope and bounds the degree it writes. A s
 |---|---|---|
 | `"csc(a + b*x)^3*sin(2*a + 2*b*x)^7".ToEntity().Integrate("x")` | `integral(...)` | 127 characters |
 | `"csc(a + b*x)*sin(2*a + 2*b*x)^8".ToEntity().Integrate("x")` | `integral(...)` | 134 characters |
+
+### A cosecant of a double argument beside the argument is written as a product
+
+**Answers where there were none.** `csc(2x) ln(tan(x))` was declined, Rubi's 4.7.7: the rule that writes
+`sin(2A)` as `2 sin(A) cos(A)` beside functions of `A` declined any other function of `2A`. The cosecant is
+`1/(2 sin(A) cos(A))`, one product as well, and is written so now, which leaves `ln(tan(x))` beside its derivative
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"csc(2*x)*ln(tan(x))".ToEntity().Integrate("x")` | `integral(...)` | `1/2 * ln(tan(x)) ^ 2 / 2` |
+| `"csc(2*x)*ln(tan(x))^2".ToEntity().Integrate("x")` | `integral(...)` | `1/2 * ln(tan(x)) ^ 3 / 3` |
 
 ### A sine or a cosine of a shifted argument is written in the other
 
