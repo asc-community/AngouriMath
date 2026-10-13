@@ -396,6 +396,26 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### A trigonometric function of `a + b/x` beside a rational function is integrated in `1/x`
+
+**Answers where there were none.** `sin(c + d/x)/(e + f x)` was declined: the substitution search reads a candidate's
+derivative but never solves the candidate for `x`. Under `x = 1/u` it is `-sin(c + d u)/(u (e u + f)) du`, which the
+partial fractions and the sine and cosine integrals answer, and `x = 1/u` is one-to-one on either side of 0. Below a
+root of a linear, the linear radical substitution gets there first
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+The answers below a root are large because the sine over the linears that come out of the substitution carries
+expanded coefficients ([#1877](https://github.com/asc-community/AngouriMath/issues/1877)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sin(c + d/x)/(e + f*x)".ToEntity().Integrate("x")` | `integral(...)` | 196 characters |
+| `"(a + b*sin(c + d/x))/(e + f*x)^2".ToEntity().Integrate("x")` | `integral(...)` | 470 characters |
+| `"(a + b*sin(c + d/x))^2/(e + f*x)^3".ToEntity().Integrate("x")` | `integral(...)` | 2,516 characters |
+| `"(c*e + d*e*x)^(1/3)*sin(a + b/(c + d*x)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 1,453 characters |
+| `"sin(a + b/sqrt(c + d*x))/(e + f*x)".ToEntity().Integrate("x")` | `integral(...)` | 12,010 characters |
+| `"sin(a + b/sqrt(c + d*x))/(e + f*x)^2".ToEntity().Integrate("x")` | `integral(...)` | 32,780 characters |
+
 ### A power of the cosine beside a secant binomial is integrated in the cosine
 
 **Answers where there were none.** `cos(c + d x)^2/(a + b sec(c + d x))` was declined, and so were the cosine's powers
