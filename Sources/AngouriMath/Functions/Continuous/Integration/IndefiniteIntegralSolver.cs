@@ -19032,6 +19032,95 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of a product with a factor under a whole power, that power taken out:
+        /// <c>(c R f^n)^r</c> is <c>K f^(n r) R^r</c>, where <c>K = (c R f^n)^r/(f^(n r) R^r)</c> and
+        /// <c>c</c> is free of <c>x</c>. The logarithmic derivatives of both sides are
+        /// <c>r (R'/R + n f'/f)</c>, so <c>K</c> is
+        /// constant wherever it is defined, and it stands in front of the answer the way Rubi
+        /// writes <c>(c sin(a + b x)^3)^(1/3) csc(a + b x)</c> in front of its.
+        /// </summary>
+        /// <remarks>
+        /// <c>(c sin(a + b x)^3)^(1/3)/x</c>, <c>sqrt((x^2 - 1)^2/(x (1 + x^2)))/(1 + x^2)</c> and
+        /// <c>1/sqrt((a^2 + x^2)^3)</c> were declined: nothing reads a function under a root of its
+        /// own power. With the power taken out each is <c>K</c> times an integrand the chain
+        /// answers. After every other rule, and at the question asked only.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByTakingTheWholePowersOutOfAPowerOfAProduct(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked || takingTheWholePowersOut)
+                return null;
+            var multiple = Variable.CreateUnique(expr, "k_out");
+            Entity? constant = null;
+            var rewritten = AFactor(expr);
+            if (constant is null)
+                return null;
+            var simplified = rewritten.InnerSimplified;
+            Entity? answer;
+            takingTheWholePowersOut = true;
+            try
+            {
+                answer = Integration.ComputeAsTheSameQuestion(simplified, x, integrateByParts);
+            }
+            finally
+            {
+                takingTheWholePowersOut = false;
+            }
+            if (answer is null)
+                return null;
+            answer = answer.Substitute(multiple, constant);
+            return answer.ContainsNode(multiple) ? null : answer;
+
+            // Only a factor of the integrand: inside a function, `ln(1/(c x) + sqrt(1/(c^2 x^2) - 1))`
+            // for `asech(c x)`, K is not a factor of anything, and the question it writes is no shorter.
+            Entity AFactor(Entity node) => node switch
+            {
+                Mulf(var left, var right) => AFactor(left) * AFactor(right),
+                Divf(var above, var below) => AFactor(above) / AFactor(below),
+                _ => TakeOut(node),
+            };
+
+            Entity TakeOut(Entity node)
+            {
+                if (constant is not null || node is not Powf(var @base, Number.Rational exponent) || exponent is Number.Integer
+                    || !@base.ContainsNode(x))
+                    return node;
+                var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(@base));
+                Entity outside = Number.Integer.One;
+                Entity inside = Number.Integer.One;
+                var taken = false;
+                foreach (var (side, sign) in new[] { (above, 1), (below, -1) })
+                    foreach (var factor in Mulf.LinearChildren(side))
+                    {
+                        var (factorBase, factorExponent) = factor switch
+                        {
+                            Powf(var b, Number.Integer n) => (b, n),
+                            _ => (factor, Number.Integer.One),
+                        };
+                        if (!factorBase.ContainsNode(x))
+                            continue;
+                        if (factorExponent.EInteger.Abs().CompareTo(EInteger.FromInt32(2)) >= 0)
+                        {
+                            outside *= MathS.Pow(factorBase, (sign * factorExponent * exponent).InnerSimplified);
+                            taken = true;
+                        }
+                        else
+                            inside = sign > 0 ? inside * factor : inside / factor;
+                    }
+                if (!taken)
+                    return node;
+                // A factor free of x stays under the power, in K: taken out, `c^(1/3)` is only
+                // `c`'s cube root for `c > 0`.
+                var written = inside == Number.Integer.One ? outside : outside * MathS.Pow(inside, exponent);
+                constant = node / written;
+                return multiple * written;
+            }
+        }
+
+        /// <summary>Set while <see cref="SolveByTakingTheWholePowersOutOfAPowerOfAProduct"/> asks its question.</summary>
+        [System.ThreadStatic] private static bool takingTheWholePowersOut;
+
+        /// <summary>
         /// A rational function of <c>x</c> and one square root of a quadratic in <c>x</c>,
         /// rationalised by an Euler substitution and handed to the rational integrator.
         /// </summary>
@@ -28451,7 +28540,11 @@ namespace AngouriMath.Functions.Algebra
                 if (constantAlone && (constant == Number.Integer.One || restFactors > 1
                     || !EntersOnlyThroughTrigonometricFunctions(single!, x)))
                     return node;
-                if (constant != Number.Integer.One && constant.Evaled is not Number.Real { IsPositive: true })
+                // An odd denominator is the real root, `(-8)^(1/3) = -2`, which splits across a
+                // product for any real constant: `(c sin(x)^3)^(1/3)` is `c^(1/3) sin(x)` for a
+                // negative `c` as well, and asking `c > 0` left it undefined there.
+                var aRealRoot = exponent is Number.Rational { ERational: var fraction } && !fraction.Denominator.IsEven;
+                if (constant != Number.Integer.One && constant.Evaled is not Number.Real { IsPositive: true } && !aRealRoot)
                 {
                     if (constant.Vars.Any() is false)
                         return node;
