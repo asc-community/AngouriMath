@@ -95,6 +95,20 @@ and the complex arcsine's real part moved two units away. A caller comparing a h
 result to a pinned string will see the last digits differ; a caller comparing to a tolerance
 will not. [#1338](https://github.com/asc-community/AngouriMath/issues/1338).
 
+### A rational evaluated at a higher precision than before has all of its digits
+
+**More digits where there were a hundred.** A rational kept its decimal value in the precision current when it was
+first written out: in 2.5.0 that was when it was made, and on the unreleased master when it was first asked for. Under
+a higher `DecimalPrecisionContext` it went on answering about a hundred digits, and so did everything computed from it.
+That includes every rational in an antiderivative, because the integrator checks its answer at the default precision.
+It is written out again in the precision asked for now
+([#1868](https://github.com/asc-community/AngouriMath/issues/1868)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `Rational.Create(128, 12167)`'s `EDecimal`, read at the default precision and then under 300 digits | 100 digits | 300 digits |
+| `sqrt(46) * 128/12167` evaluated under 300 digits, with that rational | relative error `4.7e-101` | correct to 300 digits |
+
 ### The last digits of an evaluated logarithm, exponential, real power or complex power
 
 **Silent, and in the hundredth digit.** `ln`, `log`, `e^x`, a real base to a real power and the
