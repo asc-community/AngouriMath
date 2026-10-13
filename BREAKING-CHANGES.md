@@ -2200,6 +2200,22 @@ number; the zero is a power `1/x`, whose integral is a logarithm. A symbolic `b`
 | `"sin(a + ln(c*x^2)*sqrt(-1/4))".ToEntity().Integrate("x")` | `integral(...)` | powers of `x` and `c x^2` and a logarithm, through `e^(i a)` |
 | `"1/cos(a - 2*i*ln(c*x))^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | an arctangent and a logarithm of a root, through `e^(i a)` |
 
+### A secant or cosecant of a logarithm of an imaginary power is integrated in a named constant
+
+**Answers where there were none.** `sec(a + 2 ln(c x^(i/2)))^3` was declined, with `x sec(a + 2 ln(c x^i))^3` and the
+cosecant's, the imaginary factor being in the logarithm's power of the variable rather than its coefficient (Rubi's
+4.7.5). `e^(i L)` is a constant `K` times `x^p` for the real `p = i b x u'/u`, with `K = e^(i L) x^(-p)` constant
+wherever it is defined, for either sign of `c`. With `K` named the integrand is rational in `x`; the same question
+asked without naming it answered a piecewise of over 6,000 characters, `c^(2 i)` and `c^(-2 i)` never cancelling
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sec(a + 2*ln(c*x^(1/2*i)))^3".ToEntity().Integrate("x")` | `integral(...)` | 262 characters |
+| `"csc(a + 2*ln(c*x^(1/2*i)))^3".ToEntity().Integrate("x")` | `integral(...)` | 264 characters |
+| `"x*sec(a + 2*ln(c*x^i))^3".ToEntity().Integrate("x")` | `integral(...)` | 275 characters, and so the cosecant's |
+| `"sec(a + 2*ln(c/x^(1/2*i)))^3".ToEntity().Integrate("x")` | `integral(...)` | 484 characters |
+
 ### A constant plus an imaginary cosine and sine is an exponential
 
 **Answers where there were none.** `(A + B cos(x))/(a + b cos(x) + i b sin(x))` was declined, with the
