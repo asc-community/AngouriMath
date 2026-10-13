@@ -18613,7 +18613,8 @@ namespace AngouriMath.Functions.Algebra
             {
                 if (factors.Count == 1)
                     pieces.Add(properNumerator / factors[0]);
-                else if (Functions.PartialFractions.TrySplitOverWrittenFactors(properNumerator, linears, x, out var decomposition) && decomposition is not null)
+                else if (Functions.PartialFractions.TrySplitOverWrittenFactors(properNumerator, linears, x, out var decomposition, aRepeatedQuadraticIsRead: true)
+                         && decomposition is not null)
                 {
                     // The split comes back as a sum over a constant; the constant goes to each term.
                     var (terms, over) = decomposition is Divf(var splitTop, var splitBottom) && !splitBottom.ContainsNode(x)
