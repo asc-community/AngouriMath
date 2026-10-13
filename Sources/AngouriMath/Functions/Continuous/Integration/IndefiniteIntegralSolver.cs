@@ -13297,8 +13297,10 @@ namespace AngouriMath.Functions.Algebra
         /// <c>csc(1 + x) csc(2 + 2x)^2</c> became a rational function of the sine and cosine with
         /// <c>sin(2)</c> and <c>cos(2)</c> in its coefficients, and ran twenty seconds; with the slope
         /// a symbol it declined at once. Only where some argument has an offset or a symbolic
-        /// slope, the rest being that rule's already, and where x stands nowhere else. At the
-        /// question asked or one below it, since it lands on the chain in u. Rubi's 4.7.1.
+        /// slope, the rest being that rule's already, and where x stands elsewhere only
+        /// algebraically: <c>csc(a + b x) sin(3a + 3b x)/(c + d x)</c> is
+        /// <c>csc(u) sin(3u)/(b c + d (u - a))</c> over <c>b</c>, Rubi's 4.7.3. At the question
+        /// asked or one below it, since it lands on the chain in u. Rubi's 4.7.1.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveByWritingMultiplesOfOneLinearArgument(Entity expr, Entity.Variable x, bool integrateByParts)
@@ -13348,12 +13350,26 @@ namespace AngouriMath.Functions.Algebra
                 Cosecantf(var a) when Of(a) is { } v => new Cosecantf(v),
                 _ => node,
             });
-            if (inU.ContainsNode(x))
-                return null;
+            // x beside the functions as well, algebraically -- `csc(a + b x) sin(3a + 3b x)/(c + d x)`
+            // -- is written in u too, x = (u - p)/q.
+            var beside = inU.ContainsNode(x);
+            if (beside)
+            {
+                if (inU.Nodes.Any(node => node.ContainsNode(x) && node is not (Variable or Sumf or Minusf or Mulf or Divf)
+                        && !(node is Powf(_, var exponent) && !exponent.ContainsNode(x))))
+                    return null;
+                inU = inU.Substitute(x, (u - firstOffset) / firstSlope).InnerSimplified;
+            }
             // dx = du/q.
             if (Integration.ComputeAsAQuestionOfItsOwn((inU / firstSlope).InnerSimplified, u, integrateByParts) is not { } answer)
                 return null;
             var back = answer.Substitute(u, first);
+            // And each linear the substitution wrote, `b c + d (a + b x - a)`, back in lowest terms.
+            if (beside)
+                back = back.Replace(node => node is Sumf or Minusf && node.ContainsNode(x)
+                    && TreeAnalyzer.TryGetPolyLinear(node, x, out var slope, out var offset) && !slope.ContainsNode(x) && !offset.ContainsNode(x)
+                        ? LowestOverTheSymbols(slope) * x + LowestOverTheSymbols(offset)
+                        : node).InnerSimplified;
             return back.Nodes.Any(node => node == MathS.NaN) ? null : back;
         }
 
