@@ -1197,6 +1197,9 @@ namespace AngouriMath.Functions.Algebra
             // `A - B y` whose A/B agrees with a branch of y at the poles, found by an ansatz
             // over Padé approximants.
             if ((answer = SquareRootLogarithmAnsatz.Integrate(expr, x)) is { }) return answer;
+            // And a sum with the root below the bar, over its conjugate: after every rule above,
+            // which answer the numeric spellings, `1/(a c + b c x^2 + d sqrt(a + b x^2))` among them.
+            if ((answer = IndefiniteIntegralSolver.SolveByTheConjugateOfASumWithARootOfAQuadraticBelowTheBar(expr, x, integrateByParts)) is { }) return answer;
             // Product-to-sum among the rewrites rather than before them, because a product of
             // trigonometric functions of *equal* arguments is a power and wants a different tool;
             // this only fires where the arguments differ, which is exactly what every substitution

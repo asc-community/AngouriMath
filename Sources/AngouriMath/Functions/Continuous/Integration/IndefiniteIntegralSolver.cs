@@ -18956,6 +18956,82 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A rational function of <c>x</c> and one square root of a quadratic <c>Q</c>, with the
+        /// root in a sum below the bar, written over a denominator free of it:
+        /// <c>(A + B sqrt(Q))/(C + D sqrt(Q))</c> is <c>(A + B sqrt(Q)) (C - D sqrt(Q))/(C^2 - D^2 Q)</c>,
+        /// a rational function and one beside the root, each asked of the chain.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's <c>1/(a c + b c x^2 + d sqrt(a + b x^2))</c>: Euler's substitution takes the
+        /// generic first substitution for a symbolic leading coefficient, with <c>sqrt(b)</c> in
+        /// every coefficient, and was declined. Over the conjugate it is
+        /// <c>(c Q - d sqrt(Q))/(c^2 Q^2 - d^2 Q)</c>, and both pieces are answered. It runs after
+        /// every rule that answers the numeric spellings. Only a sum: a root alone below the bar,
+        /// <c>C = 0</c>, is the root moved above it, which the chain writes back, and <c>D = 0</c>
+        /// has nothing to clear.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByTheConjugateOfASumWithARootOfAQuadraticBelowTheBar(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            Entity? radicand = null;
+            foreach (var node in expr.Nodes)
+                if (node is Powf(var @base, Number.Rational r) && r is not Number.Integer && @base.ContainsNode(x))
+                {
+                    if (!r.ERational.Denominator.Equals(EInteger.FromInt32(2)) || !r.ERational.Numerator.CanFitInInt32()
+                        || radicand is not null && radicand != @base)
+                        return null;
+                    radicand = @base;
+                }
+            if (radicand is null || !TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var a, out _, out _) || VanishesIdentically(a))
+                return null;
+            var w = Variable.CreateUnique(expr, "w_root");
+            var inW = expr.Replace(node => node is Powf(var @base, Number.Rational r) && r is not Number.Integer && @base == radicand
+                ? MathS.Pow(w, Number.Integer.Create(r.ERational.Numerator))
+                : node);
+            var (top, bottom) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(inW));
+            if (!bottom.ContainsNode(w) || InTheRoot(top) is not var (above, aboveBeside) || InTheRoot(bottom) is not var (below, belowBeside)
+                || VanishesIdentically(below) || VanishesIdentically(belowBeside))
+                return null;
+            var over = (below * below - belowBeside * belowBeside * radicand).InnerSimplified;
+            if (VanishesIdentically(over))
+                return null;
+            var rational = (above * below - aboveBeside * belowBeside * radicand).InnerSimplified;
+            var beside = (aboveBeside * below - above * belowBeside).InnerSimplified;
+            Entity answer = Number.Integer.Zero;
+            if (!VanishesIdentically(rational))
+            {
+                if (Integration.ComputeIndefiniteIntegral(rational / over, x, integrateByParts) is not { } first)
+                    return null;
+                answer += first;
+            }
+            if (!VanishesIdentically(beside))
+            {
+                if (Integration.ComputeIndefiniteIntegral(beside * MathS.Sqrt(radicand) / over, x, integrateByParts) is not { } second)
+                    return null;
+                answer += second;
+            }
+            return answer;
+
+            // A polynomial in w as A + B w, with w^2 = Q.
+            (Entity Whole, Entity Beside)? InTheRoot(Entity side)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(side.Expand().InnerSimplified, w, out var monomials) || monomials.Keys.Any(k => k.Sign < 0))
+                    return null;
+                Entity whole = Number.Integer.Zero;
+                Entity besideTheRoot = Number.Integer.Zero;
+                foreach (var pair in monomials)
+                {
+                    // Q^0 written as a power is `1 provided not Q = 0`, a condition the pieces would carry.
+                    var k = pair.Key.ToInt32Checked();
+                    var term = k / 2 == 0 ? pair.Value : pair.Value * MathS.Pow(radicand, k / 2);
+                    if (k % 2 == 0) whole += term;
+                    else besideTheRoot += term;
+                }
+                return (whole.InnerSimplified, besideTheRoot.InnerSimplified);
+            }
+        }
+
+        /// <summary>
         /// A rational function of <c>x</c> and one square root of a quadratic in <c>x</c>,
         /// rationalised by an Euler substitution and handed to the rational integrator.
         /// </summary>
