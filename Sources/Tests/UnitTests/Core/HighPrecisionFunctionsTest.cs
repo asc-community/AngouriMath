@@ -332,5 +332,26 @@ namespace AngouriMath.Tests.Core
             using var _ = MathS.Settings.DecimalPrecisionContext.Set(threeHundredDigits);
             Assert.StartsWith("1.4477346146633423266298972810533128989549659677348909712480333771187271973782808968904998312256362611570708175918866347464490548332052196352156710435710332682587883217473960307622422354384764392652386915303661697273096380952633917033052762392317525332683262721013424903315670646133049105751036966", MathS.Pow(MathS.e, x).EvalNumerical().ToString());
         }
+
+        /// <summary>
+        /// A rational written out at a hundred digits and then asked at three hundred: it kept
+        /// the hundred, and so did everything computed from it -- an antiderivative checked by
+        /// the integrator at the default precision and differentiated back at three hundred
+        /// missed its integrand by 1e-102.
+        /// https://github.com/asc-community/AngouriMath/issues/1868
+        /// </summary>
+        [Fact]
+        public void ARationalAtAHigherPrecisionAfterALowerOne()
+        {
+            var fraction = Rational.Create(128, 12167);
+            // Written out at the default precision first, as the integrator's own check does.
+            Assert.Equal(fraction.ERational.ToEDecimal(MathS.Settings.DecimalPrecisionContext), fraction.EDecimal);
+            using var _ = MathS.Settings.DecimalPrecisionContext.Set(threeHundredDigits);
+            Assert.Equal(fraction.ERational.ToEDecimal(threeHundredDigits), fraction.EDecimal);
+            // And what is computed from it, to the last few of the three hundred digits.
+            var fresh = ((Real)((Entity)"128 * sqrt(46) / 12167").EvalNumerical()).EDecimal;
+            var computed = ((Real)(MathS.Sqrt(46) * fraction).EvalNumerical()).EDecimal;
+            Assert.True(computed.Subtract(fresh, threeHundredDigits).Abs().CompareTo(EDecimal.Create(1, -295)) < 0, $"{computed} and {fresh}");
+        }
     }
 }

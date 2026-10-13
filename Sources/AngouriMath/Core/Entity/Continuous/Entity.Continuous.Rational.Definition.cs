@@ -30,14 +30,45 @@ namespace AngouriMath
                 private protected Rational(ERational value) => ERational = value;
 
                 /// <summary>
-                /// The value written out in the decimal precision of the moment it is first
-                /// asked for, not of the moment the rational was made: an integer's exact
-                /// form is the <see cref="ERational"/>, and writing a hundred digits out for
-                /// every integer and fraction the simplifier makes was a third of the cost of
-                /// making one (https://github.com/asc-community/AngouriMath/issues/1338).
+                /// The value written out in the decimal precision of the moment it is asked for,
+                /// not of the moment the rational was made: an integer's exact form is the
+                /// <see cref="ERational"/>, and writing a hundred digits out for every integer
+                /// and fraction the simplifier makes was a third of the cost of making one
+                /// (https://github.com/asc-community/AngouriMath/issues/1338). Kept with the
+                /// context it was written in and written again in another: kept alone, a
+                /// rational first asked at the default precision answered a hundred digits
+                /// under a context of three hundred, and so did every value computed from it
+                /// (https://github.com/asc-community/AngouriMath/issues/1868).
                 /// </summary>
-                public override EDecimal EDecimal => edecimal.GetValue(static @this => @this.ERational.ToEDecimal(MathS.Settings.DecimalPrecisionContext), this);
-                private LazyPropertyA<EDecimal> edecimal;
+                public override EDecimal EDecimal
+                {
+                    get
+                    {
+                        EContext context = MathS.Settings.DecimalPrecisionContext;
+                        if (writtenOut.In is { } held && ReferenceEquals(held.Context, context))
+                            return held.Value;
+                        var value = ERational.ToEDecimal(context);
+                        writtenOut.In = new WrittenOut(context, value);
+                        return value;
+                    }
+                }
+                private WrittenOutCache writtenOut;
+
+                /// <summary>One writing out and its context, replaced whole so that a reader never sees half of one.</summary>
+                private sealed record WrittenOut(EContext Context, EDecimal Value);
+
+                /// <summary>
+                /// Behind a struct equal to every other, as the caches on <see cref="Entity"/> are:
+                /// a record compares every field, and two equal rationals are equal whichever of
+                /// them has been written out.
+                /// </summary>
+                private struct WrittenOutCache : IEquatable<WrittenOutCache>
+                {
+                    internal WrittenOut? In;
+                    public bool Equals(WrittenOutCache other) => true;
+                    public override bool Equals(object? obj) => obj is WrittenOutCache;
+                    public override int GetHashCode() => 0;
+                }
 
                 internal override Priority Priority => Priority.Div;
 
