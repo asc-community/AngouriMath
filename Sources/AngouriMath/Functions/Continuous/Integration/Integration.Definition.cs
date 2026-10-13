@@ -1203,6 +1203,9 @@ namespace AngouriMath.Functions.Algebra
             // And a power of a product with a factor under a whole power, that power taken out in
             // front of a constant: `(c sin(a + b x)^3)^(1/3)` is `K sin(a + b x)`.
             if ((answer = IndefiniteIntegralSolver.SolveByTakingTheWholePowersOutOfAPowerOfAProduct(expr, x, integrateByParts)) is { }) return answer;
+            // And a root of a product beside a root of one of its factors, the product split:
+            // `(a + b x^2)^(5/2)/sqrt(a^2 - b^2 x^4)` is `K (a + b x^2)^2/sqrt(a - b x^2)`.
+            if ((answer = IndefiniteIntegralSolver.SolveBySplittingARootOfAProductBesideARootOfAFactor(expr, x, integrateByParts)) is { }) return answer;
             // Product-to-sum among the rewrites rather than before them, because a product of
             // trigonometric functions of *equal* arguments is a power and wants a different tool;
             // this only fires where the arguments differ, which is exactly what every substitution
