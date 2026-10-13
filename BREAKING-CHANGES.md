@@ -470,6 +470,24 @@ by the linear's coefficients, `(b d + 2c d x)^9`, which ran past a minute
 | `"(b + 2*c*x)^9/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | past a minute; 76,153 characters on the unreleased master | 607 characters |
 | `"(b*d + 2*c*d*x)^9/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | past a minute | 611 characters |
 
+### A quadratic's half-odd power beside a power of another quadratic is integrated
+
+**Answers where there were none.** `sqrt(3 - x + 2 x^2)/(2 + 3 x + 5 x^2)^2` was declined, and so were
+`1/((3 - x + 2 x^2)^(5/2) (2 + 3 x + 5 x^2))` and most of Rubi's 1.2.1.5 past the first powers. Above the bar the root
+was not read: `B^(n/2)` is `B^((n + 1)/2)` over `sqrt(B)`, a polynomial over the root, which the reduction over a power
+of the other quadratic answers. Below it, the split of the rational part over the two quadratics declined a repeated
+quadratic with numbers in it, although beside the root each piece is a shape the rules read
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(3 - x + 2*x^2)/(2 + 3*x + 5*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 1,344 characters |
+| `"(3 - x + 2*x^2)^(3/2)/(2 + 3*x + 5*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 1,451 characters |
+| `"1/((3 - x + 2*x^2)^(5/2)*(2 + 3*x + 5*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 1,380 characters |
+| `"1/((3 - x + 2*x^2)^(5/2)*(2 + 3*x + 5*x^2)^3)".ToEntity().Integrate("x")` | `integral(...)` | 1,629 characters |
+| `"(2 + 5*x + x^2)*sqrt(3 + 2*x + 5*x^2)/(1 + 4*x - 7*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 5,242 characters |
+| `"(a + b*x + c*x^2)^(1/2)/(d + e*x + f*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 50,758 characters, six symbols |
+
 ### A square of a symbolic quadratic beside two linears is answered within the budget
 
 **Answers where there were none in time.** `1/((d + k x)(f + g x)(a + b x + c x^2)^2)` was declined by

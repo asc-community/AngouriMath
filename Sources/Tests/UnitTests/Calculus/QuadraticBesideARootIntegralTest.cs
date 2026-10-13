@@ -111,6 +111,22 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBackPinned(integrand, new[] { 0.3, 0.7, 0.9, -0.5 }, Pins);
 
         /// <summary>
+        /// The root above the bar, <c>B^(n/2)</c> as <c>B^((n + 1)/2)</c> over the root; and a
+        /// power of the radicand below it beside a power of the other quadratic, where the split
+        /// has a numeric repeated quadratic in it, a polynomial over its power beside the root
+        /// that the reductions read. Rubi's 1.2.1.5, declined before.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(3 - x + 2*x^2)/(2 + 3*x + 5*x^2)^2")]
+        [InlineData("(3 - x + 2*x^2)^(3/2)/(2 + 3*x + 5*x^2)^3")]
+        [InlineData("(a + b*x + c*x^2)^(1/2)/(d + k*x + f*x^2)^2")]
+        [InlineData("1/((3 - x + 2*x^2)^(3/2)*(2 + 3*x + 5*x^2)^2)")]
+        [InlineData("1/((3 - x + 2*x^2)^(5/2)*(2 + 3*x + 5*x^2))")]
+        [InlineData("1/((3 - x + 2*x^2)^(5/2)*(1 + x^2))")]
+        public void TheRootAboveOrItsRadicandRepeated(string integrand)
+            => DifferentiatesBackPinned(integrand, new[] { 0.3, 0.7, 0.9, -0.5 }, Pins);
+
+        /// <summary>
         /// Beside a half-odd power of <c>a + a sec(x)</c>, the half-angle tangent leaves a power
         /// of <c>(c + d) + (d - c) t^2</c> below the bar, which ran out Rubi's budget in 4.5.2.1.
         /// </summary>

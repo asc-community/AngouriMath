@@ -425,7 +425,12 @@ namespace AngouriMath.Functions
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static bool TrySplitOverWrittenFactors(
-            Entity numerator, Entity denominator, Variable x, [NotNullWhen(true)] out Entity? decomposition)
+            Entity numerator, Entity denominator, Variable x, [NotNullWhen(true)] out Entity? decomposition,
+            // Whether the caller reads a polynomial over a power of a quadratic with numbers in
+            // it, as the rules beside the square root of a quadratic do: over the radicand's power
+            // it is a polynomial times a half-odd power of the radicand, and over another
+            // quadratic's a polynomial over a power of a quadratic beside the root of another.
+            bool aRepeatedQuadraticIsRead = false)
         {
             decomposition = null;
 
@@ -464,7 +469,7 @@ namespace AngouriMath.Functions
                 // A repeated quadratic has a rule to land on only with a symbol somewhere,
                 // the split by residues below; over the rationals the system would hand it a
                 // cubic over the square, which no rule reads.
-                if (multiplicity > 1 && degree.ToInt32Unchecked() != 1 && !(numerator + denominator).Vars.Any(v => v != x))
+                if (multiplicity > 1 && degree.ToInt32Unchecked() != 1 && !aRepeatedQuadraticIsRead && !(numerator + denominator).Vars.Any(v => v != x))
                     return false;
                 foreach (var pair in read)
                     if (pair.Key.Sign < 0 || pair.Value.ContainsNode(x))
