@@ -255,8 +255,19 @@ namespace AngouriMath
             // https://github.com/asc-community/AngouriMath/issues/721
             private protected override Entity IntrinsicCondition =>
                 Codomain < Domain.Complex && IsEvenRoot
-                ? Base >= 0 & (!Base.EqualTo(0) | Exponent > 0)
-                : (!Base.EqualTo(0) | Exponent > 0);
+                ? Base >= 0 & WhereZeroIsDefined
+                : WhereZeroIsDefined;
+
+            /// <summary>
+            /// <c>0^w</c> is defined where <c>Re(w) &gt; 0</c>. For a non-real number <c>w</c>,
+            /// <c>w &gt; 0</c> has no value, the complex numbers not being ordered, and made the
+            /// whole condition NaN, so <c>0 b^i</c> was NaN; its real part is read instead.
+            /// <a href="https://github.com/asc-community/AngouriMath/issues/1865">#1865</a>
+            /// </summary>
+            private Entity WhereZeroIsDefined
+                => (Exponent is Complex ? Exponent : Exponent.Vars.Any() ? null : Exponent.Evaled) is Complex exponent and not Real
+                   ? exponent.RealPart.IsPositive ? Boolean.True : !Base.EqualTo(0)
+                   : !Base.EqualTo(0) | Exponent > 0;
 
             /// <summary>
             /// Whether the exponent is a literal rational whose denominator is even — the case

@@ -107,5 +107,40 @@ namespace AngouriMath.Tests.Calculus
         // only in how the condition nests.
         public void SymbolicExponentsAreUnaffected(string input, string expected) =>
             Assert.Equal(expected, input.ToEntity().Differentiate("x").Simplify().Stringize());
+
+        // `0^w` is defined where `Re(w) > 0`. A power's condition was `not b = 0 or w > 0`,
+        // NaN for a non-real `w`, so zero times `b^i` was NaN and so was the derivative of
+        // anything with a constant `b^i` in it.
+        // https://github.com/asc-community/AngouriMath/issues/1865
+        [Theory]
+        [InlineData("0 * b ^ i", "0 provided not b = 0")]
+        [InlineData("b ^ i - b ^ i", "0 provided not b = 0")]
+        [InlineData("0 * b ^ (i / 2)", "0 provided not b = 0")]
+        [InlineData("0 * b ^ (-1 + i)", "0 provided not b = 0")]
+        [InlineData("0 * b ^ (2 + i)", "0")]
+        [InlineData("0 ^ i", "NaN")]
+        public void ZeroTimesAPowerWithANonRealExponent(string input, string expected) =>
+            Assert.Equal(expected, input.ToEntity().Simplify().Stringize());
+
+        [Theory]
+        [InlineData("x * b ^ i")]
+        [InlineData("sec(a + i * ln(x)) ^ 3")]
+        [InlineData("x * sin(a + ln(c * x) * sqrt(-4))")]
+        public void AConstantWithANonRealExponentDifferentiates(string integrand)
+        {
+            var f = integrand.ToEntity();
+            var antiderivative = integrand.StartsWith("x * b") ? "x ^ 2 / 2 * b ^ i".ToEntity() : f.Integrate("x").Substitute("C", 0);
+            // Differentiated while still symbolic, then pinned: pinning first never saw the NaN.
+            var derivative = antiderivative.Differentiate("x");
+            Entity Pinned(Entity e) => e.Substitute("a", "1/4".ToEntity()).Substitute("b", 2).Substitute("c", 2);
+            foreach (var point in new[] { "0.57", "1.29" })
+            {
+                var want = Pinned(f).Substitute("x", point.ToEntity()).EvalNumerical();
+                var got = Pinned(derivative).Substitute("x", point.ToEntity()).EvalNumerical();
+                var difference = (got - want).EvalNumerical();
+                Assert.True(System.Math.Abs((double)difference.RealPart) + System.Math.Abs((double)difference.ImaginaryPart) < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {point}, where it is {want}");
+            }
+        }
     }
 }
