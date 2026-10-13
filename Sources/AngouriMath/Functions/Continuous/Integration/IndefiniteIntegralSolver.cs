@@ -18271,6 +18271,24 @@ namespace AngouriMath.Functions.Algebra
                 else
                     return null;
             }
+            // The root above the bar: `B^(n/2)` for an odd `n` is `B^((n + 1)/2)/sqrt(B)`, a
+            // polynomial over the root. `sqrt(3 - x + 2 x^2)/(2 + 3 x + 5 x^2)^2` was declined,
+            // the reduction reading only a root below (Rubi's 1.2.1.5).
+            if (radicand is null && quadratic is not null)
+            {
+                Entity rest = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(numerator))
+                    if (radicand is null && factor is Powf(var @base, Number.Rational { ERational: var exponent })
+                        && exponent.Denominator.Equals(EInteger.FromInt32(2)) && exponent.Numerator.Sign > 0
+                        && exponent.Numerator.CanFitInInt32() && @base.ContainsNode(x))
+                    {
+                        radicand = @base;
+                        rest = rest * MathS.Pow(@base, (exponent.Numerator.ToInt32Unchecked() + 1) / 2);
+                    }
+                    else
+                        rest = rest * factor;
+                numerator = rest;
+            }
             if (radicand is null || quadratic is null || quadratic == radicand
                 || !TreeAnalyzer.TryGetPolyQuadratic(quadratic, x, out var a2, out var a1, out var a0)
                 || !TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var b2, out var b1, out var b0)
