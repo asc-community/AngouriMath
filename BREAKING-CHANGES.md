@@ -95,6 +95,20 @@ and the complex arcsine's real part moved two units away. A caller comparing a h
 result to a pinned string will see the last digits differ; a caller comparing to a tolerance
 will not. [#1338](https://github.com/asc-community/AngouriMath/issues/1338).
 
+### A rational evaluated at a higher precision than before has all of its digits
+
+**More digits where there were a hundred.** A rational kept its decimal value in the precision current when it was
+first written out: in 2.5.0 that was when it was made, and on the unreleased master when it was first asked for. Under
+a higher `DecimalPrecisionContext` it went on answering about a hundred digits, and so did everything computed from it.
+That includes every rational in an antiderivative, because the integrator checks its answer at the default precision.
+It is written out again in the precision asked for now
+([#1868](https://github.com/asc-community/AngouriMath/issues/1868)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `Rational.Create(128, 12167)`'s `EDecimal`, read at the default precision and then under 300 digits | 100 digits | 300 digits |
+| `sqrt(46) * 128/12167` evaluated under 300 digits, with that rational | relative error `4.7e-101` | correct to 300 digits |
+
 ### The last digits of an evaluated logarithm, exponential, real power or complex power
 
 **Silent, and in the hundredth digit.** `ln`, `log`, `e^x`, a real base to a real power and the
@@ -2199,6 +2213,22 @@ number; the zero is a power `1/x`, whose integral is a logarithm. A symbolic `b`
 | `"tan(a + i*ln(x))".ToEntity().Integrate("x")` | `integral(...)` | a rational function of `x` and `e^(i a)`, with a logarithm |
 | `"sin(a + ln(c*x^2)*sqrt(-1/4))".ToEntity().Integrate("x")` | `integral(...)` | powers of `x` and `c x^2` and a logarithm, through `e^(i a)` |
 | `"1/cos(a - 2*i*ln(c*x))^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | an arctangent and a logarithm of a root, through `e^(i a)` |
+
+### A secant or cosecant of a logarithm of an imaginary power is integrated in a named constant
+
+**Answers where there were none.** `sec(a + 2 ln(c x^(i/2)))^3` was declined, with `x sec(a + 2 ln(c x^i))^3` and the
+cosecant's, the imaginary factor being in the logarithm's power of the variable rather than its coefficient (Rubi's
+4.7.5). `e^(i L)` is a constant `K` times `x^p` for the real `p = i b x u'/u`, with `K = e^(i L) x^(-p)` constant
+wherever it is defined, for either sign of `c`. With `K` named the integrand is rational in `x`; the same question
+asked without naming it answered a piecewise of over 6,000 characters, `c^(2 i)` and `c^(-2 i)` never cancelling
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sec(a + 2*ln(c*x^(1/2*i)))^3".ToEntity().Integrate("x")` | `integral(...)` | 262 characters |
+| `"csc(a + 2*ln(c*x^(1/2*i)))^3".ToEntity().Integrate("x")` | `integral(...)` | 264 characters |
+| `"x*sec(a + 2*ln(c*x^i))^3".ToEntity().Integrate("x")` | `integral(...)` | 275 characters, and so the cosecant's |
+| `"sec(a + 2*ln(c/x^(1/2*i)))^3".ToEntity().Integrate("x")` | `integral(...)` | 484 characters |
 
 ### A constant plus an imaginary cosine and sine is an exponential
 
