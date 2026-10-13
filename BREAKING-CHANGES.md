@@ -308,6 +308,26 @@ partial fractions divide. It is taken out in front of the integral first
 | `"(b*d + 2*c*d*x)^9/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | past a minute | 76,249 characters, the length the content-free one already had |
 | `"(b*d + 2*c*d*x)^8/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | past a minute | 65,236 characters |
 
+### A whole power is taken out of a power of a product, in front of a constant
+
+**Answers where there were none.** `(c sin(a + b x)^3)^(1/3)/x` was declined: nothing read a function under a root of
+its own power. `(c R f^n)^r` is `K f^(n r) R^r` with `K = (c R f^n)^r/(f^(n r) R^r)`, constant wherever it is defined,
+and only a factor of the integrand is rewritten. A constant stays under the root inside `K`, so a negative `c` is
+answered too: an odd root is the real root
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(c*sin(a + b*x)^3)^(1/3)".ToEntity().Integrate("x")` | `integral(...)` | 35 characters |
+| `"(c*sin(a + b*x)^3)^(2/3)".ToEntity().Integrate("x")` | `integral(...)` | 78 characters |
+| `"(c*sin(a + b*x)^3)^(1/3)/x".ToEntity().Integrate("x")` | `integral(...)` | 105 characters |
+| `"(c*sin(a + b*x)^3)^(2/3)/x^3".ToEntity().Integrate("x")` | `integral(...)` | 391 characters |
+| `"(c*sin(a + b*x^n)^3)^(1/3)/x".ToEntity().Integrate("x")` | `integral(...)` | 129 characters |
+| `"sqrt((x^2 - 1)^2/(x*(1 + x^2)))/(1 + x^2)".ToEntity().Integrate("x")` | `integral(...)` | 167 characters |
+| `"1/sqrt((a^2 + x^2)^3)".ToEntity().Integrate("x")` | `integral(...)` | 104 characters |
+| `"1/sqrt((a + b*x^2)^3)".ToEntity().Integrate("x")` | `integral(...)` | 100 characters |
+| `"1/sqrt(1 - coth(x)^2)".ToEntity().Integrate("x")` | `integral(...)` | 301 characters |
+
 ### A power of x past the twelfth beside a block is split off
 
 **Answers where there were none.** `(c + d x^3 + g x^6 + f x^9)/(x^14 (a + b x^3))` was declined, and so were
