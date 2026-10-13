@@ -45,10 +45,33 @@ namespace AngouriMath.Tests.Calculus
             DifferentiatesBack(integrand, integral);
         }
 
-        private static void DifferentiatesBack(string integrand, Entity integral)
+        /// <summary>
+        /// The imaginary factor in the logarithm's power of the variable, <c>2 ln(c x^(i/2))</c>:
+        /// <c>e^(i L)</c> is a constant <c>K</c> times <c>x^p</c> for the real <c>p = i b x u'/u</c>,
+        /// and with <c>K</c> named the integrand is rational in <c>x</c>. Unnamed, <c>c^(2 i)</c>
+        /// and <c>c^(-2 i)</c> never cancelled and the answer was a piecewise of 6,000 characters.
+        /// <c>K</c> is <c>e^(i L) x^(-p)</c>, constant wherever it is defined, for either sign of
+        /// <c>c</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("sec(a + 2*ln(c*x^(1/2*i)))^3", 1.3)]
+        [InlineData("sec(a + 2*ln(c*x^(1/2*i)))^3", -1.3)]
+        [InlineData("csc(a + 2*ln(c*x^(1/2*i)))^3", 1.3)]
+        [InlineData("x*sec(a + 2*ln(c*x^i))^3", 1.3)]
+        [InlineData("x*csc(a + 2*ln(c*x^i))^3", -1.3)]
+        [InlineData("sec(a + 2*ln(c/x^(1/2*i)))^3", 1.3)]
+        [InlineData("sec(a + 2*ln(c/x^(1/2*i)))^3", -1.3)]
+        public void AnImaginaryPowerInTheLogarithm(string integrand, double c)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.True(integral.Stringize().Length <= 600, $"{integral.Stringize().Length} characters");
+            DifferentiatesBack(integrand, integral, c);
+        }
+
+        private static void DifferentiatesBack(string integrand, Entity integral, double c = 1.3)
         {
             Assert.DoesNotContain("integral(", integral.Stringize());
-            Entity Pinned(Entity e) => e.Substitute("a", 0.4).Substitute("c", 1.3);
+            Entity Pinned(Entity e) => e.Substitute("a", 0.4).Substitute("c", c);
             var derivative = Pinned(integral.Substitute("C", 0)).Differentiate("x");
             var original = Pinned(integrand.ToEntity());
             foreach (var at in new[] { 0.3, 0.8, 1.5, 2.4 })
