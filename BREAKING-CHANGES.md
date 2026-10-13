@@ -2319,6 +2319,21 @@ one reads a numeric slope, and writes an offset out by the addition formula, whi
 | `"csc(1+x)*csc(2+2*x)^2".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `cos(1 + x)` |
 | `"sin(a+b*x)^3/sin(2*a+2*b*x)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `tan(a + b x)` |
 
+### Multiples of one linear argument are written in it with `x` beside them in a linear
+
+`csc(a + b x) sin(3a + 3b x)/(c + d x)` was left unevaluated, and so was each power of `c + d x`
+below the bar. Writing the arguments in `u = a + b x` declined wherever `x` stood outside them as
+well. Where it stands there only in sums, products and powers, it is written in `u` too, as
+`(u - a)/b`, and the linears in the answer are put back in lowest terms. Rubi's 4.7.3
+([#718](https://github.com/asc-community/AngouriMath/issues/718), PR
+[#1863](https://github.com/asc-community/AngouriMath/pull/1863)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"csc(a+b*x)*sin(3*a+3*b*x)/(c+d*x)".ToEntity().Integrate("x")` | `integral(...)` | 190 characters, in `ln`, `Si` and `Ci` of a multiple of `c + d x` |
+| `"csc(a+b*x)*sin(3*a+3*b*x)/(c+d*x)^4".ToEntity().Integrate("x")` | `integral(...)` | 736 characters |
+| `"csc(2+3*x)*sin(6+9*x)/(c+d*x)".ToEntity().Integrate("x")` | `integral(...)` | 194 characters |
+
 ### A function of one linear under a power inside a sum is written in that linear
 
 `x^3/(a + b (c + d x)^3)` was left unevaluated, and `(c + d x)^4/(a + b (c + d x)^3)` ran for more
