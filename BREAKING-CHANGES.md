@@ -1058,6 +1058,25 @@ secant too now, and the integrand is `sgn(cos(x)) (1 + u^2)^(3/2)/(a + b u)^2` i
 | `"sec(x)^7/(a + b*tan(x))^3".ToEntity().Integrate("x")` | `integral(...)` | 1,253 characters |
 | `"sec(x)/(a + b*cot(x))".ToEntity().Integrate("x")` | `integral(...)` | 571 characters |
 
+### A sum with the root of a quadratic below the bar is cleared by its conjugate
+
+**Answers where there were none.** `1/(a c + b c x^2 + d sqrt(a + b x^2))` was declined: Euler's substitution
+writes `sqrt(b)` into every coefficient for a symbolic leading coefficient, and the rational integrator could not
+finish. `(A + B sqrt(Q))/(C + D sqrt(Q))` is `(A + B sqrt(Q)) (C - D sqrt(Q))/(C^2 - D^2 Q)`, a rational function and
+one beside the root, and each is answered
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+The symbolic answers are large because each piece's answer is piecewise in the signs of the constants, and adding
+two of them multiplies their cases.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(a*c + b*c*x^2 + d*sqrt(a + b*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 3,464 characters |
+| `"x^2/(a*c + b*c*x^2 + d*sqrt(a + b*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 1,605 characters |
+| `"1/(x^2*(a*c + b*c*x^2 + d*sqrt(a + b*x^2)))".ToEntity().Integrate("x")` | `integral(...)` | 5,052 characters |
+| `"1/(c*sqrt(a + b*x^2) + d)".ToEntity().Integrate("x")` | `integral(...)` | 2,888 characters |
+| `"x*sqrt(2 - x^2)/(x - sqrt(2 - x^2))".ToEntity().Integrate("x")` | `integral(...)` | 195 characters |
+
 ### A quadratic with rational roots takes Euler's third substitution at one of them
 
 **Answers where there were none.** `1/(x + sqrt(3 - 2x - x^2))` was declined. Its leading coefficient is negative and
