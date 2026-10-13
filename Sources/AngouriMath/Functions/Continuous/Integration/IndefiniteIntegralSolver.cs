@@ -19121,6 +19121,76 @@ namespace AngouriMath.Functions.Algebra
         [System.ThreadStatic] private static bool takingTheWholePowersOut;
 
         /// <summary>
+        /// A root of a product beside a root of one of its factors, the product split:
+        /// <c>(P Q)^r</c> is <c>K P^r Q^r</c>, where <c>K = (P Q)^r/(P^r Q^r)</c> is constant wherever
+        /// it is defined, for the same reason as in
+        /// <see cref="SolveByTakingTheWholePowersOutOfAPowerOfAProduct"/>. The powers of <c>P</c>
+        /// then gather: <c>(a + b x^2)^(5/2)/sqrt(a^2 - b^2 x^4)</c> is
+        /// <c>K (a + b x^2)^2/sqrt(a - b x^2)</c>.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's 1.2.2.3:282-293 were declined: nothing reads a radicand as a product of another
+        /// radicand and a cofactor. Only factors of the integrand are read, and at the question
+        /// asked only. https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveBySplittingARootOfAProductBesideARootOfAFactor(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked || splittingARootOfAProduct)
+                return null;
+            var roots = new List<(Entity Node, Entity Base, Number.Rational Exponent)>();
+            Gather(expr);
+            if (roots.Count < 2)
+                return null;
+            foreach (var product in roots)
+                foreach (var factor in roots)
+                {
+                    if (ReferenceEquals(product.Node, factor.Node) || product.Base == factor.Base
+                        || ExactlyDivided(product.Base, factor.Base, x) is not { } cofactor || !cofactor.ContainsNode(x))
+                        continue;
+                    var multiple = Variable.CreateUnique(expr, "k_split");
+                    var written = MathS.Pow(factor.Base, product.Exponent) * MathS.Pow(cofactor, product.Exponent);
+                    var constant = product.Node / written;
+                    var rewritten = expr.Replace(node => ReferenceEquals(node, product.Node) ? multiple * written : node).InnerSimplified;
+                    Entity? answer;
+                    splittingARootOfAProduct = true;
+                    try
+                    {
+                        answer = Integration.ComputeAsTheSameQuestion(rewritten, x, integrateByParts);
+                    }
+                    finally
+                    {
+                        splittingARootOfAProduct = false;
+                    }
+                    if (answer is null)
+                        return null;
+                    answer = answer.Substitute(multiple, constant);
+                    return answer.ContainsNode(multiple) ? null : answer;
+                }
+            return null;
+
+            void Gather(Entity node)
+            {
+                switch (node)
+                {
+                    case Mulf(var left, var right):
+                        Gather(left);
+                        Gather(right);
+                        break;
+                    case Divf(var above, var below):
+                        Gather(above);
+                        Gather(below);
+                        break;
+                    case Powf(var @base, Number.Rational exponent) when exponent is not Number.Integer && @base.ContainsNode(x):
+                        roots.Add((node, @base, exponent));
+                        break;
+                }
+            }
+        }
+
+        /// <summary>Set while <see cref="SolveBySplittingARootOfAProductBesideARootOfAFactor"/> asks its question.</summary>
+        [System.ThreadStatic] private static bool splittingARootOfAProduct;
+
+        /// <summary>
         /// A rational function of <c>x</c> and one square root of a quadratic in <c>x</c>,
         /// rationalised by an Euler substitution and handed to the rational integrator.
         /// </summary>
