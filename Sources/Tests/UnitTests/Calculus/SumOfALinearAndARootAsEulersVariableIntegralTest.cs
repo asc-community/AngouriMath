@@ -35,12 +35,25 @@ namespace AngouriMath.Tests.Calculus
         // And beside powers of the radicand, whole and not, before the split expands them.
         [InlineData("(a + 2*d*k*x/f^2 + k^2*x^2/f^2)^2*(d + k*x + f*sqrt(a + 2*d*k*x/f^2 + k^2*x^2/f^2))^n")]
         [InlineData("(a + 2*d*k*x/f^2 + k^2*x^2/f^2)^(3/2)*(d + k*x + f*sqrt(a + 2*d*k*x/f^2 + k^2*x^2/f^2))^n")]
-        public void IsIntegratedInTheSum(string integrand)
+        public void IsIntegratedInTheSum(string integrand) => DifferentiatesBack(integrand, 2.5);
+
+        // The radicand written over `f^2` as Rubi writes it, and the root of a constant multiple
+        // of it beside the sum: `sqrt(g Q)` is `sqrt(Q)` times a ratio constant wherever both are
+        // defined, named while the question is asked, and so for either sign of `g`.
+        [Theory]
+        [InlineData("(d + k*x + f*sqrt((a*f^2 + k*x*(2*d + k*x))/f^2))^n", 2.5)]
+        [InlineData("(d + k*x + f*sqrt((a*f^2 + k*x*(2*d + k*x))/f^2))^n/((a*f^2 + k*x*(2*d + k*x))/f^2)^(1/2)", 2.5)]
+        [InlineData("(a*g + 2*d*k*g*x/f^2 + k^2*g*x^2/f^2)^(1/2)*(d + k*x + f*sqrt(a + 2*d*k*x/f^2 + k^2*x^2/f^2))^n", 2.5)]
+        [InlineData("(a*g + 2*d*k*g*x/f^2 + k^2*g*x^2/f^2)^(1/2)*(d + k*x + f*sqrt(a + 2*d*k*x/f^2 + k^2*x^2/f^2))^n", -2.5)]
+        [InlineData("(d + k*x + f*sqrt((a*f^2 + k*x*(2*d + k*x))/f^2))^n/((a*f^2*g + k*g*x*(2*d + k*x))/f^2)^(1/2)", -2.5)]
+        public void WrittenOverItsDenominatorOrBesideTheRootOfAMultiple(string integrand, double g) => DifferentiatesBack(integrand, g);
+
+        private static void DifferentiatesBack(string integrand, double g)
         {
             var integral = integrand.ToEntity().Integrate("x");
             Assert.DoesNotContain("integral(", integral.Stringize());
             Entity Pinned(Entity e) => e.Substitute("a", 1.3).Substitute("b", 0.6).Substitute("d", 0.7)
-                .Substitute("f", 1.1).Substitute("k", 0.9).Substitute("n", 0.37);
+                .Substitute("f", 1.1).Substitute("k", 0.9).Substitute("n", 0.37).Substitute("g", g);
             var derivative = Pinned(integral.Substitute("C", 0)).Differentiate("x");
             var original = Pinned(integrand.ToEntity());
             foreach (var at in new[] { -2.5, -1.2, 0.3, 0.8, 1.4 })
