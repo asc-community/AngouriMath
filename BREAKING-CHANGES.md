@@ -151,6 +151,21 @@ an arm for each sign of a quantity that is not real, `x^2 provided not x = 0` be
 | `"piecewise(2 * x provided not x = 0, 3 * x ^ 2 provided i - 1 < 0)".ToEntity().InnerSimplified` | `NaN` | `2 * x` where `x` is not 0 |
 | `"piecewise(1 provided i < 0, 2 provided i > 0)".ToEntity().InnerSimplified` | `NaN` | `NaN`, as before: no case holds |
 
+### Zero times a power with a non-real exponent is zero where the power is defined
+
+**A value where there was NaN.** `0 b^i` simplified to NaN, and so did `b^i - b^i`. That in turn made `x b^i`'s
+derivative NaN, along with the derivative of every antiderivative with a constant like `(e^a)^i` in it. A power's
+condition was `not b = 0 or w > 0`, and `w > 0` has no value for a non-real `w`, since the complex numbers are not
+ordered. `0^w` is defined where `Re(w) > 0`, and that is the condition now
+([#1865](https://github.com/asc-community/AngouriMath/issues/1865)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"0 * b^i".ToEntity().Simplify()` | `NaN` | `0 provided not b = 0` |
+| `"b^i - b^i".ToEntity().Simplify()` | `NaN` | `0 provided not b = 0` |
+| `"0 * b^(2 + i)".ToEntity().Simplify()` | `NaN` | `0` |
+| `"x * b^i".ToEntity().Differentiate("x")` | `NaN` | `b ^ i provided not b = 0` |
+
 ### The factorial far from zero, and a quotient by a number whose modulus is nearly whole
 
 The numerical factorial is Spouge's approximation, and it holds right of zero. Used left of zero it
