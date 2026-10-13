@@ -400,7 +400,7 @@ whose denominator in the tangent is a product of linears
 | `"sec(c + d*x)^3/(a*cos(c + d*x) + b*sin(c + d*x))^4".ToEntity().Integrate("x")` | `integral(...)` | answered, in 9,322 characters |
 | `"1/(a*sec(x) + b*tan(x))^4".ToEntity().Integrate("x")` | `integral(...)` | answered, in 6,548 characters |
 
-### An odd power of a sine or a cosine of a logarithm is integrated, and a resonance on a sign is declined
+### An odd power of a sine or a cosine of a logarithm is integrated, and a resonance on a sign holds on both sides
 
 **Answers where there were none.** `x^m sin(a + b ln(k x^n))^3` and the cosine's cube were declined, though the first
 and second powers were answered (Rubi's 4.7.5). Under `t = ln(k x^n)` each one is an exponential times a power of a
@@ -410,7 +410,10 @@ substitution asked it one level down. A logarithm's substitution now asks that i
 
 **No answer where there was a wrong one.** `e^(x/n) sin(x sqrt(-1/n^2))` is resonant: `1/n + i sqrt(-1/n^2)` is zero
 for a positive `n`, and `1/n - i sqrt(-1/n^2)` is zero for a negative one. The answer divided by one of them, and had
-no value at any point. It is declined now ([#1852](https://github.com/asc-community/AngouriMath/issues/1852)).
+no value at any point. Euler's identity is written in `j = -(1/n)/sqrt(-1/n^2)` in place of `i` now: `j^2` is `-1`
+whichever sign `n` has, and `1/n + j sqrt(-1/n^2)` is zero by construction, so one answer holds on both sides. A
+logarithm's substitution reaches the same integrand, so `x^m sin(a + ln(k x^n) sqrt(-(1 + m)^2/n^2))` and its powers are
+answered too ([#1852](https://github.com/asc-community/AngouriMath/issues/1852)).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
@@ -419,7 +422,10 @@ no value at any point. It is declined now ([#1852](https://github.com/asc-commun
 | `"x^2*sin(a + b*ln(k*x^n))^3".ToEntity().Integrate("x")` | `integral(...)` | 1,605 characters |
 | `"x^m*cos(a + b*ln(k*x^n))^3".ToEntity().Integrate("x")` | `integral(...)` | 1,907 characters |
 | `"sin(a + b*ln(k*x^n))^4/x^2".ToEntity().Integrate("x")` | `integral(...)` | 2,083 characters |
-| `"exp(x/n)*sin(x*sqrt((-1)/n^2))".ToEntity().Integrate("x")` | an answer with no value anywhere, divided by `1/n^2 + (-1/n^2)` | `integral(...)` |
+| `"exp(x/n)*sin(x*sqrt((-1)/n^2))".ToEntity().Integrate("x")` | an answer with no value anywhere, divided by `1/n^2 + (-1/n^2)` | 110 characters, right for either sign of `n` |
+| `"exp(x/n)*sin(a + x*sqrt((-1)/n^2))".ToEntity().Integrate("x")` | an answer with no value anywhere | 254 characters |
+| `"x^m*sin(a + ln(k*x^n)*sqrt(-(1 + m)^2/n^2))".ToEntity().Integrate("x")` | `integral(...)` | 465 characters |
+| `"x^2*sin(a + ln(k*x^n)*sqrt((-1)/n^2))^3".ToEntity().Integrate("x")` | `integral(...)` | 1,873 characters |
 
 ### An odd power of a quadratic's derivative over a power of the quadratic is integrated in the quadratic
 
@@ -2170,8 +2176,8 @@ by `(m + 1)^2 + B^2`, which an imaginary `B` can make zero, and Rubi's 4.7.5 is 
 that. `e^(i (a + b ln(u)))` is `e^(i a)` times a real power of `u` when `b` is imaginary, so each
 such function is a sum or quotient of powers of `u`, and is written so now when `b` is an imaginary
 number; the zero is a power `1/x`, whose integral is a logarithm. A symbolic `b`,
-`sqrt(-1/n^2)`, is left alone, since whether the zero is there turns on the sign of `n`
-([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+`sqrt(-1/n^2)`, whose zero turns on the sign of `n`, is answered by the exponential's rule
+([#1852](https://github.com/asc-community/AngouriMath/issues/1852), [#718](https://github.com/asc-community/AngouriMath/issues/718)).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
