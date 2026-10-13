@@ -26893,8 +26893,16 @@ namespace AngouriMath.Functions.Algebra
         {
             if (!expr.Nodes.Any(node => node is Logf && node.ContainsNode(x)))
                 return null;
+            // `e^(i L)` is `K x^p` for a real `p` when `u` is a product of constants and powers of
+            // the variable, with `K = e^(i L) x^(-p)` constant wherever it is defined: named, the
+            // integrand is rational in `x` with one symbol in it, where `e^(i a)` and `e^(-i a)`, or
+            // `c^(2 i)` and `c^(-2 i)`, were two that never cancelled and answered a piecewise of
+            // thousands of characters. One argument only, so that one name stands for it.
+            var arguments = new HashSet<Entity>();
+            Entity? power = null;
+            var named = Variable.CreateUnique(expr, "k_exp");
             var any = false;
-            var rewritten = expr.Replace(node =>
+            Entity Rewritten(bool naming) => expr.Replace(node =>
             {
                 var (argument, kind) = node switch
                 {
@@ -26906,11 +26914,14 @@ namespace AngouriMath.Functions.Algebra
                     Cosecantf(var of) => (of, 5),
                     _ => ((Entity?)null, -1)
                 };
-                if (argument is null || !IsLinearInALogarithmWithAnImaginaryCoefficient(argument, x))
+                if (argument is null || !IsLinearInALogarithmWithAnImaginaryCoefficient(argument, x, out var itsPower))
                     return node;
                 any = true;
-                var plus = MathS.Pow(MathS.e, MathS.i * argument);
-                var minus = MathS.Pow(MathS.e, -MathS.i * argument);
+                arguments.Add(argument);
+                power = itsPower;
+                var (plus, minus) = naming && itsPower is { }
+                    ? (named * MathS.Pow(x, itsPower), MathS.Pow(x, -itsPower) / named)
+                    : (MathS.Pow(MathS.e, MathS.i * argument), MathS.Pow(MathS.e, -MathS.i * argument));
                 return kind switch
                 {
                     0 => (plus - minus) / (2 * MathS.i),
@@ -26921,6 +26932,7 @@ namespace AngouriMath.Functions.Algebra
                     _ => 2 * MathS.i / (plus - minus),
                 };
             });
+            var rewritten = Rewritten(naming: true);
             if (!any)
                 return null;
             // Beside its own derivative the logarithm is a substitution's: `tan(a + i ln(x))/x` is
@@ -26935,15 +26947,26 @@ namespace AngouriMath.Functions.Algebra
                 if (beside.ContainsNode(x) && AreProportionalAtSampledPoints(beside, logarithm.Differentiate(x), x))
                     return null;
             }
-            return Integration.ComputeAsTheSameQuestion(rewritten, x, integrateByParts);
+            // A condition on `K` is a sign of a number that is not real, and has no value once
+            // `K` is written back: `tan(a + i ln(x))`'s antiderivative is a piecewise on `K^4 > 0`.
+            // There the exponentials are asked as they are.
+            if (power is { } && arguments.Count == 1
+                && Integration.ComputeAsTheSameQuestion(rewritten, x, integrateByParts) is { } answer
+                && !answer.Nodes.Any(node => node is Providedf(_, var condition) && condition.ContainsNode(named)
+                                             || node is Piecewise piecewise && piecewise.Cases.Any(@case => @case.Predicate.ContainsNode(named))))
+                return answer.Substitute(named, (MathS.Pow(MathS.e, MathS.i * arguments.First()) * MathS.Pow(x, -power)).InnerSimplified);
+            return Integration.ComputeAsTheSameQuestion(Rewritten(naming: false), x, integrateByParts);
         }
 
         /// <summary>
         /// Whether <paramref name="argument"/> is <c>a + b ln(u)</c>, with <c>u</c> the only place the
-        /// variable is and <c>b</c> an imaginary number.
+        /// variable is and <c>b</c> an imaginary number, or <c>u</c> a product of constants and
+        /// powers of the variable whose powers <c>b</c> makes imaginary. <paramref name="power"/> is
+        /// then the real <c>p</c> of <c>e^(i L) = K x^p</c>, and null for any other <c>u</c>.
         /// </summary>
-        private static bool IsLinearInALogarithmWithAnImaginaryCoefficient(Entity argument, Entity.Variable x)
+        private static bool IsLinearInALogarithmWithAnImaginaryCoefficient(Entity argument, Entity.Variable x, out Entity? power)
         {
+            power = null;
             var logarithms = argument.Nodes
                 .Where(node => node is Logf(var @base, var of) && @base == MathS.e && of.ContainsNode(x))
                 .Distinct().ToList();
@@ -26958,9 +26981,32 @@ namespace AngouriMath.Functions.Algebra
             // A number, and not a symbol's: with `b = sqrt(-1/n^2)` the power of the variable this
             // leaves is `1/x` for every positive n, which nothing reading `n` symbolically can know,
             // and the general power's formula comes back with a zero below its bar.
-            return coefficient.Vars.Count() == 0 && coefficient.Evaled is Number.Complex number && number is not Number.Real
-                && System.Math.Abs((double)number.RealPart) < 1e-12 * System.Math.Abs((double)number.ImaginaryPart);
+            if (coefficient.Vars.Any())
+                return false;
+            // `2 ln(c x^(i/2))`: the imaginary factor is in the logarithm's power of the variable.
+            // What makes `e^(i b ln(u))` a power of the variable is that `b x u'/u` is a constant,
+            // and it is `i` there. For `u` a product of constants and powers of the variable,
+            // `x u'/u` is the sum of those powers, read off the factors.
+            Entity sum = Number.Integer.Zero;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(((Logf)logarithms[0]).Antilogarithm))
+            {
+                Entity? its = factor == x ? Number.Integer.One
+                    : factor is Powf(var @base, var exponent) && @base == x && !exponent.ContainsNode(x) ? exponent
+                    : !factor.ContainsNode(x) ? Number.Integer.Zero
+                    : null;
+                if (its is null)
+                    return IsAnImaginaryNumber(coefficient);
+                sum = underneath ? sum - its : sum + its;
+            }
+            if (!IsAnImaginaryNumber(coefficient * sum))
+                return false;
+            power = (MathS.i * coefficient * sum).InnerSimplified;
+            return true;
         }
+
+        private static bool IsAnImaginaryNumber(Entity expr)
+            => expr.Vars.Count() == 0 && expr.Evaled is Number.Complex number && number is not Number.Real
+               && System.Math.Abs((double)number.RealPart) < 1e-12 * System.Math.Abs((double)number.ImaginaryPart);
 
         /// <summary>
         /// A power of the variable times a sine or cosine of a logarithm, in closed form:
