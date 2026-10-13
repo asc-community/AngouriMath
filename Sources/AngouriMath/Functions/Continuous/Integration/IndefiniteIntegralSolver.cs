@@ -18871,6 +18871,21 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A rational root of <c>a x^2 + b x + c</c> with rational coefficients, the larger, or
+        /// null where its roots are not rational.
+        /// </summary>
+        private static Entity? RationalRootOf(Entity a, Entity b, Entity c)
+        {
+            if (a.Evaled is not Number.Rational ra || b.Evaled is not Number.Rational rb || c.Evaled is not Number.Rational rc
+                || ra.Evaled is Number.Complex { IsZero: true })
+                return null;
+            var discriminant = (rb * rb - 4 * ra * rc).InnerSimplified;
+            if (discriminant.Evaled is not Number.Rational { IsNegative: false } || MathS.Sqrt(discriminant).InnerSimplified.Evaled is not Number.Rational root)
+                return null;
+            return ((-rb + root) / (2 * ra)).InnerSimplified;
+        }
+
+        /// <summary>
         /// <paramref name="radicand"/> as <c>a x^2 + b x + c</c>, read through a constant below the
         /// bar as well: Rubi writes <c>(a f^2 + e x (2 d + e x))/f^2</c> for
         /// <c>a + 2 d e x/f^2 + e^2 x^2/f^2</c>, and the first was not read as a quadratic.
@@ -19079,6 +19094,21 @@ namespace AngouriMath.Functions.Algebra
             else if (aRational) which = 1;
             else if (cRational) which = 2;
             else if (aPositive) which = 1;
+            else if (RationalRootOf(a, b, c) is { } rationalRoot)
+            {
+                // Neither root rational and a < 0, the quadratic's own roots are: `3 - 2x - x^2`
+                // is `(1 - x)(3 + x)`, and the second substitution wrote `sqrt(3)` into every
+                // coefficient, after which `1/(x + sqrt(3 - 2x - x^2))` was declined. Shifted to a
+                // root, x = y + r, the constant term is zero and the third substitution's, with
+                // rational coefficients throughout. Where a > 0 the first substitution answers
+                // first and faster: `sqrt(12x^2 + 17x + 6)/((2 + 3x)^2 (30 + 31x - 12x^2)^2)`
+                // took 1.4 s by it and timed out by the shift.
+                var y = Variable.CreateUnique(expr, "y_euler");
+                if (SolveByEulerSubstitution(expr.Substitute(x, y + rationalRoot), y) is not { } inY)
+                    return null;
+                var writtenBack = radicand.Substitute(x, y + rationalRoot).Substitute(y, x - rationalRoot);
+                return inY.Substitute(y, x - rationalRoot).Replace(node => node == writtenBack ? radicand : node).InnerSimplified;
+            }
             else if (cPositive) which = 2;
             else if (aValue is null) which = 1;
             else if (cValue is null) which = 2;
