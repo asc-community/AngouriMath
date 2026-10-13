@@ -120,6 +120,18 @@ namespace AngouriMath.Tests.Calculus
         public void TheRootAtZero(string integrand, double[] points) => DifferentiatesBack(integrand, points, ("r", 1.7));
 
         /// <summary>
+        /// Neither <c>sqrt(a)</c> nor <c>sqrt(c)</c> rational, but the quadratic's roots: shifted
+        /// to one, the root is at zero and the third substitution has rational coefficients,
+        /// where the second wrote <c>sqrt(3)</c> into every one and was declined. Rubi's 1.3.2.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(x + sqrt(3 - 2*x - x^2))", new[] { -2.5, -1.2, 0.3, 0.8 })]
+        [InlineData("1/(x + sqrt(3 - 2*x - x^2))^3", new[] { -2.5, -1.2, 0.3, 0.8 })]
+        [InlineData("x/(x + sqrt(3 - 2*x - x^2))", new[] { -2.5, -1.2, 0.3, 0.8 })]
+        [InlineData("1/(2*x + sqrt(3 - 2*x - x^2))", new[] { -2.5, -1.2, 0.3, 0.8 })]
+        public void ARationalRootOfTheQuadratic(string integrand, double[] points) => DifferentiatesBack(integrand, points);
+
+        /// <summary>
         /// Reached one level down, which is why the rule is not scoped: a nested radical under
         /// <c>u = sqrt(1 + x)</c>, and the remainders of by parts against an inverse function.
         /// </summary>
