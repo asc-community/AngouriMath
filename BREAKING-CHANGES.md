@@ -607,6 +607,23 @@ left ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 | `"1/(a + b*cot(x) + c*csc(x))".ToEntity().Integrate("x")` | `integral(...)` | 2,738 characters |
 | `"1/(a + c*sec(2*x + 1) + b*tan(2*x + 1))".ToEntity().Integrate("x")` | `integral(...)`; past 290 s on the unreleased master | 2,890 characters |
 
+### A root of a product beside a root of one of its factors is split
+
+**Answers where there were none.** `(a + b x^2)^(5/2)/sqrt(a^2 - b^2 x^4)` was declined: nothing read a radicand as
+another radicand times a cofactor. `(P Q)^r` is `K P^r Q^r` with `K = (P Q)^r/(P^r Q^r)`, constant wherever it is
+defined, and the powers of `P` then gather into `K (a + b x^2)^2/sqrt(a - b x^2)`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+The answers are as large as the split integrands' answers, which are piecewise in the signs of `a` and `b`.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a + b*x^2)^(5/2)/sqrt(a^2 - b^2*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 2,937 characters |
+| `"(a + b*x^2)^(1/2)/sqrt(a^2 - b^2*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 562 characters |
+| `"1/((a + b*x^2)^(3/2)*sqrt(a^2 - b^2*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 4,191 characters |
+| `"(a - b*x^2)^(3/2)/sqrt(a^2 - b^2*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 6,543 characters |
+| `"1/((a - b*x^2)^(1/2)*sqrt(a^2 - b^2*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 877 characters |
+
 ### A secant or a cosecant beside a power of a sum of them is read as a power of the cosine or the sine
 
 **Answers where there were none.** `sec(x) sqrt(sec(x) + tan(x))` was declined, with the rest of Rubi's 4.7.7
