@@ -8493,8 +8493,7 @@ namespace AngouriMath.Functions.Algebra
                 // `P(x) e^(a x)` is a polynomial times one exponential -- one of them, with
                 // `a = -i b` or `a = i b`, a polynomial alone -- which are closed on their own.
                 // `e^(i arctan(a x))/sqrt(c + a^2 c x^2)` under `x = tan(u)/a` is `e^(i u) cos(u)`.
-                var plus = ((onTheCosine - MathS.i * onTheSine) / 2).InnerSimplified;
-                var minus = ((onTheCosine + MathS.i * onTheSine) / 2).InnerSimplified;
+                var unit = (Entity)MathS.i;
                 var towardsPlus = (rate + MathS.i * frequency).InnerSimplified;
                 var towardsMinus = (rate - MathS.i * frequency).InnerSimplified;
                 static bool Vanishes(Entity exponent) => exponent.Evaled is Number.Complex { IsZero: true }
@@ -8503,10 +8502,18 @@ namespace AngouriMath.Functions.Algebra
                 var minusVanishes = Vanishes(towardsMinus);
                 // One of the two vanishes, since their product is the scale, and which one can rest on
                 // a sign: with `a = 1/n` and `b = sqrt(-1/n^2)`, `a + i b` is zero for a positive `n`
-                // and `a - i b` for a negative one. Neither seen to, the term over it divides by zero
-                // on one side of the sign, and the answer had no value anywhere.
+                // and `a - i b` for a negative one. Neither seen to, Euler's identity is written in
+                // `j = -a/b` instead of `i`: its square is `-1` wherever the scale is zero, whichever
+                // sign holds, and `a + j b` is zero by construction.
                 if (!plusVanishes && !minusVanishes)
-                    return null;
+                {
+                    if (frequency.Evaled is Number.Complex { IsZero: true })
+                        return null;
+                    unit = -rate / frequency;
+                    (towardsPlus, towardsMinus, plusVanishes) = (Number.Integer.Zero, (2 * rate).InnerSimplified, true);
+                }
+                var plus = ((onTheCosine - unit * onTheSine) / 2).InnerSimplified;
+                var minus = ((onTheCosine + unit * onTheSine) / 2).InnerSimplified;
                 Entity resonant = Number.Integer.Zero;
                 foreach (var (coefficient, exponent, vanishes) in new[] { (plus, towardsPlus, plusVanishes), (minus, towardsMinus, minusVanishes) })
                 {

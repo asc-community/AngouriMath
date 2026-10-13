@@ -46,15 +46,40 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
-        /// <c>a + i b</c> or <c>a - i b</c> is zero, which one by the sign of <c>n</c>, and an answer
-        /// dividing by either had no value anywhere.
+        /// <c>a + i b</c> or <c>a - i b</c> is zero, which one by the sign of <c>n</c>: an answer
+        /// dividing by either had no value anywhere, and one written in <c>j = -a/b</c> in place of
+        /// <c>i</c> holds on both sides.
         /// <a href="https://github.com/asc-community/AngouriMath/issues/1852">#1852</a>
         /// </summary>
         [Theory]
         [InlineData("exp(x/n)*sin(x*sqrt((-1)/n^2))")]
         [InlineData("exp(x/n)*sin(a + x*sqrt((-1)/n^2))")]
+        [InlineData("exp(x/n)*cos(a + x*sqrt((-1/9)/n^2))^3")]
         [InlineData("sin(a + ln(k*x^n)*sqrt((-1)/n^2))")]
-        public void AResonanceOnASignIsDeclined(string integrand) =>
-            Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
+        [InlineData("x*sin(a + ln(k*x^n)*sqrt((-4)/n^2))")]
+        [InlineData("x^m*sin(a + ln(k*x^n)*sqrt(-(1 + m)^2/n^2))")]
+        [InlineData("x^m*cos(a + ln(k*x^n)*sqrt(-1/4*(1 + m)^2/n^2))^2")]
+        [InlineData("x^2*sin(a + ln(k*x^n)*sqrt((-1)/n^2))^3")]
+        [InlineData("x^m*sin(a + ln(k*x^2)*sqrt(-1/36*(1 + m)^2))^3")]
+        public void AResonanceOnASignHoldsOnBothSides(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            foreach (var n in new[] { 3, -3 })
+            {
+                Entity Pinned(Entity e) => e.Substitute("a", "1/4".ToEntity()).Substitute("k", 2)
+                    .Substitute("n", n).Substitute("m", "5/2".ToEntity());
+                var derivative = Pinned(integral.Substitute("C", 0)).Differentiate("x");
+                var original = Pinned(integrand.ToEntity());
+                foreach (var at in new[] { "0.35", "0.6", "1.1", "1.4" })
+                {
+                    var want = original.Substitute("x", at.ToEntity()).EvalNumerical();
+                    var got = derivative.Substitute("x", at.ToEntity()).EvalNumerical();
+                    Assert.True(Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart)
+                                < 1e-9 * Math.Max(1, Math.Abs((double)want.RealPart) + Math.Abs((double)want.ImaginaryPart)),
+                        $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, n = {n}, where the integrand is {want}");
+                }
+            }
+        }
     }
 }
