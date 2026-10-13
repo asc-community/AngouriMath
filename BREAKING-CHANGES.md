@@ -1058,6 +1058,21 @@ secant too now, and the integrand is `sgn(cos(x)) (1 + u^2)^(3/2)/(a + b u)^2` i
 | `"sec(x)^7/(a + b*tan(x))^3".ToEntity().Integrate("x")` | `integral(...)` | 1,253 characters |
 | `"sec(x)/(a + b*cot(x))".ToEntity().Integrate("x")` | `integral(...)` | 571 characters |
 
+### A quadratic with rational roots takes Euler's third substitution at one of them
+
+**Answers where there were none.** `1/(x + sqrt(3 - 2x - x^2))` was declined. Its leading coefficient is negative and
+its constant term not a square, so the second substitution wrote `sqrt(3)` into every coefficient and the rational
+integrator could not finish. `3 - 2x - x^2` is `(1 - x)(3 + x)`: shifted to a root, the constant term is zero, and the
+third substitution answers with rational coefficients throughout. A quadratic with a positive leading coefficient
+keeps the first substitution, which was already answering it
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(x + sqrt(3 - 2*x - x^2))".ToEntity().Integrate("x")` | `integral(...)` | 389 characters |
+| `"1/(x + sqrt(3 - 2*x - x^2))^3".ToEntity().Integrate("x")` | `integral(...)` | 1,160 characters |
+| `"1/(2*x + sqrt(3 - 2*x - x^2))".ToEntity().Integrate("x")` | `integral(...)` | 253 characters |
+
 ### A root of a multiple of the radicand beside Euler's sum is the same root
 
 **Answers where there were none.** `sqrt(g Q) (d + e x + f sqrt(Q))^n` was declined, with the root of `g Q` below the
