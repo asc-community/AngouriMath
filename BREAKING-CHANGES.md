@@ -1058,6 +1058,21 @@ secant too now, and the integrand is `sgn(cos(x)) (1 + u^2)^(3/2)/(a + b u)^2` i
 | `"sec(x)^7/(a + b*tan(x))^3".ToEntity().Integrate("x")` | `integral(...)` | 1,253 characters |
 | `"sec(x)/(a + b*cot(x))".ToEntity().Integrate("x")` | `integral(...)` | 571 characters |
 
+### A root of a multiple of the radicand beside Euler's sum is the same root
+
+**Answers where there were none.** `sqrt(g Q) (d + e x + f sqrt(Q))^n` was declined, with the root of `g Q` below the
+bar, and so was the sum with its quadratic written over a constant, `sqrt((a f^2 + e x (2 d + e x))/f^2)`, as Rubi's
+1.3.2 writes it. The substitution read one radicand, and a quadratic only as a polynomial. `sqrt(g Q)/sqrt(Q)` is
+constant wherever both roots are defined, for either sign of `g`, so it is named while the question is asked and put
+back after; and a quadratic over a constant is read through the constant
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(d + e*x + f*sqrt((a*f^2 + e*x*(2*d + e*x))/f^2))^n".ToEntity().Integrate("x")` | `integral(...)` | 227 characters |
+| `"(a*g + 2*d*e*g*x/f^2 + e^2*g*x^2/f^2)^(1/2)*(d + e*x + f*sqrt(a + 2*d*e*x/f^2 + e^2*x^2/f^2))^n".ToEntity().Integrate("x")` | `integral(...)` | 539 characters |
+| `"(d + e*x + f*sqrt(a + 2*d*e*x/f^2 + e^2*x^2/f^2))^n/(a*g + 2*d*e*g*x/f^2 + e^2*g*x^2/f^2)^(1/2)".ToEntity().Integrate("x")` | `integral(...)` | 253 characters |
+
 ### A whole power of the radicand under Euler's substitution is read as one
 
 **Answers where there were none, and none where they were wrong.** Euler's substitution writes the

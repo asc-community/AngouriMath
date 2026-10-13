@@ -18886,6 +18886,76 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <paramref name="radicand"/> as <c>a x^2 + b x + c</c>, read through a constant below the
+        /// bar as well: Rubi writes <c>(a f^2 + e x (2 d + e x))/f^2</c> for
+        /// <c>a + 2 d e x/f^2 + e^2 x^2/f^2</c>, and the first was not read as a quadratic.
+        /// </summary>
+        private static bool TryReadAQuadraticOverAConstant(Entity radicand, Entity.Variable x,
+            [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity? a,
+            [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity? b,
+            [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity? c)
+        {
+            if (TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out a, out b, out c))
+                return true;
+            if (radicand is Divf(var over, var constant) && !constant.ContainsNode(x)
+                && TreeAnalyzer.TryGetPolyQuadratic(over, x, out var overA, out var overB, out var overC))
+            {
+                (a, b, c) = ((overA / constant).InnerSimplified, (overB / constant).InnerSimplified, (overC / constant).InnerSimplified);
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> with every square root of a constant multiple of one quadratic
+        /// <c>Q</c> written as a named constant times <c>sqrt(Q)</c>, and the names' values; null
+        /// where there is one radicand, or radicands that are not multiples of one.
+        /// </summary>
+        /// <remarks>
+        /// <c>sqrt(g Q) (d + e x + f sqrt(Q))^n</c>: the ratio <c>sqrt(g Q)/sqrt(Q)</c> is constant
+        /// wherever both roots are defined, whatever the sign of <c>g</c>, so it comes out of the
+        /// integral named and goes back in after. The radicand kept is the one a power of a sum
+        /// holds, the substitution's own. Rubi's 1.3.2.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static (Entity Rewritten, List<(Entity.Variable Name, Entity Value)> Ratios)? WithTheRootsOfMultiplesAsOne(Entity expr, Entity.Variable x)
+        {
+            static bool IsARoot(Entity node, Entity.Variable x)
+                => node is Powf(var @base, Number.Rational r) && r is not Number.Integer
+                   && r.ERational.Denominator.Equals(EInteger.FromInt32(2)) && @base.ContainsNode(x);
+            var radicands = expr.Nodes.Where(node => IsARoot(node, x)).Select(node => ((Powf)node).Base).Distinct().ToList();
+            if (radicands.Count < 2)
+                return null;
+            var kept = expr.Nodes
+                .OfType<Powf>()
+                .Where(power => !power.Exponent.ContainsNode(x) && !IsARoot(power, x) && power.Base.Nodes.Any(inner => IsARoot(inner, x)))
+                .SelectMany(power => power.Base.Nodes.Where(inner => IsARoot(inner, x)).Select(inner => ((Powf)inner).Base))
+                .FirstOrDefault() ?? radicands[0];
+            if (!TryReadAQuadraticOverAConstant(kept, x, out var a, out var b, out var c) || VanishesIdentically(a))
+                return null;
+            var ratios = new List<(Entity.Variable, Entity)>();
+            var byRadicand = new Dictionary<Entity, Entity.Variable>();
+            foreach (var other in radicands)
+            {
+                if (other == kept)
+                    continue;
+                if (!TryReadAQuadraticOverAConstant(other, x, out var oa, out var ob, out var oc))
+                    return null;
+                var factor = (oa / a).InnerSimplified;
+                if (factor.ContainsNode(x) || !VanishesIdentically(ob - factor * b) || !VanishesIdentically(oc - factor * c))
+                    return null;
+                var name = Variable.CreateUnique(expr + ratios.Aggregate((Entity)Number.Integer.Zero, (sum, pair) => sum + pair.Item1), "k_ratio");
+                ratios.Add((name, MathS.Sqrt(other) / MathS.Sqrt(kept)));
+                byRadicand[other] = name;
+            }
+            var rewritten = expr.Replace(node =>
+                node is Powf(var @base, Number.Rational r) && byRadicand.TryGetValue(@base, out var ratio) && IsARoot(node, x)
+                    ? MathS.Pow(ratio, Number.Integer.Create(r.ERational.Numerator)) * MathS.Pow(kept, r)
+                    : node);
+            return (rewritten, ratios);
+        }
+
+        /// <summary>
         /// A rational function of <c>x</c> and one square root of a quadratic in <c>x</c>,
         /// rationalised by an Euler substitution and handed to the rational integrator.
         /// </summary>
@@ -18936,6 +19006,15 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         internal static Entity? SolveByEulerSubstitution(Entity expr, Entity.Variable x, bool onlyBySumItWrites = false)
         {
+            // Roots of constant multiples of one quadratic are one root: see the method below.
+            if (WithTheRootsOfMultiplesAsOne(expr, x) is var (asOne, ratios))
+            {
+                if (SolveByEulerSubstitution(asOne, x, onlyBySumItWrites) is not { } inTheRatios)
+                    return null;
+                foreach (var (name, value) in ratios)
+                    inTheRatios = inTheRatios.Substitute(name, value);
+                return inTheRatios;
+            }
 
             // One square root of a quadratic in x, and otherwise a rational function of x --
             // or, besides those, powers of `x + sqrt(Q)` and `sqrt(Q) - x` to any exponent,
@@ -18976,7 +19055,7 @@ namespace AngouriMath.Functions.Algebra
                             else if (radicand != innerBase) return null;
                         }
             if (radicand is null
-                || !TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var a, out var b, out var c)
+                || !TryReadAQuadraticOverAConstant(radicand, x, out var a, out var b, out var c)
                 || a.Evaled is Number.Complex { IsZero: true })
                 return null;
             // A missing linear term is the trigonometric substitution's and answered more shortly there.
