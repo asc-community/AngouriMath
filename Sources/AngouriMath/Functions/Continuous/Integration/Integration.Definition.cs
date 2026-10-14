@@ -669,7 +669,7 @@ namespace AngouriMath.Functions.Algebra
             // A symbolic trinomial in x^2 below the bar beside a root of a quadratic, over its roots
             // in x^2, before anything reads the trinomial whole: asked of it, the routes below ran
             // past a minute on Rubi's 1.2.2.4 `sqrt(d + e x^2)/(x^2 (a + b x^2 + c x^4))`.
-            if ((answer = IndefiniteIntegralSolver.SolveATrinomialInTheSquareBesideTheRootOfAQuadratic(expr, x, integrateByParts)) is { }) return answer;
+            if ((answer = IndefiniteIntegralSolver.SolveATrinomialInTheSquareBesideTheRootOfAQuadratic(expr, x)) is { }) return answer;
             // A linear under a power inside a sum, written as the variable: `x^3/(a + b (c + d x)^3)`.
             // Before the polynomial term, which takes the leading coefficient out of a power of
             // the sum and writes what is left out in powers of x, where the linear is gone; and
