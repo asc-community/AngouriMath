@@ -429,6 +429,24 @@ root of a linear, the linear radical substitution gets there first
 | `"sin(a + b/sqrt(c + d*x))/(e + f*x)".ToEntity().Integrate("x")` | `integral(...)` | 1,114 characters |
 | `"sin(a + b/sqrt(c + d*x))/(e + f*x)^2".ToEntity().Integrate("x")` | `integral(...)` | 2,288 characters |
 
+### A symbolic trinomial in x^2 beside a root of a quadratic is split over its factors
+
+**Answers where there were none.** `sqrt(d + k x^2)/(a + b x^2 + c x^4)` and its kin were declined, most of them
+past any budget. The trinomial is written over its factors in x^2 now, with its roots named: `c (x^2 - r)(x^2 - s)`
+where they are real, and `c (x^2 + p x + m)(x^2 - p x + m)` where they are a conjugate pair. Each factor is a quadratic
+the existing rules close beside the root. The answer is a piecewise on the sign of `b^2 - 4 a c`, and the second
+case is most of its length ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2*sqrt(d + k*x^2)/(a + b*x^2 + c*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 29,139 characters |
+| `"sqrt(d + k*x^2)/(x^2*(a + b*x^2 + c*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 10,736 characters |
+| `"(d + k*x^2)^(3/2)/(a + b*x^2 + c*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 31,242 characters |
+| `"x^4*(d + k*x^2)^(3/2)/(a + b*x^2 + c*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 41,265 characters |
+| `"x^2*sqrt(1 - x^2)/(a + b*x^2 + c*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 8,502 characters |
+| `"x^4/((a + b*x^2 + c*x^4)*sqrt(d + k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 28,551 characters |
+| `"1/(x^2*(a + b*x^2 + c*x^4)*sqrt(d + k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 10,194 characters |
+
 ### A power of the cosine beside a secant binomial is integrated in the cosine
 
 **Answers where there were none.** `cos(c + d x)^2/(a + b sec(c + d x))` was declined, and so were the cosine's powers
