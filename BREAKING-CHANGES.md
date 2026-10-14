@@ -555,6 +555,30 @@ same answer as on the unreleased master, in 1.4 seconds rather than 30
 | `"1/((d + k*x)*(f + g*x)*(a + b*x + c*x^2)^2)".ToEntity().Integrate("x")` | `integral(...)` | 24,143 characters |
 | `"1/((d + k*x)^3*(a + b*x + c*x^2)^2)".ToEntity().Integrate("x")` | `integral(...)` | 9,593 characters |
 
+### Powers of linears beside a symbolic root of a quadratic are taken apart over the linears
+
+**Answers where there were none.** `sqrt(a + b x + c x^2)/((d + k x)(f + g x)^2)` was declined: with no quadratic
+below the bar, powers of linears were left to Euler's substitution, which writes the root of a symbolic leading
+coefficient into every coefficient and does not finish. They are taken apart over the linears now where the
+integrand has a symbol in it, each piece closed beside the root. The answers are large because each piece's cases,
+by the sign of the radicand at its pole and of `c`, multiply in the sum
+([#1874](https://github.com/asc-community/AngouriMath/issues/1874)): the fourth row is 27 cases of about 3,000
+characters each ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(a + b*x + c*x^2)/((d + k*x)*(f + g*x)^2)".ToEntity().Integrate("x")` | `integral(...)` | 12,694 characters |
+| `"sqrt(a + b*x + c*x^2)/((d + k*x)*(f + g*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 20,029 characters |
+| `"sqrt(a + b*x + c*x^2)/((d + k*x)*(f + g*x)^4)".ToEntity().Integrate("x")` | `integral(...)` | 29,203 characters |
+| `"(a + b*x + c*x^2)^(3/2)/((d + k*x)*(f + g*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 79,744 characters |
+| `"1/((d + k*x)*(f + g*x)^2*sqrt(a + b*x + c*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 11,335 characters |
+| `"1/((d + k*x)*(f + g*x)^3*sqrt(a + b*x + c*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 18,103 characters |
+| `"sqrt(a + b*x^2 + c*x^4)/(x^3*(d + k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 5,902 characters |
+| `"(a + b*x^2 + c*x^4)^(3/2)/(x^3*(d + k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 27,184 characters |
+| `"1/(x^3*(d + k*x^2)*sqrt(a + b*x^2 + c*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 5,515 characters |
+| `"asec(a + b*x)/x^4".ToEntity().Integrate("x")` | `integral(...)` | 11,873 characters |
+| `"acsc(a + b*x)/x^4".ToEntity().Integrate("x")` | `integral(...)` | 11,864 characters |
+
 ### A trinomial the numerator holds is divided out of a power of it
 
 **A shorter answer, where 2.5.0 had none.** `(d + g x + f x^2)(a + b x^2 + c x^4)/(a + b x^2 + c x^4)^4`, written
