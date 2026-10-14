@@ -666,6 +666,9 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveAGaussianInAReciprocal(expr, x)) is { }) return answer;
             // And a trigonometric function of the reciprocal of a linear beside a power of it, under u = 1/L.
             if ((answer = IndefiniteIntegralSolver.SolveAFunctionOfTheReciprocalOfALinear(expr, x, integrateByParts)) is { }) return answer;
+            // And one of `a + b/x` beside any rational function, under `x = 1/u`:
+            // `sin(c + d/x)/(e + f x)` is `-sin(c + d u)/(u (e u + f)) du`.
+            if ((answer = IndefiniteIntegralSolver.SolveByTheReciprocalOfAFunctionOfTheReciprocal(expr, x, integrateByParts)) is { }) return answer;
             // An exponential of a multiple of a logarithm is a power of the argument, which is
             // how every inverse hyperbolic function under an exponential arrives.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingAnExponentialOfALogarithm(expr, x, integrateByParts)) is { }) return answer;

@@ -19121,6 +19121,77 @@ namespace AngouriMath.Functions.Algebra
         [System.ThreadStatic] private static bool takingTheWholePowersOut;
 
         /// <summary>
+        /// A rational function of <c>x</c> and of trigonometric functions of <c>a + b/x</c>, under
+        /// <c>x = 1/u</c>: <c>sin(c + d/x)/(e + f x)</c> is
+        /// <c>-sin(c + d u)/(u (e u + f)) du</c>, which the partial fractions and the sine and
+        /// cosine integrals answer.
+        /// </summary>
+        /// <remarks>
+        /// <c>x = 1/u</c> is one-to-one on either side of 0, so the answer in <c>u</c> written back
+        /// in <c>1/x</c> holds on both. Every argument of a function holding <c>x</c> has to be
+        /// linear in <c>1/x</c> and not in <c>x</c>, so the integrand in <c>u</c> is one this rule
+        /// does not read again. Rubi's 4.1.12 <c>(a + b sin(c + d/x))^k/(e + f x)^m</c> were
+        /// declined: the substitution search reads a candidate's derivative but never solves
+        /// the candidate for <c>x</c>. https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByTheReciprocalOfAFunctionOfTheReciprocal(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var u = Variable.CreateUnique(expr, "u_rec");
+            // Each function of x, named, and written in u: its argument the linear in u it is.
+            var inU = new Dictionary<Entity, Entity>();
+            var names = new Dictionary<Entity, Variable>();
+            foreach (var node in expr.Nodes)
+            {
+                Entity argument;
+                switch (node)
+                {
+                    case Sinf(var a): argument = a; break;
+                    case Cosf(var a): argument = a; break;
+                    case Tanf(var a): argument = a; break;
+                    case Cotanf(var a): argument = a; break;
+                    case Secantf(var a): argument = a; break;
+                    case Cosecantf(var a): argument = a; break;
+                    case Powf(_, Number.Integer):
+                    case Sumf or Minusf or Mulf or Divf or Variable or Number:
+                        continue;
+                    default:
+                        if (node.ContainsNode(x))
+                            return null;
+                        continue;
+                }
+                if (!argument.ContainsNode(x) || inU.ContainsKey(node))
+                    continue;
+                if (!TreeAnalyzer.TryGetPolynomial(argument.Substitute(x, Number.Integer.One / u).InnerSimplified, u, out var read)
+                    || read.Keys.Any(k => k.Sign < 0 || k.CompareTo(EInteger.One) > 0) || !read.TryGetValue(EInteger.One, out var slope))
+                    return null;
+                Entity linear = read.TryGetValue(EInteger.Zero, out var constant)
+                    ? constant.InnerSimplified + slope.InnerSimplified * u
+                    : slope.InnerSimplified * u;
+                inU[node] = node switch
+                {
+                    Sinf => MathS.Sin(linear),
+                    Cosf => MathS.Cos(linear),
+                    Tanf => MathS.Tan(linear),
+                    Cotanf => MathS.Cotan(linear),
+                    Secantf => MathS.Sec(linear),
+                    Cosecantf => MathS.Cosec(linear),
+                    _ => node,
+                };
+                names[node] = Variable.CreateUnique(expr, "f_rec" + names.Count);
+            }
+            if (inU.Count == 0)
+                return null;
+            // The rest one quotient, the way the rules read it: not `e + f/u` but `(e u + f)/u`.
+            var named = expr.Replace(node => names.TryGetValue(node, out var name) ? name : node);
+            var integrand = Functions.SingleQuotient.Combine(-named.Substitute(x, Number.Integer.One / u) / MathS.Sqr(u)).InnerSimplified;
+            foreach (var pair in names)
+                integrand = integrand.Substitute(pair.Value, inU[pair.Key]);
+            if (Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is not { } inTermsOfU)
+                return null;
+            return inTermsOfU.Substitute(u, Number.Integer.One / x);
+        }
+
+        /// <summary>
         /// A root of a product beside a root of one of its factors, the product split:
         /// <c>(P Q)^r</c> is <c>K P^r Q^r</c>, where <c>K = (P Q)^r/(P^r Q^r)</c> is constant wherever
         /// it is defined, for the same reason as in
