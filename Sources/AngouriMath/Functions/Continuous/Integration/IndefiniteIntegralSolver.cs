@@ -19359,9 +19359,13 @@ namespace AngouriMath.Functions.Algebra
                 foreach (var factor in roots)
                 {
                     // One of the two a root or a symbolic power at least: two whole powers are a
-                    // rational function, which the partial fractions take apart already.
+                    // rational function, which the partial fractions take apart already. And a
+                    // factor to a whole power of two or more: beside a bare one the root was split
+                    // where it read better whole -- Welz's `(1 + x)/((x - 2) sqrt(1 + x^3))` is one
+                    // logarithm, and over `sqrt(1 + x) sqrt(1 - x + x^2)` it was three.
                     if (ReferenceEquals(product.Node, factor.Node) || product.Base == factor.Base
                         || product.Exponent is Number.Integer && factor.Exponent is Number.Integer
+                        || factor.Exponent is Number.Integer { EInteger: var once } && once.Abs().CompareTo(EInteger.FromInt32(2)) < 0
                         || ExactlyDivided(product.Base, factor.Base, x) is not { } cofactor || !cofactor.ContainsNode(x))
                         continue;
                     var multiple = Variable.CreateUnique(expr, "k_split");
