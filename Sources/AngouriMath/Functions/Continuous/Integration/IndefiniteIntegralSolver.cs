@@ -18099,8 +18099,11 @@ namespace AngouriMath.Functions.Algebra
             // (x - p) with p = -n/m, and K = numerator/(m constant).
             var p = (-n / m).InnerSimplified;
             var k = (numerator / (m * constant)).InnerSimplified;
-            var atP = (a * p * p + b * p + c).InnerSimplified;
-            var slopeAtP = (2 * a * p + b).InnerSimplified;
+            // Bare: `3 (-d/k)^2 + 2` comes back `... provided not k = 0`, the linear's own slope
+            // not vanishing, and the table read no quadratic in t through the condition --
+            // `1/((d + k x) sqrt(2 + 3 x^2))` was declined where `1/((d + x) sqrt(2 + 3 x^2))` was not.
+            var atP = Functions.PartialFractions.Bare((a * p * p + b * p + c).InnerSimplified);
+            var slopeAtP = Functions.PartialFractions.Bare((2 * a * p + b).InnerSimplified);
             var t = Variable.CreateUnique(expr, "t_recip");
             var inT = 1 / MathS.Pow(atP * MathS.Sqr(t) + slopeAtP * t + a, Number.Rational.Create(1, 2));
             if (IntegralPatterns.TryStandardIntegrals(inT, t) is not { } g)
@@ -18489,12 +18492,13 @@ namespace AngouriMath.Functions.Algebra
                 if (coefficient.Evaled is Number.Complex and not Number.Real)
                     return null;
             var p = (-n / m).InnerSimplified;
-            var atP = (a * p * p + b * p + c).InnerSimplified;
+            // Bare, as in the rule for a single linear: the slope's condition is not a case.
+            var atP = Functions.PartialFractions.Bare((a * p * p + b * p + c).InnerSimplified);
             // A root of the radicand leaves a linear under the root, which is not this.
             if (VanishesIdentically(atP)
                 || Functions.PartialFractions.TaylorCoefficientsAtTheRoot(numerator, p, power, x) is not { } taylor)
                 return null;
-            var slopeAtP = (2 * a * p + b).InnerSimplified;
+            var slopeAtP = Functions.PartialFractions.Bare((2 * a * p + b).InnerSimplified);
             var t = Variable.CreateUnique(expr, "t_recip");
             // P(p + 1/t) t^(k - 1) is the sum of the Taylor coefficients times t^(k - 1 - j), and
             // (x - p)^k is L^k/m^k.
