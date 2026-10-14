@@ -18636,8 +18636,10 @@ namespace AngouriMath.Functions.Algebra
             // the linears alone the reciprocal writes a sign of each, `sgn(sqrt(1 + x) - 1)` once
             // `sqrt(x + sqrt(1 + x))/x^2` is taken back from `u = sqrt(1 + x)`, whose derivative
             // is not read where the argument is not shown real -- and Euler's substitution, after
-            // this, answers those without one.
-            if (beyondTheLinears && !aQuadratic)
+            // this, answers those without one. With a symbol in them it does not: the leading
+            // coefficient's root is in every coefficient it writes, and `sqrt(a + b x + c x^2)/(x^2 (d + e x))`,
+            // which is Rubi's 1.2.2.4 under `u = x^2`, was declined.
+            if (beyondTheLinears && !aQuadratic && !expr.Vars.Any(symbol => symbol != x))
                 return null;
             // Distinct: two factors with the same root are one repeated, which is not this.
             // Beyond the linears the split decides that, and merges linears with one root.
