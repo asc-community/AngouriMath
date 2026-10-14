@@ -541,6 +541,26 @@ quadratic with numbers in it, although beside the root each piece is a shape the
 | `"(2 + 5*x + x^2)*sqrt(3 + 2*x + 5*x^2)/(1 + 4*x - 7*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 5,242 characters |
 | `"(a + b*x + c*x^2)^(1/2)/(d + e*x + f*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 50,758 characters, six symbols |
 
+### A power of a perfect square with a symbolic leading coefficient is a power of its root
+
+**Answers where there were none.** `sqrt(c d^2 + 2 c d k x + c k^2 x^2)` was declined: the square root of
+`c (d + k x)^2` was taken as `sqrt(c) |d + k x|` only for a leading coefficient whose sign was known. It
+holds for every nonzero one, since `(d + k x)^2` is positive, and is taken so now. Beside a power of the
+square's own linear, that linear is taken as the root, so the two powers gather into one. The reciprocal
+root, which 2.5.0 answered in 411 characters and the unreleased master declined, is 61 characters now
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(c*d^2 + 2*c*d*k*x + c*k^2*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 62 characters |
+| `"(c*d^2 + 2*c*d*k*x + c*k^2*x^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 62 characters |
+| `"1/sqrt(c*d^2 + 2*c*d*k*x + c*k^2*x^2)".ToEntity().Integrate("x")` | 411 characters | 61 characters |
+| `"1/(c*d^2 + 2*c*d*k*x + c*k^2*x^2)^(5/2)".ToEntity().Integrate("x")` | `integral(...)` | 74 characters |
+| `"(d + k*x)^(-1 - 2*p)*(c*d^2 + 2*c*d*k*x + c*k^2*x^2)^p".ToEntity().Integrate("x")` | `integral(...)` | 103 characters |
+| `"1/((d + k*x)*sqrt(b^2/(4*c) + b*x + c*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 1,277 characters |
+| `"sqrt(a + a*sech(c + d*x))".ToEntity().Integrate("x")` | `integral(...)` | 274 characters |
+| `"asinh(sqrt(b*x^2 - 1))^3/sqrt(b*x^2 - 1)".ToEntity().Integrate("x")` | `integral(...)` | 166 characters |
+
 ### A square of a symbolic quadratic beside two linears is answered within the budget
 
 **Answers where there were none in time.** `1/((d + k x)(f + g x)(a + b x + c x^2)^2)` was declined by

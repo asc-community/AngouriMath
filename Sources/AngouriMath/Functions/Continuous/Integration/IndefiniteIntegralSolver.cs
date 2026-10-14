@@ -21417,12 +21417,17 @@ namespace AngouriMath.Functions.Algebra
                 // with the answer. The other two coefficients are real or symbolic, not a
                 // number off the line, so that `(x + h)^2` is not negative.
                 // A whole power needs no sign of anything: (a (w + h)^2)^n is a^n (w + h)^(2n).
+                // And one of no known sign: for a real w + h, (w + h)^2 is positive, so
+                // Log(a (w + h)^2) is Log(a) + 2 ln|w + h| for every nonzero a, and
+                // (a (w + h)^2)^r is a^r |w + h|^(2r) -- `sqrt(c (d + k x)^2)` is
+                // `sqrt(c) |d + k x|` for a negative c as for a positive one.
                 if (!whole && a.Evaled is not Number.Real { IsZero: false })
                 {
-                    if (!IsPositiveForARealParameter(a, x, out var leadingAssumed, assumed)
-                        && !IsPositiveForARealParameter((-a).InnerSimplified, x, out leadingAssumed, assumed))
+                    if (a.Evaled is Number.Complex and not Number.Real)
                         return node;
-                    assumed = leadingAssumed;
+                    if (IsPositiveForARealParameter(a, x, out var leadingAssumed, assumed)
+                        || IsPositiveForARealParameter((-a).InnerSimplified, x, out leadingAssumed, assumed))
+                        assumed = leadingAssumed;
                 }
                 var leading = a;
                 if (b.Evaled is Number.Complex and not Number.Real || c.Evaled is Number.Complex and not Number.Real
@@ -22058,6 +22063,21 @@ namespace AngouriMath.Functions.Algebra
             if (found is not var (square, exponent, root, leading, squareIsBelow)
                 || above.Nodes.Concat(below.Nodes).Count(node => node == square) != 1)
                 return null;
+            // A linear of the integrand that is a multiple of the root, `d + k x` beside
+            // `(c d^2 + 2 c d k x + c k^2 x^2)^p`, is the root itself, with the multiple's square
+            // taken out of the leading coefficient: its power and the square's then gather into
+            // one power of one linear, where `(x + d/k)^(2p) (d + k x)^(-1 - 2p)` were two.
+            if (root is Sumf && TreeAnalyzer.TryGetPolyLinear(root, x, out _, out var rootShift))
+                foreach (var factor in Mulf.LinearChildren(above).Concat(Mulf.LinearChildren(below)))
+                {
+                    var linear = factor is Powf(var @base, var power) && !power.ContainsNode(x) ? @base : factor;
+                    if (linear == square || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out var intercept)
+                        || slope.Evaled is Number.Complex { IsZero: true } || !VanishesIdentically(intercept - slope * rootShift))
+                        continue;
+                    root = linear;
+                    leading = leading / (slope * slope);
+                    break;
+                }
             var twice = (2 * exponent).InnerSimplified;
             // The root's power above the bar either way, with a negative exponent for the square
             // below it: `x (x + h)^(-2p)` is read below the top where `x/(x + h)^(2p)` was not.
