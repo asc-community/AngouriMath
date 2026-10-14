@@ -162,6 +162,10 @@ namespace AngouriMath
                 (Providedf a, var b) => ExpandOnTwoArguments(a.Expression, b, operation, defaultCtor, isExact).Provided(a.Predicate),
                 (var a, Providedf b) => ExpandOnTwoArguments(a, b.Expression, operation, defaultCtor, isExact).Provided(b.Predicate),
                 (Piecewise a, Piecewise b) => CombinedCaseByCase(a, b, operation, defaultCtor, isExact),
+                // A sum already holding a piecewise is not copied into each case of another: it
+                // stays beside it, as CombinedCaseByCase leaves two piecewises that do not combine.
+                (Piecewise a, var b) when this is Sumf or Minusf && !CombinesEveryPiecewiseSum && b.Nodes.Any(node => node is Piecewise) => defaultCtor(this, left, right),
+                (var a, Piecewise b) when this is Sumf or Minusf && !CombinesEveryPiecewiseSum && a.Nodes.Any(node => node is Piecewise) => defaultCtor(this, left, right),
                 (Piecewise a, var b) => a.ApplyToValues(a => ops(a, b)),
                 (var a, Piecewise b) => b.ApplyToValues(b => ops(a, b)),
                 (Matrix a, Matrix b) => a.InnerMatrix.Shape == b.InnerMatrix.Shape ? a.Elementwise(b, ops) : defaultCtor(this, left, right),
@@ -176,6 +180,17 @@ namespace AngouriMath
                 } : defaultCtor(this, left, right)
             };
         }
+
+        /// <summary>
+        /// Set while the integrator normalises an integrand: a sum of piecewises in one is combined
+        /// case by case whatever the count, as before
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1874">#1874</a>. An
+        /// integrand holding the cases of an answer -- what parts leaves, `u' v` with `v` an
+        /// antiderivative -- is searched as one piecewise, where kept a sum it was taken apart
+        /// term by term and every term searched: `(a + b atanh(c x^2))^2/x^5` went from 19
+        /// seconds to 134. Answers stay sums.
+        /// </summary>
+        [ThreadStatic] internal static bool CombinesEveryPiecewiseSum;
 
         /// <summary>
         /// A piecewise combined with a piecewise, case by case: every case of one against every
@@ -227,7 +242,19 @@ namespace AngouriMath
             for (var i = 0; i < pairs.Count; i++)
                 if (keep[i])
                     cases.Add((ExpandOnTwoArguments(pairs[i].First.Expression, pairs[i].Second.Expression, operation, defaultCtor, isExact), pairs[i].Predicate).ToProvided());
-            return MathS.Piecewise(cases);
+            var combined = MathS.Piecewise(cases);
+            // A sum or a difference is combined only where the cases line up: where they do not,
+            // every case of one against every case of the other is the product of the two counts,
+            // and the two piecewises as written say the same in the sum of them. Counted once the
+            // cases no value reaches are gone, since a sum over `k < a` for each k is one case per
+            // k after that and the product before it. The antiderivative of
+            // `1/(b x^2 + m) - 1/(sqrt(a + b x^2) (b x^2 + m))` was nine cases in 3,685
+            // characters, where its two terms are 287 and 685.
+            // https://github.com/asc-community/AngouriMath/issues/1874
+            if (this is Sumf or Minusf && !CombinesEveryPiecewiseSum && combined.InnerSimplified(isExact) is var simplified
+                && (simplified is Piecewise piecewise ? piecewise.Cases.Count() : 1) > a.Cases.Count() + b.Cases.Count())
+                return defaultCtor(this, a, b);
+            return combined;
         }
 
         /// <summary>
