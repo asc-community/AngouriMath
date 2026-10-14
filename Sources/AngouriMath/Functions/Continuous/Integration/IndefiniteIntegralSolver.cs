@@ -8103,6 +8103,16 @@ namespace AngouriMath.Functions.Algebra
         /// </summary>
         private static Entity? OverAPowerOfALinear(Entity expr, Entity.Variable x, Entity argument)
         {
+            var names = new List<(Variable Name, Entity Coefficient)>();
+            Entity Named(Entity coefficient)
+            {
+                if (coefficient is not (Sumf or Minusf) || !coefficient.Vars.Any())
+                    return coefficient;
+                var name = Variable.CreateUnique(expr + names.Aggregate((Entity)Number.Integer.Zero, (all, pair) => all + pair.Name), "k_quad");
+                names.Add((name, coefficient));
+                return name;
+            }
+            Entity WrittenBack(Entity answer) => names.Aggregate(answer, (all, pair) => all.Substitute(pair.Name, pair.Coefficient));
             var (sine, cosine) = (MathS.Sin(argument), MathS.Cos(argument));
             var (tangent, cotangent, secant, cosecant) = (MathS.Tan(argument), MathS.Cotan(argument), MathS.Sec(argument), MathS.Cosec(argument));
             var s = Variable.CreateUnique(expr, "s");
@@ -8161,6 +8171,26 @@ namespace AngouriMath.Functions.Algebra
                     // cosine integrals of the two conjugate arguments add up to a real answer.
                     else if (TreeAnalyzer.TryGetPolyQuadratic(@base, x, out var leading, out var middle, out var last) && !TreeAnalyzer.IsZero(leading))
                     {
+                        // A double root is one linear twice: split over two roots that coincide, the
+                        // partial fractions divided by their difference, and every value was NaN.
+                        // https://github.com/asc-community/AngouriMath/issues/1879
+                        if (Functions.PartialFractions.IsZeroAsAValue(middle * middle - 4 * leading * last))
+                        {
+                            var twice = (x + middle / (2 * leading)).InnerSimplified;
+                            constant /= MathS.Pow(leading, -exponent);
+                            AddALinear(twice, -2 * exponent);
+                            written *= MathS.Pow(twice, -2 * exponent);
+                            continue;
+                        }
+                        // A compound coefficient named for the split and written back in the answer:
+                        // `d e - c f` carried through the partial fractions over the roots came out
+                        // expanded to the seventh degree in every coefficient, 11,876 characters for
+                        // `sin(a + b x)/(x ((d e - c f) x^2 + f))` against 575 for `k`. Not where the
+                        // roots coincide, which a name hides, and which are a linear twice above.
+                        // https://github.com/asc-community/AngouriMath/issues/1877
+                        leading = Named(leading);
+                        middle = Named(middle);
+                        last = Named(last);
                         var discriminant = MathS.Sqrt(middle * middle - 4 * leading * last);
                         var first = ((-middle + discriminant) / (2 * leading)).InnerSimplified;
                         var second = ((-middle - discriminant) / (2 * leading)).InnerSimplified;
@@ -8193,7 +8223,7 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             if (linears.Count == 1)
                 return AgainstAPowerOfALinear(polynomial, linears[0].Linear, linears[0].Power, angles, argument, x, needsAnIntegral: true) is var (one, _) && one is not null
-                    ? Functions.PartialFractions.Bare((constant * one).InnerSimplified)
+                    ? WrittenBack(Functions.PartialFractions.Bare((constant * one).InnerSimplified))
                     : null;
             // Over each linear by partial fractions, and each term the one-linear question.
             var denominator = linears.Aggregate((Entity)Number.Integer.One, (product, pair) => product * MathS.Pow(pair.Linear, pair.Power));
@@ -8210,7 +8240,7 @@ namespace AngouriMath.Functions.Algebra
                 sum += integral;
                 special |= integrals;
             }
-            return special ? Functions.PartialFractions.Bare((constant * sum).InnerSimplified) : null;
+            return special ? WrittenBack(Functions.PartialFractions.Bare((constant * sum).InnerSimplified)) : null;
         }
 
         /// <summary>
