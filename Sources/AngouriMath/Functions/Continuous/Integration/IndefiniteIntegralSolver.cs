@@ -18723,6 +18723,93 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A rational function with a trinomial in the square below the bar, beside a root of a
+        /// quadratic, taken apart over the trinomial's roots in the square:
+        /// <c>a + b x^2 + c x^4</c> is <c>c (x^2 - y1) (x^2 - y2)</c> with
+        /// <c>y = (-b -+ q)/(2c)</c> and <c>q = sqrt(b^2 - 4 a c)</c>, and each <c>x^2 - y</c> is a
+        /// quadratic the rule before this one splits the integrand over and closes beside the
+        /// root. Rubi's 1.2.2.4 <c>sqrt(d + e x^2)/(a + b x^2 + c x^4)</c> does the same.
+        /// </summary>
+        /// <remarks>
+        /// Asked with <c>q</c> a symbol of its own and written back after: the integrand with
+        /// the trinomial so written is an integrand for every <c>q</c>, and the one asked for
+        /// at <c>q^2 = b^2 - 4 a c</c>, so its antiderivative there is the answer -- and
+        /// <c>q</c> stays one atom through the split, where <c>sqrt(b^2 - 4 a c)</c> in every
+        /// coefficient was multiplied out with them
+        /// (<a href="https://github.com/asc-community/AngouriMath/issues/1877">#1877</a> was
+        /// the same with a quadratic). Not where the discriminant vanishes, the roots being one
+        /// root twice. With a symbol in the trinomial only: a numeric one is factored over the
+        /// rationals where it factors, and otherwise answered as it was.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveATrinomialInTheSquareBesideTheRootOfAQuadratic(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!expr.Nodes.Any(node => node is Powf(var radicand, Number.Rational { ERational.Denominator: var half })
+                    && half.Equals(EInteger.FromInt32(2)) && radicand.ContainsNode(x)
+                    && TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out _, out _, out _)))
+                return null;
+            var (_, denominator) = Functions.SingleQuotient.Of(expr);
+            Entity? trinomial = null;
+            (Entity A, Entity B, Entity C)? read = null;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                var @base = factor is Powf(var repeated, Number.Integer { EInteger.Sign: > 0 }) ? repeated : factor;
+                if (@base is not (Sumf or Minusf) || !@base.ContainsNode(x) || !@base.Vars.Any(symbol => symbol != x)
+                    || !TreeAnalyzer.TryGetPolynomial(@base, x, out var monomials)
+                    || monomials.Count != 3
+                    || !monomials.TryGetValue(EInteger.Zero, out var a)
+                    || !monomials.TryGetValue(EInteger.FromInt32(2), out var b)
+                    || !monomials.TryGetValue(EInteger.FromInt32(4), out var c))
+                    continue;
+                if (trinomial is not null && trinomial != @base)
+                    return null;
+                trinomial = @base;
+                read = (a, b, c);
+            }
+            if (trinomial is null || read is not var (constant, middle, leading)
+                || VanishesIdentically(leading) || VanishesIdentically(middle))
+                return null;
+            var discriminant = (middle * middle - 4 * constant * leading).InnerSimplified;
+            if (VanishesIdentically(discriminant))
+                return null;
+            // Three writings of the trinomial, each real where it is taken. Two real roots in x^2:
+            // c (x^2 - y1) (x^2 - y2). None: the roots are a conjugate pair and the pieces' cases
+            // read the sign of an imaginary q, so it is the product of two real quadratics
+            // c (x^2 + p x + m) (x^2 - p x + m) with m = sqrt(a/c) and p = sqrt(2 m - b/c), both
+            // real there since b^2 < 4 a c makes a/c positive and |b/c| < 2 m. Each is an
+            // identity in its symbols, so each answer is an antiderivative wherever its symbols
+            // are what they stand for. A root twice, where the discriminant vanishes, is the
+            // case the generic answer leaves, as `ln(a x + b)/a` leaves a = 0.
+            var square = MathS.Pow(x, Number.Integer.Create(2));
+            var q = Variable.CreateUnique(expr, "q");
+            var m = Variable.CreateUnique(expr + q, "m");
+            var p = Variable.CreateUnique(expr + q + m, "p");
+            var writings = new (Entity Written, Entity[] Named, Entity[] Values, Entity Condition)[]
+            {
+                (leading * (square - (q - middle) / (2 * leading)) * (square + (q + middle) / (2 * leading)),
+                    new Entity[] { q }, new[] { MathS.Sqrt(discriminant) }, discriminant > 0),
+                (leading * (square + p * x + m) * (square - p * x + m),
+                    new Entity[] { m, p }, new[] { MathS.Sqrt(constant / leading), MathS.Sqrt(2 * MathS.Sqrt(constant / leading) - middle / leading) }, discriminant < 0),
+            };
+            var cases = new List<Providedf>();
+            foreach (var (overTheRoots, named, values, condition) in writings)
+            {
+                var written = expr.Replace(node => node == trinomial ? overTheRoots : node);
+                if (Integration.ComputeIndefiniteIntegral(written, x, integrateByParts) is not { } inNamed)
+                    return null;
+                var answered = inNamed;
+                for (var i = named.Length - 1; i >= 0; i--)
+                    answered = answered.Substitute(named[i], values[i]);
+                answered = answered.InnerSimplified;
+                if (answered.Nodes.Any(node => node is Number.Complex { IsNaN: true }))
+                    return null;
+                cases.Add(new Providedf(answered, condition));
+            }
+            var answer = MathS.Piecewise(cases);
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
+
+        /// <summary>
         /// A piece over a whole power of <paramref name="radicand"/>, beside its root, as the one
         /// half-odd power the two are: <c>(g + h x)/(Q^j sqrt(Q))</c> is
         /// <c>(g + h x) Q^(-j - 1/2)</c>, which the reduction for a polynomial beside a half-odd
