@@ -396,6 +396,22 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### A sine or a cosine over a symbolic quadratic or binomial is split over its roots with the coefficients named
+
+**Answers where there were none.** A quadratic or a binomial with a compound coefficient below a sine or a cosine is
+split over its roots with each compound coefficient named, and the names are written back in the answer. Carried
+through the partial fractions, `d e - c f` was expanded to the seventh degree in every coefficient, and a quadratic
+with a double root was split over two equal roots, so its answer was NaN everywhere. A double root is now one linear
+twice ([#1877](https://github.com/asc-community/AngouriMath/issues/1877),
+[#1879](https://github.com/asc-community/AngouriMath/issues/1879)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sin(a + b*x)/(x*((d*e - c*f)*x^2 + f))".ToEntity().Integrate("x")` | `integral(...)` | 980 characters |
+| `"sin(a + b*x)/((c + d)*x^2 + (e - f)*x + 1)".ToEntity().Integrate("x")` | `integral(...)` | 921 characters |
+| `"sin(a + b*x)/((d*e - c*f)*x^3 + f)".ToEntity().Integrate("x")` | `integral(...)` | 1,416 characters |
+| `"sin(x)/(a*x^2 + 2*a*x + a)".ToEntity().Integrate("x")` | `integral(...)` | 246 characters |
+
 ### A trigonometric function of `a + b/x` beside a rational function is integrated in `1/x`
 
 **Answers where there were none.** `sin(c + d/x)/(e + f x)` was declined: the substitution search reads a candidate's
@@ -404,17 +420,14 @@ partial fractions and the sine and cosine integrals answer, and `x = 1/u` is one
 root of a linear, the linear radical substitution gets there first
 ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 
-The answers below a root are large because the sine over the linears that come out of the substitution carries
-expanded coefficients ([#1877](https://github.com/asc-community/AngouriMath/issues/1877)).
-
 | Input | Was (2.5.0) | Now |
 |---|---|---|
 | `"sin(c + d/x)/(e + f*x)".ToEntity().Integrate("x")` | `integral(...)` | 196 characters |
 | `"(a + b*sin(c + d/x))/(e + f*x)^2".ToEntity().Integrate("x")` | `integral(...)` | 470 characters |
 | `"(a + b*sin(c + d/x))^2/(e + f*x)^3".ToEntity().Integrate("x")` | `integral(...)` | 2,516 characters |
 | `"(c*e + d*e*x)^(1/3)*sin(a + b/(c + d*x)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 1,453 characters |
-| `"sin(a + b/sqrt(c + d*x))/(e + f*x)".ToEntity().Integrate("x")` | `integral(...)` | 12,010 characters |
-| `"sin(a + b/sqrt(c + d*x))/(e + f*x)^2".ToEntity().Integrate("x")` | `integral(...)` | 32,780 characters |
+| `"sin(a + b/sqrt(c + d*x))/(e + f*x)".ToEntity().Integrate("x")` | `integral(...)` | 1,114 characters |
+| `"sin(a + b/sqrt(c + d*x))/(e + f*x)^2".ToEntity().Integrate("x")` | `integral(...)` | 2,288 characters |
 
 ### A power of the cosine beside a secant binomial is integrated in the cosine
 
