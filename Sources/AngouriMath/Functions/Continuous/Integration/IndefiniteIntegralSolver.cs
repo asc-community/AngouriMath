@@ -19151,6 +19151,147 @@ namespace AngouriMath.Functions.Algebra
         [System.ThreadStatic] private static bool takingTheWholePowersOut;
 
         /// <summary>
+        /// A rational function of <c>x</c> and of trigonometric functions of <c>a + b/x</c>, under
+        /// <c>x = 1/u</c>: <c>sin(c + d/x)/(e + f x)</c> is
+        /// <c>-sin(c + d u)/(u (e u + f)) du</c>, which the partial fractions and the sine and
+        /// cosine integrals answer.
+        /// </summary>
+        /// <remarks>
+        /// <c>x = 1/u</c> is one-to-one on either side of 0, so the answer in <c>u</c> written back
+        /// in <c>1/x</c> holds on both. Every argument of a function holding <c>x</c> has to be
+        /// linear in <c>1/x</c> and not in <c>x</c>, so the integrand in <c>u</c> is one this rule
+        /// does not read again. Rubi's 4.1.12 <c>(a + b sin(c + d/x))^k/(e + f x)^m</c> were
+        /// declined: the substitution search reads a candidate's derivative but never solves
+        /// the candidate for <c>x</c>. https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByTheReciprocalOfAFunctionOfTheReciprocal(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var u = Variable.CreateUnique(expr, "u_rec");
+            // Each function of x, named, and written in u: its argument the linear in u it is.
+            var inU = new Dictionary<Entity, Entity>();
+            var names = new Dictionary<Entity, Variable>();
+            foreach (var node in expr.Nodes)
+            {
+                Entity argument;
+                switch (node)
+                {
+                    case Sinf(var a): argument = a; break;
+                    case Cosf(var a): argument = a; break;
+                    case Tanf(var a): argument = a; break;
+                    case Cotanf(var a): argument = a; break;
+                    case Secantf(var a): argument = a; break;
+                    case Cosecantf(var a): argument = a; break;
+                    case Powf(_, Number.Integer):
+                    case Sumf or Minusf or Mulf or Divf or Variable or Number:
+                        continue;
+                    default:
+                        if (node.ContainsNode(x))
+                            return null;
+                        continue;
+                }
+                if (!argument.ContainsNode(x) || inU.ContainsKey(node))
+                    continue;
+                if (!TreeAnalyzer.TryGetPolynomial(argument.Substitute(x, Number.Integer.One / u).InnerSimplified, u, out var read)
+                    || read.Keys.Any(k => k.Sign < 0 || k.CompareTo(EInteger.One) > 0) || !read.TryGetValue(EInteger.One, out var slope))
+                    return null;
+                Entity linear = read.TryGetValue(EInteger.Zero, out var constant)
+                    ? constant.InnerSimplified + slope.InnerSimplified * u
+                    : slope.InnerSimplified * u;
+                inU[node] = node switch
+                {
+                    Sinf => MathS.Sin(linear),
+                    Cosf => MathS.Cos(linear),
+                    Tanf => MathS.Tan(linear),
+                    Cotanf => MathS.Cotan(linear),
+                    Secantf => MathS.Sec(linear),
+                    Cosecantf => MathS.Cosec(linear),
+                    _ => node,
+                };
+                names[node] = Variable.CreateUnique(expr, "f_rec" + names.Count);
+            }
+            if (inU.Count == 0)
+                return null;
+            // The rest one quotient, the way the rules read it: not `e + f/u` but `(e u + f)/u`.
+            var named = expr.Replace(node => names.TryGetValue(node, out var name) ? name : node);
+            var integrand = Functions.SingleQuotient.Combine(-named.Substitute(x, Number.Integer.One / u) / MathS.Sqr(u)).InnerSimplified;
+            foreach (var pair in names)
+                integrand = integrand.Substitute(pair.Value, inU[pair.Key]);
+            if (Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is not { } inTermsOfU)
+                return null;
+            return inTermsOfU.Substitute(u, Number.Integer.One / x);
+        }
+
+        /// <summary>
+        /// A root of a product beside a root of one of its factors, the product split:
+        /// <c>(P Q)^r</c> is <c>K P^r Q^r</c>, where <c>K = (P Q)^r/(P^r Q^r)</c> is constant wherever
+        /// it is defined, for the same reason as in
+        /// <see cref="SolveByTakingTheWholePowersOutOfAPowerOfAProduct"/>. The powers of <c>P</c>
+        /// then gather: <c>(a + b x^2)^(5/2)/sqrt(a^2 - b^2 x^4)</c> is
+        /// <c>K (a + b x^2)^2/sqrt(a - b x^2)</c>.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's 1.2.2.3:282-293 were declined: nothing reads a radicand as a product of another
+        /// radicand and a cofactor. Only factors of the integrand are read, and at the question
+        /// asked only. https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveBySplittingARootOfAProductBesideARootOfAFactor(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked || splittingARootOfAProduct)
+                return null;
+            var roots = new List<(Entity Node, Entity Base, Number.Rational Exponent)>();
+            Gather(expr);
+            if (roots.Count < 2)
+                return null;
+            foreach (var product in roots)
+                foreach (var factor in roots)
+                {
+                    if (ReferenceEquals(product.Node, factor.Node) || product.Base == factor.Base
+                        || ExactlyDivided(product.Base, factor.Base, x) is not { } cofactor || !cofactor.ContainsNode(x))
+                        continue;
+                    var multiple = Variable.CreateUnique(expr, "k_split");
+                    var written = MathS.Pow(factor.Base, product.Exponent) * MathS.Pow(cofactor, product.Exponent);
+                    var constant = product.Node / written;
+                    var rewritten = expr.Replace(node => ReferenceEquals(node, product.Node) ? multiple * written : node).InnerSimplified;
+                    Entity? answer;
+                    splittingARootOfAProduct = true;
+                    try
+                    {
+                        answer = Integration.ComputeAsTheSameQuestion(rewritten, x, integrateByParts);
+                    }
+                    finally
+                    {
+                        splittingARootOfAProduct = false;
+                    }
+                    if (answer is null)
+                        return null;
+                    answer = answer.Substitute(multiple, constant);
+                    return answer.ContainsNode(multiple) ? null : answer;
+                }
+            return null;
+
+            void Gather(Entity node)
+            {
+                switch (node)
+                {
+                    case Mulf(var left, var right):
+                        Gather(left);
+                        Gather(right);
+                        break;
+                    case Divf(var above, var below):
+                        Gather(above);
+                        Gather(below);
+                        break;
+                    case Powf(var @base, Number.Rational exponent) when exponent is not Number.Integer && @base.ContainsNode(x):
+                        roots.Add((node, @base, exponent));
+                        break;
+                }
+            }
+        }
+
+        /// <summary>Set while <see cref="SolveBySplittingARootOfAProductBesideARootOfAFactor"/> asks its question.</summary>
+        [System.ThreadStatic] private static bool splittingARootOfAProduct;
+
+        /// <summary>
         /// A rational function of <c>x</c> and one square root of a quadratic in <c>x</c>,
         /// rationalised by an Euler substitution and handed to the rational integrator.
         /// </summary>
