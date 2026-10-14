@@ -8113,6 +8113,18 @@ namespace AngouriMath.Functions.Algebra
                 return name;
             }
             Entity WrittenBack(Entity answer) => names.Aggregate(answer, (all, pair) => all.Substitute(pair.Name, pair.Coefficient));
+            // A binomial's two coefficients named the same way: its roots are distinct wherever
+            // its constant term is not zero, which the reading of its roots requires.
+            Entity WithItsCoefficientsNamed(Entity binomial)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(binomial, x, out var terms) || terms.Count != 2
+                    || terms.Values.Any(coefficient => coefficient.ContainsNode(x)))
+                    return binomial;
+                if (!terms.TryGetValue(EInteger.Zero, out var free) || terms.Values.All(coefficient => coefficient is not (Sumf or Minusf)))
+                    return binomial;
+                var top = terms.First(term => !term.Key.IsZero);
+                return Named(free) + Named(top.Value) * MathS.Pow(x, Number.Integer.Create(top.Key));
+            }
             var (sine, cosine) = (MathS.Sin(argument), MathS.Cos(argument));
             var (tangent, cotangent, secant, cosecant) = (MathS.Tan(argument), MathS.Cotan(argument), MathS.Sec(argument), MathS.Cosec(argument));
             var s = Variable.CreateUnique(expr, "s");
@@ -8200,7 +8212,7 @@ namespace AngouriMath.Functions.Algebra
                         written *= MathS.Pow(Monic(leading, middle, last, x), -exponent);
                     }
                     // And a binomial past the quadratic the linears of its roots: `sin(c + d x)/(a + b x^3)`.
-                    else if (TheRootsOfABinomial(@base, x) is { } binomial)
+                    else if (TheRootsOfABinomial(WithItsCoefficientsNamed(@base), x) is { } binomial)
                     {
                         constant /= MathS.Pow(binomial.Leading, -exponent);
                         foreach (var root in binomial.Roots)

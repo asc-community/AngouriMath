@@ -12,8 +12,8 @@ using Xunit;
 namespace AngouriMath.Tests.Calculus
 {
     /// <summary>
-    /// A sine or a cosine over a quadratic with compound coefficients, split over the quadratic's
-    /// roots with the coefficients named: <c>sin(a + b x)/(x ((d e - c f) x^2 + f))</c> was
+    /// A sine or a cosine over a quadratic or a binomial with compound coefficients, split over
+    /// its roots with the coefficients named: <c>sin(a + b x)/(x ((d e - c f) x^2 + f))</c> was
     /// 11,876 characters, every coefficient expanded to the seventh degree; and one with a double
     /// root is a linear twice, where split over two equal roots it was NaN everywhere.
     /// <a href="https://github.com/asc-community/AngouriMath/issues/1877">#1877</a>,
@@ -61,6 +61,8 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("sin(a+b*x)/((c+d)*x^2+(e-f)*x+1)", 1500)]
         [InlineData("sin(a+b*x)/((c+d)*x^2+2*(c+d)*x+(c+d))", 1500)]
         [InlineData("sin(x)/(a*x^2+2*a*x+a)", 1500)]
+        [InlineData("sin(a+b*x)/((d*e-c*f)*x^3+f)", 2000)]
+        [InlineData("sin(a+b/sqrt(c+d*x))/(e+f*x)", 2000)]
         public void IsShortAndDifferentiatesBack(string integrand, int longest)
         {
             var length = integrand.ToEntity().Integrate("x").Stringize().Length;
