@@ -733,6 +733,21 @@ The answers are as large as the split integrands' answers, which are piecewise i
 | `"(a - b*x^2)^(3/2)/sqrt(a^2 - b^2*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 6,543 characters |
 | `"1/((a - b*x^2)^(1/2)*sqrt(a^2 - b^2*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 877 characters |
 
+### A symbolic power of a product beside a symbolic power of one of its factors is split
+
+**Answers where there were none.** `(d + k x)^(-3 - 2p) (a d k + (c d^2 + a k^2) x + c d k x^2)^p` was declined:
+the split of a power of a product beside a power of a factor took rational exponents only. `(P Q)^r` is
+`K P^r Q^r` with `K` constant between the zeros of `P` and `Q` for any exponent free of x, so a symbolic one is
+split too, and the powers of `P` gather ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(d + k*x)^(-3 - 2*p)*(a*d*k + (c*d^2 + a*k^2)*x + c*d*k*x^2)^p".ToEntity().Integrate("x")` | not done in 60 seconds | 349 characters |
+| `"(d + k*x)^m/(a*d*k + (c*d^2 + a*k^2)*x + c*d*k*x^2)^m".ToEntity().Integrate("x")` | `integral(...)` | 215 characters |
+| `"(A + B*x)*(a*c + b*c*x)^m/(a^2 + 2*a*b*x + b^2*x^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 476 characters |
+| `"(d + k*x)^m*(f + g*x)^3/(a*d*k + (c*d^2 + a*k^2)*x + c*d*k*x^2)^m".ToEntity().Integrate("x")` | `integral(...)` | 1,817 characters |
+| `"(1 - x^4)^n/(1 + x + x^2 + x^3)^n".ToEntity().Integrate("x")` | `integral(...)` | 147 characters |
+
 ### A secant or a cosecant beside a power of a sum of them is read as a power of the cosine or the sine
 
 **Answers where there were none.** `sec(x) sqrt(sec(x) + tan(x))` was declined, with the rest of Rubi's 4.7.7
