@@ -148,7 +148,8 @@ namespace AngouriMath.Tests.Core
         [Fact]
         public void OppositeSignsStayWhereALaterCaseDoesNotTestTheQuantity()
         {
-            var sum = "piecewise(1 provided q > 0, 2 provided q < 0, 3 provided p > 0) + piecewise(10 provided q < 0, 20 provided q > 0, 30 provided p > 0)".ToEntity().InnerSimplified;
+            // A product: a sum whose cases do not line up stays a sum of its two piecewises (#1874).
+            var sum = "piecewise(1 provided q > 0, 2 provided q < 0, 3 provided p > 0) * piecewise(10 provided q < 0, 20 provided q > 0, 30 provided p > 0)".ToEntity().InnerSimplified;
             Assert.Contains(Assert.IsType<Piecewise>(sum).Cases, @case => @case.Predicate.ToString().Contains("q > 0") && @case.Predicate.ToString().Contains("q < 0"));
         }
 

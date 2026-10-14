@@ -189,7 +189,7 @@ namespace AngouriMath.Functions.Algebra
         /// </para>
         /// </remarks>
         private static Entity Normalized(Entity expr, Entity.Variable x) =>
-            expr.Replace(Patterns.GatherPowersOfOneBase).Replace(node => IndefiniteIntegralSolver.GatherSignsAndModuli(node, x))
+            WithItsPiecewiseSumsCombined(expr.Replace(Patterns.GatherPowersOfOneBase).Replace(node => IndefiniteIntegralSolver.GatherSignsAndModuli(node, x))
                 // A whole power of a fractional power is the power of the product of the
                 // exponents, exact for every base: `((c^2 x^2 + 1)^(-1/2))^2` is
                 // `(c^2 x^2 + 1)^(-1)`, and left as a square of a root it was handed to Euler's
@@ -209,7 +209,36 @@ namespace AngouriMath.Functions.Algebra
                 // `1/(a + b x^2 + c x^4)` is answered.
                 .Replace(node => node is Entity.Powf(var zeroth, Entity.Number.Integer { IsZero: true }) && zeroth.ContainsNode(x)
                     ? Entity.Number.Integer.One
-                    : node);
+                    : node));
+
+        /// <summary>
+        /// <paramref name="expr"/> with every sum of piecewises in it combined case by case, as
+        /// the evaluator did before an answer's sum of piecewises was left a sum: an integrand
+        /// is searched as the one piecewise, and taken apart term by term it was searched once a
+        /// term. The sums are written anew, so that no simplification of them is remembered from
+        /// outside the scope.
+        /// https://github.com/asc-community/AngouriMath/issues/1874
+        /// </summary>
+        private static Entity WithItsPiecewiseSumsCombined(Entity expr)
+        {
+            if (!expr.Nodes.Any(node => node is Entity.Sumf or Entity.Minusf && node.DirectChildren.Any(child => child is Entity.Piecewise)))
+                return expr;
+            var combining = Entity.CombinesEveryPiecewiseSum;
+            Entity.CombinesEveryPiecewiseSum = true;
+            try
+            {
+                return expr.Replace(node => node switch
+                {
+                    Entity.Sumf(var augend, var addend) => new Entity.Sumf(augend, addend),
+                    Entity.Minusf(var minuend, var subtrahend) => new Entity.Minusf(minuend, subtrahend),
+                    _ => node
+                }).InnerSimplified;
+            }
+            finally
+            {
+                Entity.CombinesEveryPiecewiseSum = combining;
+            }
+        }
 
         /// <summary>
         /// The integrals already answered under the settings in force, so that the same question
