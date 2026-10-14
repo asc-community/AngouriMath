@@ -466,6 +466,24 @@ the first power: for a higher power the secant's own rules answer
 | `"cos(c + d*x)^2*(A + B*sec(c + d*x) + C*sec(c + d*x)^2)/(a + b*sec(c + d*x))".ToEntity().Integrate("x")` | `integral(...)` | 12,065 characters |
 | `"sin(x)^2/(a + b*csc(x))".ToEntity().Integrate("x")` | `integral(...)` | 898 characters |
 
+### A linear with a symbolic slope beside a root of a quadratic with no linear term is integrated
+
+**Answers where there were none.** `sqrt(a + c x^2)/(x (d + k x))` was declined where `sqrt(a + b x + c x^2)/(x (d + k x))`
+was answered. The rule for a constant over a linear beside the root works at the linear's root `p = -d/k`. Without
+a linear term, the quadratic's value there came back with `provided not k = 0` attached, and the table read no
+quadratic through that condition. The value is read without the condition now: a linear's slope is not zero. A
+linear with the imaginary unit in it is still declined there, as it was by accident before
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(a + c*x^2)/(x*(d + k*x))".ToEntity().Integrate("x")` | `integral(...)` | 1,362 characters |
+| `"sqrt(a + c*x^2)/(x^3*(d + k*x))".ToEntity().Integrate("x")` | `integral(...)` | 1,710 characters |
+| `"1/(x*(d + k*x)*sqrt(a + c*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 1,067 characters |
+| `"1/(x*(d + k*x)*(a + c*x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | 1,769 characters |
+| `"1/(x^3*(d + k*x)^2*sqrt(a + c*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 2,801 characters |
+| `"sqrt(a + c/x^2)/(d + k*x)".ToEntity().Integrate("x")` | `integral(...)` | 1,373 characters |
+
 ### One linear twice is not two linear powers
 
 **Answers that had no value.** `(a c + b c x)^(-3 - 2 p) (f + g x) (a^2 + 2 a b x + b^2 x^2)^p` was answered
