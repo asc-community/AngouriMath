@@ -18095,6 +18095,11 @@ namespace AngouriMath.Functions.Algebra
             foreach (var coefficient in new[] { a, b, c, m, n, numerator, constant })
                 if (coefficient.Evaled is Number.Complex and not Number.Real)
                     return null;
+            // And a pole off the real line is not one: the answer is written with the sign of
+            // x - p, and nothing checks it after. `1 + i a x` beside a root, what
+            // `e^(3 i atan(a x))` is written as, has its pole at `i/a`.
+            if (Functions.PartialFractions.HoldsTheImaginaryUnit(m) || Functions.PartialFractions.HoldsTheImaginaryUnit(n))
+                return null;
 
             // (x - p) with p = -n/m, and K = numerator/(m constant).
             var p = (-n / m).InnerSimplified;
