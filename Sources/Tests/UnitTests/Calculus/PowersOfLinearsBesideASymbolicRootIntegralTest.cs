@@ -16,7 +16,7 @@ namespace AngouriMath.Tests.Calculus
     /// quadratic with symbols in it, taken apart over the linears: Euler's substitution, which
     /// the split left these to, writes the root of a symbolic leading coefficient into every
     /// coefficient. Rubi's 1.2.2.4 <c>sqrt(a + b x^2 + c x^4)/(x^3 (d + e x^2))</c> is one under
-    /// <c>u = x^2</c>.
+    /// <c>u = x^2</c>, written here with <c>k</c> for <c>e</c>, which is Euler's number.
     /// <a href="https://github.com/asc-community/AngouriMath/issues/718">#718</a>
     /// </summary>
     [Trait("Area", "Calculus")]
@@ -28,7 +28,7 @@ namespace AngouriMath.Tests.Calculus
             Assert.DoesNotContain("integral(", integral.Stringize());
             Assert.DoesNotContain("NaN", integral.Stringize());
 
-            // Pinned before it is differentiated: the answer carries `sgn(x + d/e)`, whose
+            // Pinned before it is differentiated: the answer carries `sgn(x + d/k)`, whose
             // derivative is read where its argument is a number.
             var pinned = integral.Substitute("C", 0);
             Entity original = integrand.ToEntity();
@@ -59,14 +59,15 @@ namespace AngouriMath.Tests.Calculus
         }
 
         [Theory]
-        [InlineData("sqrt(a+b*x+c*x^2)/(x^2*(d+e*x))")]
-        [InlineData("1/(x^2*(d+e*x)*sqrt(a+b*x+c*x^2))")]
-        [InlineData("sqrt(a+b*x^2+c*x^4)/(x^3*(d+e*x^2))")]
+        [InlineData("sqrt(a+b*x+c*x^2)/(x^2*(d+k*x))")]
+        [InlineData("1/(x^2*(d+k*x)*sqrt(a+b*x+c*x^2))")]
+        [InlineData("sqrt(a+b*x^2+c*x^4)/(x^3*(d+k*x^2))")]
+        [InlineData("1/((d+k*x)*(f+g*x)^2*sqrt(a+b*x+c*x^2))")]
         public void IsAnsweredAndDifferentiatesBack(string integrand)
         {
             var points = new[] { -1.4, -0.3, 0.8, 2.25 };
-            DifferentiatesBack(integrand, points, ("a", 2), ("b", 1.0 / 3), ("c", 1.5), ("d", 1.25), ("e", 3));
-            DifferentiatesBack(integrand, points, ("a", -1), ("b", 3), ("c", 2), ("d", -2), ("e", 1.5));
+            DifferentiatesBack(integrand, points, ("a", 2), ("b", 1.0 / 3), ("c", 1.5), ("d", 1.25), ("k", 3), ("f", 7.0 / 3), ("g", -0.4));
+            DifferentiatesBack(integrand, points, ("a", -1), ("b", 3), ("c", 2), ("d", -2), ("k", 1.5), ("f", 0.5), ("g", 5.0 / 3));
         }
     }
 }
