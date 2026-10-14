@@ -19236,7 +19236,8 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
-        /// A root of a product beside a root of one of its factors, the product split:
+        /// A root of a product beside a root of one of its factors, or a symbolic power of one
+        /// beside a symbolic power of a factor, the product split:
         /// <c>(P Q)^r</c> is <c>K P^r Q^r</c>, where <c>K = (P Q)^r/(P^r Q^r)</c> is constant wherever
         /// it is defined, for the same reason as in
         /// <see cref="SolveByTakingTheWholePowersOutOfAPowerOfAProduct"/>. The powers of <c>P</c>
@@ -19252,7 +19253,7 @@ namespace AngouriMath.Functions.Algebra
         {
             if (!Integration.AnsweringTheQuestionAsked || splittingARootOfAProduct)
                 return null;
-            var roots = new List<(Entity Node, Entity Base, Number.Rational Exponent)>();
+            var roots = new List<(Entity Node, Entity Base, Entity Exponent)>();
             Gather(expr);
             if (roots.Count < 2)
                 return null;
@@ -19295,7 +19296,12 @@ namespace AngouriMath.Functions.Algebra
                         Gather(above);
                         Gather(below);
                         break;
-                    case Powf(var @base, Number.Rational exponent) when exponent is not Number.Integer && @base.ContainsNode(x):
+                    // A symbolic exponent as well: K is exp(2 pi i n r) for a whole n constant
+                    // between the zeros of P and Q, whatever r is. Rubi's 1.2.1.2:2389,
+                    // `(d + e x)^(-3 - 2 p) ((d + e x) (a e + c d x))^p`, gathers into
+                    // `(d + e x)^(-3 - p) (a e + c d x)^p`.
+                    case Powf(var @base, var exponent) when exponent is not Number.Integer && !exponent.ContainsNode(x) && @base.ContainsNode(x)
+                        && (exponent is Number.Rational || exponent.Vars.Any()):
                         roots.Add((node, @base, exponent));
                         break;
                 }
