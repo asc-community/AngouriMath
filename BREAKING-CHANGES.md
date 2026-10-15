@@ -447,6 +447,19 @@ case is most of its length ([#718](https://github.com/asc-community/AngouriMath/
 | `"x^4/((a + b*x^2 + c*x^4)*sqrt(d + k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 28,551 characters |
 | `"1/(x^2*(a + b*x^2 + c*x^4)*sqrt(d + k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 10,194 characters |
 
+### A power of x over a sum of two cubes is split over the cube roots of unity
+
+**Answers where there were none.** `x^k/((3 a + b x^2)^3 + 27 a^2 c x^3)` was declined: the integrator's resultant needs
+numbers for coefficients. A sextic `d6 (x^2 + s)^3 + d3 x^3` is now split over the cube roots of unity into three
+quadratics, `x^2 + w m x + s` with `m^3 = d3/d6`. For two of them `w` is complex, so the answer carries `i` the way
+Rubi's does ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2/(27*a^3+27*a^2*b*x^2+27*a^2*c*x^3+9*a*b^2*x^4+b^3*x^6)".ToEntity().Integrate("x")` | `integral(...)` | 849 characters |
+| `"1/(27*a^3+27*a^2*b*x^2+27*a^2*c*x^3+9*a*b^2*x^4+b^3*x^6)".ToEntity().Integrate("x")` | `integral(...)` | 2,091 characters |
+| `"1/(x^2*(27*a^3+27*a^2*b*x^2+27*a^2*c*x^3+9*a*b^2*x^4+b^3*x^6))".ToEntity().Integrate("x")` | `integral(...)` | 3,820 characters |
+
 ### A polynomial of degree six with a large leading coefficient is factored
 
 **Answers where there were none.** The factoring clears a leading coefficient by rescaling the variable, and declined
