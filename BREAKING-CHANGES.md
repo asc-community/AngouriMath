@@ -447,6 +447,18 @@ case is most of its length ([#718](https://github.com/asc-community/AngouriMath/
 | `"x^4/((a + b*x^2 + c*x^4)*sqrt(d + k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 28,551 characters |
 | `"1/(x^2*(a + b*x^2 + c*x^4)*sqrt(d + k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 10,194 characters |
 
+### A rational function past the twelfth degree is reduced by Hermite's method
+
+**Answers where there were none.** The integrator read a denominator of degree twelve at most, so a derivative over
+powers of `x^4 + x + 3` up to the fourth was declined, after seven to fifteen seconds. A rational function with numbers
+for coefficients over a denominator past the twelfth degree now takes Hermite's reduction, as long as what is left for the
+logarithms stays within twelve ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"3*(-47+228*x+120*x^2+19*x^3)/(3+x+x^4)^4+(42-320*x-75*x^2-8*x^3)/(3+x+x^4)^3+30*x/(3+x+x^4)^2".ToEntity().Integrate("x")` | `integral(...)` | 142 characters |
+| `"(-3+10*x+4*x^3-30*x^5)/(3+x+x^4)^3-3*(1+4*x^3)*(2-3*x+5*x^2+x^4-5*x^6)/(3+x+x^4)^4".ToEntity().Integrate("x")` | `integral(...)` | 142 characters |
+
 ### A power of a linear over a power of a quadratic is reduced a power at a time
 
 **Answers where there were none.** `sqrt(d + k x)/(a + b x + c x^2)^3` took thirty seconds for 26,437 characters on the
