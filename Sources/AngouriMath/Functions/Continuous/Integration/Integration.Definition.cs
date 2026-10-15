@@ -669,6 +669,9 @@ namespace AngouriMath.Functions.Algebra
             // A power of a linear beside the derivative of a quadratic over a whole power of it, by
             // parts once, before anything takes the symbolic quadratic apart.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfALinearBesideTheDerivativeOfAQuadraticOverItsPower(expr, x, integrateByParts)) is { }) return answer;
+            // A power of a linear that is not whole, times a linear, over a whole power of a quadratic,
+            // the power of the quadratic lowered one at a time.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfALinearOverAPowerOfAQuadratic(expr, x, integrateByParts)) is { }) return answer;
             // A rational function over a whole power of a symbolic quadratic, the power lowered one
             // at a time, before the partial fractions take the quadratic apart over its roots.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOverAPowerOfASymbolicQuadratic(expr, x, integrateByParts)) is { }) return answer;
