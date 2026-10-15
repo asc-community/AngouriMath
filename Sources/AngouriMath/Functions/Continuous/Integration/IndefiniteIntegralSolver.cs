@@ -19404,7 +19404,10 @@ namespace AngouriMath.Functions.Algebra
             if (!VanishesIdentically(t - lambda * bq))
                 return null;
             exponent = exponent.InnerSimplified;
-            if (exponent == Number.Integer.Zero)
+            // A negative whole power of the linear is a rational function whose power of the
+            // linear parts would raise: `(b + 2 c x)/((d + e x) Q^3)` went from 6,220 characters
+            // to 14,351, the partial fractions answering it whole as before.
+            if (exponent == Number.Integer.Zero || exponent is Number.Integer { EInteger.Sign: < 0 })
                 return null;
             var lower = power - 1;
             var outside = -MathS.Pow(linear, exponent) / (lower * MathS.Pow(quadratic, Number.Integer.Create(lower)));
