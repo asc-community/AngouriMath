@@ -85,13 +85,22 @@ namespace AngouriMath.Functions.Algebra
         internal static Entity? IntegrateAHighDegree(Entity numerator, Entity denominator, Variable x)
             => PolynomialFactoring.TryGetRationalCoefficients(denominator, x, 1, 1, MaxReducedDegree, out var belowCoefficients)
                && RationalPolynomial.Create(belowCoefficients).Degree > MaxDegree
-                ? Integrate(numerator, denominator, x)
+                ? IntegrateUpToDegree(numerator, denominator, x, MaxReducedDegree)
                 : null;
 
+        /// <summary>
+        /// The integral of <paramref name="numerator"/> over <paramref name="denominator"/>,
+        /// held to <see cref="MaxDegree"/> unless asked otherwise: below a substitution a
+        /// denominator past it -- <c>1/(cos(x) + cos(3x))^5</c> under the tangent's half angle --
+        /// was reduced past the budget where it used to be declined at once.
+        /// </summary>
         internal static Entity? Integrate(Entity numerator, Entity denominator, Variable x)
+            => IntegrateUpToDegree(numerator, denominator, x, MaxDegree);
+
+        private static Entity? IntegrateUpToDegree(Entity numerator, Entity denominator, Variable x, int degree)
         {
-            if (!PolynomialFactoring.TryGetRationalCoefficients(numerator, x, 1, 0, MaxReducedDegree, out var aboveCoefficients)
-                || !PolynomialFactoring.TryGetRationalCoefficients(denominator, x, 1, 1, MaxReducedDegree, out var belowCoefficients))
+            if (!PolynomialFactoring.TryGetRationalCoefficients(numerator, x, 1, 0, degree, out var aboveCoefficients)
+                || !PolynomialFactoring.TryGetRationalCoefficients(denominator, x, 1, 1, degree, out var belowCoefficients))
                 return null;
             var above = RationalPolynomial.Create(aboveCoefficients);
             var below = RationalPolynomial.Create(belowCoefficients);

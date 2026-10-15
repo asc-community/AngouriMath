@@ -2624,8 +2624,9 @@ namespace AngouriMath.Functions.Algebra
         internal static Entity? SolveAHighDegreeRationalFunctionByHermite(Entity expr, Entity.Variable x)
         {
             // A sum of quotients over powers of one denominator, Rubi's spelling of a derivative,
-            // is one quotient for this.
-            if (expr.Vars.Any(symbol => symbol != x))
+            // is one quotient for this. At the question asked only, which is where nothing else
+            // answered one.
+            if (!Integration.AnsweringTheQuestionAsked || expr.Vars.Any(symbol => symbol != x))
                 return null;
             // Over the least common multiple of the terms' denominators, each base to its highest
             // power, rather than their product: three terms over the fourth, third and second
