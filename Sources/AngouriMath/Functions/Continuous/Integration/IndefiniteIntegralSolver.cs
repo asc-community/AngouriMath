@@ -2643,22 +2643,22 @@ namespace AngouriMath.Functions.Algebra
                         ? (b0, w.ToInt32Unchecked()) : (factor, 1);
                     powers[@base] = powers.TryGetValue(@base, out var already) ? already + whole : whole;
                 }
-                foreach (var (@base, whole) in powers)
-                    highest[@base] = System.Math.Max(highest.TryGetValue(@base, out var already) ? already : 0, whole);
+                foreach (var pair in powers)
+                    highest[pair.Key] = System.Math.Max(highest.TryGetValue(pair.Key, out var already) ? already : 0, pair.Value);
                 powersOf.Add(powers);
             }
             Entity denominator = Number.Integer.One;
-            foreach (var (@base, whole) in highest)
-                denominator = denominator * MathS.Pow(@base, Number.Integer.Create(whole));
+            foreach (var pair in highest)
+                denominator = denominator * MathS.Pow(pair.Key, Number.Integer.Create(pair.Value));
             Entity numerator = Number.Integer.Zero;
             for (var i = 0; i < terms.Count; i++)
             {
                 Entity cofactor = Number.Integer.One;
-                foreach (var (@base, whole) in highest)
+                foreach (var pair in highest)
                 {
-                    var missing = whole - (powersOf[i].TryGetValue(@base, out var have) ? have : 0);
+                    var missing = pair.Value - (powersOf[i].TryGetValue(pair.Key, out var have) ? have : 0);
                     if (missing > 0)
-                        cofactor = cofactor * MathS.Pow(@base, Number.Integer.Create(missing));
+                        cofactor = cofactor * MathS.Pow(pair.Key, Number.Integer.Create(missing));
                 }
                 numerator = numerator + terms[i].Numerator * cofactor;
             }
