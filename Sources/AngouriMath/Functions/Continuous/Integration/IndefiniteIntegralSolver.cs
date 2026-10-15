@@ -19405,6 +19405,11 @@ namespace AngouriMath.Functions.Algebra
             var discriminant = (4 * a2 * a0 - a1 * a1).InnerSimplified;
             if (VanishesIdentically(discriminant))
                 return null;
+            // Real coefficients only, whose cases the table's 1/Q reads; and with no linear, not a
+            // binomial in x^2, which the binomial rules answer: `x^22/(a + b x^2)^10` was theirs in
+            // a second and ten levels of this ran past the budget.
+            if (Functions.PartialFractions.HoldsTheImaginaryUnit(quadratic) || linear is null && VanishesIdentically(a1))
+                return null;
             // A quadratic that factors over linears is the partial fractions' to take apart, and
             // they do it cheaply: `(d + e x)^10/((d + e x) (a e + c d x))^4`, written out, went from
             // two seconds past the budget here.
