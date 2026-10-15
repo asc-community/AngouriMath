@@ -64,15 +64,43 @@ namespace AngouriMath.Functions.Algebra
         private const int MaxDegree = 12;
 
         /// <summary>
+        /// The largest denominator degree read at all: Hermite's reduction is a few Diophantine
+        /// solves over the rationals, and what it leaves for the resultant is the squarefree part,
+        /// held to <see cref="MaxDegree"/>. Rubi's 1.3.1 <c>3 (19 x^3 + 120 x^2 + 228 x - 47)/(x^4 + x + 3)^4 + ...</c>
+        /// is a derivative over a sixteenth-degree denominator with nothing left for the logarithms,
+        /// and was declined after a minute and a half of searching elsewhere.
+        /// </summary>
+        private const int MaxReducedDegree = 24;
+
+        /// <summary>
         /// The integral of <paramref name="numerator"/> over <paramref name="denominator"/>,
         /// both polynomials in <paramref name="x"/> with rational coefficients and the fraction
         /// proper; <see langword="null"/> where they are not, or where the answer does not
         /// differentiate back to the integrand at the sampled points.
         /// </summary>
+        /// <summary>
+        /// <see cref="Integrate"/>, for a denominator past <see cref="MaxDegree"/> only: what the
+        /// rest of the integrator never answered, asked before it searches.
+        /// </summary>
+        internal static Entity? IntegrateAHighDegree(Entity numerator, Entity denominator, Variable x)
+            => PolynomialFactoring.TryGetRationalCoefficients(denominator, x, 1, 1, MaxReducedDegree, out var belowCoefficients)
+               && RationalPolynomial.Create(belowCoefficients).Degree > MaxDegree
+                ? IntegrateUpToDegree(numerator, denominator, x, MaxReducedDegree)
+                : null;
+
+        /// <summary>
+        /// The integral of <paramref name="numerator"/> over <paramref name="denominator"/>,
+        /// held to <see cref="MaxDegree"/> unless asked otherwise: below a substitution a
+        /// denominator past it -- <c>1/(cos(x) + cos(3x))^5</c> under the tangent's half angle --
+        /// was reduced past the budget where it used to be declined at once.
+        /// </summary>
         internal static Entity? Integrate(Entity numerator, Entity denominator, Variable x)
+            => IntegrateUpToDegree(numerator, denominator, x, MaxDegree);
+
+        private static Entity? IntegrateUpToDegree(Entity numerator, Entity denominator, Variable x, int degree)
         {
-            if (!PolynomialFactoring.TryGetRationalCoefficients(numerator, x, 1, 0, MaxDegree, out var aboveCoefficients)
-                || !PolynomialFactoring.TryGetRationalCoefficients(denominator, x, 1, 1, MaxDegree, out var belowCoefficients))
+            if (!PolynomialFactoring.TryGetRationalCoefficients(numerator, x, 1, 0, degree, out var aboveCoefficients)
+                || !PolynomialFactoring.TryGetRationalCoefficients(denominator, x, 1, 1, degree, out var belowCoefficients))
                 return null;
             var above = RationalPolynomial.Create(aboveCoefficients);
             var below = RationalPolynomial.Create(belowCoefficients);
@@ -87,7 +115,7 @@ namespace AngouriMath.Functions.Algebra
             var answer = rationalPart;
             if (!logAbove.IsZero)
             {
-                if (LogarithmicPart(logAbove, logBelow, x) is not { } logarithmic)
+                if (logBelow.Degree > MaxDegree || LogarithmicPart(logAbove, logBelow, x) is not { } logarithmic)
                     return null;
                 answer = answer + logarithmic;
             }
