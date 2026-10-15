@@ -696,7 +696,7 @@ namespace AngouriMath.Functions
         }
 
         /// <summary>Whether a number off the real line is among the nodes of <paramref name="expr"/>.</summary>
-        private static bool HoldsTheImaginaryUnit(Entity expr)
+        internal static bool HoldsTheImaginaryUnit(Entity expr)
             => expr.Nodes.Any(node => node is Complex number && number is not Real && !number.ImaginaryPart.IsZero);
 
         /// <summary>
