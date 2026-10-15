@@ -19436,19 +19436,33 @@ namespace AngouriMath.Functions.Algebra
         {
             if (!Integration.AnsweringTheQuestionAsked || splittingARootOfAProduct)
                 return null;
-            var roots = new List<(Entity Node, Entity Base, Entity Exponent)>();
-            Gather(expr);
+            var roots = new List<(Entity Node, Entity Base, Entity Exponent, bool Below)>();
+            Gather(expr, false);
             if (roots.Count < 2)
                 return null;
             foreach (var product in roots)
                 foreach (var factor in roots)
                 {
+                    // One of the two a root or a symbolic power at least: two whole powers are a
+                    // rational function, which the partial fractions take apart already. And a
+                    // factor to a whole power of two or more: beside a bare one the root was split
+                    // where it read better whole -- Welz's `(1 + x)/((x - 2) sqrt(1 + x^3))` is one
+                    // logarithm, and over `sqrt(1 + x) sqrt(1 - x + x^2)` it was three.
                     if (ReferenceEquals(product.Node, factor.Node) || product.Base == factor.Base
+                        || product.Exponent is Number.Integer && factor.Exponent is Number.Integer
+                        || factor.Exponent is Number.Integer { EInteger: var once } && once.Abs().CompareTo(EInteger.FromInt32(2)) < 0
+                        // A whole power beside a root only where the split gathers powers below
+                        // the bar, and of a sum: above it, `(a + b x)^3 sqrt(c x^2 - a^2 c/b^2)` went
+                        // from 3,540 characters to 33,316, and `x^(5/2)/(b x^2 + c x^4)^3`, a power
+                        // of x, from 1.7 seconds to 7.9.
+                        || factor.Exponent is Number.Integer && !factor.Below
+                        || product.Exponent is Number.Integer && factor.Base is not (Sumf or Minusf)
                         || ExactlyDivided(product.Base, factor.Base, x) is not { } cofactor || !cofactor.ContainsNode(x))
                         continue;
                     var multiple = Variable.CreateUnique(expr, "k_split");
                     var written = MathS.Pow(factor.Base, product.Exponent) * MathS.Pow(cofactor, product.Exponent);
-                    var constant = product.Node / written;
+                    // A whole power of a product is the product of the powers, with no constant.
+                    Entity constant = product.Exponent is Number.Integer ? Number.Integer.One : product.Node / written;
                     var rewritten = expr.Replace(node => ReferenceEquals(node, product.Node) ? multiple * written : node).InnerSimplified;
                     Entity? answer;
                     splittingARootOfAProduct = true;
@@ -19467,17 +19481,17 @@ namespace AngouriMath.Functions.Algebra
                 }
             return null;
 
-            void Gather(Entity node)
+            void Gather(Entity node, bool below)
             {
                 switch (node)
                 {
                     case Mulf(var left, var right):
-                        Gather(left);
-                        Gather(right);
+                        Gather(left, below);
+                        Gather(right, below);
                         break;
-                    case Divf(var above, var below):
-                        Gather(above);
-                        Gather(below);
+                    case Divf(var above, var under):
+                        Gather(above, below);
+                        Gather(under, !below);
                         break;
                     // A symbolic exponent as well: K is exp(2 pi i n r) for a whole n constant
                     // between the zeros of P and Q, whatever r is. Rubi's 1.2.1.2:2389,
@@ -19485,7 +19499,17 @@ namespace AngouriMath.Functions.Algebra
                     // `(d + e x)^(-3 - p) (a e + c d x)^p`.
                     case Powf(var @base, var exponent) when exponent is not Number.Integer && !exponent.ContainsNode(x) && @base.ContainsNode(x)
                         && (exponent is Number.Rational || exponent.Vars.Any()):
-                        roots.Add((node, @base, exponent));
+                        roots.Add((node, @base, exponent, below));
+                        break;
+                    // And a whole power, or a sum standing as a factor, beside a root: Rubi's
+                    // 1.2.1.2:2218, `1/((d + e x)^4 (a d e + (c d^2 + a e^2) x + c d e x^2)^(3/2))`, is
+                    // `(d + e x)^(-11/2) (a e + c d x)^(-3/2)` up to the constant, and :2280 has the
+                    // product to the first power below the bar beside `sqrt(d + e x)`.
+                    case Powf(var @base, Number.Integer { IsZero: false } whole) when @base is Sumf or Minusf && @base.ContainsNode(x):
+                        roots.Add((node, @base, whole, below ^ whole.EInteger.Sign < 0));
+                        break;
+                    case Sumf or Minusf when node.ContainsNode(x):
+                        roots.Add((node, node, Number.Integer.One, below));
                         break;
                 }
             }

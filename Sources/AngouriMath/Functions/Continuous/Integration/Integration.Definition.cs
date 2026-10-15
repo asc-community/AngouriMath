@@ -669,6 +669,12 @@ namespace AngouriMath.Functions.Algebra
             // A power of a linear beside the derivative of a quadratic over a whole power of it, by
             // parts once, before anything takes the symbolic quadratic apart.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfALinearBesideTheDerivativeOfAQuadraticOverItsPower(expr, x, integrateByParts)) is { }) return answer;
+            // A root or a power of a product beside a power of one of its factors, the product
+            // split: `(a + b x^2)^(5/2)/sqrt(a^2 - b^2 x^4)` is `K (a + b x^2)^2/sqrt(a - b x^2)`.
+            // Early, since what reads the product whole is slower and longer: Rubi's 1.2.1.2:2218,
+            // `1/((d + e x)^4 (a d e + (c d^2 + a e^2) x + c d e x^2)^(3/2))`, took 27 seconds to
+            // reach it and its split form takes a quarter of one.
+            if ((answer = IndefiniteIntegralSolver.SolveBySplittingARootOfAProductBesideARootOfAFactor(expr, x, integrateByParts)) is { }) return answer;
             // A symbolic trinomial in x^2 below the bar beside a root of a quadratic, over its roots
             // in x^2, before anything reads the trinomial whole: asked of it, the routes below ran
             // past a minute on Rubi's 1.2.2.4 `sqrt(d + e x^2)/(x^2 (a + b x^2 + c x^4))`.
@@ -1242,9 +1248,6 @@ namespace AngouriMath.Functions.Algebra
             // And a power of a product with a factor under a whole power, that power taken out in
             // front of a constant: `(c sin(a + b x)^3)^(1/3)` is `K sin(a + b x)`.
             if ((answer = IndefiniteIntegralSolver.SolveByTakingTheWholePowersOutOfAPowerOfAProduct(expr, x, integrateByParts)) is { }) return answer;
-            // And a root of a product beside a root of one of its factors, the product split:
-            // `(a + b x^2)^(5/2)/sqrt(a^2 - b^2 x^4)` is `K (a + b x^2)^2/sqrt(a - b x^2)`.
-            if ((answer = IndefiniteIntegralSolver.SolveBySplittingARootOfAProductBesideARootOfAFactor(expr, x, integrateByParts)) is { }) return answer;
             // Product-to-sum among the rewrites rather than before them, because a product of
             // trigonometric functions of *equal* arguments is a power and wants a different tool;
             // this only fires where the arguments differ, which is exactly what every substitution

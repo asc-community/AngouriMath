@@ -766,6 +766,24 @@ split too, and the powers of `P` gather ([#718](https://github.com/asc-community
 | `"(d + k*x)^m*(f + g*x)^3/(a*d*k + (c*d^2 + a*k^2)*x + c*d*k*x^2)^m".ToEntity().Integrate("x")` | `integral(...)` | 1,817 characters |
 | `"(1 - x^4)^n/(1 + x + x^2 + x^3)^n".ToEntity().Integrate("x")` | `integral(...)` | 147 characters |
 
+### A power of a product beside a whole power of one of its factors below the bar is split
+
+**Answers where there were none.** `1/((d + k x)^4 (a d k + (c d^2 + a k^2) x + c d k x^2)^(3/2))` was declined
+past any budget. The split of a root of a product beside a root of a factor now also takes a factor to a whole
+power of two or more below the bar, and a product to a whole power beside a root of a factor, so the powers of
+the factor gather. It is asked before the routes that read the product whole: `(d + k x)^(7/2)/(a d k + (c d^2
++ a k^2) x + c d k x^2)` was answered by them in 29,285 characters
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((d + k*x)^4*(a*d*k + (c*d^2 + a*k^2)*x + c*d*k*x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | 663 characters |
+| `"1/(sqrt(d + k*x)*(a*d*k + (c*d^2 + a*k^2)*x + c*d*k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 1,435 characters |
+| `"(d + k*x)^(7/2)/(a*d*k + (c*d^2 + a*k^2)*x + c*d*k*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 1,611 characters |
+| `"(A + B*x)*(a*c + b*c*x)^m/(a^2 + 2*a*b*x + b^2*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 223 characters |
+| `"(f + g*x)/((d + k*x)^3*(c*d^2 - b*d*k - b*k^2*x - c*k^2*x^2)^(5/2))".ToEntity().Integrate("x")` | `integral(...)` | 1,156 characters |
+| `"(12 - 3*k^2*x^2)^(1/4)/(2 + k*x)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 613 characters |
+
 ### A secant or a cosecant beside a power of a sum of them is read as a power of the cosine or the sine
 
 **Answers where there were none.** `sec(x) sqrt(sec(x) + tan(x))` was declined, with the rest of Rubi's 4.7.7
