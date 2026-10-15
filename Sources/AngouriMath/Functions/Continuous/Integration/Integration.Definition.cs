@@ -666,6 +666,9 @@ namespace AngouriMath.Functions.Algebra
             // the question asked only, and the polynomial term below writes `1/u` as `u^(-1)` and
             // asks that a level down: `1/(e^atanh(a x) (c - c/(a x))^(3/2))` reached it nowhere.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingEachLinearOnce(expr, x, integrateByParts)) is { }) return answer;
+            // A power of a linear beside the derivative of a quadratic over a whole power of it, by
+            // parts once, before anything takes the symbolic quadratic apart.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfALinearBesideTheDerivativeOfAQuadraticOverItsPower(expr, x, integrateByParts)) is { }) return answer;
             // A symbolic trinomial in x^2 below the bar beside a root of a quadratic, over its roots
             // in x^2, before anything reads the trinomial whole: asked of it, the routes below ran
             // past a minute on Rubi's 1.2.2.4 `sqrt(d + e x^2)/(x^2 (a + b x^2 + c x^4))`.

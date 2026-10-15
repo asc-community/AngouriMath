@@ -19343,6 +19343,79 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of a linear beside the derivative of a quadratic, over a whole power of that
+        /// quadratic, by parts once: <c>Q' L^m/Q^n</c> with <c>u = L^m</c> and
+        /// <c>dv = Q'/Q^n dx</c> is <c>-L^m/((n - 1) Q^(n - 1)) + m e/(n - 1) * integral L^(m - 1)/Q^(n - 1)</c>,
+        /// for <c>L = d + e x</c>, and the power of the quadratic is one lower in what is left.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's 1.2.1.3 <c>(b + 2 c x) sqrt(d + e x)/(a + b x + c x^2)^2</c> and its kin took
+        /// thirty seconds or ran past the budget, the partial fractions taking the symbolic
+        /// quadratic apart twice over; what is left over its first power is answered in a third of
+        /// a second -- a whole power of the linear too, `(b + 2 c x) (d + e x)^4/(a + b x + c x^2)^2`
+        /// ran past the budget there. The numerator is read up to a constant multiple of <c>Q'</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPowerOfALinearBesideTheDerivativeOfAQuadraticOverItsPower(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            Entity? quadratic = null;
+            var power = 0;
+            Entity? linear = null;
+            Entity exponent = Number.Integer.Zero;
+            Entity? derivative = null;
+            Entity constant = Number.Integer.One;
+            foreach (var (side, below) in new[] { (numerator, false), (denominator, true) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (!factor.ContainsNode(x))
+                    {
+                        constant = below ? constant / factor : constant * factor;
+                        continue;
+                    }
+                    var (@base, raised) = factor is Powf(var b, var r) && !r.ContainsNode(x) ? (b, r) : (factor, (Entity)Number.Integer.One);
+                    if (below && quadratic is null && raised is Number.Integer { EInteger: var whole } && whole.CompareTo(EInteger.FromInt32(2)) >= 0
+                        && whole.CanFitInInt32() && TreeAnalyzer.TryGetPolyQuadratic(@base, x, out var leading, out _, out _) && !VanishesIdentically(leading))
+                    {
+                        quadratic = @base;
+                        power = whole.ToInt32Unchecked();
+                        continue;
+                    }
+                    if (!TreeAnalyzer.TryGetPolyLinear(@base, x, out var slope, out _) || VanishesIdentically(slope))
+                        return null;
+                    // The derivative once, above the bar; the linear any number of times, either side.
+                    if (!below && derivative is null && raised == Number.Integer.One && (linear is null || linear != @base))
+                    {
+                        derivative = @base;
+                        continue;
+                    }
+                    if (linear is not null && linear != @base)
+                        return null;
+                    linear = @base;
+                    exponent = below ? exponent - raised : exponent + raised;
+                }
+            if (quadratic is null || derivative is null || linear is null
+                || !TreeAnalyzer.TryGetPolyQuadratic(quadratic, x, out var a, out var bq, out _)
+                || !TreeAnalyzer.TryGetPolyLinear(derivative, x, out var s, out var t)
+                || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var e, out _))
+                return null;
+            // The derivative of Q is 2 a x + b; the numerator's linear is lambda times it.
+            var lambda = (s / (2 * a)).InnerSimplified;
+            if (!VanishesIdentically(t - lambda * bq))
+                return null;
+            exponent = exponent.InnerSimplified;
+            if (exponent == Number.Integer.Zero)
+                return null;
+            var lower = power - 1;
+            var outside = -MathS.Pow(linear, exponent) / (lower * MathS.Pow(quadratic, Number.Integer.Create(lower)));
+            var left = exponent * e * MathS.Pow(linear, (exponent - 1).InnerSimplified) / (lower * MathS.Pow(quadratic, Number.Integer.Create(lower)));
+            if (Integration.ComputeAsAQuestionOfItsOwn(left.InnerSimplified, x, integrateByParts) is not { } rest)
+                return null;
+            var answer = (constant * lambda * (outside + rest)).InnerSimplified;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
+
+        /// <summary>
         /// A root of a product beside a root of one of its factors, or a symbolic power of one
         /// beside a symbolic power of a factor, the product split:
         /// <c>(P Q)^r</c> is <c>K P^r Q^r</c>, where <c>K = (P Q)^r/(P^r Q^r)</c> is constant wherever
