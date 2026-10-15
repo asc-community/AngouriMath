@@ -19361,6 +19361,11 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         internal static Entity? SolveARationalFunctionOverAPowerOfASymbolicQuadratic(Entity expr, Entity.Variable x, bool integrateByParts)
         {
+            // At the question asked only: below a substitution the routes it pre-empts answered
+            // `(a + b x + c x^2)^3/((1 - d x)^(3/2) (1 + d x)^(3/2))` in 2,917 characters, and
+            // this in 67,746.
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
             var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
             if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var top) || top.Keys.Any(k => k.Sign < 0 || !k.CanFitInInt32()))
                 return null;
@@ -19399,6 +19404,19 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             var discriminant = (4 * a2 * a0 - a1 * a1).InnerSimplified;
             if (VanishesIdentically(discriminant))
+                return null;
+            // A quadratic that factors over linears is the partial fractions' to take apart, and
+            // they do it cheaply: `(d + e x)^10/((d + e x) (a e + c d x))^4`, written out, went from
+            // two seconds past the budget here.
+            // It does where b^2 - 4 a c is the square of a polynomial in the symbols, which is
+            // what is asked: the factoring does not find `(d + e x) (a e + c d x)` written out.
+            var opposite = Functions.PartialFractions.Bare((a1 * a1 - 4 * a2 * a0).Expand().InnerSimplified);
+            var symbols = opposite.Vars.Distinct().OrderBy(v => v.Name, System.StringComparer.Ordinal).ToArray();
+            var indices = new Dictionary<Variable, int>();
+            for (var i = 0; i < symbols.Length; i++)
+                indices[symbols[i]] = i;
+            if (symbols.Length <= MultivariatePolynomial.MaxVariables
+                && MultivariatePolynomial.TryParse(opposite, indices) is { } parsed && parsed.TrySquareRoot() is not null)
                 return null;
             var named = Variable.CreateUnique(expr, "D_q");
             var atTheRoot = Variable.CreateUnique(expr + named, "Q_p");
