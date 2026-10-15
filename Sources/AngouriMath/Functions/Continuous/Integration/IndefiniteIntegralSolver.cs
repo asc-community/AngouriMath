@@ -2621,6 +2621,49 @@ namespace AngouriMath.Functions.Algebra
         /// <see cref="RothsteinTrager"/>. After <see cref="SolveByPartialFractions"/>, so that
         /// everything that answers keeps the form it gives.
         /// </summary>
+        internal static Entity? SolveAHighDegreeRationalFunctionByHermite(Entity expr, Entity.Variable x)
+        {
+            // A sum of quotients over powers of one denominator, Rubi's spelling of a derivative,
+            // is one quotient for this.
+            if (expr.Vars.Any(symbol => symbol != x))
+                return null;
+            // Over the least common multiple of the terms' denominators, each base to its highest
+            // power, rather than their product: three terms over the fourth, third and second
+            // powers of one quartic are one quotient over its fourth power.
+            var terms = Sumf.LinearChildren(expr).Select(term => Functions.SingleQuotient.Of(term)).ToList();
+            var highest = new Dictionary<Entity, int>();
+            var powersOf = new List<Dictionary<Entity, int>>();
+            foreach (var (_, below) in terms)
+            {
+                var powers = new Dictionary<Entity, int>();
+                foreach (var factor in Mulf.LinearChildren(below))
+                {
+                    var (@base, whole) = factor is Powf(var b0, Number.Integer { EInteger: var w }) && w.Sign > 0 && w.CanFitInInt32()
+                        ? (b0, w.ToInt32Unchecked()) : (factor, 1);
+                    powers[@base] = powers.TryGetValue(@base, out var already) ? already + whole : whole;
+                }
+                foreach (var (@base, whole) in powers)
+                    highest[@base] = System.Math.Max(highest.TryGetValue(@base, out var already) ? already : 0, whole);
+                powersOf.Add(powers);
+            }
+            Entity denominator = Number.Integer.One;
+            foreach (var (@base, whole) in highest)
+                denominator = denominator * MathS.Pow(@base, Number.Integer.Create(whole));
+            Entity numerator = Number.Integer.Zero;
+            for (var i = 0; i < terms.Count; i++)
+            {
+                Entity cofactor = Number.Integer.One;
+                foreach (var (@base, whole) in highest)
+                {
+                    var missing = whole - (powersOf[i].TryGetValue(@base, out var have) ? have : 0);
+                    if (missing > 0)
+                        cofactor = cofactor * MathS.Pow(@base, Number.Integer.Create(missing));
+                }
+                numerator = numerator + terms[i].Numerator * cofactor;
+            }
+            return RothsteinTrager.IntegrateAHighDegree(numerator, denominator, x);
+        }
+
         internal static Entity? SolveByRothsteinTrager(Entity expr, Entity.Variable x)
         {
             if (!TryReadAsQuotient(expr, out var numerator, out var denominator))

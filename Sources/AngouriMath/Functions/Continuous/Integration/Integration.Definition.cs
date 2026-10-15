@@ -666,6 +666,9 @@ namespace AngouriMath.Functions.Algebra
             // the question asked only, and the polynomial term below writes `1/u` as `u^(-1)` and
             // asks that a level down: `1/(e^atanh(a x) (c - c/(a x))^(3/2))` reached it nowhere.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingEachLinearOnce(expr, x, integrateByParts)) is { }) return answer;
+            // A rational function with numbers for coefficients over a denominator past the twelfth
+            // degree, by Hermite's reduction before anything searches: nothing below answered one.
+            if ((answer = IndefiniteIntegralSolver.SolveAHighDegreeRationalFunctionByHermite(expr, x)) is { }) return answer;
             // A power of a linear beside the derivative of a quadratic over a whole power of it, by
             // parts once, before anything takes the symbolic quadratic apart.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfALinearBesideTheDerivativeOfAQuadraticOverItsPower(expr, x, integrateByParts)) is { }) return answer;
