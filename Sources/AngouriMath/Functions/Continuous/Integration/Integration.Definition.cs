@@ -669,6 +669,9 @@ namespace AngouriMath.Functions.Algebra
             // A power of a linear beside the derivative of a quadratic over a whole power of it, by
             // parts once, before anything takes the symbolic quadratic apart.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfALinearBesideTheDerivativeOfAQuadraticOverItsPower(expr, x, integrateByParts)) is { }) return answer;
+            // A power of a linear that is not whole, times a linear, over a whole power of a quadratic,
+            // the power of the quadratic lowered one at a time.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfALinearOverAPowerOfAQuadratic(expr, x, integrateByParts)) is { }) return answer;
             // A root or a power of a product beside a power of one of its factors, the product
             // split: `(a + b x^2)^(5/2)/sqrt(a^2 - b^2 x^4)` is `K (a + b x^2)^2/sqrt(a - b x^2)`.
             // Early, since what reads the product whole is slower and longer: Rubi's 1.2.1.2:2218,

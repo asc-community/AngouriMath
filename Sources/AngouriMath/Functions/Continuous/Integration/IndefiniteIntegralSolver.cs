@@ -19343,6 +19343,121 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of a linear that is not whole, times a linear, over a whole power of a quadratic,
+        /// with the power of the quadratic lowered one at a time:
+        /// <c>integral L^m N Q^p = (alpha + beta x) L^(m + 1) Q^(p + 1) + integral L^m W Q^(p + 1)</c>
+        /// for <c>p &lt;= -2</c>, where <c>alpha</c> and <c>beta</c> make
+        /// <c>N - (alpha + beta x) (p + 1) L Q'</c> a multiple of <c>Q</c> and
+        /// <c>W = (N - (alpha + beta x) (p + 1) L Q')/Q - beta L - (alpha + beta x) (m + 1) e</c> is
+        /// linear again; at <c>p = -1</c> the integrator answers what is left.
+        /// </summary>
+        /// <remarks>
+        /// The derivative of the first term is <c>L^m Q^p</c> times
+        /// <c>beta L Q + (alpha + beta x) (m + 1) e Q + (alpha + beta x) L (p + 1) Q'</c>, which with
+        /// <c>L^m Q^(p + 1) W</c> added is <c>L^m Q^p N</c>. <c>(alpha + beta x) L Q'</c> modulo
+        /// <c>Q</c> is <c>(alpha + beta x) (r1 x + r0)</c> with <c>r1 = 2 c d - b e</c> and
+        /// <c>r0 = b d - 2 a e</c>, for <c>L = d + e x</c> and <c>Q = a + b x + c x^2</c>, and
+        /// matching it to <c>N</c> is two equations in two unknowns. Rubi's 1.2.1.2
+        /// <c>(d + e x)^(7/2)/(a + b x + c x^2)^2</c> ran past a minute and
+        /// <c>sqrt(d + e x)/(a + b x + c x^2)^3</c> took thirty seconds for 26,437 characters.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPowerOfALinearOverAPowerOfAQuadratic(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            Entity? quadratic = null;
+            var power = 0;
+            Entity? linear = null;
+            Entity exponent = Number.Integer.Zero;
+            Entity? other = null;
+            Entity constant = Number.Integer.One;
+            foreach (var (side, below) in new[] { (numerator, false), (denominator, true) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (!factor.ContainsNode(x))
+                    {
+                        constant = below ? constant / factor : constant * factor;
+                        continue;
+                    }
+                    var (@base, raised) = factor is Powf(var b0, var raisedTo) && !raisedTo.ContainsNode(x) ? (b0, raisedTo) : (factor, (Entity)Number.Integer.One);
+                    if (below && quadratic is null && raised is Number.Integer { EInteger: var whole } && whole.CompareTo(EInteger.FromInt32(2)) >= 0
+                        && whole.CanFitInInt32() && TreeAnalyzer.TryGetPolyQuadratic(@base, x, out var leading, out _, out _) && !VanishesIdentically(leading))
+                    {
+                        quadratic = @base;
+                        power = whole.ToInt32Unchecked();
+                        continue;
+                    }
+                    if (!TreeAnalyzer.TryGetPolyLinear(@base, x, out var slope, out _) || VanishesIdentically(slope))
+                        return null;
+                    // The linear to a power that is not whole, either side; one more linear above, once.
+                    if (raised is not Number.Integer && (linear is null || linear == @base))
+                    {
+                        linear = @base;
+                        exponent = below ? exponent - raised : exponent + raised;
+                        continue;
+                    }
+                    if (!below && other is null && raised == Number.Integer.One)
+                    {
+                        other = @base;
+                        continue;
+                    }
+                    return null;
+                }
+            exponent = exponent.InnerSimplified;
+            if (quadratic is null || linear is null || exponent is Number.Integer
+                || !TreeAnalyzer.TryGetPolyQuadratic(quadratic, x, out var c, out var b, out var a)
+                || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var e, out var d)
+                || VanishesIdentically(b * b - 4 * a * c))
+                return null;
+            Entity nb = Number.Integer.Zero, na = constant;
+            if (other is not null)
+            {
+                if (!TreeAnalyzer.TryGetPolyLinear(other, x, out var ob, out var oa))
+                    return null;
+                nb = (constant * ob).InnerSimplified;
+                na = (constant * oa).InnerSimplified;
+            }
+            var r1 = (2 * c * d - b * e).InnerSimplified;
+            var r0 = (b * d - 2 * a * e).InnerSimplified;
+            Entity answer = Number.Integer.Zero;
+            for (var p = -power; p <= -2; p++)
+            {
+                // (p + 1) [r1 alpha + (r0 - r1 b/c) beta] = B, (p + 1) [r0 alpha - (r1 a/c) beta] = A.
+                var m11 = r1;
+                var m12 = r0 - r1 * b / c;
+                var m21 = r0;
+                var m22 = -r1 * a / c;
+                var determinant = Functions.PartialFractions.InLowestTermsOverTheSymbols((p + 1) * (m11 * m22 - m12 * m21));
+                if (VanishesIdentically(determinant))
+                    return null;
+                var alpha = Functions.PartialFractions.InLowestTermsOverTheSymbols((nb * m22 - m12 * na) / determinant);
+                var beta = Functions.PartialFractions.InLowestTermsOverTheSymbols((m11 * na - m21 * nb) / determinant);
+                // N - (alpha + beta x) (p + 1) L Q', a cubic, over Q: its quotient is linear, read off
+                // the two highest coefficients, the remainder being zero by the choice of alpha, beta.
+                var c3 = -(p + 1) * beta * e * 2 * c;
+                var c2 = -(p + 1) * (beta * (d * 2 * c + e * b) + alpha * e * 2 * c);
+                var q1 = (c3 / c).InnerSimplified;
+                var q0 = ((c2 - q1 * b) / c).InnerSimplified;
+                // W = quotient - beta L - (alpha + beta x)(m + 1) e.
+                var wb = Functions.PartialFractions.InLowestTermsOverTheSymbols(q1 - beta * e - beta * (exponent + 1) * e);
+                var wa = Functions.PartialFractions.InLowestTermsOverTheSymbols(q0 - beta * d - alpha * (exponent + 1) * e);
+                answer = answer + (alpha + beta * x) * MathS.Pow(linear, (exponent + 1).InnerSimplified) * MathS.Pow(quadratic, Number.Integer.Create(p + 1));
+                nb = wb;
+                na = wa;
+            }
+            // What is left asked with its two coefficients named: written out they are long, and the
+            // integrator took past a minute over them where with two symbols it takes a third of a
+            // second.
+            var namedA = Variable.CreateUnique(expr, "A_l");
+            var namedB = Variable.CreateUnique(expr + namedA, "B_l");
+            var left = (namedA + namedB * x) * MathS.Pow(linear, exponent) / quadratic;
+            if (Integration.ComputeAsAQuestionOfItsOwn(left, x, integrateByParts) is not { } rest)
+                return null;
+            answer = (answer + rest.Substitute(namedA, na).Substitute(namedB, nb)).InnerSimplified;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
+
+        /// <summary>
         /// A power of a linear beside the derivative of a quadratic, over a whole power of that
         /// quadratic, by parts once: <c>Q' L^m/Q^n</c> with <c>u = L^m</c> and
         /// <c>dv = Q'/Q^n dx</c> is <c>-L^m/((n - 1) Q^(n - 1)) + m e/(n - 1) * integral L^(m - 1)/Q^(n - 1)</c>,
