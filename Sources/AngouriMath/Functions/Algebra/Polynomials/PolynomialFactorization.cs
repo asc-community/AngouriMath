@@ -89,7 +89,19 @@ namespace AngouriMath.Functions
         /// degree; past this the intermediate polynomial costs more than the answer is worth.
         /// </summary>
         [ConstantField]
-        private static readonly EInteger MaxMonicScale = EInteger.FromInt32(2).Pow(2048);
+        private static readonly EInteger MaxMonicScale = EInteger.FromInt32(2).Pow(512);
+
+        /// <summary>
+        /// The same, up to <see cref="MaxLowDegree"/>: a sextic of Rubi's 1.3.1 whose leading
+        /// coefficient is 107 bits needs 2^535, and is factored in a quarter of a second. Past
+        /// that degree the bound stays: <c>1/(1 + cosh(x)^5)</c> asks for a hundred and twenty
+        /// polynomials of degree eight and nine at 2^580 to 2^880, a second each and none of them
+        /// needed, and went from 7 seconds to 72 with the higher bound for every degree.
+        /// </summary>
+        [ConstantField]
+        private static readonly EInteger MaxLowDegreeMonicScale = EInteger.FromInt32(2).Pow(1024);
+
+        private const int MaxLowDegree = 6;
 
         /// <summary>
         /// <paramref name="expr"/> written as a product of powers of irreducible polynomials
@@ -267,7 +279,7 @@ namespace AngouriMath.Functions
                 return FactorMonic(primitive);
 
             var degree = primitive.Degree;
-            if (lead.Abs().Pow(degree - 1).CompareTo(MaxMonicScale) > 0)
+            if (lead.Abs().Pow(degree - 1).CompareTo(degree <= MaxLowDegree ? MaxLowDegreeMonicScale : MaxMonicScale) > 0)
                 return null;
 
             var scaled = new EInteger[degree + 1];
