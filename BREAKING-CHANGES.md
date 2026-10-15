@@ -447,6 +447,23 @@ case is most of its length ([#718](https://github.com/asc-community/AngouriMath/
 | `"x^4/((a + b*x^2 + c*x^4)*sqrt(d + k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 28,551 characters |
 | `"1/(x^2*(a + b*x^2 + c*x^4)*sqrt(d + k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 10,194 characters |
 
+### A power of a linear over a power of a quadratic is reduced a power at a time
+
+**Answers where there were none.** `sqrt(d + k x)/(a + b x + c x^2)^3` took thirty seconds for 26,437 characters on the
+unreleased master, and `(d + k x)^(7/2)/(a + b x + c x^2)^2` ran past a minute. A power of a linear that is not whole,
+times a linear, over a whole power of a quadratic is now reduced one power of the quadratic at a time: what is left each
+time is the same shape with the quadratic's power one lower, and over the first power the integrator answers it
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(d + k*x)^(7/2)/(a + b*x + c*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 4,691 characters |
+| `"1/((d + k*x)^(3/2)*(a + b*x + c*x^2)^2)".ToEntity().Integrate("x")` | `integral(...)` | 2,789 characters |
+| `"(d + k*x)^(7/2)/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 7,149 characters |
+| `"sqrt(d + k*x)/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 4,819 characters |
+| `"(A + B*x)/(x^(3/2)*(a + b*x + c*x^2)^2)".ToEntity().Integrate("x")` | `integral(...)` | 1,169 characters |
+| `"(b + 2*c*x)*(d + k*x)^(3/2)/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 2,505 characters |
+
 ### A power of the cosine beside a secant binomial is integrated in the cosine
 
 **Answers where there were none.** `cos(c + d x)^2/(a + b sec(c + d x))` was declined, and so were the cosine's powers
