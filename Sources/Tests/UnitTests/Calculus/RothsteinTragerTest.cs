@@ -119,5 +119,17 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x^2/(x^4 + x^3 + 1)")]
         public void AResidueOfDegreeThreeIsASumOverRoots(string integrand)
             => Assert.Contains(DifferentiatesBack(integrand, TheLine).Nodes, node => node is Entity.SumOverSetf);
+
+        /// <summary>
+        /// Over a square, the resultant of what Hermite's reduction leaves has a 107-bit leading
+        /// coefficient, and clearing it rescales a sextic past 2^512, where the factoring declined.
+        /// Rubi's 1.3.1 over <c>((x^2 + 6)^3 + 324 x^3)^2</c>, whose first power was answered.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/718">#718</a>
+        /// </summary>
+        [Theory]
+        [InlineData("x^8/(216+108*x^2+324*x^3+18*x^4+x^6)^2")]
+        [InlineData("x^2/(216+108*x^2+324*x^3+18*x^4+x^6)^2")]
+        public void ALargeLeadingCoefficientOfTheResultantIsCleared(string integrand)
+            => Assert.Contains(DifferentiatesBack(integrand, TheLine).Nodes, node => node is Entity.SumOverSetf);
     }
 }

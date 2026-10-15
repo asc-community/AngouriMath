@@ -447,6 +447,19 @@ case is most of its length ([#718](https://github.com/asc-community/AngouriMath/
 | `"x^4/((a + b*x^2 + c*x^4)*sqrt(d + k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 28,551 characters |
 | `"1/(x^2*(a + b*x^2 + c*x^4)*sqrt(d + k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 10,194 characters |
 
+### A polynomial of degree six with a large leading coefficient is factored
+
+**Answers where there were none.** The factoring clears a leading coefficient by rescaling the variable, and declined
+when that raised it past 2^512. Over the square of `(x^2 + 6)^3 + 324 x^3` the resultant the integrator factors is a sextic
+with a 107-bit leading coefficient, which needs 2^535. Up to degree six the bound is now 2^1024; past it, it stays
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^8/(216+108*x^2+324*x^3+18*x^4+x^6)^2".ToEntity().Integrate("x")` | `integral(...)` | 381 characters, a sum over the roots of the sextic |
+| `"x^5/(216+108*x^2+324*x^3+18*x^4+x^6)^2".ToEntity().Integrate("x")` | `integral(...)` | 377 characters |
+| `"x^2/(216+108*x^2+324*x^3+18*x^4+x^6)^2".ToEntity().Integrate("x")` | `integral(...)` | 394 characters |
+
 ### A rational function past the twelfth degree is reduced by Hermite's method
 
 **Answers where there were none.** The integrator read a denominator of degree twelve at most, so a derivative over
