@@ -545,6 +545,20 @@ answered too ([#1852](https://github.com/asc-community/AngouriMath/issues/1852))
 | `"x^m*sin(a + ln(k*x^n)*sqrt(-(1 + m)^2/n^2))".ToEntity().Integrate("x")` | `integral(...)` | 465 characters |
 | `"x^2*sin(a + ln(k*x^n)*sqrt((-1)/n^2))^3".ToEntity().Integrate("x")` | `integral(...)` | 1,873 characters |
 
+### A power of a linear beside a quadratic's derivative over a power of the quadratic is integrated by parts
+
+**Answers where there were none.** `(b + 2 c x) sqrt(d + k x)/(a + b x + c x^2)^2` ran past any budget, the partial fractions
+taking the symbolic quadratic apart twice over. With `u` the power of the linear and `dv` the derivative over the power
+of the quadratic, parts leaves the quadratic one power lower, which is answered in under half a second
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(b + 2*c*x)*(d + k*x)^4/(a + b*x + c*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 2,215 characters |
+| `"(b + 2*c*x)*sqrt(d + k*x)/(a + b*x + c*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 976 characters |
+| `"(b + 2*c*x)/((a + b*x + c*x^2)^2*sqrt(d + k*x))".ToEntity().Integrate("x")` | `integral(...)` | 1,075 characters |
+| `"(b + 2*c*x)*(d + k*x)^(3/2)/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 4,054 characters |
+
 ### An odd power of a quadratic's derivative over a power of the quadratic is integrated in the quadratic
 
 **Shorter answers, and answers where there were none.** `(b + 2c x)^9/(a + b x + c x^2)^3` was answered through the

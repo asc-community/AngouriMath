@@ -666,6 +666,9 @@ namespace AngouriMath.Functions.Algebra
             // the question asked only, and the polynomial term below writes `1/u` as `u^(-1)` and
             // asks that a level down: `1/(e^atanh(a x) (c - c/(a x))^(3/2))` reached it nowhere.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingEachLinearOnce(expr, x, integrateByParts)) is { }) return answer;
+            // A power of a linear beside the derivative of a quadratic over a whole power of it, by
+            // parts once, before anything takes the symbolic quadratic apart.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfALinearBesideTheDerivativeOfAQuadraticOverItsPower(expr, x, integrateByParts)) is { }) return answer;
             // A root or a power of a product beside a power of one of its factors, the product
             // split: `(a + b x^2)^(5/2)/sqrt(a^2 - b^2 x^4)` is `K (a + b x^2)^2/sqrt(a - b x^2)`.
             // Early, since what reads the product whole is slower and longer: Rubi's 1.2.1.2:2218,
