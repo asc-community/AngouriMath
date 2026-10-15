@@ -19589,6 +19589,95 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of <c>x</c> over a sextic that is a sum of two cubes,
+        /// <c>d6 ((x^2 + s)^3 + q x^3)</c>, split over the cube roots of unity:
+        /// <c>1/(U^3 + V^3) = sum_j w_j/(3 V^2 (U + w_j V))</c> for <c>U = x^2 + s</c>,
+        /// <c>V = m x</c>, <c>m^3 = q</c>, so that <c>x^k/(U^3 + V^3)</c> is
+        /// <c>sum_j w_j x^(k - 2)/(3 m^2 (x^2 + w_j m x + s))</c>, three quadratics.
+        /// </summary>
+        /// <remarks>
+        /// The sextic is read as <c>d6 x^6 + d4 x^4 + d3 x^3 + d2 x^2 + d0</c> with
+        /// <c>d4^2 = 3 d6 d2</c> and <c>d2^2 = 3 d4 d0</c>, which is what makes
+        /// <c>d6 x^6 + d4 x^4 + d2 x^2 + d0</c> the cube <c>d6 (x^2 + s)^3</c> with
+        /// <c>s = d4/(3 d6)</c>. The identity is the partial fractions of <c>1/(U^3 + V^3)</c> in
+        /// <c>U</c>, whose poles <c>-w_j V</c> have residues <c>1/(3 w_j^2 V^2) = w_j/(3 V^2)</c>; any
+        /// cube root <c>m</c> of <c>q</c> gives it. The three quadratics are one integral
+        /// <c>x^n/(x^2 + B x + S)</c> asked with <c>B</c> and <c>S</c> named. Rubi's 1.3.1
+        /// <c>x^k/(27 a^3 + 27 a^2 b x^2 + 27 a^2 c x^3 + 9 a b^2 x^4 + b^3 x^6)</c> was declined,
+        /// the integrator's resultant needing numbers for coefficients.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPowerOfXOverASumOfTwoCubes(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked || !expr.Vars.Any(symbol => symbol != x))
+                return null;
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            Entity? sextic = null;
+            var power = 0;
+            Entity constant = Number.Integer.One;
+            foreach (var (side, below) in new[] { (numerator, false), (denominator, true) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (!factor.ContainsNode(x))
+                    {
+                        constant = below ? constant / factor : constant * factor;
+                        continue;
+                    }
+                    if (factor == x || factor is Powf(var bx, Number.Integer { EInteger: var wx }) && bx == x && wx.CanFitInInt32())
+                    {
+                        var whole = factor == x ? 1 : ((Number.Integer)((Powf)factor).Exponent).EInteger.ToInt32Unchecked();
+                        power += below ? -whole : whole;
+                        continue;
+                    }
+                    if (below && sextic is null)
+                    {
+                        sextic = factor;
+                        continue;
+                    }
+                    return null;
+                }
+            if (sextic is null || Functions.PartialFractions.HoldsTheImaginaryUnit(sextic)
+                || !TreeAnalyzer.TryGetPolynomial(sextic, x, out var read) || read.Keys.Any(key => key.Sign < 0 || key.CompareTo(EInteger.FromInt32(6)) > 0))
+                return null;
+            Entity At(int degree) => read.TryGetValue(EInteger.FromInt32(degree), out var coefficient) ? coefficient.InnerSimplified : Number.Integer.Zero;
+            var (d6, d5, d4, d3, d2, d1, d0) = (At(6), At(5), At(4), At(3), At(2), At(1), At(0));
+            if (!VanishesIdentically(d5) || !VanishesIdentically(d1)
+                || VanishesIdentically(d6) || VanishesIdentically(d4) || VanishesIdentically(d3) || VanishesIdentically(d0)
+                || !VanishesIdentically((d4 * d4 - 3 * d6 * d2).Expand()) || !VanishesIdentically((d2 * d2 - 3 * d4 * d0).Expand()))
+                return null;
+            var shift = Functions.PartialFractions.InLowestTermsOverTheSymbols(d4 / (3 * d6));
+            var cube = Functions.PartialFractions.InLowestTermsOverTheSymbols(d3 / d6);
+            var root = MathS.Pow(cube, Number.Rational.Create(1, 3));
+            var namedB = Variable.CreateUnique(expr, "B_c");
+            var namedS = Variable.CreateUnique(expr + namedB, "S_c");
+            var term = MathS.Pow(x, Number.Integer.Create(power - 2)) / (MathS.Pow(x, Number.Integer.Create(2)) + namedB * x + namedS);
+            if (Integration.ComputeAsAQuestionOfItsOwn(term, x, integrateByParts) is not { } each)
+                return null;
+            // The integral over a real quadratic splits on the sign of 4 S - B^2, which means nothing
+            // for the complex B of two of the three: its first arm, the arctangent over
+            // sqrt(4 S - B^2), differentiates back to the integrand for any B with 4 S != B^2, and
+            // the answer is checked below.
+            each = each.Replace(node => node switch
+            {
+                Piecewise piecewise when piecewise.Cases.Any() => piecewise.Cases.First().Expression,
+                Providedf provided => provided.Expression,
+                _ => node,
+            });
+            var half = Number.Rational.Create(1, 2);
+            var unities = new Entity[]
+            {
+                Number.Integer.One,
+                -half + half * MathS.Sqrt(3) * MathS.i,
+                -half - half * MathS.Sqrt(3) * MathS.i,
+            };
+            Entity answer = Number.Integer.Zero;
+            foreach (var unity in unities)
+                answer = answer + unity * each.Substitute(namedB, unity * root).Substitute(namedS, shift);
+            answer = (constant / (3 * d6 * MathS.Pow(root, Number.Integer.Create(2))) * answer).InnerSimplified;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
+
+        /// <summary>
         /// A power of an even quadratic <c>w = p + q x^2</c> over a binomial in it, <c>w^m/(a + b w^n)</c>
         /// with <c>0 &lt;= m &lt; n</c>, split over the <c>n</c> roots <c>r_j</c> of <c>a + b w^n</c>:
         /// <c>w^m/(a + b w^n) = -(1/(n a)) sum_j r_j^(m + 1)/(w - r_j)</c>, and each

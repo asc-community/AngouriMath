@@ -678,6 +678,9 @@ namespace AngouriMath.Functions.Algebra
             // A rational function over a whole power of a symbolic quadratic, the power lowered one
             // at a time, before the partial fractions take the quadratic apart over its roots.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOverAPowerOfASymbolicQuadratic(expr, x, integrateByParts)) is { }) return answer;
+            // A power of x over a sextic that is a sum of two cubes, split over the cube roots of
+            // unity into three quadratics before the partial fractions try the symbolic sextic.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfXOverASumOfTwoCubes(expr, x, integrateByParts)) is { }) return answer;
             // A power of an even quadratic over a binomial in it, split over the binomial's roots.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfAnEvenQuadraticOverABinomialInIt(expr, x, integrateByParts)) is { }) return answer;
             // A root or a power of a product beside a power of one of its factors, the product
