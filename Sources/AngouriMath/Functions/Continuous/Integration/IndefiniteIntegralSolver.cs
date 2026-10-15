@@ -19364,6 +19364,8 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         internal static Entity? SolveAPowerOfALinearOverAPowerOfAQuadratic(Entity expr, Entity.Variable x, bool integrateByParts)
         {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
             var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
             Entity? quadratic = null;
             var power = 0;
@@ -19408,6 +19410,20 @@ namespace AngouriMath.Functions.Algebra
                 || !TreeAnalyzer.TryGetPolyQuadratic(quadratic, x, out var c, out var b, out var a)
                 || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var e, out var d)
                 || VanishesIdentically(b * b - 4 * a * c))
+                return null;
+            // Not a positive power of x itself, which u = sqrt(x) answers sooner -- the
+            // reduction took `x^(9/2)/(a + b x + c x^2)^3` from 2.6 seconds to 8.3; not a quadratic
+            // over the imaginary unit; and not one that factors over linears, b^2 - 4 a c the
+            // square of a polynomial, which the partial fractions take apart cheaply.
+            if (linear == x && exponent is Number.Rational { IsPositive: true } || Functions.PartialFractions.HoldsTheImaginaryUnit(quadratic))
+                return null;
+            var opposite = Functions.PartialFractions.Bare((b * b - 4 * a * c).Expand().InnerSimplified);
+            var symbols = opposite.Vars.Distinct().OrderBy(v => v.Name, System.StringComparer.Ordinal).ToArray();
+            var indices = new Dictionary<Variable, int>();
+            for (var i = 0; i < symbols.Length; i++)
+                indices[symbols[i]] = i;
+            if (symbols.Length <= MultivariatePolynomial.MaxVariables
+                && MultivariatePolynomial.TryParse(opposite, indices) is { } parsed && parsed.TrySquareRoot() is not null)
                 return null;
             Entity nb = Number.Integer.Zero, na = constant;
             if (other is not null)
