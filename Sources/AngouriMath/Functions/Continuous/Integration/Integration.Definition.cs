@@ -681,6 +681,8 @@ namespace AngouriMath.Functions.Algebra
             // A power of x over a sextic that is a sum of two cubes, split over the cube roots of
             // unity into three quadratics before the partial fractions try the symbolic sextic.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfXOverASumOfTwoCubes(expr, x, integrateByParts)) is { }) return answer;
+            // A power of an even quadratic over a binomial in it, split over the binomial's roots.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfAnEvenQuadraticOverABinomialInIt(expr, x, integrateByParts)) is { }) return answer;
             // A root or a power of a product beside a power of one of its factors, the product
             // split: `(a + b x^2)^(5/2)/sqrt(a^2 - b^2 x^4)` is `K (a + b x^2)^2/sqrt(a - b x^2)`.
             // Early, since what reads the product whole is slower and longer: Rubi's 1.2.1.2:2218,
