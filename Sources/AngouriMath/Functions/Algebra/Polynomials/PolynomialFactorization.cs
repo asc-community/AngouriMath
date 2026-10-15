@@ -89,7 +89,7 @@ namespace AngouriMath.Functions
         /// degree; past this the intermediate polynomial costs more than the answer is worth.
         /// </summary>
         [ConstantField]
-        private static readonly EInteger MaxMonicScale = EInteger.FromInt32(2).Pow(512);
+        private static readonly EInteger MaxMonicScale = EInteger.FromInt32(2).Pow(2048);
 
         /// <summary>
         /// <paramref name="expr"/> written as a product of powers of irreducible polynomials
