@@ -576,6 +576,23 @@ of the quadratic, parts leaves the quadratic one power lower, which is answered 
 | `"(b + 2*c*x)/((a + b*x + c*x^2)^2*sqrt(d + k*x))".ToEntity().Integrate("x")` | `integral(...)` | 1,075 characters |
 | `"(b + 2*c*x)*(d + k*x)^(3/2)/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 4,054 characters |
 
+### A rational function over a power of a symbolic quadratic is reduced a power at a time
+
+**Answers where there were none.** `1/((d + k x) (a + b x + c x^2)^4)` ran past a minute, the partial fractions taking the
+symbolic quadratic apart over its roots and its powers with them. The linear is taken off at its root now, and the power
+of the quadratic is lowered one at a time by the recurrence for the integral of `1/Q^k`, down to the first power, which
+is written in closed form. A quadratic that factors over linears is left to the partial fractions
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^8/(a + b*x + c*x^2)^4".ToEntity().Integrate("x")` | `integral(...)` | 8,511 characters |
+| `"1/((d + k*x)*(a + b*x + c*x^2)^4)".ToEntity().Integrate("x")` | `integral(...)` | 9,091 characters |
+| `"1/((d + k*x)^2*(a + b*x + c*x^2)^5)".ToEntity().Integrate("x")` | `integral(...)` | 25,767 characters |
+| `"1/((d + k*x)^2*(a + c*x^2)^4)".ToEntity().Integrate("x")` | `integral(...)` | 9,599 characters |
+| `"(f + g*x)/((d + k*x)^2*(a + b*x + c*x^2)^3)".ToEntity().Integrate("x")` | `integral(...)` | 21,943 characters |
+| `"(A + B*x + C*x^2)/((d + k*x)^3*(a + c*x^2)^3)".ToEntity().Integrate("x")` | `integral(...)` | 25,201 characters |
+
 ### An odd power of a quadratic's derivative over a power of the quadratic is integrated in the quadratic
 
 **Shorter answers, and answers where there were none.** `(b + 2c x)^9/(a + b x + c x^2)^3` was answered through the
