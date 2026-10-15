@@ -19716,6 +19716,11 @@ namespace AngouriMath.Functions.Algebra
                     var (first, second) = (factors[i], factors[j]);
                     var power = Signed(first);
                     if (power != Signed(second)
+                        // Square roots of two linears belong to the rules for Rubi's 1.1.1.6 and
+                        // to the combined radicals, which write the sign as sgn; and with symbols in
+                        // the linears the rules for each of them answer, in a tenth of the time.
+                        || power == Number.Rational.Create(1, 2) || power == Number.Rational.Create(-1, 2)
+                        || (first.Base * second.Base).Vars.Any(symbol => symbol != x)
                         || !TreeAnalyzer.TryGetPolyLinear(first.Base, x, out var s1, out var c1)
                         || !TreeAnalyzer.TryGetPolyLinear(second.Base, x, out var s2, out var c2)
                         // Constant multiples of one linear are one linear, not a quadratic.
