@@ -19387,6 +19387,208 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A rational function over a whole power of a symbolic quadratic, beside at most one
+        /// linear to a whole power, with the power of the quadratic lowered one at a time rather
+        /// than the quadratic taken apart: the linear comes off first, as
+        /// <c>N/(L^j Q^n) = N(p)/(Q(p)^n L^j) + M/(L^(j - 1) Q^n)</c> at its root <c>p</c>, and
+        /// what is left over <c>Q^k</c> is <c>S/Q^(k - 1) + (alpha Q' + beta)/Q^k</c>, whose second
+        /// part is <c>-alpha/((k - 1) Q^(k - 1))</c> and the recurrence
+        /// <c>integral 1/Q^k = (2 c x + b)/((k - 1) D Q^(k - 1)) + 2 c (2 k - 3)/((k - 1) D) integral 1/Q^(k - 1)</c>
+        /// with <c>D = 4 a c - b^2</c>, down to the first power, which is the integrator's.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's 1.2.1.2 <c>1/((d + e x) (a + b x + c x^2)^4)</c> and <c>x^8/(a + b x + c x^2)^4</c>
+        /// ran past a minute: the partial fractions take a symbolic quadratic apart over its
+        /// roots, and its powers with it. <c>D</c> and <c>Q(p)</c> are named while the reduction
+        /// runs and written back after, so that each stays one atom.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveARationalFunctionOverAPowerOfASymbolicQuadratic(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // At the question asked only: below a substitution the routes it pre-empts answered
+            // `(a + b x + c x^2)^3/((1 - d x)^(3/2) (1 + d x)^(3/2))` in 2,917 characters, and
+            // this in 67,746.
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var top) || top.Keys.Any(k => k.Sign < 0 || !k.CanFitInInt32()))
+                return null;
+            Entity? quadratic = null;
+            var power = 0;
+            Entity? linear = null;
+            var linearPower = 0;
+            Entity constant = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = constant * factor;
+                    continue;
+                }
+                var (@base, whole) = factor is Powf(var b0, Number.Integer { EInteger: var w }) && w.Sign > 0 && w.CanFitInInt32()
+                    ? (b0, w.ToInt32Unchecked()) : (factor, 1);
+                if (TreeAnalyzer.TryGetPolyLinear(@base, x, out var slope, out _) && !VanishesIdentically(slope))
+                {
+                    if (linear is not null && linear != @base)
+                        return null;
+                    linear = @base;
+                    linearPower += whole;
+                    continue;
+                }
+                if (quadratic is null && whole >= 2 && TreeAnalyzer.TryGetPolyQuadratic(@base, x, out var leading, out _, out _) && !VanishesIdentically(leading))
+                {
+                    quadratic = @base;
+                    power = whole;
+                    continue;
+                }
+                return null;
+            }
+            if (quadratic is null || !quadratic.Vars.Any(symbol => symbol != x)
+                || !TreeAnalyzer.TryGetPolyQuadratic(quadratic, x, out var a2, out var a1, out var a0))
+                return null;
+            var discriminant = (4 * a2 * a0 - a1 * a1).InnerSimplified;
+            if (VanishesIdentically(discriminant))
+                return null;
+            // Real coefficients only, whose cases the table's 1/Q reads; and with no linear, not a
+            // binomial in x^2, which the binomial rules answer: `x^22/(a + b x^2)^10` was theirs in
+            // a second and ten levels of this ran past the budget.
+            if (Functions.PartialFractions.HoldsTheImaginaryUnit(quadratic) || linear is null && VanishesIdentically(a1))
+                return null;
+            // A quadratic that factors over linears is the partial fractions' to take apart, and
+            // they do it cheaply: `(d + e x)^10/((d + e x) (a e + c d x))^4`, written out, went from
+            // two seconds past the budget here.
+            // It does where b^2 - 4 a c is the square of a polynomial in the symbols, which is
+            // what is asked: the factoring does not find `(d + e x) (a e + c d x)` written out.
+            var opposite = Functions.PartialFractions.Bare((a1 * a1 - 4 * a2 * a0).Expand().InnerSimplified);
+            var symbols = opposite.Vars.Distinct().OrderBy(v => v.Name, System.StringComparer.Ordinal).ToArray();
+            var indices = new Dictionary<Variable, int>();
+            for (var i = 0; i < symbols.Length; i++)
+                indices[symbols[i]] = i;
+            if (symbols.Length <= MultivariatePolynomial.MaxVariables
+                && MultivariatePolynomial.TryParse(opposite, indices) is { } parsed && parsed.TrySquareRoot() is not null)
+                return null;
+            var named = Variable.CreateUnique(expr, "D_q");
+            var atTheRoot = Variable.CreateUnique(expr + named, "Q_p");
+            var theRoot = Variable.CreateUnique(expr + named + atTheRoot, "x_p");
+            Entity d = named;
+
+            static Entity[] Trim(Entity[] poly)
+            {
+                var length = poly.Length;
+                while (length > 0 && poly[length - 1] == Number.Integer.Zero)
+                    length--;
+                return poly.Take(length).ToArray();
+            }
+            static Entity[] Plus(Entity[] left, Entity[] right)
+            {
+                var sum = new Entity[System.Math.Max(left.Length, right.Length)];
+                for (var i = 0; i < sum.Length; i++)
+                    sum[i] = ((i < left.Length ? left[i] : Number.Integer.Zero) + (i < right.Length ? right[i] : Number.Integer.Zero)).InnerSimplified;
+                return sum;
+            }
+            static Entity[] Scaled(Entity[] poly, Entity by) => poly.Select(c => (c * by).InnerSimplified).ToArray();
+            // Each coefficient in lowest terms over the symbols, so that the next step works on it
+            // as written small.
+            static Entity[] Reduced(Entity[] poly) => poly.Select(Functions.PartialFractions.InLowestTermsOverTheSymbols).ToArray();
+
+            var degree = top.Keys.Count == 0 ? 0 : top.Keys.Max()!.ToInt32Unchecked();
+            var start = new Entity[degree + 1];
+            for (var i = 0; i <= degree; i++)
+                start[i] = top.TryGetValue(EInteger.FromInt32(i), out var coefficient) ? coefficient : Number.Integer.Zero;
+
+            // The integrand as a sum of polynomials over L^j Q^k, one per (j, k), merged as they
+            // arrive so that each stays of small degree.
+            var terms = new Dictionary<(int Linear, int Quadratic), Entity[]>();
+            void Add(int j, int k, Entity[] poly)
+                => terms[(j, k)] = terms.TryGetValue((j, k), out var already) ? Plus(already, poly) : poly;
+            Add(linearPower, power, start);
+            Entity answer = Number.Integer.Zero;
+            Entity m = Number.Integer.One, p = theRoot;
+            if (linear is not null && !TreeAnalyzer.TryGetPolyLinear(linear, x, out m!, out _))
+                return null;
+            // Q - Q(p) = (x - p) (c (x + p) + b).
+            var cofactor = new Entity[] { (a2 * p + a1).InnerSimplified, a2 };
+
+            while (terms.Count > 0)
+            {
+                var (j, k) = terms.Keys.OrderByDescending(key => key.Linear).ThenByDescending(key => key.Quadratic).First();
+                var poly = Reduced(terms[(j, k)]);
+                terms.Remove((j, k));
+                if (Trim(poly).Length == 0)
+                    continue;
+                if (j > 0)
+                {
+                    // N/(L^j Q^k) = N(p)/(Q(p)^k m^j (x - p)^j) + N1/(m L^(j-1) Q^k)
+                    //   - N(p) (c (x + p) + b) sum_i Q(p)^(k-1-i)/(Q(p)^k m L^(j-1) Q^(k-i)),
+                    // with N1 = (N - N(p))/(x - p).
+                    Entity atP = Number.Integer.Zero;
+                    for (var i = poly.Length - 1; i >= 0; i--)
+                        atP = (atP * p + poly[i]).InnerSimplified;
+                    var c = Functions.PartialFractions.InLowestTermsOverTheSymbols(atP / MathS.Pow(atTheRoot, Number.Integer.Create(k)) / MathS.Pow(m, Number.Integer.Create(j)));
+                    answer = answer + (j == 1 ? c * MathS.Ln(linear!) : c * MathS.Pow(linear!, Number.Integer.Create(1 - j)) * MathS.Pow(m, Number.Integer.Create(j - 1)) / (1 - j));
+                    var n1 = new Entity[System.Math.Max(poly.Length - 1, 0)];
+                    Entity carry = Number.Integer.Zero;
+                    for (var i = poly.Length - 1; i >= 1; i--)
+                    {
+                        carry = (poly[i] + carry * p).InnerSimplified;
+                        n1[i - 1] = carry;
+                    }
+                    Add(j - 1, k, Scaled(n1, 1 / m));
+                    for (var i = 0; i < k; i++)
+                        Add(j - 1, k - i, Scaled(cofactor, (-atP * MathS.Pow(atTheRoot, Number.Integer.Create(-1 - i)) / m).InnerSimplified));
+                    continue;
+                }
+                if (k == 0)
+                {
+                    for (var i = 0; i < poly.Length; i++)
+                        answer = answer + poly[i] * MathS.Pow(x, Number.Integer.Create(i + 1)) / (i + 1);
+                    continue;
+                }
+                // P/Q^k: P = S Q + t1 x + t0, and t1 x + t0 = alpha Q' + beta.
+                var remainder = poly.ToArray();
+                var quotient = Enumerable.Repeat((Entity)Number.Integer.Zero, System.Math.Max(remainder.Length - 2, 0)).ToArray();
+                for (var i = remainder.Length - 1; i >= 2; i--)
+                {
+                    var factor = (remainder[i] / a2).InnerSimplified;
+                    quotient[i - 2] = factor;
+                    remainder[i] = Number.Integer.Zero;
+                    remainder[i - 1] = (remainder[i - 1] - factor * a1).InnerSimplified;
+                    remainder[i - 2] = (remainder[i - 2] - factor * a0).InnerSimplified;
+                }
+                var t1 = remainder.Length > 1 ? remainder[1] : Number.Integer.Zero;
+                var t0 = remainder.Length > 0 ? remainder[0] : Number.Integer.Zero;
+                var alpha = Functions.PartialFractions.InLowestTermsOverTheSymbols(t1 / (2 * a2));
+                var beta = Functions.PartialFractions.InLowestTermsOverTheSymbols(t0 - alpha * a1);
+                Add(0, k - 1, quotient);
+                if (k == 1)
+                {
+                    // Over the first power in closed form: alpha ln(Q), and beta times the table's
+                    // integral of 1/Q. Asked of the integrator instead, a linear over Q with these
+                    // coefficients took forty seconds.
+                    if (IntegralPatterns.TryStandardIntegrals(1 / quadratic, x) is not { } overQ)
+                        return null;
+                    answer = answer + alpha * MathS.Ln(quadratic) + beta * overQ;
+                    continue;
+                }
+                var lower = MathS.Pow(quadratic, Number.Integer.Create(k - 1));
+                answer = answer - alpha / ((k - 1) * lower) + beta * (2 * a2 * x + a1) / ((k - 1) * d * lower);
+                Add(0, k - 1, new[] { (beta * 2 * a2 * (2 * k - 3) / ((k - 1) * d)).InnerSimplified });
+            }
+            Entity withoutTheLinear = Number.Integer.Zero;
+            Entity scale = Number.Integer.One;
+            answer = ((withoutTheLinear + scale * answer) / constant).Substitute(named, discriminant);
+            if (linear is not null && TreeAnalyzer.TryGetPolyLinear(linear, x, out var mm, out var nn))
+            {
+                var root = (-nn / mm).InnerSimplified;
+                // Q(p) as one quotient in lowest terms, (c d^2 - b d e + a e^2)/e^2, rather than
+                // Q written at -d/e wherever it stood.
+                answer = answer.Substitute(atTheRoot, Functions.PartialFractions.InLowestTermsOverTheSymbols(a2 * root * root + a1 * root + a0)).Substitute(theRoot, root);
+            }
+            answer = answer.InnerSimplified;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
+
+        /// <summary>
         /// A power of a linear beside the derivative of a quadratic, over a whole power of that
         /// quadratic, by parts once: <c>Q' L^m/Q^n</c> with <c>u = L^m</c> and
         /// <c>dv = Q'/Q^n dx</c> is <c>-L^m/((n - 1) Q^(n - 1)) + m e/(n - 1) * integral L^(m - 1)/Q^(n - 1)</c>,
