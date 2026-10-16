@@ -396,6 +396,24 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### A constant sum that comes to a number is folded before an integral is asked
+
+**Answers where there were none.** `1/sqrt(2 + 2 a - 2 (1 + a) + c x^4)` was declined, and so was Rubi's 1.1.1.2
+`(c + d x)^(1 + 2 n - 2 (1 + n))/(a + b x)^2`. The terms of a sum free of the variable that come to a number once
+multiplied out are now written as that number before the integral is asked: `2 + 2 a - 2 (1 + a)` is `0` and
+`1 + 2 n - 2 (1 + n)` is `-1` ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/sqrt(2+2*a-2*(1+a)+c*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 44 characters |
+| `"(c+d*x)^(1+2*n-2*(1+n))/(a+b*x)^2".ToEntity().Integrate("x")` | `integral(...)` | 255 characters |
+
+**A changed answer.** An integrand with such a sum as a coefficient is integrated with the number in its place.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(2+2*c-2*(1+c))*x^4".ToEntity().Integrate("x")` | `(2 + 2 * c - 2 * (1 + c)) * x ^ 5 / 5 + C` | `0 + C` |
+
 ### Powers of multiples of powers of one linear are gathered into one power of it
 
 **Answers where there were none.** `1/(sqrt(-2 - b x) sqrt(2 + b x))` was declined, and so were four more of Rubi's
