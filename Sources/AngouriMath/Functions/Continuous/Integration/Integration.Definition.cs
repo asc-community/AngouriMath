@@ -664,6 +664,9 @@ namespace AngouriMath.Functions.Algebra
             // A sum free of the variable that comes to a number multiplied out, as that number,
             // before anything reads a coefficient or an exponent in it: `2 + 2 a - 2 (1 + a)`.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingConstantSumsToTheirNumbers(expr, x, integrateByParts)) is { }) return answer;
+            // An arctangent over a power of d (1 +- i c x), under x = tan(u)/c, where 1 + i tan(u) is
+            // e^(i u)/cos(u): the rules below ran out of time on `(a + b atan(c x))^2/(d + i c d x)^2`.
+            if ((answer = IndefiniteIntegralSolver.SolveAnArctangentOverAPowerOfOnePlusICXUnderTheTangent(expr, x, integrateByParts)) is { }) return answer;
             // A symbolic power of a sine, cosine, secant or cosecant times `alpha + beta f^2`, where it is
             // the derivative of `cos sin^(m + 1)`, `sin cos^(m + 1)`, `tan sec^m` or `cot csc^m`.
             if ((answer = IndefiniteIntegralSolver.SolveASymbolicPowerOfATrigonometricFunctionAsTheDerivativeOfAProduct(expr, x)) is { }) return answer;
