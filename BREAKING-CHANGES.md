@@ -2938,6 +2938,18 @@ Each of these was checked by differentiating it back with the parameters pinned 
 four points. The Rubi sample is unchanged at 231 of 463 with no wrong answers, so nothing that
 already had an antiderivative moves.
 
+### `NaN` a fifth time, from an exponential times a cosine with a complex rate
+
+**A wrong answer.** `e^(-i x) cos(x)` was answered `NaN + C`: the closed form `P(x) e^(a x) cos(b x)` divides by
+`a^2 + b^2`, which is `(-i)^2 + 1 = 0` here, the resonance that leaves a term linear in `x`. It is integrated through the
+exponential form now, and so is `e^(-i arctan(a x))/(c + a^2 c x^2)^(3/2)`, which comes to it
+(PR [#1380](https://github.com/asc-community/AngouriMath/pull/1380)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(-i*x)*cos(x)".Integrate("x")` | `NaN + C` | `x/2 + e^(-2 i x)/(-4 i)` up to form |
+| `"e^(-i*atan(a*x))/(c+a^2*c*x^2)^(3/2)".Integrate("x")` | `integral(...)` | an answer |
+
 ### `NaN` a fourth time, from an exponent that is `-1` only as a value
 
 **A wrong answer.** `x^(-1 - 3n) (a + b x^n)^3` came back as a sum whose last term was `x^0/0`, so
