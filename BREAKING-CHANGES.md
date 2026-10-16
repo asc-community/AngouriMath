@@ -134,6 +134,40 @@ the working digits, or `MathS.Settings.PrecisionErrorZeroRange` where a caller h
 still that integer, so `e^(-123.456)` is 0 as it was.
 [#1338](https://github.com/asc-community/AngouriMath/issues/1338).
 
+### A constant or an exponential evaluated at a higher precision than before has all of its digits
+
+**More digits where there were a hundred.** `pi`, `e` and an exponential, evaluated once at one precision, went on
+answering in that precision under a higher one: in 2.5.0 `pi` read under 300 digits after a read under 100 had 100
+digits, and `e^(1/3)` the same. Each is now worked out in the precision asked for
+([#1367](https://github.com/asc-community/AngouriMath/issues/1367), #1368).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `MathS.pi.Evaled` under 300 digits, after a read under 100 | 100 digits | 300 digits |
+| `"e^(1/3)".Evaled` under 300 digits, after a read under 100 | 100 digits | 300 digits |
+
+### A string parsed once is parsed again under the other downcasting setting
+
+**A different number.** `MathS.FromString` remembered what it had parsed, keyed on the parsing setting alone. A string
+parsed with downcasting on came back with its exact numbers under downcasting off, and the other way round. The
+cache is now keyed on the downcasting setting too
+([#1513](https://github.com/asc-community/AngouriMath/issues/1513), #1517).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `MathS.FromString("1/3").Evaled` under downcasting off, after the same parse with it on | `1/3` | `0.3333…` (one hundred digits) |
+
+### A difference of a negated term is printed as a sum
+
+**A printed form.** A solution and a difference were printed with the sign of a negative factor left inside:
+`b - x = 0` solved for `x` printed `-b / (-1)`, and LaTeX printed `1/100 - (-4) x` as `\frac{1}{100}--4 \cdot x`, which does
+not read back. Both are simplified to the sum now (#1397).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"b - x = 0".Solve("x")` | `{ -b / (-1) }` | `{ b }` |
+| `"1/100 - (-4)*x".ToEntity().Latexize()` | `\frac{1}{100}--4 \cdot x` | `\frac{1}{100}+4 \cdot x` |
+
 ### A piecewise is defined where the case it takes is
 
 **Domain conditions that were false.** The domain condition of a piecewise asked every case's predicate
