@@ -669,6 +669,9 @@ namespace AngouriMath.Functions.Algebra
             // linear is written once: `(2 + 3x)^4/((1 - 2x)^(5/2) (3 + 5x)^(5/2))` took forty-five
             // seconds there, and over `(3 - x - 10x^2)^(5/2)` it takes half of one.
             if ((answer = IndefiniteIntegralSolver.SolveTwoLinearsToOnePowerAsOneQuadratic(expr, x, integrateByParts)) is { }) return answer;
+            // A linear and a quadratic to one power as one binomial, `(1 + x) (1 - x + x^2)` as
+            // `1 + x^3`, which the rules for a power of a binomial answer.
+            if ((answer = IndefiniteIntegralSolver.SolveALinearAndAQuadraticToOnePowerAsOneBinomial(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByWritingEachLinearOnce(expr, x, integrateByParts)) is { }) return answer;
             // A rational function with numbers for coefficients over a denominator past the twelfth
             // degree, by Hermite's reduction before anything searches: nothing below answered one.
