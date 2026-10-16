@@ -25772,6 +25772,79 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// The reciprocal of <c>a + b s^n</c>, <c>s</c> a sine or a cosine of a linear and a symbol in
+        /// <c>a</c> or <c>b</c>, over the roots of the binomial: with <c>q = 2</c> for an even <c>n</c>
+        /// and <c>1</c> for an odd one, <c>m = n/q</c> and <c>r_k</c> the <c>m</c>-th roots of
+        /// <c>-a/b</c>, <c>1/(a + b s^n) = (1/(m a)) sum r_k/(r_k - s^q)</c>, and each term is an
+        /// arctangent of <c>tan(y)</c> or of <c>tan(y/2)</c>.
+        /// </summary>
+        /// <remarks>
+        /// Each term is written <c>F(K u)/K</c> with only <c>K^2</c> fixed, so its derivative is the
+        /// same whichever root <c>K</c> is: <c>(atan(K tan(y))/K)' = 1/(cos(y)^2 + K^2 sin(y)^2)</c>.
+        /// A root that makes <c>K^2</c> zero or infinite -- <c>1/(1 + sin(y)^5)</c> has <c>-1</c> -- is
+        /// another shape, and declines. <c>n</c> up to <c>4</c>, and numbers for <c>a</c> and
+        /// <c>b</c>, are answered by the rules before it. Rubi's 4.1.7 and 4.2.7
+        /// <c>1/(a + b sin(x)^5)</c>, <c>1/(a - b cos(x)^6)</c> and the like were declined.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAReciprocalOfABinomialInAPowerOfASineOverItsRoots(Entity expr, Entity.Variable x)
+        {
+            if (!TryReadAsQuotient(expr, out var numerator, out var denominator) || numerator.ContainsNode(x))
+                return null;
+            var functions = denominator.Nodes.Where(node => node is Sinf or Cosf && node.ContainsNode(x)).Distinct().ToList();
+            if (functions.Count != 1)
+                return null;
+            var function = functions[0];
+            var argument = function is Sinf(var inSine) ? inSine : ((Cosf)function).Argument;
+            if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out _) || Functions.PartialFractions.IsZeroAsAValue(slope))
+                return null;
+            var s = Variable.CreateUnique(expr, "s_bin");
+            var inS = denominator.Substitute(function, s);
+            if (inS.ContainsNode(x) || !TreeAnalyzer.TryGetPolynomial(inS, s, out var read) || read.Count != 2
+                || !read.ContainsKey(EInteger.Zero) || read.Keys.Max() is not { } top || !top.CanFitInInt32())
+                return null;
+            var n = top.ToInt32Unchecked();
+            if (n < 5 || n > 12)
+                return null;
+            var a = read[EInteger.Zero];
+            var b = read[top];
+            if (!(a + b).Vars.Any() || Functions.PartialFractions.IsZeroAsAValue(a) || Functions.PartialFractions.IsZeroAsAValue(b))
+                return null;
+            var q = n % 2 == 0 ? 2 : 1;
+            var m = n / q;
+            var sine = function is Sinf;
+            var u = q == 2 ? MathS.Tan(argument) : MathS.Tan(argument / 2);
+            var radius = MathS.Pow(-a / b, Number.Rational.Create(1, m));
+            Entity sum = Number.Integer.Zero;
+            for (var k = 0; k < m; k++)
+            {
+                // The root of unity as a cosine and a sine: `(-1)^(2/3)` is 1 here, the real cube
+                // root of 1, where it means the principal `e^(2 pi i/3)` to Rubi.
+                var turn = 2 * MathS.pi * k / m;
+                var r = (k == 0 ? radius : radius * (MathS.Cos(turn) + MathS.i * MathS.Sin(turn))).InnerSimplified;
+                // K^2, the factor in front, and the argument of the arctangent over K.
+                var (square, front, shift) = (q, sine) switch
+                {
+                    (2, true) => ((r - 1) / r, (Entity)Number.Integer.One, (Entity)Number.Integer.Zero),
+                    (2, false) => (r / (r - 1), r / (r - 1), Number.Integer.Zero),
+                    (1, true) => ((MathS.Sqr(r) - 1) / MathS.Sqr(r), 2, -1 / r),
+                    _ => ((r - 1) / (r + 1), 2 * r / (r + 1), Number.Integer.Zero),
+                };
+                square = square.InnerSimplified;
+                if (Functions.PartialFractions.IsZeroAsAValue(square) || Functions.PartialFractions.IsZeroAsAValue((1 / square).InnerSimplified))
+                    return null;
+                var root = MathS.Sqrt(square);
+                // An even power under tan(y), where K multiplies u; an odd one under tan(y/2), where it divides.
+                sum += q == 2 ? front * MathS.Arctan(root * u) / root : front * MathS.Arctan((u + shift) / root) / root;
+            }
+            var answer = (numerator / (m * a * slope) * sum).InnerSimplified;
+            // Refused where it differs, not where it cannot be told: the intervals do not settle
+            // the arctangents of complex arguments at every sampled point, and `1/(a + b sin(x)^5)`,
+            // right at every point checked exactly, was declined for too few comparisons.
+            return Functions.PartialFractions.DerivativeDiffersWhereReal(answer, expr, x) ? null : answer;
+        }
+
+        /// <summary>
         /// A rational function of a sine, or of a cosine, over a quadratic in it with a symbol
         /// among the coefficients: <c>sin(x)/(a + b sin(x) + c sin(x)^2)</c>, and the same with
         /// the other function to even powers, a cosecant or a secant beside. Written in
