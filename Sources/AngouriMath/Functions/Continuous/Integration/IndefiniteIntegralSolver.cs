@@ -17911,6 +17911,60 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// The solution of a linear system whose entries are all rational numbers, by Gauss-Jordan
+        /// elimination in exact rationals kept in lowest terms -- PeterO's rationals are not reduced
+        /// on their own, and unreduced the solve for Welz's piece took two minutes -- an unknown no
+        /// row pivots on set to zero; null where an
+        /// entry is not a rational number or the system is inconsistent.
+        /// </summary>
+        private static Entity[]? TrySolveInRationals(Entity[][] matrix, Entity[] rhs)
+        {
+            static ERational? Read(Entity entry) => entry is Number.Rational r ? r.ERational : entry.Evaled is Number.Rational e ? e.ERational : null;
+            var rows = matrix.Length;
+            var columns = rows == 0 ? 0 : matrix[0].Length;
+            var m = new ERational[rows][];
+            for (var i = 0; i < rows; i++)
+            {
+                m[i] = new ERational[columns + 1];
+                for (var j = 0; j < columns; j++)
+                    if (Read(matrix[i][j]) is { } value) m[i][j] = value; else return null;
+                if (Read(rhs[i]) is { } right) m[i][columns] = right; else return null;
+            }
+            var pivotOf = new int[columns];
+            for (var j = 0; j < columns; j++) pivotOf[j] = -1;
+            var row = 0;
+            for (var column = 0; column < columns && row < rows; column++)
+            {
+                var pivot = -1;
+                for (var i = row; i < rows; i++)
+                    if (!m[i][column].IsZero) { pivot = i; break; }
+                if (pivot < 0)
+                    continue;
+                (m[row], m[pivot]) = (m[pivot], m[row]);
+                var lead = m[row][column];
+                for (var j = column; j <= columns; j++)
+                    m[row][j] = m[row][j].Divide(lead).ToLowestTerms();
+                for (var i = 0; i < rows; i++)
+                {
+                    if (i == row || m[i][column].IsZero)
+                        continue;
+                    var factor = m[i][column];
+                    for (var j = column; j <= columns; j++)
+                        m[i][j] = m[i][j].Subtract(factor.Multiply(m[row][j])).ToLowestTerms();
+                }
+                pivotOf[column] = row;
+                row++;
+            }
+            for (var i = row; i < rows; i++)
+                if (!m[i][columns].IsZero)
+                    return null;
+            var values = new Entity[columns];
+            for (var j = 0; j < columns; j++)
+                values[j] = pivotOf[j] < 0 ? Number.Integer.Zero : Number.Rational.Create(m[pivotOf[j]][columns]);
+            return values;
+        }
+
+        /// <summary>
         /// A polynomial times an odd half power of a quadratic, <c>P Q^(m/2)</c>, reduced to
         /// <c>R Q^(k + 1/2) + K/sqrt(Q)</c> by one linear solve, with <c>K/sqrt(Q)</c> the
         /// table's -- an arcsine or a logarithm by the sign of the leading coefficient, a
@@ -17968,7 +18022,13 @@ namespace AngouriMath.Functions.Algebra
                 || pRead.Values.Any(coefficient => coefficient.ContainsNode(x)))
                 return null;
             var degreeOfP = pRead.Count == 0 ? 0 : pRead.Keys.Max()!.ToInt32Unchecked();
-            if (degreeOfP > 8 || m > 9 || m < -9)
+            // The solve is one linear system of about degreeOfP + |m| unknowns; with numbers for every
+            // coefficient it stays small to far higher powers, and Welz's
+            // `1/((3 - 2 x + x^2)^(11/2) (1 + x + 2 x^2)^5)` left a piece of degree 9 over the
+            // eleventh half power, and its `^(21/2)`, `^10` twin one of degree 19.
+            var numeric = !radicand.Vars.Any(v => v != x) && !polynomial.Vars.Any(v => v != x);
+            var (degreeCap, powerCap) = numeric ? (24, 25) : (8, 9);
+            if (degreeOfP > degreeCap || m > powerCap || m < -powerCap)
                 return null;
 
             // Each coefficient that is neither a number nor a symbol is named for the solve and
@@ -17981,6 +18041,10 @@ namespace AngouriMath.Functions.Algebra
             {
                 if (value is Number or Variable)
                     return value;
+                // A number written as an expression, `-2` as `-1 * 2`, is that number: named, it kept
+                // the system out of the exact rational solve below.
+                if (!value.Vars.Any() && value.Evaled is Number.Rational number)
+                    return number;
                 foreach (var (name, named) in names)
                     if (named == value)
                         return name;
@@ -18034,7 +18098,10 @@ namespace AngouriMath.Functions.Algebra
                     matrix[row][column] = columns[column].TryGetValue(power, out var entry) ? entry : Number.Integer.Zero;
                 rhs[row] = target.TryGetValue(power, out var wanted) ? wanted : Number.Integer.Zero;
             }
-            if (!Functions.PartialFractions.TrySolveLinear(matrix, rhs, out var values) || values is null)
+            // With numbers for every entry the system is solved in exact rationals: eliminated as
+            // expressions, the values of Welz's degree-9 piece over the eleventh half power came to
+            // half a million nodes of unfolded fractions and were refused at the bound.
+            if ((TrySolveInRationals(matrix, rhs) ?? (Functions.PartialFractions.TrySolveLinear(matrix, rhs, out var solved) ? solved : null)) is not { } values)
                 return null;
             Entity r = Number.Integer.Zero;
             for (var k = 0; k <= degreeOfR; k++)
