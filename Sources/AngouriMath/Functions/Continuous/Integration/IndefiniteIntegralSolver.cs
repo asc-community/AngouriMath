@@ -19676,7 +19676,11 @@ namespace AngouriMath.Functions.Algebra
             foreach (var unity in unities)
                 answer = answer + unity * each.Substitute(namedB, unity * root).Substitute(namedS, shift);
             answer = (constant / (3 * d6 * MathS.Pow(root, Number.Integer.Create(2))) * answer).InnerSimplified;
-            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+            // Refused where it differs, not where it cannot be told: with `q < 0` the real cube root
+            // makes all three quadratics' coefficients complex at the pinned values, the intervals
+            // settle too few points, and `8 x^2/(8 a x^3 - b (x^2 + 1)^3)` -- `1/(a - b cosh(x)^3)`
+            // under `u = e^x` -- was declined where its `+ b` twin was answered.
+            return Functions.PartialFractions.DerivativeDiffersWhereReal(answer, expr, x) ? null : answer;
         }
 
         /// <summary>
@@ -28959,10 +28963,14 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         internal static Entity? SolveAPowerOfAnInverseFunctionOfAQuadraticByTheRecurrence(Entity expr, Entity.Variable x)
         {
-            var (@base, power) = expr is Powf(var b0, Number.Integer p0) ? (b0, p0) : (expr, Number.Integer.One);
-            if (power.EInteger.IsZero || power.EInteger.Abs().CompareTo(EInteger.FromInt32(12)) > 0)
+            var (@base, power) = expr is Powf(var b0, Number.Rational p0) ? (b0, p0) : (expr, (Number.Rational)Number.Integer.One);
+            // A whole power, or half an odd one.
+            var twice = (power * 2).InnerSimplified;
+            if (twice is not Number.Integer { EInteger: var twiceE } || twiceE.IsZero || twiceE.Abs().CompareTo(EInteger.FromInt32(24)) > 0)
                 return null;
-            var n = power.EInteger.ToInt32Unchecked();
+            var doubled = twiceE.ToInt32Unchecked();
+            var half = doubled % 2 != 0;
+            var n = doubled / 2;
             // The inverse function, its argument w, the sign e, the radical H is written with, and
             // whether w^2 is 1 or -1 at x = 0.
             (Entity Node, Entity W, int Sign, Entity Root, int Square)? Read(Entity node)
@@ -29002,6 +29010,8 @@ namespace AngouriMath.Functions.Algebra
             var h = root / (d * x);
             var e = (Entity)Number.Integer.Create(sign);
             var a_bu = a + b * inverse;
+            if (half)
+                return HalfPower();
             if (n < 0)
                 return NegativePower();
             // I(k) by the recurrence, from I(0) = x and I(1) = x (a + b u) + 2 e b H.
@@ -29020,6 +29030,53 @@ namespace AngouriMath.Functions.Algebra
             if (!Functions.PartialFractions.IsZeroAsAValue((h * inverse.Differentiate(x) - 2).InnerSimplified))
                 return null;
             return integrals[n].InnerSimplified;
+
+            // Half an odd power of the inverse hyperbolic cosine, through u as below: with
+            // P = a + b u, the integrals of e^(+-u/2) P^(-1/2) are the error functions of
+            // z = sqrt(P)/sqrt(2 b), (2 sqrt(pi)/sqrt(2 b)) e^(-+a/(2 b)) erfi(z) and erf(z), z written
+            // so that z sqrt(2 b) is the root of P itself. I(1/2) is by parts from them, and the
+            // recurrence runs up and down from I(-1/2) and I(1/2). The circular functions would want
+            // the Fresnel integrals, which have no node.
+            Entity? HalfPower()
+            {
+                if (inverse is not Logf || sign != -1 || squareAtZero != 1)
+                    return null;
+                var plus = Functions.PartialFractions.IsZeroAsAValue((c - 1).InnerSimplified);
+                var theta = inverse / 2;
+                Entity Exp(Entity z) => MathS.Pow(MathS.e, z);
+                Entity Sinh(Entity z) => (Exp(z) - Exp(-z)) / 2;
+                Entity Cosh(Entity z) => (Exp(z) + Exp(-z)) / 2;
+                // g = sinh, h = g' = cosh for c = 1; g = cosh, h = sinh for c = -1.
+                var kappa = x / (plus ? Sinh(theta) : Cosh(theta));
+                var z = MathS.Sqrt(a_bu) / MathS.Sqrt(2 * b);
+                var front = 2 * MathS.Sqrt(MathS.pi) / MathS.Sqrt(2 * b);
+                var upward = front * Exp(-a / (2 * b)) * MathS.Erfi(z);
+                var downward = front * Exp(a / (2 * b)) * MathS.Erf(z);
+                // The integral over u of cosh(theta) P^(-1/2), or of sinh(theta) P^(-1/2).
+                Entity OverRoot(bool ofCosh) => ofCosh ? (upward + downward) / 2 : (upward - downward) / 2;
+                var root = MathS.Sqrt(a_bu);
+                var halves = new Dictionary<int, Entity>
+                {
+                    [-1] = kappa / 2 * OverRoot(plus),
+                    // By parts, with the antiderivative of h(theta) in u being 2 h~(theta), h~ the other one.
+                    [1] = kappa / 2 * (2 * (plus ? Sinh(theta) : Cosh(theta)) * root - b * OverRoot(!plus)),
+                };
+                Entity Step(int t) => (Entity)Number.Rational.Create(t, 2);
+                for (var t = 3; t <= doubled; t += 2)
+                {
+                    var m = Step(t);
+                    halves[t] = x * MathS.Pow(a_bu, m) + 2 * e * m * b * h * MathS.Pow(a_bu, m - 1)
+                        - 4 * e * MathS.Sqr(b) * m * (m - 1) * halves[t - 4];
+                }
+                for (var t = -3; t >= doubled; t -= 2)
+                {
+                    var m = Step(t + 4);
+                    halves[t] = (x * MathS.Pow(a_bu, m) + 2 * e * m * b * h * MathS.Pow(a_bu, m - 1) - halves[t + 4])
+                        / (4 * e * MathS.Sqr(b) * m * (m - 1));
+                }
+                var answer = halves[doubled].InnerSimplified;
+                return Functions.PartialFractions.DerivativeDiffersWhereReal(answer, expr, x) ? null : answer;
+            }
 
             // A negative power, through u: w - c is a constant times g(theta)^2 with theta = u/2 + beta,
             // so x = kappa g(theta) with kappa = x/g(theta) constant on each side of 0, and

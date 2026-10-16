@@ -396,6 +396,33 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### Half an odd power of an inverse hyperbolic cosine of `c + d x^2` is integrated in error functions
+
+**Answers where there were none.** `(a + b acosh(1 + d x^2))^(1/2)` was declined, and so were thirteen more of Rubi's
+7.2.5, from the power `-7/2` to `5/2`. With `P = a + b u`, the integrals of `e^(+-u/2) P^(-1/2)` are error functions of
+`sqrt(P)/sqrt(2 b)`; the power `1/2` follows by parts and the rest by the recurrence for the whole powers, run up and
+down ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a+b*acosh(1+d*x^2))^(1/2)".ToEntity().Integrate("x")` | `integral(...)` | 625 characters |
+| `"(a+b*acosh(-1+d*x^2))^(5/2)".ToEntity().Integrate("x")` | `integral(...)` | 868 characters |
+| `"1/(a+b*acosh(1+d*x^2))^(1/2)".ToEntity().Integrate("x")` | `integral(...)` | 418 characters |
+| `"1/(a+b*acosh(-1+d*x^2))^(7/2)".ToEntity().Integrate("x")` | `integral(...)` | 1,098 characters |
+
+### A difference of two cubes is split over the cube roots of unity where its answer cannot be sampled
+
+**Answers where there were none.** `1/(a - b cosh(x)^3)` was declined, which Rubi's 6.2.7 has. Under `u = e^x` it is
+`8 u^2/(8 a u^3 - b (u^2 + 1)^3)`, a difference of two cubes, which the rule for a sum of two cubes split correctly and
+then refused: with the second cube negative, the real cube root makes all three quadratics complex at the sampled
+values, and too few points could be compared. The answer is now refused only where it differs
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(a-b*cosh(x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 666 characters |
+| `"8*x^2/(8*a*x^3-b*(x^2+1)^3)".ToEntity().Integrate("x")` | `integral(...)` | 654 characters |
+
 ### A negative power of an inverse function of `c + d x^2` is integrated in sine and cosine integrals
 
 **Answers where there were none.** `1/(a + b acos(1 + d x^2))` was declined, and so were seventeen more of Rubi's

@@ -55,5 +55,18 @@ namespace AngouriMath.Tests.Calculus
             DifferentiatesBack(integrand, ("a", 2), ("b", 3), ("c", 5));
             DifferentiatesBack(integrand, ("a", -1), ("b", 2), ("c", -3));
         }
+
+        // A difference of two cubes, the second cube's coefficient negative: `1/(a - b cosh(x)^3)` is
+        // `8 u^2/(8 a u^3 - b (u^2 + 1)^3)` under `u = e^x`. The real cube root makes all three
+        // quadratics complex at sampled values, and the answer was refused for want of points.
+        [Theory]
+        [InlineData("8*x^2/(8*a*x^3-b*(x^2+1)^3)")]
+        [InlineData("1/(a-b*cosh(x)^3)")]
+        [InlineData("x/(27*a^3+27*a^2*b*x^2-27*a^2*c*x^3+9*a*b^2*x^4+b^3*x^6)")]
+        public void ADifferenceIsAnsweredAndDifferentiatesBack(string integrand)
+        {
+            DifferentiatesBack(integrand, ("a", 2), ("b", 3), ("c", 5));
+            DifferentiatesBack(integrand, ("a", -1), ("b", 2), ("c", -3));
+        }
     }
 }
