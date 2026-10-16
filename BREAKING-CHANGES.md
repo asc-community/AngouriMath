@@ -396,6 +396,21 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### A power of a sine or hyperbolic sine over a binomial in a power of it is split over the binomial's roots
+
+**Answers where there were none.** `sinh(c + d x)^4/(a + b sinh(c + d x)^3)` was declined, and so were eight more of
+Rubi's 6.1.7 with a power of the hyperbolic sine or cosecant beside `a + b sinh(c + d x)^3`. `s^k/(a + b s^n)` is now
+divided down, or up, to a power between 0 and `n` over the binomial, the powers of `s` beside going to the integrator,
+and split over all `n` roots of the binomial as the reciprocal alone already was
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sinh(c+d*x)^4/(a+b*sinh(c+d*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 1,497 characters |
+| `"csch(c+d*x)^3/(a+b*sinh(c+d*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 1,566 characters |
+| `"sinh(c+d*x)^6/(a+b*sinh(c+d*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 1,517 characters |
+| `"sin(x)^2/(a+b*sin(x)^5)".ToEntity().Integrate("x")` | `integral(...)` | 2,475 characters |
+
 ### A rational function times a logarithm of nested powers of linears is integrated by parts
 
 **Answers where there were none.** `ln(e (f (a + b x)^p (c + d x)^q)^r)` was declined, and so were four more of Rubi's

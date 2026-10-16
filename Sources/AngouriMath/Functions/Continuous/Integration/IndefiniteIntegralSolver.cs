@@ -25960,9 +25960,19 @@ namespace AngouriMath.Functions.Algebra
         /// <c>1/(a + b sin(x)^5)</c>, <c>1/(a - b cos(x)^6)</c> and the like were declined.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
+        /// <summary>
+        /// <see cref="SolveAReciprocalOfABinomialInAPowerOfASineOverItsRoots"/> asked first where a power of
+        /// the function stands above or below the binomial: the rules before it in the dispatcher spent
+        /// the budget on `sinh(y)^4/(a + b sinh(y)^3)`, and the bare reciprocal they answer is left to them.
+        /// </summary>
+        internal static Entity? SolveAPowerOverABinomialInAPowerOfASineOverItsRoots(Entity expr, Entity.Variable x)
+            => Integration.AnsweringTheQuestionAsked && TryReadAsQuotient(expr, out var above, out _) && above.ContainsNode(x)
+                ? SolveAReciprocalOfABinomialInAPowerOfASineOverItsRoots(expr, x)
+                : null;
+
         internal static Entity? SolveAReciprocalOfABinomialInAPowerOfASineOverItsRoots(Entity expr, Entity.Variable x)
         {
-            if (!TryReadAsQuotient(expr, out var numerator, out var denominator) || numerator.ContainsNode(x))
+            if (!TryReadAsQuotient(expr, out var numerator, out var denominator))
                 return null;
             // The hyperbolic sine and cosine are parsed as `(e^y -+ e^(-y))/2`, and read back from it.
             static (Entity Argument, bool Sine, bool Hyperbolic)? Read(Entity node) => node switch
@@ -25985,31 +25995,71 @@ namespace AngouriMath.Functions.Algebra
             if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out _) || Functions.PartialFractions.IsZeroAsAValue(slope))
                 return null;
             var s = Variable.CreateUnique(expr, "s_bin");
-            var inS = denominator.Substitute(function, s);
-            if (inS.ContainsNode(x) || !TreeAnalyzer.TryGetPolynomial(inS, s, out var read) || read.Count != 2
-                || !read.ContainsKey(EInteger.Zero) || read.Keys.Max() is not { } top || !top.CanFitInInt32())
+            // In s the integrand is C s^k/(a + b s^n) for a whole k of either sign: a power of the
+            // function above the bar, or of its reciprocal, `csch(y)^3/(a + b sinh(y)^3)`.
+            var (aboveInS, belowInS) = Functions.SingleQuotient.Of(expr.Substitute(function, s));
+            if (aboveInS.ContainsNode(x) || belowInS.ContainsNode(x)
+                || !TreeAnalyzer.TryGetPolynomial(aboveInS, s, out var readAbove) || readAbove.Count != 1
+                || !TreeAnalyzer.TryGetPolynomial(belowInS, s, out var readBelow) || readBelow.Count != 2)
                 return null;
-            var n = top.ToInt32Unchecked();
+            var lowest = readBelow.Keys.Min()!;
+            var top = readBelow.Keys.Max()!;
+            var aboveKey = readAbove.Keys.Single();
+            if (!top.CanFitInInt32() || !lowest.CanFitInInt32() || !aboveKey.CanFitInInt32())
+                return null;
+            var n = (top - lowest).ToInt32Unchecked();
+            var k = (aboveKey - lowest).ToInt32Unchecked();
+            Entity front0 = readAbove[aboveKey];
+            var a = readBelow[lowest];
+            var b = readBelow[top];
+            // The binomial alone, read off the denominator as it is written, as it always was.
+            if (!numerator.ContainsNode(x) && TreeAnalyzer.TryGetPolynomial(denominator.Substitute(function, s), s, out var asWritten)
+                && asWritten.Count == 2 && asWritten.ContainsKey(EInteger.Zero))
+                (front0, a, b, k) = (numerator, asWritten[EInteger.Zero], asWritten[asWritten.Keys.Max()!], 0);
+            else if (numerator.ContainsNode(x) == false && k != 0)
+                return null;
             // Past what the rules before it answer: they write `1/(a + b cosh(x)^3)` through `e^x` in
-            // 655 characters, where this writes 1491.
-            if (n < 5 || n > 12)
+            // 655 characters, where this writes 1491. With a power beside it they timed out at n = 3:
+            // `sinh(y)^4/(a + b sinh(y)^3)`.
+            // And at n = 4 with a power beside it too: they answer `sin(y)^3/(a - b sin(y)^4)` in a tenth
+            // of a second, where asked first this took half of one.
+            if (n > 12 || n < 3 || n < 5 && k == 0 || n == 4 || System.Math.Abs(k) > 24)
                 return null;
-            var a = read[EInteger.Zero];
-            var b = read[top];
             if (!(a + b).Vars.Any() || Functions.PartialFractions.IsZeroAsAValue(a) || Functions.PartialFractions.IsZeroAsAValue(b))
                 return null;
-            var q = n % 2 == 0 ? 2 : 1;
+            // s^k/(a + b s^n) is s^(k - n)/b - (a/b) s^(k - n)/(a + b s^n) down to k < n, and
+            // s^k/a - (b/a) s^(k + n)/(a + b s^n) up to k >= 0; the powers of s go to the integrator.
+            Entity powers = Number.Integer.Zero;
+            while (k >= n)
+            {
+                powers += front0 / b * MathS.Pow(function, Number.Integer.Create(k - n));
+                front0 = -front0 * a / b;
+                k -= n;
+            }
+            while (k < 0)
+            {
+                powers += front0 / a * MathS.Pow(function, Number.Integer.Create(k));
+                front0 = -front0 * b / a;
+                k += n;
+            }
+            Entity? powersIntegrated = Number.Integer.Zero;
+            if (powers != Number.Integer.Zero
+                && (powersIntegrated = Integration.ComputeAsAQuestionOfItsOwn(powers.InnerSimplified, x, integrateByParts: true)) is null)
+                return null;
+            numerator = front0;
+            // Above the bar s^k with 0 < k < n: over all n roots, (1/(n a)) sum r^(k + 1)/(r - s).
+            var q = n % 2 == 0 && k == 0 ? 2 : 1;
             var m = n / q;
             var half = q == 2 ? argument : argument / 2;
             var u = hyperbolic ? MathS.Hyperbolic.Tanh(half) : MathS.Tan(half);
             var radius = MathS.Pow(-a / b, Number.Rational.Create(1, m));
             Entity sum = Number.Integer.Zero;
-            for (var k = 0; k < m; k++)
+            for (var j = 0; j < m; j++)
             {
                 // The root of unity as a cosine and a sine: `(-1)^(2/3)` is 1 here, the real cube
                 // root of 1, where it means the principal `e^(2 pi i/3)` to Rubi.
-                var turn = 2 * MathS.pi * k / m;
-                var r = (k == 0 ? radius : radius * (MathS.Cos(turn) + MathS.i * MathS.Sin(turn))).InnerSimplified;
+                var turn = 2 * MathS.pi * j / m;
+                var r = (j == 0 ? radius : radius * (MathS.Cos(turn) + MathS.i * MathS.Sin(turn))).InnerSimplified;
                 // K^2, the factor in front, and the argument of the arctangent over K.
                 var (square, front, shift) = (q, sine, hyperbolic) switch
                 {
@@ -26027,9 +26077,10 @@ namespace AngouriMath.Functions.Algebra
                 // An even power under tan(y), where K multiplies u; an odd one under tan(y/2), where it divides.
                 // The hyperbolic ones are the same with the inverse hyperbolic tangent.
                 Entity Inverse(Entity z) => hyperbolic ? MathS.Hyperbolic.Artanh(z) : MathS.Arctan(z);
-                sum += q == 2 ? front * Inverse(root * u) / root : front * Inverse((u + shift) / root) / root;
+                // r^0 is not folded into 1 when r is a root written out, so it is left off.
+                sum += (k == 0 ? Number.Integer.One : MathS.Pow(r, Number.Integer.Create(k))) * (q == 2 ? front * Inverse(root * u) / root : front * Inverse((u + shift) / root) / root);
             }
-            var answer = (numerator / (m * a * slope) * sum).InnerSimplified;
+            var answer = (powersIntegrated + numerator / (m * a * slope) * sum).InnerSimplified;
             // Refused where it differs, not where it cannot be told: the intervals do not settle
             // the arctangents of complex arguments at every sampled point, and `1/(a + b sin(x)^5)`,
             // right at every point checked exactly, was declined for too few comparisons.
