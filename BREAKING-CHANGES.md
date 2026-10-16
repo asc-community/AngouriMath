@@ -147,6 +147,51 @@ the working digits, or `MathS.Settings.PrecisionErrorZeroRange` where a caller h
 still that integer, so `e^(-123.456)` is 0 as it was.
 [#1338](https://github.com/asc-community/AngouriMath/issues/1338).
 
+### A constant or an exponential evaluated at a higher precision than before has all of its digits
+
+**More digits where there were a hundred.** `pi`, `e` and an exponential, evaluated once at one precision, went on
+answering in that precision under a higher one: in 2.5.0 `pi` read under 300 digits after a read under 100 had 100
+digits, and `e^(1/3)` the same. Each is now worked out in the precision asked for
+([#1367](https://github.com/asc-community/AngouriMath/issues/1367), #1368).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `MathS.pi.Evaled` under 300 digits, after a read under 100 | 100 digits | 300 digits |
+| `"e^(1/3)".Evaled` under 300 digits, after a read under 100 | 100 digits | 300 digits |
+
+### A string parsed once is parsed again under the other downcasting setting
+
+**A different number.** `MathS.FromString` remembered what it had parsed, keyed on the parsing setting alone. A string
+parsed with downcasting on came back with its exact numbers under downcasting off, and the other way round. The
+cache is now keyed on the downcasting setting too
+([#1513](https://github.com/asc-community/AngouriMath/issues/1513), #1517).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `MathS.FromString("1/3").Evaled` under downcasting off, after the same parse with it on | `1/3` | `0.3333…` (one hundred digits) |
+
+### A difference of a negated term is printed as a sum
+
+**A printed form.** A solution and a difference were printed with the sign of a negative factor left inside:
+`b - x = 0` solved for `x` printed `-b / (-1)`, and LaTeX printed `1/100 - (-4) x` as `\frac{1}{100}--4 \cdot x`, which does
+not read back. Both are simplified to the sum now (#1397).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"b - x = 0".Solve("x")` | `{ -b / (-1) }` | `{ b }` |
+| `"1/100 - (-4)*x".ToEntity().Latexize()` | `\frac{1}{100}--4 \cdot x` | `\frac{1}{100}+4 \cdot x` |
+
+### A complex number divided by one beyond `10^50` in modulus is not zero
+
+**A wrong answer.** With the downcasting off, a complex division took the reciprocal of the divisor's squared modulus
+first, and beyond `10^50` that underflowed the context to zero, so `(1.98e119 + i)/(3.39e125 + i)` was `0`. It is
+divided by Smith's method now, which scales by the larger part and squares nothing
+([#1372](https://github.com/asc-community/AngouriMath/issues/1372), #1374).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `(1.98e119 + i)/(3.39e125 + i)` with the downcasting off | `0` | `5.8407…e-7` |
+
 ### A piecewise is defined where the case it takes is
 
 **Domain conditions that were false.** The domain condition of a piecewise asked every case's predicate
@@ -2916,6 +2961,18 @@ read as though it were not.
 Each of these was checked by differentiating it back with the parameters pinned and comparing at
 four points. The Rubi sample is unchanged at 231 of 463 with no wrong answers, so nothing that
 already had an antiderivative moves.
+
+### `NaN` a fifth time, from an exponential times a cosine with a complex rate
+
+**A wrong answer.** `e^(-i x) cos(x)` was answered `NaN + C`: the closed form `P(x) e^(a x) cos(b x)` divides by
+`a^2 + b^2`, which is `(-i)^2 + 1 = 0` here, the resonance that leaves a term linear in `x`. It is integrated through the
+exponential form now, and so is `e^(-i arctan(a x))/(c + a^2 c x^2)^(3/2)`, which comes to it
+(PR [#1380](https://github.com/asc-community/AngouriMath/pull/1380)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(-i*x)*cos(x)".Integrate("x")` | `NaN + C` | `x/2 + e^(-2 i x)/(-4 i)` up to form |
+| `"e^(-i*atan(a*x))/(c+a^2*c*x^2)^(3/2)".Integrate("x")` | `integral(...)` | an answer |
 
 ### `NaN` a fourth time, from an exponent that is `-1` only as a value
 
