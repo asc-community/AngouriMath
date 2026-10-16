@@ -396,6 +396,22 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### A function of an inverse tangent times its derivative up to a constant factor is integrated by substitution
+
+**Answers where there were none.** `atan(c x/sqrt(a - c^2 x^2))^m/sqrt(d - c^2 d x^2/a)` was declined, and so were
+eleven more of Rubi's 5.3.7. The derivative of `u = atan(c x/sqrt(a - c^2 x^2))` is `c/sqrt(a - c^2 x^2)`, and beside
+it `1/sqrt(d - c^2 d x^2/a)` is that times a factor constant wherever it is real, though written with `x` in it. The
+integrand over `u'` is now split into a function of `u` and such a factor, and the integral is the factor times the
+integral of the function ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"atan(c*x/sqrt(a-c^2*x^2))^m/sqrt(d-c^2*d*x^2/a)".ToEntity().Integrate("x")` | `integral(...)` | 176 characters |
+| `"atan(c*x/sqrt(a-c^2*x^2))/sqrt(d-c^2*d*x^2/a)".ToEntity().Integrate("x")` | `integral(...)` | 164 characters |
+| `"1/(atan(c*x/sqrt(a-c^2*x^2))*sqrt(d-c^2*d*x^2/a))".ToEntity().Integrate("x")` | `integral(...)` | 160 characters |
+| `"atan(k*x/sqrt(-a*k^2/b-k^2*x^2))^m/sqrt(a+b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 320 characters |
+| `"1/(atan(k*x/sqrt(-a*k^2/b-k^2*x^2))^3*sqrt(a+b*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 314 characters |
+
 ### Half an odd power of an inverse hyperbolic cosine of `c + d x^2` is integrated in error functions
 
 **Answers where there were none.** `(a + b acosh(1 + d x^2))^(1/2)` was declined, and so were thirteen more of Rubi's
