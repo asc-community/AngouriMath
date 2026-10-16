@@ -9740,7 +9740,10 @@ namespace AngouriMath.Functions.Algebra
                     // ran past thirty seconds, and `x^3 e^(-i arctan(a x))` came out in 26 thousand
                     // characters where so it is 218. Alone the exponential is answered shorter as the
                     // root, and for a power not whole the quotient's power is.
-                    if ((n == Number.Integer.One || n == Number.Integer.MinusOne) && !quadraticElsewhere && xElsewhere)
+                    // So for every n beside a function of x and no quadratic: `e^(3 i arctan(a + b x))/x^2`
+                    // as `(1 + i L)^3 (1 + L^2)^(-3/2)` ran out of time, and as the two powers it is
+                    // answered in half a second.
+                    if (!quadraticElsewhere && xElsewhere)
                     {
                         var half = Number.Rational.Create(n.ERational.Divide(2));
                         return MathS.Pow(1 + MathS.i * argument, half) * MathS.Pow(1 - MathS.i * argument, Number.Rational.Create(half.ERational.Negate()));

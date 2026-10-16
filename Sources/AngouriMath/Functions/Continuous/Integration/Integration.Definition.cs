@@ -664,6 +664,10 @@ namespace AngouriMath.Functions.Algebra
             // A sum free of the variable that comes to a number multiplied out, as that number,
             // before anything reads a coefficient or an exponent in it: `2 + 2 a - 2 (1 + a)`.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingConstantSumsToTheirNumbers(expr, x, integrateByParts)) is { }) return answer;
+            // An exponential of i times an inverse trigonometric function written algebraically, at the
+            // question asked, before the rules that spent the budget: `e^(3 i atan(a + b x))/x^2` ran out of
+            // time where, rewritten, it is answered in half a second. It is asked again in its place below.
+            if (AnsweringTheQuestionAsked && (answer = IndefiniteIntegralSolver.SolveByWritingAnExponentialOfAnInverseAlgebraically(expr, x, integrateByParts)) is { }) return answer;
             // A power of a sine, cosine or hyperbolic one over a binomial in a power of it, over the
             // binomial's roots, before the rules that spent the budget on `sinh(y)^4/(a + b sinh(y)^3)`.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOverABinomialInAPowerOfASineOverItsRoots(expr, x)) is { }) return answer;
