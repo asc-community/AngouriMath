@@ -664,6 +664,9 @@ namespace AngouriMath.Functions.Algebra
             // A sum free of the variable that comes to a number multiplied out, as that number,
             // before anything reads a coefficient or an exponent in it: `2 + 2 a - 2 (1 + a)`.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingConstantSumsToTheirNumbers(expr, x, integrateByParts)) is { }) return answer;
+            // A rational function times the logarithm of a nested product of powers of linears, by parts,
+            // its logarithm's derivative read off as written: `ln(e (f (a + b x)^p (c + d x)^q)^r)`.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionTimesALogarithmOfPowersOfLinears(expr, x, integrateByParts)) is { }) return answer;
             // A whole power of a linear in the inverse sine, cosine or hyperbolic cosine of
             // `c + d x^2` with `c^2 = 1`, by its recurrence, which closes: by parts it went round.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfAnInverseFunctionOfAQuadraticByTheRecurrence(expr, x)) is { }) return answer;
