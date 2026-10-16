@@ -661,6 +661,9 @@ namespace AngouriMath.Functions.Algebra
             // dropped it re-enabled integration by parts one level below the call that
             // switched it off -- which is a cycle, since by parts calls back into here.
             // `x * ln(x)` went round it until the stack ran out.
+            // A sum free of the variable that comes to a number multiplied out, as that number,
+            // before anything reads a coefficient or an exponent in it: `2 + 2 a - 2 (1 + a)`.
+            if ((answer = IndefiniteIntegralSolver.SolveByFoldingConstantSumsToTheirNumbers(expr, x, integrateByParts)) is { }) return answer;
             // A whole power of a linear in the inverse sine, cosine or hyperbolic cosine of
             // `c + d x^2` with `c^2 = 1`, by its recurrence, which closes: by parts it went round.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfAnInverseFunctionOfAQuadraticByTheRecurrence(expr, x)) is { }) return answer;
@@ -671,6 +674,8 @@ namespace AngouriMath.Functions.Algebra
             // Two linears to one power that is not whole, as one quadratic to that power, before each
             // linear is written once: `(2 + 3x)^4/((1 - 2x)^(5/2) (3 + 5x)^(5/2))` took forty-five
             // seconds there, and over `(3 - x - 10x^2)^(5/2)` it takes half of one.
+            // A linear below the cube root of a quadratic, in closed form where Rubi has one.
+            if ((answer = IndefiniteIntegralSolver.SolveALinearBelowACubeRootOfAQuadraticInClosedForm(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveTwoLinearsToOnePowerAsOneQuadratic(expr, x, integrateByParts)) is { }) return answer;
             // A linear and a quadratic to one power as one binomial, `(1 + x) (1 - x + x^2)` as
             // `1 + x^3`, which the rules for a power of a binomial answer.
@@ -963,6 +968,8 @@ namespace AngouriMath.Functions.Algebra
             // among the coefficients, split over the quadratic's two roots: under the
             // half-angle it is a quartic in t with a symbol in every coefficient.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOfASineOverASymbolicQuadratic(expr, x, integrateByParts)) is { }) return answer;
+            // And over a binomial in a higher power of it, over the binomial's roots.
+            if ((answer = IndefiniteIntegralSolver.SolveAReciprocalOfABinomialInAPowerOfASineOverItsRoots(expr, x)) is { }) return answer;
             // Fractional powers of `a ± a sin(y)` beside anything rational in the sine and
             // cosine, by the half angle at which they are squares: `1 + sin(y)` is `2 sin(u)^2`. Before
             // the substitution search, which spent twenty seconds on the radicals of the sine.
@@ -1320,6 +1327,11 @@ namespace AngouriMath.Functions.Algebra
             // function of x and of sin(x) and cos(x) together. `x^2/(x cos(x) - sin(x))^2` is
             // `((x sin(x) + cos(x))/(x cos(x) - sin(x)))'`.
             if ((answer = IndefiniteIntegralSolver.SolveByTrigonometricTowerAnsatz(expr, x)) is { }) return answer;
+            // Powers of polynomials that are multiples of powers of one linear, as one power of it,
+            // the quotient constant in front. Late, so that a rule answering the powers as written
+            // goes first: asked before the rules for two linears, it wrote `((a + b x)^3)^(1/3)` in
+            // 111 characters where they write 25.
+            if ((answer = IndefiniteIntegralSolver.SolvePowersOfOneLinearAsOnePower(expr, x, integrateByParts)) is { }) return answer;
             // Last of the rewrites, because it is the only one that fires on an integrand nothing
             // is wrong with -- it clears a parameter rather than a shape -- so everything that
             // can answer the problem as written gets to try first.
