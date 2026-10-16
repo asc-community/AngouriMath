@@ -667,6 +667,11 @@ namespace AngouriMath.Functions.Algebra
             // A rational function times the logarithm of a nested product of powers of linears, by parts,
             // its logarithm's derivative read off as written: `ln(e (f (a + b x)^p (c + d x)^q)^r)`.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionTimesALogarithmOfPowersOfLinears(expr, x, integrateByParts)) is { }) return answer;
+            // A function of an inverse of something not linear times its derivative up to a factor
+            // constant though written with x: `atan(c x/sqrt(a - c^2 x^2))^2/sqrt(d - c^2 d x^2/a)`. Early,
+            // since it fires only where that factor holds x, and the rules before it spent 28 seconds on
+            // `atan(e x/sqrt(-a e^2/b - e^2 x^2))/sqrt(a + b x^2)` declining.
+            if ((answer = IndefiniteIntegralSolver.SolveAFunctionOfAnInverseTimesItsDerivativeUpToAConstant(expr, x, integrateByParts)) is { }) return answer;
             // A whole power of a linear in the inverse sine, cosine or hyperbolic cosine of
             // `c + d x^2` with `c^2 = 1`, by its recurrence, which closes: by parts it went round.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfAnInverseFunctionOfAQuadraticByTheRecurrence(expr, x)) is { }) return answer;
