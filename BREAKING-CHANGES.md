@@ -396,6 +396,23 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### A linear below the cube root of a quadratic is integrated in closed form
+
+**Answers where there were none.** `1/((d + e x) (d^2 + 3 e^2 x^2)^(1/3))` was declined, and so were six more of Rubi's
+1.2.1.2. With `y = x + b/(2c)`, `1/((d + e x) (a + b x + c x^2)^(1/3))` is a linear in `y` below the cube root of
+`a' + c y^2`, and where `c d'^2 = 3 a' e^2` or `c d'^2 = -9 a' e^2` it has a closed form of two or three logarithms and
+an arctangent ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((d+k*x)*(d^2+3*k^2*x^2)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 773 characters |
+| `"1/((2+3*i*x)*(4-27*x^2)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 398 characters |
+| `"1/((1+x^2)^(1/3)*(x+sqrt(3)))".ToEntity().Integrate("x")` | `integral(...)` | 290 characters |
+| `"1/((1+x^2)^(1/3)*(-x+sqrt(3)))".ToEntity().Integrate("x")` | `integral(...)` | 302 characters |
+| `"1/((d+k*x)*(d^2-9*k^2*x^2)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 397 characters |
+| `"1/((d+k*x)*(c^2*d^2-b*c*d*k+b^2*k^2+3*b*c*k^2*x+3*c^2*k^2*x^2)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 1,934 characters |
+| `"1/((d+k*x)*(-c^2*d^2+b*c*d*k+2*b^2*k^2+9*b*c*k^2*x+9*c^2*k^2*x^2)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 1,274 characters |
+
 ### A linear and a quadratic to one power are integrated as one binomial
 
 **Answers where there were none.** `1/((1 + x)^(1/3) (1 - x + x^2)^(1/3))` was declined. A linear and a quadratic to

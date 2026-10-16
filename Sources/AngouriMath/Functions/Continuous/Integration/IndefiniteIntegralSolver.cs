@@ -19989,6 +19989,83 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A linear below the cube root of a quadratic, <c>1/((d + e x) (a + b x + c x^2)^(1/3))</c>,
+        /// in closed form where the shifted quadratic <c>a' + c y^2</c>, <c>y = x + b/(2 c)</c>, and
+        /// the linear <c>d' + e y</c> satisfy <c>c d'^2 = 3 a' e^2</c> or <c>c d'^2 = -9 a' e^2</c>.
+        /// </summary>
+        /// <remarks>
+        /// With <c>q^3 = 6 c^2 e^2/d'^2</c> and <c>R = (a + b x + c x^2)^(1/3)</c> the integral is
+        /// <c>-sqrt(3) c e/(d'^2 q^2) arctan(1/sqrt(3) + 2 c (d' - e y)/(sqrt(3) d' q R))
+        /// - 3 c e/(2 d'^2 q^2) ln(d + e x) + 3 c e/(2 d'^2 q^2) ln(c d' - c e y - d' q R)</c>, Rubi's
+        /// 1.2.1.2 rule. Where <c>c d'^2 = -9 a' e^2</c>, with <c>t = e y/d'</c>, <c>u = 1 - 3 t</c>
+        /// and <c>k^3 = a'</c>, it is <c>(-3/8 ln(2 R + k u) + 1/4 ln(d + e x) + 1/8 ln(u)
+        /// - sqrt(3)/4 arctan(sqrt(3) k u/(4 R - k u)))/(e k)</c>: on the curve
+        /// <c>w^3 = 1 - 9 t^2</c> the tangent at each point over <c>t = -1</c> meets it again at
+        /// <c>(1/3, 0)</c>, so <c>w + r (1 - 3 t)/2</c> for the cube roots of unity <c>r</c> are the
+        /// functions whose logarithms carry the residues. Otherwise the integral is elliptic. The
+        /// answer is differentiated back.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveALinearBelowACubeRootOfAQuadraticInClosedForm(Entity expr, Entity.Variable x)
+        {
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            if (numerator.ContainsNode(x))
+                return null;
+            Entity? linear = null, quadratic = null;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                    numerator /= factor;
+                else if (quadratic is null && factor is Powf(var @base, Number.Rational power) && power == Number.Rational.Create(1, 3))
+                    quadratic = @base;
+                else if (linear is null && TreeAnalyzer.TryGetPolyLinear(factor, x, out _, out _))
+                    linear = factor;
+                else
+                    return null;
+            }
+            if (linear is null || quadratic is null
+                || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var e, out var d)
+                || !TreeAnalyzer.TryGetPolynomial(quadratic, x, out var read)
+                || read.Keys.Any(key => key.Sign < 0 || key.CompareTo(EInteger.FromInt32(2)) > 0)
+                || !read.TryGetValue(EInteger.FromInt32(2), out var c) || VanishesIdentically(c.Expand()))
+                return null;
+            var a = read.TryGetValue(EInteger.Zero, out var a0) ? a0 : Number.Integer.Zero;
+            var b = read.TryGetValue(EInteger.One, out var b0) ? b0 : Number.Integer.Zero;
+            var shift = (b / (2 * c)).InnerSimplified;
+            var dShifted = (d - e * shift).InnerSimplified;
+            var aShifted = (a - b * b / (4 * c)).InnerSimplified;
+            if (VanishesIdentically(dShifted.Expand()) || VanishesIdentically(e.Expand()))
+                return null;
+            var three = Number.Integer.Create(3);
+            var root3 = MathS.Sqrt(three);
+            if (VanishesIdentically((c * dShifted * dShifted + 9 * aShifted * e * e).Expand().InnerSimplified.Expand()))
+            {
+                var k = MathS.Pow(aShifted, Number.Rational.Create(1, 3));
+                var cubeRoot = MathS.Pow(quadratic, Number.Rational.Create(1, 3));
+                var u = 1 - 3 * e * (x + shift) / dShifted;
+                var closed = numerator / (e * k) * (
+                    -Number.Rational.Create(3, 8) * MathS.Ln(2 * cubeRoot + k * u)
+                    + Number.Rational.Create(1, 4) * MathS.Ln(linear)
+                    + Number.Rational.Create(1, 8) * MathS.Ln(u)
+                    - root3 / 4 * MathS.Arctan(root3 * k * u / (4 * cubeRoot - k * u)));
+                closed = closed.InnerSimplified;
+                return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(closed, expr, x) ? closed : null;
+            }
+            if (!VanishesIdentically((c * dShifted * dShifted - 3 * aShifted * e * e).Expand().InnerSimplified.Expand()))
+                return null;
+            var q = MathS.Pow(6 * c * c * e * e / (dShifted * dShifted), Number.Rational.Create(1, 3));
+            var r = MathS.Pow(quadratic, Number.Rational.Create(1, 3));
+            var y = x + shift;
+            var scale = c * e / (dShifted * dShifted * q * q);
+            var answer = numerator * (
+                -root3 * scale * MathS.Arctan(1 / root3 + 2 * c * (dShifted - e * y) / (root3 * dShifted * q * r))
+                - three / 2 * scale * MathS.Ln(linear)
+                + three / 2 * scale * MathS.Ln(c * dShifted - c * e * y - dShifted * q * r));
+            answer = answer.InnerSimplified;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
+
+        /// <summary>
         /// Powers that are not whole of polynomials that are constant multiples of powers of one
         /// linear, gathered into one power of it: <c>B^p = (B^p/L^(k p)) L^(k p)</c> for
         /// <c>B = lambda L^k</c>, so <c>sqrt(-2 - b x) sqrt(2 + b x)</c> is a constant times
