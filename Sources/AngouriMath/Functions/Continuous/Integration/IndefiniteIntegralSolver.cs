@@ -29083,7 +29083,7 @@ namespace AngouriMath.Functions.Algebra
         /// <c>(g + h x)^3</c>, were declined or ran out of time.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
-        internal static Entity? SolveARationalFunctionTimesALogarithmOfPowersOfLinears(Entity expr, Entity.Variable x, bool integrateByParts)
+        internal static Entity? SolveARationalFunctionTimesALogarithmOfPowersOfLinears(Entity expr, Entity.Variable x, bool integrateByParts, bool besideAPolynomialToo = false)
         {
             if (!Integration.AnsweringTheQuestionAsked)
                 return null;
@@ -29132,10 +29132,11 @@ namespace AngouriMath.Functions.Algebra
             if (!TreeAnalyzer.TryGetPolynomial(Functions.SingleQuotient.Of(rational).Numerator, x, out var readAbove)
                 || !TreeAnalyzer.TryGetPolynomial(Functions.SingleQuotient.Of(rational).Denominator, x, out _))
                 return null;
-            // A polynomial of degree one or more beside the logarithm is left to by parts as it was: asked
-            // here first, `(f + g x)^4 (A + B ln(e ((a + b x)/(c + d x))^n))` ran out of time on its
-            // remainder, a fifth power over two linears, where it had been answered.
-            if (!Functions.SingleQuotient.Of(rational).Denominator.ContainsNode(x)
+            // A polynomial of degree one or more beside the logarithm is left to by parts as it was, and
+            // asked here again only once everything else has declined: asked here first,
+            // `(f + g x)^4 (A + B ln(e ((a + b x)/(c + d x))^n))` ran out of time on its remainder, a fifth
+            // power over two linears, where it had been answered, and `x ln(...)` is answered nowhere else.
+            if (!besideAPolynomialToo && !Functions.SingleQuotient.Of(rational).Denominator.ContainsNode(x)
                 && readAbove.Keys.Any(key => key.Sign > 0))
                 return null;
             if (Integration.ComputeAsAQuestionOfItsOwn(rational, x, integrateByParts) is not { } s

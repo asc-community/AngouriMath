@@ -1335,6 +1335,8 @@ namespace AngouriMath.Functions.Algebra
             // goes first: asked before the rules for two linears, it wrote `((a + b x)^3)^(1/3)` in
             // 111 characters where they write 25.
             if ((answer = IndefiniteIntegralSolver.SolvePowersOfOneLinearAsOnePower(expr, x, integrateByParts)) is { }) return answer;
+            // And beside a polynomial too, where everything before has declined: `x ln(e (f (a + b x)^p (c + d x)^q)^r)`.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionTimesALogarithmOfPowersOfLinears(expr, x, integrateByParts, besideAPolynomialToo: true)) is { }) return answer;
             // Last of the rewrites, because it is the only one that fires on an integrand nothing
             // is wrong with -- it clears a parameter rather than a shape -- so everything that
             // can answer the problem as written gets to try first.
