@@ -19920,6 +19920,63 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A linear below the cube root of a quadratic, <c>1/((d + e x) (a + b x + c x^2)^(1/3))</c>,
+        /// in closed form where the shifted quadratic <c>a' + c y^2</c>, <c>y = x + b/(2 c)</c>, and
+        /// the linear <c>d' + e y</c> satisfy <c>c d'^2 = 3 a' e^2</c>.
+        /// </summary>
+        /// <remarks>
+        /// With <c>q^3 = 6 c^2 e^2/d'^2</c> and <c>R = (a + b x + c x^2)^(1/3)</c> the integral is
+        /// <c>-sqrt(3) c e/(d'^2 q^2) arctan(1/sqrt(3) + 2 c (d' - e y)/(sqrt(3) d' q R))
+        /// - 3 c e/(2 d'^2 q^2) ln(d + e x) + 3 c e/(2 d'^2 q^2) ln(c d' - c e y - d' q R)</c>, Rubi's
+        /// 1.2.1.2 rule. Otherwise the integral is elliptic. The answer is differentiated back.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveALinearBelowACubeRootOfAQuadraticInClosedForm(Entity expr, Entity.Variable x)
+        {
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            if (numerator.ContainsNode(x))
+                return null;
+            Entity? linear = null, quadratic = null;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                    numerator /= factor;
+                else if (quadratic is null && factor is Powf(var @base, Number.Rational power) && power == Number.Rational.Create(1, 3))
+                    quadratic = @base;
+                else if (linear is null && TreeAnalyzer.TryGetPolyLinear(factor, x, out _, out _))
+                    linear = factor;
+                else
+                    return null;
+            }
+            if (linear is null || quadratic is null
+                || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var e, out var d)
+                || !TreeAnalyzer.TryGetPolynomial(quadratic, x, out var read)
+                || read.Keys.Any(key => key.Sign < 0 || key.CompareTo(EInteger.FromInt32(2)) > 0)
+                || !read.TryGetValue(EInteger.FromInt32(2), out var c) || VanishesIdentically(c.Expand()))
+                return null;
+            var a = read.TryGetValue(EInteger.Zero, out var a0) ? a0 : Number.Integer.Zero;
+            var b = read.TryGetValue(EInteger.One, out var b0) ? b0 : Number.Integer.Zero;
+            var shift = (b / (2 * c)).InnerSimplified;
+            var dShifted = (d - e * shift).InnerSimplified;
+            var aShifted = (a - b * b / (4 * c)).InnerSimplified;
+            if (VanishesIdentically(dShifted.Expand())
+                || !VanishesIdentically((c * dShifted * dShifted - 3 * aShifted * e * e).Expand().InnerSimplified.Expand()))
+                return null;
+            var three = Number.Integer.Create(3);
+            var root3 = MathS.Sqrt(three);
+            var q = MathS.Pow(6 * c * c * e * e / (dShifted * dShifted), Number.Rational.Create(1, 3));
+            var r = MathS.Pow(quadratic, Number.Rational.Create(1, 3));
+            var y = x + shift;
+            var scale = c * e / (dShifted * dShifted * q * q);
+            var answer = numerator * (
+                -root3 * scale * MathS.Arctan(1 / root3 + 2 * c * (dShifted - e * y) / (root3 * dShifted * q * r))
+                - three / 2 * scale * MathS.Ln(linear)
+                + three / 2 * scale * MathS.Ln(c * dShifted - c * e * y - dShifted * q * r));
+            answer = answer.InnerSimplified;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
+
+        /// <summary>
         /// A power of a linear that is not whole, times a linear, over a whole power of a quadratic,
         /// with the power of the quadratic lowered one at a time:
         /// <c>integral L^m N Q^p = (alpha + beta x) L^(m + 1) Q^(p + 1) + integral L^m W Q^(p + 1)</c>

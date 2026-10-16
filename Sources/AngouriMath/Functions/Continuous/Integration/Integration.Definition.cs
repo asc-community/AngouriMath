@@ -668,6 +668,8 @@ namespace AngouriMath.Functions.Algebra
             // Two linears to one power that is not whole, as one quadratic to that power, before each
             // linear is written once: `(2 + 3x)^4/((1 - 2x)^(5/2) (3 + 5x)^(5/2))` took forty-five
             // seconds there, and over `(3 - x - 10x^2)^(5/2)` it takes half of one.
+            // A linear below the cube root of a quadratic, in closed form where Rubi has one.
+            if ((answer = IndefiniteIntegralSolver.SolveALinearBelowACubeRootOfAQuadraticInClosedForm(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveTwoLinearsToOnePowerAsOneQuadratic(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByWritingEachLinearOnce(expr, x, integrateByParts)) is { }) return answer;
             // A rational function with numbers for coefficients over a denominator past the twelfth
