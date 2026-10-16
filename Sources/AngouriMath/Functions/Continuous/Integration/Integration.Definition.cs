@@ -661,6 +661,9 @@ namespace AngouriMath.Functions.Algebra
             // dropped it re-enabled integration by parts one level below the call that
             // switched it off -- which is a cycle, since by parts calls back into here.
             // `x * ln(x)` went round it until the stack ran out.
+            // A whole power of a linear in the inverse sine, cosine or hyperbolic cosine of
+            // `c + d x^2` with `c^2 = 1`, by its recurrence, which closes: by parts it went round.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfAnInverseFunctionOfAQuadraticByTheRecurrence(expr, x)) is { }) return answer;
             // A product of powers of quotients of linears with one linear in two of them, written
             // over each linear once with the constant that takes in front. First, since it answers
             // the question asked only, and the polynomial term below writes `1/u` as `u^(-1)` and
