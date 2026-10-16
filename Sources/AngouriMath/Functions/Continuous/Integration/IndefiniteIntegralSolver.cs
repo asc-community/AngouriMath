@@ -31741,6 +31741,11 @@ namespace AngouriMath.Functions.Algebra
                 || top.Values.Concat(bottom.Values).Any(coefficient => coefficient.ContainsNode(t)))
                 return null;
             var lead = bottom[bottom.Keys.Max()!];
+            // Only where the symbols in the denominator are one factor common to all of it: there the
+            // rules below formed `k^2/k^2`, and anywhere else this respelling sent fifteen of Rubi's
+            // 4.x problems the half-angle answered in a second to a timeout.
+            if (!lead.Vars.Any() || bottom.Values.Any(coefficient => Functions.PartialFractions.InLowestTermsOverTheSymbols(coefficient / lead) is not Number))
+                return null;
             Entity Rebuilt(Dictionary<EInteger, Entity> monomials)
                 => monomials.Aggregate((Entity)Number.Integer.Zero, (sum, pair)
                     => sum + Functions.PartialFractions.InLowestTermsOverTheSymbols(pair.Value / lead)
