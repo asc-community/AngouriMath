@@ -20066,6 +20066,96 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Powers that are not whole of polynomials that are constant multiples of powers of one
+        /// linear, gathered into one power of it: <c>B^p = (B^p/L^(k p)) L^(k p)</c> for
+        /// <c>B = lambda L^k</c>, so <c>sqrt(-2 - b x) sqrt(2 + b x)</c> is a constant times
+        /// <c>2 + b x</c> and <c>(a^3 + 3 a^2 b x + 3 a b^2 x^2 + b^3 x^3)^p</c> one times
+        /// <c>(a + b x)^(3 p)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <c>B^p/L^(k p)</c> is constant wherever it is continuous: its logarithmic derivative is
+        /// <c>p B'/B - k p L'/L</c>, which is zero for <c>B = lambda L^k</c>. It is kept in the
+        /// answer as written. Rubi's 1.1.1.2 <c>1/(sqrt(-2 - b x) sqrt(2 + b x))</c>, 1.1.1.3
+        /// <c>(a + b x)^n/(x (-a - b x)^n)</c> and 1.3.1 <c>(a^3 + 3 a^2 b x + 3 a b^2 x^2 + b^3 x^3)^p</c>
+        /// were declined.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolvePowersOfOneLinearAsOnePower(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            // Without a leading `1 *`, which is another spelling to the rules that read the result.
+            static Entity Times(Entity a, Entity b) => a == Number.Integer.One ? b : a * b;
+            static bool IsWhole(Entity power) => power is Number.Integer;
+            // The root r and degree k of a polynomial that is c (x - r)^k, or null.
+            (Entity Root, int Degree)? AsAPowerOfALinear(Entity polynomial)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, x, out var read) || read.Keys.Any(key => key.Sign < 0))
+                    return null;
+                var present = read.Where(term => !VanishesIdentically(term.Value.Expand())).ToList();
+                if (present.Count == 0 || present.Max(term => term.Key) is not { } top || top.Sign <= 0 || !top.CanFitInInt32())
+                    return null;
+                var k = top.ToInt32Unchecked();
+                var lead = read[top];
+                var next = read.TryGetValue(top - EInteger.One, out var n0) ? n0 : Number.Integer.Zero;
+                var root = (-next / (k * lead)).InnerSimplified;
+                if (k > 1 && !VanishesIdentically((polynomial - lead * MathS.Pow(x - root, Number.Integer.Create(k))).Expand()))
+                    return null;
+                return (root, k);
+            }
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            var members = new List<(Entity Base, Entity Power, int Degree, Entity Root)>();
+            Entity rest = Number.Integer.One;
+            foreach (var (side, below) in new[] { (numerator, false), (denominator, true) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (factor is Powf(var @base, var power) && !IsWhole(power) && !power.ContainsNode(x)
+                        && AsAPowerOfALinear(@base) is var (root, degree))
+                        members.Add((@base, below ? -power : power, degree, root));
+                    else
+                        rest = below ? rest / factor : Times(rest, factor);
+                }
+            // Gathered by root; worth doing where a group has two members or a power of a linear.
+            var groups = new List<List<(Entity Base, Entity Power, int Degree, Entity Root)>>();
+            foreach (var member in members)
+            {
+                if (groups.FirstOrDefault(group => VanishesIdentically((group[0].Root - member.Root).Expand().InnerSimplified)) is { } group)
+                    group.Add(member);
+                else
+                    groups.Add(new() { member });
+            }
+            if (!groups.Any(group => group.Count > 1 || group.Any(member => member.Degree > 1)))
+                return null;
+            Entity constant = Number.Integer.One;
+            Entity gathered = rest;
+            foreach (var group in groups)
+            {
+                var linear = group.FirstOrDefault(member => member.Degree == 1).Base ?? x - group[0].Root;
+                Entity total = Number.Integer.Zero;
+                foreach (var member in group)
+                {
+                    var exponent = member.Degree * member.Power;
+                    // The linear itself is its own power, with nothing to carry in front.
+                    if (member.Base != linear)
+                        constant = Times(constant, MathS.Pow(member.Base, member.Power) / MathS.Pow(linear, exponent));
+                    total += exponent;
+                }
+                total = total.InnerSimplified;
+                if (VanishesIdentically(total.Expand()))
+                    continue;
+                // Spelled as a quotient where the power is negative, as the rules read it.
+                gathered = total is Number.Real { IsNegative: true } || (total is Mulf(Number.Real { IsNegative: true }, _))
+                    ? gathered / MathS.Pow(linear, (-total).InnerSimplified)
+                    : Times(gathered, MathS.Pow(linear, total));
+            }
+            if (Integration.ComputeAsAQuestionOfItsOwn(gathered, x, integrateByParts) is not { } joined)
+                return null;
+            if (!Functions.PartialFractions.DerivativeHoldsAtSampledPoints(joined, gathered, x))
+                return null;
+            return constant * joined;
+        }
+
+        /// <summary>
         /// A power of a linear that is not whole, times a linear, over a whole power of a quadratic,
         /// with the power of the quadratic lowered one at a time:
         /// <c>integral L^m N Q^p = (alpha + beta x) L^(m + 1) Q^(p + 1) + integral L^m W Q^(p + 1)</c>
