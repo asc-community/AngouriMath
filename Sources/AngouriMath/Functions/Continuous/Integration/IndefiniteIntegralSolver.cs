@@ -29072,6 +29072,53 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>f^m (alpha + beta f^2)</c> for a symbolic <c>m</c> and <c>f</c> a sine, cosine, secant or
+        /// cosecant of a linear <c>u</c>, where it is the derivative of a product: with <c>u' = 1</c>,
+        /// <c>(cos sin^(m + 1))' = sin^m ((m + 1) - (m + 2) sin^2)</c>,
+        /// <c>(sin cos^(m + 1))' = cos^m ((m + 2) cos^2 - (m + 1))</c>,
+        /// <c>(tan sec^m)' = sec^m ((m + 1) sec^2 - m)</c> and <c>(cot csc^m)' = -csc^m ((m + 1) csc^2 - m)</c>.
+        /// </summary>
+        /// <remarks>
+        /// The integrand is read as <c>f^m</c> times a polynomial in <c>f</c> with only the constant and
+        /// square terms, <c>alpha + beta f^2</c>, which matches <c>p0 + p2 f^2</c> above where
+        /// <c>beta p0 = alpha p2</c>; the answer is <c>(alpha/p0) G/u'</c>. Rubi's 4.1.4.1, 4.2.4.1 and 4.5.4.1
+        /// <c>sec(c + d x)^m (m - (1 + m) sec(c + d x)^2)</c> and the like were declined.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveASymbolicPowerOfATrigonometricFunctionAsTheDerivativeOfAProduct(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            // The power with a symbol in its exponent, of a sine, cosine, secant or cosecant of a linear.
+            var power = expr.Nodes.OfType<Powf>().FirstOrDefault(node => node.Exponent.Vars.Any() && !node.Exponent.ContainsNode(x)
+                && node.Base is Sinf or Cosf or Secantf or Cosecantf);
+            if (power is not Powf(var function, var m))
+                return null;
+            var argument = function switch { Sinf(var y) => y, Cosf(var y) => y, Secantf(var y) => y, Cosecantf(var y) => y, _ => null };
+            if (argument is null || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out _) || Functions.PartialFractions.IsZeroAsAValue(slope))
+                return null;
+            var s = Variable.CreateUnique(expr, "s_trig");
+            // The power taken off by writing 1 for it: `s^m (...)/s^m` is not cancelled by the simplification.
+            var inS = expr.Substitute(power, Number.Integer.One).Substitute(function, s).InnerSimplified;
+            if (inS.ContainsNode(x) || !TreeAnalyzer.TryGetPolynomial(inS.Expand(), s, out var read)
+                || read.Keys.Any(key => !key.IsZero && !key.Equals(EInteger.FromInt32(2))))
+                return null;
+            var alpha = read.TryGetValue(EInteger.Zero, out var a0) ? a0 : Number.Integer.Zero;
+            var beta = read.TryGetValue(EInteger.FromInt32(2), out var b2) ? b2 : Number.Integer.Zero;
+            var (p0, p2, product) = function switch
+            {
+                Sinf => (m + 1, -(m + 2), MathS.Cos(argument) * MathS.Pow(function, m + 1)),
+                Cosf => (-(m + 1), m + 2, MathS.Sin(argument) * MathS.Pow(function, m + 1)),
+                Secantf => (-m, m + 1, MathS.Tan(argument) * MathS.Pow(function, m)),
+                _ => (m, -(m + 1), MathS.Cotan(argument) * MathS.Pow(function, m)),
+            };
+            if (Functions.PartialFractions.IsZeroAsAValue(p0.InnerSimplified)
+                || !Functions.PartialFractions.IsZeroAsAValue((beta * p0 - alpha * p2).Expand().InnerSimplified))
+                return null;
+            return (alpha / (p0 * slope) * product).InnerSimplified;
+        }
+
+        /// <summary>
         /// A power of a constant multiple of a radicand that a logarithm holds under a root,
         /// written over that radicand: <c>acosh(c x)</c> is <c>ln(c x + sqrt(c^2 x^2 - 1))</c>,
         /// and beside it <c>d - c^2 d x^2</c> is <c>-d (c^2 x^2 - 1)</c>. A whole power is the
