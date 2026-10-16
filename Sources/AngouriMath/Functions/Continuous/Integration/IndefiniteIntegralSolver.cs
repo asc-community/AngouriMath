@@ -26155,6 +26155,104 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A product of whole powers of a sine and a cosine of one linear times something else in x
+        /// that is no polynomial, <c>sin(u)^3 cos(u)^6/(a + b u)</c>, linearised: the product is a sum
+        /// of <c>cos(k u)</c> and <c>sin(k u)</c> by the product-to-sum formulas, and each term beside
+        /// the rest its own question.
+        /// </summary>
+        /// <remarks>
+        /// <c>sin(3 u)/(a + b u)</c> is answered in sines and cosine integrals, and the product of
+        /// powers was not: Rubi's 5.1.4 <c>x^3 (1 - c^2 x^2)^(5/2)/(a + b asin(c x))</c>, which under
+        /// <c>u = asin(c x)</c> is that product, was declined. Last but one, so that everything
+        /// answering the product as written goes first.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAProductOfPowersOfASineAndACosineByLinearising(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            static IEnumerable<(Entity Factor, bool Below)> Factors(Entity e, bool below) => e switch
+            {
+                Mulf(var l, var r) => Factors(l, below).Concat(Factors(r, below)),
+                Divf(var l, var r) => Factors(l, below).Concat(Factors(r, !below)),
+                _ => new[] { (e, below) }
+            };
+            Entity? argument = null;
+            int sines = 0, cosines = 0;
+            Entity rest = Number.Integer.One;
+            foreach (var (factor, below) in Factors(expr, false))
+            {
+                var (function, power) = factor is Powf(var b0, Number.Integer { EInteger: var p0 }) && b0 is Sinf or Cosf && p0.Sign > 0 && p0.CanFitInInt32()
+                    ? (b0, p0.ToInt32Unchecked()) : (factor, 1);
+                if (!below && function is Sinf or Cosf && function.ContainsNode(x))
+                {
+                    var y0 = function is Sinf(var ys) ? ys : ((Cosf)function).Argument;
+                    if (argument is not null && argument != y0)
+                        return null;
+                    argument = y0;
+                    if (function is Sinf) sines += power; else cosines += power;
+                }
+                else
+                    rest = below ? rest / factor : rest * factor;
+            }
+            if (argument is null || sines + cosines < 2 || sines + cosines > 24
+                || !TreeAnalyzer.TryGetPolyLinear(argument, x, out _, out _)
+                || !rest.ContainsNode(x) || rest.Nodes.Any(node => node is Sinf or Cosf or Tanf or Cotanf or Secantf or Cosecantf)
+                || TreeAnalyzer.TryGetPolynomial(rest, x, out var asPolynomial) && asPolynomial.Keys.All(key => key.Sign >= 0))
+                return null;
+            // cos(k y) and sin(k y) coefficients, multiplied by sin y and cos y one at a time.
+            var cosine = new Dictionary<int, ERational> { [0] = ERational.One };
+            var sine = new Dictionary<int, ERational>();
+            static void Add(Dictionary<int, ERational> into, int k, ERational value)
+                => into[k] = (into.TryGetValue(k, out var old) ? old + value : value).ToLowestTerms();
+            var half = ERational.Create(1, 2);
+            for (var step = 0; step < sines + cosines; step++)
+            {
+                var bySine = step < sines;
+                var (nextCosine, nextSine) = (new Dictionary<int, ERational>(), new Dictionary<int, ERational>());
+                foreach (var (k, value) in cosine)
+                    if (bySine)
+                    {   // cos(k y) sin y = (sin((k + 1) y) - sin((k - 1) y))/2
+                        Add(nextSine, k + 1, value * half);
+                        if (k - 1 > 0) Add(nextSine, k - 1, -value * half);
+                        else if (k - 1 < 0) Add(nextSine, 1 - k, value * half);
+                    }
+                    else
+                    {   // cos(k y) cos y = (cos((k + 1) y) + cos((k - 1) y))/2
+                        Add(nextCosine, k + 1, value * half);
+                        Add(nextCosine, System.Math.Abs(k - 1), value * half);
+                    }
+                foreach (var (k, value) in sine)
+                    if (bySine)
+                    {   // sin(k y) sin y = (cos((k - 1) y) - cos((k + 1) y))/2
+                        Add(nextCosine, System.Math.Abs(k - 1), value * half);
+                        Add(nextCosine, k + 1, -value * half);
+                    }
+                    else
+                    {   // sin(k y) cos y = (sin((k + 1) y) + sin((k - 1) y))/2
+                        Add(nextSine, k + 1, value * half);
+                        if (k - 1 > 0) Add(nextSine, k - 1, value * half);
+                        else if (k - 1 < 0) Add(nextSine, 1 - k, -value * half);
+                    }
+                (cosine, sine) = (nextCosine, nextSine);
+            }
+            Entity answer = Number.Integer.Zero;
+            foreach (var (terms, isSine) in new[] { (cosine, false), (sine, true) })
+                foreach (var (k, value) in terms.OrderBy(term => term.Key))
+                {
+                    if (value.IsZero)
+                        continue;
+                    var multiple = k == 1 ? argument : Number.Integer.Create(k) * argument;
+                    Entity piece = k == 0 ? rest : (isSine ? MathS.Sin(multiple) : MathS.Cos(multiple)) * rest;
+                    if (Integration.ComputeAsAQuestionOfItsOwn(piece, x, integrateByParts: true) is not { } integrated)
+                        return null;
+                    answer += Number.Rational.Create(value.Numerator, value.Denominator) * integrated;
+                }
+            answer = answer.InnerSimplified;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
         /// A rational function of a sine, or of a cosine, over a quadratic in it with a symbol
         /// among the coefficients: <c>sin(x)/(a + b sin(x) + c sin(x)^2)</c>, and the same with
         /// the other function to even powers, a cosecant or a secant beside. Written in

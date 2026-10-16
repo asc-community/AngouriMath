@@ -1348,6 +1348,9 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolvePowersOfOneLinearAsOnePower(expr, x, integrateByParts)) is { }) return answer;
             // And beside a polynomial too, where everything before has declined: `x ln(e (f (a + b x)^p (c + d x)^q)^r)`.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionTimesALogarithmOfPowersOfLinears(expr, x, integrateByParts, besideAPolynomialToo: true)) is { }) return answer;
+            // A product of powers of a sine and a cosine beside something that is no polynomial,
+            // linearised, where everything answering it as written has declined: `sin(u)^3 cos(u)^6/(a + b u)`.
+            if ((answer = IndefiniteIntegralSolver.SolveAProductOfPowersOfASineAndACosineByLinearising(expr, x)) is { }) return answer;
             // Last of the rewrites, because it is the only one that fires on an integrand nothing
             // is wrong with -- it clears a parameter rather than a shape -- so everything that
             // can answer the problem as written gets to try first.
