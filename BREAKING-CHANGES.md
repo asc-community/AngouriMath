@@ -396,6 +396,24 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### A negative power of an inverse function of `c + d x^2` is integrated in sine and cosine integrals
+
+**Answers where there were none.** `1/(a + b acos(1 + d x^2))` was declined, and so were seventeen more of Rubi's
+5.1.5, 5.2.5 and 7.2.5, to the first three negative powers. `w - c` is a constant times `g(u/2 + beta)^2` for a sine or
+a cosine `g`, so `x/g` is constant on each side of 0; the powers `-1` and `-2` are then sine and cosine integrals of
+`(a + b u)/(2 b)`, hyperbolic ones for the inverse hyperbolic cosine, and the recurrence run backwards gives the
+rest. The answers hold on the real domain of the integrand
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(a+b*acos(1+d*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 184 characters |
+| `"1/(a+b*acos(-1+d*x^2))^2".ToEntity().Integrate("x")` | `integral(...)` | 273 characters |
+| `"1/(a+b*asin(1+d*x^2))^3".ToEntity().Integrate("x")` | `integral(...)` | 380 characters |
+| `"1/(a+b*asin(-1+d*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 224 characters |
+| `"1/(a+b*acosh(1+d*x^2))^2".ToEntity().Integrate("x")` | `integral(...)` | 608 characters |
+| `"1/(a+b*acosh(-1+d*x^2))^3".ToEntity().Integrate("x")` | `integral(...)` | 633 characters |
+
 ### The reciprocal of a binomial in a high power of a sine, cosine or hyperbolic one is split over its roots
 
 **Answers where there were none.** `1/(a + b sin(x)^5)` was declined, and so were twenty more of Rubi's 4.1.7, 4.2.7,

@@ -28942,7 +28942,12 @@ namespace AngouriMath.Functions.Algebra
         /// inverse hyperbolic sine of one with <c>c^2 = -1</c>, by the recurrence
         /// <c>integral (a + b u)^n = x (a + b u)^n + 2 e n b H (a + b u)^(n - 1) - 4 e b^2 n (n - 1) integral (a + b u)^(n - 2)</c>,
         /// with <c>H = 1/(d x u'(w))</c>, <c>e = 1</c> for the circular functions and <c>-1</c> for the
-        /// hyperbolic ones. It closes at <c>n = 0</c> and <c>n = 1</c>, so nothing is asked below.
+        /// hyperbolic ones. It closes at <c>n = 0</c> and <c>n = 1</c>, so nothing is asked below. A
+        /// negative power goes through <c>u</c>: <c>w - c</c> is a constant times <c>g(u/2 + beta)^2</c>
+        /// for a sine or a cosine <c>g</c>, so <c>x/g</c> is constant on each side of 0, and the
+        /// powers <c>-1</c> and <c>-2</c> are sine and cosine integrals of <c>(a + b u)/(2 b)</c>
+        /// (hyperbolic ones for the hyperbolic cosine), the rest the recurrence run backwards. Exact on
+        /// the real domain; off it <c>x/g</c> can change sign across a cut.
         /// </summary>
         /// <remarks>
         /// Each <c>u</c> has <c>u'' = e w u'^3</c>, and with <c>c^2 = 1</c> (or <c>-1</c>) the radicand of
@@ -28955,7 +28960,7 @@ namespace AngouriMath.Functions.Algebra
         internal static Entity? SolveAPowerOfAnInverseFunctionOfAQuadraticByTheRecurrence(Entity expr, Entity.Variable x)
         {
             var (@base, power) = expr is Powf(var b0, Number.Integer p0) ? (b0, p0) : (expr, Number.Integer.One);
-            if (power.EInteger.Sign <= 0 || power.EInteger.CompareTo(EInteger.FromInt32(12)) > 0)
+            if (power.EInteger.IsZero || power.EInteger.Abs().CompareTo(EInteger.FromInt32(12)) > 0)
                 return null;
             var n = power.EInteger.ToInt32Unchecked();
             // The inverse function, its argument w, the sign e, the radical H is written with, and
@@ -28997,6 +29002,8 @@ namespace AngouriMath.Functions.Algebra
             var h = root / (d * x);
             var e = (Entity)Number.Integer.Create(sign);
             var a_bu = a + b * inverse;
+            if (n < 0)
+                return NegativePower();
             // I(k) by the recurrence, from I(0) = x and I(1) = x (a + b u) + 2 e b H.
             var integrals = new Entity[n + 1];
             for (var k = 0; k <= n; k++)
@@ -29013,6 +29020,55 @@ namespace AngouriMath.Functions.Algebra
             if (!Functions.PartialFractions.IsZeroAsAValue((h * inverse.Differentiate(x) - 2).InnerSimplified))
                 return null;
             return integrals[n].InnerSimplified;
+
+            // A negative power, through u: w - c is a constant times g(theta)^2 with theta = u/2 + beta,
+            // so x = kappa g(theta) with kappa = x/g(theta) constant on each side of 0, and
+            // dx = (kappa/2) g'(theta) du. Then I(-1) and I(-2) are sine and cosine integrals of
+            // v = (a + b u)/(2 b), and the recurrence run backwards gives the rest.
+            Entity? NegativePower()
+            {
+                var plus = Functions.PartialFractions.IsZeroAsAValue((c - 1).InnerSimplified);
+                // Whether g is a sine, beta, and h = g' as (hyperbolic, cosine, sign).
+                (bool GIsSine, Entity Beta, bool Hyperbolic, bool Cosine, int Sign)? table = (inverse, sign, squareAtZero, plus) switch
+                {
+                    (Arccosf, _, _, true) => (true, Number.Integer.Zero, false, true, 1),
+                    (Arccosf, _, _, false) => (false, Number.Integer.Zero, false, false, -1),
+                    (Arcsinf, _, _, true) => (true, -MathS.pi / 4, false, true, 1),
+                    (Arcsinf, _, _, false) => (false, -MathS.pi / 4, false, false, -1),
+                    (Logf, -1, 1, true) => (true, Number.Integer.Zero, true, true, 1),
+                    (Logf, -1, 1, false) => (false, Number.Integer.Zero, true, false, 1),
+                    _ => null,
+                };
+                if (table is not var (gIsSine, beta, hyperbolic, cosine, hSign))
+                    return null;
+                var theta = inverse / 2 + beta;
+                var kappa = x / (gIsSine ? Sin(theta) : Cos(theta));
+                var v = a_bu / (2 * b);
+                var gamma = a / (2 * b) - beta;
+                Entity Sin(Entity z) => hyperbolic ? MathS.Hyperbolic.Sinh(z) : MathS.Sin(z);
+                Entity Cos(Entity z) => hyperbolic ? MathS.Hyperbolic.Cosh(z) : MathS.Cos(z);
+                // The integral over v of h(v - gamma)/v for h a cosine or a sine, circular or hyperbolic.
+                Entity OverV(bool ofCosine) => (hyperbolic, ofCosine) switch
+                {
+                    (false, true) => Cos(gamma) * MathS.Ci(v) + Sin(gamma) * MathS.Si(v),
+                    (false, false) => Cos(gamma) * MathS.Si(v) - Sin(gamma) * MathS.Ci(v),
+                    (true, true) => Cos(gamma) * MathS.Chi(v) - Sin(gamma) * MathS.Shi(v),
+                    _ => Cos(gamma) * MathS.Shi(v) - Sin(gamma) * MathS.Chi(v),
+                };
+                // h' is the other function: -sin for cos, cos for sin; sinh for cosh, cosh for sinh.
+                var hPrimeSign = hyperbolic || !cosine ? hSign : -hSign;
+                var hOfTheta = hSign * (cosine ? Cos(theta) : Sin(theta));
+                var integrals = new Dictionary<int, Entity>
+                {
+                    [-1] = kappa / (2 * b) * hSign * OverV(cosine),
+                    [-2] = kappa / 2 * (-hOfTheta / (b * a_bu) + hPrimeSign * OverV(!cosine) / (2 * MathS.Sqr(b))),
+                };
+                for (var k = -1; k - 2 >= n; k--)
+                    integrals[k - 2] = (x * MathS.Pow(a_bu, k) + 2 * e * k * b * h * MathS.Pow(a_bu, k - 1) - integrals[k])
+                        / (4 * e * MathS.Sqr(b) * k * (k - 1));
+                var answer = integrals[n].InnerSimplified;
+                return Functions.PartialFractions.DerivativeDiffersWhereReal(answer, expr, x) ? null : answer;
+            }
         }
 
         /// <summary>

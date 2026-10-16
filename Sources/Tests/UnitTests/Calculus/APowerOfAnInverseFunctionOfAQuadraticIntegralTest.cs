@@ -61,6 +61,21 @@ namespace AngouriMath.Tests.Calculus
             DifferentiatesBack(integrand, ("a", -0.75), ("b", -0.7), ("d", 0.15 * sign));
         }
 
+        // A negative power, in sine and cosine integrals (hyperbolic ones for acosh) of (a + b u)/(2 b):
+        // exact on the real domain, where d keeps the argument inside [-1, 1].
+        [Theory]
+        [InlineData("1/(a+b*acos(1+d*x^2))", -1)]
+        [InlineData("1/(a+b*acos(-1+d*x^2))^2", 1)]
+        [InlineData("1/(a+b*asin(1+d*x^2))^3", -1)]
+        [InlineData("1/(a+b*asin(-1+d*x^2))", 1)]
+        [InlineData("1/(a+b*acosh(1+d*x^2))^2", 1)]
+        [InlineData("1/(a+b*acosh(-1+d*x^2))^3", -1)]
+        public void ANegativePowerIsAnsweredAndDifferentiatesBack(string integrand, int sign)
+        {
+            DifferentiatesBack(integrand, ("a", 0.6), ("b", 1.25), ("d", 0.3 * sign));
+            DifferentiatesBack(integrand, ("a", -0.75), ("b", -0.7), ("d", 0.15 * sign));
+        }
+
         [Fact]
         public void WithNumbersIsAnswered()
             => DifferentiatesBack("asin(1-2*x^2)^2");
