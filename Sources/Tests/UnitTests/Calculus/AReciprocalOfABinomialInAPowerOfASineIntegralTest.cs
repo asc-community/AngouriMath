@@ -51,7 +51,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("1/(a-b*cos(x)^5)")]
         [InlineData("1/(a+b*cos(x)^6)")]
         [InlineData("3/(a+b*sin(2*x+1)^7)")]
-        [InlineData("1/(a+b*cosh(x)^3)")]
+        [InlineData("1/(a+b*cosh(x)^7)")]
         [InlineData("1/(a-b*cosh(x)^5)")]
         [InlineData("1/(a+b*sinh(x)^6)")]
         [InlineData("1/(a+b*sinh(2*x+1)^5)")]

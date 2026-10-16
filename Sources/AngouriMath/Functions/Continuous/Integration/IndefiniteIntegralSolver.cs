@@ -25817,8 +25817,9 @@ namespace AngouriMath.Functions.Algebra
                 || !read.ContainsKey(EInteger.Zero) || read.Keys.Max() is not { } top || !top.CanFitInInt32())
                 return null;
             var n = top.ToInt32Unchecked();
-            // Past what the rules before it answer: n = 3 for a hyperbolic cosine, and 5 on.
-            if (n > 12 || n < 3 || n == 4 || n < 5 && (sine || !hyperbolic))
+            // Past what the rules before it answer: they write `1/(a + b cosh(x)^3)` through `e^x` in
+            // 655 characters, where this writes 1491.
+            if (n < 5 || n > 12)
                 return null;
             var a = read[EInteger.Zero];
             var b = read[top];
