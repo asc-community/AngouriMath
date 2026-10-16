@@ -396,6 +396,19 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### A difference of two cubes is split over the cube roots of unity where its answer cannot be sampled
+
+**Answers where there were none.** `1/(a - b cosh(x)^3)` was declined, which Rubi's 6.2.7 has. Under `u = e^x` it is
+`8 u^2/(8 a u^3 - b (u^2 + 1)^3)`, a difference of two cubes, which the rule for a sum of two cubes split correctly and
+then refused: with the second cube negative, the real cube root makes all three quadratics complex at the sampled
+values, and too few points could be compared. The answer is now refused only where it differs
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(a-b*cosh(x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 666 characters |
+| `"8*x^2/(8*a*x^3-b*(x^2+1)^3)".ToEntity().Integrate("x")` | `integral(...)` | 654 characters |
+
 ### A negative power of an inverse function of `c + d x^2` is integrated in sine and cosine integrals
 
 **Answers where there were none.** `1/(a + b acos(1 + d x^2))` was declined, and so were seventeen more of Rubi's

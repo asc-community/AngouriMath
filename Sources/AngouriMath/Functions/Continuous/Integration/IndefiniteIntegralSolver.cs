@@ -19676,7 +19676,11 @@ namespace AngouriMath.Functions.Algebra
             foreach (var unity in unities)
                 answer = answer + unity * each.Substitute(namedB, unity * root).Substitute(namedS, shift);
             answer = (constant / (3 * d6 * MathS.Pow(root, Number.Integer.Create(2))) * answer).InnerSimplified;
-            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+            // Refused where it differs, not where it cannot be told: with `q < 0` the real cube root
+            // makes all three quadratics' coefficients complex at the pinned values, the intervals
+            // settle too few points, and `8 x^2/(8 a x^3 - b (x^2 + 1)^3)` -- `1/(a - b cosh(x)^3)`
+            // under `u = e^x` -- was declined where its `+ b` twin was answered.
+            return Functions.PartialFractions.DerivativeDiffersWhereReal(answer, expr, x) ? null : answer;
         }
 
         /// <summary>
