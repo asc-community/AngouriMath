@@ -670,6 +670,9 @@ namespace AngouriMath.Functions.Algebra
             // A power of a sine, cosine or hyperbolic one over a binomial in a power of it, over the
             // binomial's roots, before the rules that spent the budget on `sinh(y)^4/(a + b sinh(y)^3)`.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOverABinomialInAPowerOfASineOverItsRoots(expr, x)) is { }) return answer;
+            // A power of x times a power of a sum holding an inverse function of x^n, under t = x^n,
+            // before the rules that timed out on `x^3 (a + b atanh(c x^2))^2`.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfXTimesAFunctionOfAnotherUnderThatPower(expr, x)) is { }) return answer;
             // A rational function times the logarithm of a nested product of powers of linears, by parts,
             // its logarithm's derivative read off as written: `ln(e (f (a + b x)^p (c + d x)^q)^r)`.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionTimesALogarithmOfPowersOfLinears(expr, x, integrateByParts)) is { }) return answer;
