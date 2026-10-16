@@ -19678,6 +19678,63 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A whole power of a polynomial that is the square of a polynomial in <c>x</c>, written as
+        /// twice that power of the root: <c>(a^2 + 2 a b x^2 + b^2 x^4)^n</c> is
+        /// <c>(a + b x^2)^(2 n)</c>, whatever the signs, since the power is whole.
+        /// </summary>
+        /// <remarks>
+        /// The rules for a power of a binomial read the root; the trinomial is the partial fractions'
+        /// whole. Rubi's 1.2.2.2 <c>1/((d x)^(3/2) (a^2 + 2 a b x^2 + b^2 x^4)^2)</c> ran past the
+        /// budget, and over <c>(a + b x^2)^4</c> it takes a twentieth of a second.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAWholePowerOfASquareOverItsRoot(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            var changed = false;
+            Entity? Rewritten(Entity side)
+            {
+                Entity? product = null;
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    var written = factor;
+                    var (@base, whole) = factor is Powf(var b0, Number.Integer { EInteger: var w }) && w.Sign > 0 && w.CanFitInInt32()
+                        ? (b0, w.ToInt32Unchecked()) : (factor, 1);
+                    // With numbers for coefficients the partial fractions answer the trinomial.
+                    if (@base is Sumf && @base.ContainsNode(x) && @base.Vars.Any(symbol => symbol != x)
+                        && Sumf.LinearChildren(@base).Count() >= 3
+                        && TreeAnalyzer.TryGetPolynomial(@base, x, out var read) && read.Keys.All(key => key.Sign >= 0)
+                        && read.Keys.Any(key => key.CompareTo(EInteger.FromInt32(2)) >= 0))
+                    {
+                        var symbols = @base.Vars.Distinct().OrderBy(v => v.Name, System.StringComparer.Ordinal).ToArray();
+                        var indices = new Dictionary<Variable, int>();
+                        for (var i = 0; i < symbols.Length; i++)
+                            indices[symbols[i]] = i;
+                        if (symbols.Length <= MultivariatePolynomial.MaxVariables
+                            && MultivariatePolynomial.TryParse(@base, indices) is { } parsed && parsed.TrySquareRoot() is { } root
+                            && root.ToEntity(symbols) is var rootEntity && rootEntity.ContainsNode(x))
+                        {
+                            written = MathS.Pow(rootEntity, Number.Integer.Create(2 * whole));
+                            changed = true;
+                        }
+                    }
+                    product = product is null ? written : product * written;
+                }
+                return product;
+            }
+            var above = Rewritten(numerator);
+            var below = Rewritten(denominator);
+            if (!changed || above is null)
+                return null;
+            var asked = below is null || below == Number.Integer.One ? above : above / below;
+            if (Integration.ComputeAsAQuestionOfItsOwn(asked, x, integrateByParts) is not { } answer)
+                return null;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
+
+        /// <summary>
         /// A power of a linear that is not whole, times a linear, over a whole power of a quadratic,
         /// with the power of the quadratic lowered one at a time:
         /// <c>integral L^m N Q^p = (alpha + beta x) L^(m + 1) Q^(p + 1) + integral L^m W Q^(p + 1)</c>
