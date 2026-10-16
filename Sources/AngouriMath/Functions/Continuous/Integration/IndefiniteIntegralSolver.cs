@@ -28639,6 +28639,43 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// The terms of a sum free of the variable that come to a number once multiplied out, written
+        /// as that number: <c>2 + 2 a - 2 (1 + a)</c> is <c>0</c> and <c>1 + 2 n - 2 (1 + n)</c> is
+        /// <c>-1</c>, which neither the simplification nor the rules reading a coefficient or an
+        /// exponent see. Rubi's 1.2.2.2 <c>1/sqrt(a + (2 + 2 c - 2 (1 + c)) x^4)</c> and 1.1.1.2
+        /// <c>(c + d x)^(1 + 2 n - 2 (1 + n))/(a + b x)^2</c> were declined where
+        /// <c>1/sqrt(a)</c> and <c>1/((c + d x) (a + b x)^2)</c> are answered.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        internal static Entity? SolveByFoldingConstantSumsToTheirNumbers(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            // Only where a product holds a sum, which multiplying out is for.
+            static bool Distributes(Entity term) => term.Nodes.Any(node => node is Mulf && node.DirectChildren.Any(child => child is Sumf or Minusf));
+            if (!expr.Nodes.Any(node => node is Sumf or Minusf && !node.ContainsNode(x) && Distributes(node)))
+                return null;
+            var folded = expr.Replace(node =>
+            {
+                if (node is not (Sumf or Minusf))
+                    return node;
+                var terms = Sumf.LinearChildren(node).ToList();
+                var free = terms.Where(term => !term.ContainsNode(x)).ToList();
+                if (free.Count < 2 || !free.Any(Distributes))
+                    return node;
+                if (free.Aggregate((sum, term) => sum + term).Expand().InnerSimplified is not Number number)
+                    return node;
+                return terms.Where(term => term.ContainsNode(x)).Aggregate((Entity)number, (sum, term) => sum + term);
+            });
+            if (folded == expr)
+                return null;
+            var simplified = folded.InnerSimplified;
+            if (simplified == expr || simplified == expr.InnerSimplified)
+                return null;
+            return Integration.ComputeAsTheSameQuestion(simplified, x, integrateByParts);
+        }
+
+        /// <summary>
         /// A power of a constant multiple of a radicand that a logarithm holds under a root,
         /// written over that radicand: <c>acosh(c x)</c> is <c>ln(c x + sqrt(c^2 x^2 - 1))</c>,
         /// and beside it <c>d - c^2 d x^2</c> is <c>-d (c^2 x^2 - 1)</c>. A whole power is the
