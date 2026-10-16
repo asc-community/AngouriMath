@@ -3153,7 +3153,9 @@ namespace AngouriMath.Functions.Algebra
             if (!TreeAnalyzer.TryGetPolynomial(denominator, x, out var belowAsWritten) || belowAsWritten.Count == 0
                 || belowAsWritten.Keys.Any(power => power.Sign < 0 || !power.CanFitInInt32())
                 || belowAsWritten.Values.Any(coefficient => coefficient.ContainsNode(x))
-                || !denominator.Vars.Any(v => v != x))
+                // A symbol, or a number that is not rational, which the partial fractions do not
+                // factor over: `(sqrt(2) - x^2)/(1 - sqrt(2) x^2 + x^4)` was declined.
+                || !denominator.Vars.Any(v => v != x) && belowAsWritten.Values.All(coefficient => coefficient.Evaled is Number.Rational))
                 return null;
             if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var aboveAsWritten) || aboveAsWritten.Count == 0
                 || aboveAsWritten.Keys.Any(power => power.Sign < 0 || !power.CanFitInInt32())
@@ -19989,6 +19991,173 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A linear below the cube root of a quadratic, <c>1/((d + e x) (a + b x + c x^2)^(1/3))</c>,
+        /// in closed form where the shifted quadratic <c>a' + c y^2</c>, <c>y = x + b/(2 c)</c>, and
+        /// the linear <c>d' + e y</c> satisfy <c>c d'^2 = 3 a' e^2</c> or <c>c d'^2 = -9 a' e^2</c>.
+        /// </summary>
+        /// <remarks>
+        /// With <c>q^3 = 6 c^2 e^2/d'^2</c> and <c>R = (a + b x + c x^2)^(1/3)</c> the integral is
+        /// <c>-sqrt(3) c e/(d'^2 q^2) arctan(1/sqrt(3) + 2 c (d' - e y)/(sqrt(3) d' q R))
+        /// - 3 c e/(2 d'^2 q^2) ln(d + e x) + 3 c e/(2 d'^2 q^2) ln(c d' - c e y - d' q R)</c>, Rubi's
+        /// 1.2.1.2 rule. Where <c>c d'^2 = -9 a' e^2</c>, with <c>t = e y/d'</c>, <c>u = 1 - 3 t</c>
+        /// and <c>k^3 = a'</c>, it is <c>(-3/8 ln(2 R + k u) + 1/4 ln(d + e x) + 1/8 ln(u)
+        /// - sqrt(3)/4 arctan(sqrt(3) k u/(4 R - k u)))/(e k)</c>: on the curve
+        /// <c>w^3 = 1 - 9 t^2</c> the tangent at each point over <c>t = -1</c> meets it again at
+        /// <c>(1/3, 0)</c>, so <c>w + r (1 - 3 t)/2</c> for the cube roots of unity <c>r</c> are the
+        /// functions whose logarithms carry the residues. Otherwise the integral is elliptic. The
+        /// answer is differentiated back.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveALinearBelowACubeRootOfAQuadraticInClosedForm(Entity expr, Entity.Variable x)
+        {
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            if (numerator.ContainsNode(x))
+                return null;
+            Entity? linear = null, quadratic = null;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                    numerator /= factor;
+                else if (quadratic is null && factor is Powf(var @base, Number.Rational power) && power == Number.Rational.Create(1, 3))
+                    quadratic = @base;
+                else if (linear is null && TreeAnalyzer.TryGetPolyLinear(factor, x, out _, out _))
+                    linear = factor;
+                else
+                    return null;
+            }
+            if (linear is null || quadratic is null
+                || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var e, out var d)
+                || !TreeAnalyzer.TryGetPolynomial(quadratic, x, out var read)
+                || read.Keys.Any(key => key.Sign < 0 || key.CompareTo(EInteger.FromInt32(2)) > 0)
+                || !read.TryGetValue(EInteger.FromInt32(2), out var c) || VanishesIdentically(c.Expand()))
+                return null;
+            var a = read.TryGetValue(EInteger.Zero, out var a0) ? a0 : Number.Integer.Zero;
+            var b = read.TryGetValue(EInteger.One, out var b0) ? b0 : Number.Integer.Zero;
+            var shift = (b / (2 * c)).InnerSimplified;
+            var dShifted = (d - e * shift).InnerSimplified;
+            var aShifted = (a - b * b / (4 * c)).InnerSimplified;
+            if (VanishesIdentically(dShifted.Expand()) || VanishesIdentically(e.Expand()))
+                return null;
+            var three = Number.Integer.Create(3);
+            var root3 = MathS.Sqrt(three);
+            if (VanishesIdentically((c * dShifted * dShifted + 9 * aShifted * e * e).Expand().InnerSimplified.Expand()))
+            {
+                var k = MathS.Pow(aShifted, Number.Rational.Create(1, 3));
+                var cubeRoot = MathS.Pow(quadratic, Number.Rational.Create(1, 3));
+                var u = 1 - 3 * e * (x + shift) / dShifted;
+                var closed = numerator / (e * k) * (
+                    -Number.Rational.Create(3, 8) * MathS.Ln(2 * cubeRoot + k * u)
+                    + Number.Rational.Create(1, 4) * MathS.Ln(linear)
+                    + Number.Rational.Create(1, 8) * MathS.Ln(u)
+                    - root3 / 4 * MathS.Arctan(root3 * k * u / (4 * cubeRoot - k * u)));
+                closed = closed.InnerSimplified;
+                return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(closed, expr, x) ? closed : null;
+            }
+            if (!VanishesIdentically((c * dShifted * dShifted - 3 * aShifted * e * e).Expand().InnerSimplified.Expand()))
+                return null;
+            var q = MathS.Pow(6 * c * c * e * e / (dShifted * dShifted), Number.Rational.Create(1, 3));
+            var r = MathS.Pow(quadratic, Number.Rational.Create(1, 3));
+            var y = x + shift;
+            var scale = c * e / (dShifted * dShifted * q * q);
+            var answer = numerator * (
+                -root3 * scale * MathS.Arctan(1 / root3 + 2 * c * (dShifted - e * y) / (root3 * dShifted * q * r))
+                - three / 2 * scale * MathS.Ln(linear)
+                + three / 2 * scale * MathS.Ln(c * dShifted - c * e * y - dShifted * q * r));
+            answer = answer.InnerSimplified;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
+
+        /// <summary>
+        /// Powers that are not whole of polynomials that are constant multiples of powers of one
+        /// linear, gathered into one power of it: <c>B^p = (B^p/L^(k p)) L^(k p)</c> for
+        /// <c>B = lambda L^k</c>, so <c>sqrt(-2 - b x) sqrt(2 + b x)</c> is a constant times
+        /// <c>2 + b x</c> and <c>(a^3 + 3 a^2 b x + 3 a b^2 x^2 + b^3 x^3)^p</c> one times
+        /// <c>(a + b x)^(3 p)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <c>B^p/L^(k p)</c> is constant wherever it is continuous: its logarithmic derivative is
+        /// <c>p B'/B - k p L'/L</c>, which is zero for <c>B = lambda L^k</c>. It is kept in the
+        /// answer as written. Rubi's 1.1.1.2 <c>1/(sqrt(-2 - b x) sqrt(2 + b x))</c>, 1.1.1.3
+        /// <c>(a + b x)^n/(x (-a - b x)^n)</c> and 1.3.1 <c>(a^3 + 3 a^2 b x + 3 a b^2 x^2 + b^3 x^3)^p</c>
+        /// were declined.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolvePowersOfOneLinearAsOnePower(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            // Without a leading `1 *`, which is another spelling to the rules that read the result.
+            static Entity Times(Entity a, Entity b) => a == Number.Integer.One ? b : a * b;
+            static bool IsWhole(Entity power) => power is Number.Integer;
+            // The root r and degree k of a polynomial that is c (x - r)^k, or null.
+            (Entity Root, int Degree)? AsAPowerOfALinear(Entity polynomial)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, x, out var read) || read.Keys.Any(key => key.Sign < 0))
+                    return null;
+                var present = read.Where(term => !VanishesIdentically(term.Value.Expand())).ToList();
+                if (present.Count == 0 || present.Max(term => term.Key) is not { } top || top.Sign <= 0 || !top.CanFitInInt32())
+                    return null;
+                var k = top.ToInt32Unchecked();
+                var lead = read[top];
+                var next = read.TryGetValue(top - EInteger.One, out var n0) ? n0 : Number.Integer.Zero;
+                var root = (-next / (k * lead)).InnerSimplified;
+                if (k > 1 && !VanishesIdentically((polynomial - lead * MathS.Pow(x - root, Number.Integer.Create(k))).Expand()))
+                    return null;
+                return (root, k);
+            }
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            var members = new List<(Entity Base, Entity Power, int Degree, Entity Root)>();
+            Entity rest = Number.Integer.One;
+            foreach (var (side, below) in new[] { (numerator, false), (denominator, true) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (factor is Powf(var @base, var power) && !IsWhole(power) && !power.ContainsNode(x)
+                        && AsAPowerOfALinear(@base) is var (root, degree))
+                        members.Add((@base, below ? -power : power, degree, root));
+                    else
+                        rest = below ? rest / factor : Times(rest, factor);
+                }
+            // Gathered by root; worth doing where a group has two members or a power of a linear.
+            var groups = new List<List<(Entity Base, Entity Power, int Degree, Entity Root)>>();
+            foreach (var member in members)
+            {
+                if (groups.FirstOrDefault(group => VanishesIdentically((group[0].Root - member.Root).Expand().InnerSimplified)) is { } group)
+                    group.Add(member);
+                else
+                    groups.Add(new() { member });
+            }
+            if (!groups.Any(group => group.Count > 1 || group.Any(member => member.Degree > 1)))
+                return null;
+            Entity constant = Number.Integer.One;
+            Entity gathered = rest;
+            foreach (var group in groups)
+            {
+                var linear = group.FirstOrDefault(member => member.Degree == 1).Base ?? x - group[0].Root;
+                Entity total = Number.Integer.Zero;
+                foreach (var member in group)
+                {
+                    var exponent = member.Degree * member.Power;
+                    // The linear itself is its own power, with nothing to carry in front.
+                    if (member.Base != linear)
+                        constant = Times(constant, MathS.Pow(member.Base, member.Power) / MathS.Pow(linear, exponent));
+                    total += exponent;
+                }
+                total = total.InnerSimplified;
+                if (VanishesIdentically(total.Expand()))
+                    continue;
+                // Spelled as a quotient where the power is negative, as the rules read it.
+                gathered = total is Number.Real { IsNegative: true } || (total is Mulf(Number.Real { IsNegative: true }, _))
+                    ? gathered / MathS.Pow(linear, (-total).InnerSimplified)
+                    : Times(gathered, MathS.Pow(linear, total));
+            }
+            if (Integration.ComputeAsAQuestionOfItsOwn(gathered, x, integrateByParts) is not { } joined)
+                return null;
+            if (!Functions.PartialFractions.DerivativeHoldsAtSampledPoints(joined, gathered, x))
+                return null;
+            return constant * joined;
+        }
+
+        /// <summary>
         /// A power of a linear that is not whole, times a linear, over a whole power of a quadratic,
         /// with the power of the quadratic lowered one at a time:
         /// <c>integral L^m N Q^p = (alpha + beta x) L^(m + 1) Q^(p + 1) + integral L^m W Q^(p + 1)</c>
@@ -28636,6 +28805,43 @@ namespace AngouriMath.Functions.Algebra
                         return false;
                 return true;
             }
+        }
+
+        /// <summary>
+        /// The terms of a sum free of the variable that come to a number once multiplied out, written
+        /// as that number: <c>2 + 2 a - 2 (1 + a)</c> is <c>0</c> and <c>1 + 2 n - 2 (1 + n)</c> is
+        /// <c>-1</c>, which neither the simplification nor the rules reading a coefficient or an
+        /// exponent see. Rubi's 1.2.2.2 <c>1/sqrt(a + (2 + 2 c - 2 (1 + c)) x^4)</c> and 1.1.1.2
+        /// <c>(c + d x)^(1 + 2 n - 2 (1 + n))/(a + b x)^2</c> were declined where
+        /// <c>1/sqrt(a)</c> and <c>1/((c + d x) (a + b x)^2)</c> are answered.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        internal static Entity? SolveByFoldingConstantSumsToTheirNumbers(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            // Only where a product holds a sum, which multiplying out is for.
+            static bool Distributes(Entity term) => term.Nodes.Any(node => node is Mulf && node.DirectChildren.Any(child => child is Sumf or Minusf));
+            if (!expr.Nodes.Any(node => node is Sumf or Minusf && !node.ContainsNode(x) && Distributes(node)))
+                return null;
+            var folded = expr.Replace(node =>
+            {
+                if (node is not (Sumf or Minusf))
+                    return node;
+                var terms = Sumf.LinearChildren(node).ToList();
+                var free = terms.Where(term => !term.ContainsNode(x)).ToList();
+                if (free.Count < 2 || !free.Any(Distributes))
+                    return node;
+                if (free.Aggregate((sum, term) => sum + term).Expand().InnerSimplified is not Number number)
+                    return node;
+                return terms.Where(term => term.ContainsNode(x)).Aggregate((Entity)number, (sum, term) => sum + term);
+            });
+            if (folded == expr)
+                return null;
+            var simplified = folded.InnerSimplified;
+            if (simplified == expr || simplified == expr.InnerSimplified)
+                return null;
+            return Integration.ComputeAsTheSameQuestion(simplified, x, integrateByParts);
         }
 
         /// <summary>
