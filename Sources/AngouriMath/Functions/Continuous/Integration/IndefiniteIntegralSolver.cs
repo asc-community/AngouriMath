@@ -19920,6 +19920,75 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A linear and a quadratic to one power that is not whole, as one binomial:
+        /// <c>integral g L^p Q^p = (L^p Q^p/P^p) integral g P^p</c> where <c>P = L Q</c> is
+        /// <c>A + B x^3</c>, as <c>(1 + x) (1 - x + x^2)</c> is <c>1 + x^3</c>.
+        /// </summary>
+        /// <remarks>
+        /// <c>L^p Q^p/P^p</c> is constant wherever it is continuous, for the reason
+        /// <see cref="SolveTwoLinearsToOnePowerAsOneQuadratic"/> gives, and the rules for a power
+        /// of a binomial answer the rest. Rubi's 1.2.1.2 <c>1/((1 + x)^(1/3) (1 - x + x^2)^(1/3))</c>
+        /// and <c>1/((b e - c e x)^(1/3) (b^2 + b c x + c^2 x^2)^(1/3))</c> were declined.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveALinearAndAQuadraticToOnePowerAsOneBinomial(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            // Without a leading `1 *`, which is another spelling to the rules that read the result.
+            static Entity Times(Entity a, Entity b) => a == Number.Integer.One ? b : a * b;
+            static Entity Over(Entity a, Entity b) => a / b;
+            int? Degree(Entity polynomial)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, x, out var read) || read.Keys.Any(key => key.Sign < 0))
+                    return null;
+                var present = read.Where(term => !VanishesIdentically(term.Value.Expand())).Select(term => term.Key).ToList();
+                return present.Count == 0 || present.Max() is not { } top || !top.CanFitInInt32() ? null : top.ToInt32Unchecked();
+            }
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            var factors = new List<(Entity Base, Number.Rational Power, bool Below, Entity Factor, int Degree)>();
+            Entity rest = Number.Integer.One;
+            foreach (var (side, below) in new[] { (numerator, false), (denominator, true) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (factor is Powf(var @base, Number.Rational power) && power is not Number.Integer
+                        && Degree(@base) is (1 or 2) and var degree)
+                        factors.Add((@base, power, below, factor, degree));
+                    else
+                        rest = below ? Over(rest, factor) : Times(rest, factor);
+                }
+            Number.Rational Signed((Entity Base, Number.Rational Power, bool Below, Entity Factor, int Degree) f) => f.Below ? (Number.Rational)(-f.Power) : f.Power;
+            for (var i = 0; i < factors.Count; i++)
+                for (var j = 0; j < factors.Count; j++)
+                {
+                    var (first, second) = (factors[i], factors[j]);
+                    var power = Signed(first);
+                    if (first.Degree != 1 || second.Degree != 2 || power != Signed(second)
+                        || !TreeAnalyzer.TryGetPolynomial(first.Base * second.Base, x, out var product))
+                        continue;
+                    var terms = product.Where(term => !VanishesIdentically(term.Value.Expand())).ToDictionary(term => term.Key, term => term.Value);
+                    if (terms.Count != 2 || !terms.ContainsKey(EInteger.Zero) || !terms.ContainsKey(EInteger.FromInt32(3)))
+                        continue;
+                    var binomial = terms[EInteger.Zero].Expand().InnerSimplified
+                        + terms[EInteger.FromInt32(3)].Expand().InnerSimplified * MathS.Pow(x, Number.Integer.Create(3));
+                    Entity others = rest;
+                    for (var k = 0; k < factors.Count; k++)
+                        if (k != i && k != j)
+                            others = factors[k].Below ? Over(others, factors[k].Factor) : Times(others, factors[k].Factor);
+                    // Spelled as a quotient where the power is negative, as the rules for a power of a
+                    // binomial read it.
+                    var asked = power.IsNegative ? Over(others, MathS.Pow(binomial, (Number.Rational)(-power))) : Times(others, MathS.Pow(binomial, power));
+                    if (Integration.ComputeAsAQuestionOfItsOwn(asked, x, integrateByParts) is not { } joined)
+                        return null;
+                    if (!Functions.PartialFractions.DerivativeHoldsAtSampledPoints(joined, asked, x))
+                        return null;
+                    var constant = MathS.Pow(first.Base, power) * MathS.Pow(second.Base, power) / MathS.Pow(binomial, power);
+                    return constant * joined;
+                }
+            return null;
+        }
+
+        /// <summary>
         /// A linear below the cube root of a quadratic, <c>1/((d + e x) (a + b x + c x^2)^(1/3))</c>,
         /// in closed form where the shifted quadratic <c>a' + c y^2</c>, <c>y = x + b/(2 c)</c>, and
         /// the linear <c>d' + e y</c> satisfy <c>c d'^2 = 3 a' e^2</c> or <c>c d'^2 = -9 a' e^2</c>.

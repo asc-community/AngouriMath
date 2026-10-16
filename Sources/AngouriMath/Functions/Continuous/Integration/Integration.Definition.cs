@@ -671,6 +671,9 @@ namespace AngouriMath.Functions.Algebra
             // A linear below the cube root of a quadratic, in closed form where Rubi has one.
             if ((answer = IndefiniteIntegralSolver.SolveALinearBelowACubeRootOfAQuadraticInClosedForm(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveTwoLinearsToOnePowerAsOneQuadratic(expr, x, integrateByParts)) is { }) return answer;
+            // A linear and a quadratic to one power as one binomial, `(1 + x) (1 - x + x^2)` as
+            // `1 + x^3`, which the rules for a power of a binomial answer.
+            if ((answer = IndefiniteIntegralSolver.SolveALinearAndAQuadraticToOnePowerAsOneBinomial(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByWritingEachLinearOnce(expr, x, integrateByParts)) is { }) return answer;
             // A rational function with numbers for coefficients over a denominator past the twelfth
             // degree, by Hermite's reduction before anything searches: nothing below answered one.

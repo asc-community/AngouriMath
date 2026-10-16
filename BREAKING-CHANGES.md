@@ -396,6 +396,19 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### A linear and a quadratic to one power are integrated as one binomial
+
+**Answers where there were none.** `1/((1 + x)^(1/3) (1 - x + x^2)^(1/3))` was declined. A linear and a quadratic to
+one power that is not whole, whose product is `A + B x^3`, are now integrated as `(L^p Q^p/(A + B x^3)^p)` times the
+integral over `(A + B x^3)^p`. The quotient is constant on each interval between the roots, so it stays in the answer
+as written ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((1+x)^(1/3)*(1-x+x^2)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 263 characters |
+| `"1/((1-x)^(1/3)*(1+x+x^2)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 269 characters |
+| `"1/((b*k-c*k*x)^(1/3)*(b^2+b*c*x+c^2*x^2)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 881 characters |
+
 ### A sine or a cosine over a symbolic quadratic or binomial is split over its roots with the coefficients named
 
 **Answers where there were none.** A quadratic or a binomial with a compound coefficient below a sine or a cosine is
