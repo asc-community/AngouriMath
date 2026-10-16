@@ -25791,11 +25791,24 @@ namespace AngouriMath.Functions.Algebra
         {
             if (!TryReadAsQuotient(expr, out var numerator, out var denominator) || numerator.ContainsNode(x))
                 return null;
-            var functions = denominator.Nodes.Where(node => node is Sinf or Cosf && node.ContainsNode(x)).Distinct().ToList();
+            // The hyperbolic sine and cosine are parsed as `(e^y -+ e^(-y))/2`, and read back from it.
+            static (Entity Argument, bool Sine, bool Hyperbolic)? Read(Entity node) => node switch
+            {
+                Sinf(var y) => (y, true, false),
+                Cosf(var y) => (y, false, false),
+                Divf(Sumf(Powf(var e1, var y), Powf(var e2, var minusY)), Number.Integer { EInteger: var two })
+                    when two.Equals(EInteger.FromInt32(2)) && e1 == MathS.e && e2 == MathS.e
+                    && Functions.PartialFractions.IsZeroAsAValue((y + minusY).InnerSimplified) => (y, false, true),
+                Divf(Minusf(Powf(var e1, var y), Powf(var e2, var minusY)), Number.Integer { EInteger: var two })
+                    when two.Equals(EInteger.FromInt32(2)) && e1 == MathS.e && e2 == MathS.e
+                    && Functions.PartialFractions.IsZeroAsAValue((y + minusY).InnerSimplified) => (y, true, true),
+                _ => null
+            };
+            var functions = denominator.Nodes.Where(node => node.ContainsNode(x) && Read(node) is not null).Distinct().ToList();
             if (functions.Count != 1)
                 return null;
             var function = functions[0];
-            var argument = function is Sinf(var inSine) ? inSine : ((Cosf)function).Argument;
+            var (argument, sine, hyperbolic) = Read(function)!.Value;
             if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out _) || Functions.PartialFractions.IsZeroAsAValue(slope))
                 return null;
             var s = Variable.CreateUnique(expr, "s_bin");
@@ -25804,7 +25817,8 @@ namespace AngouriMath.Functions.Algebra
                 || !read.ContainsKey(EInteger.Zero) || read.Keys.Max() is not { } top || !top.CanFitInInt32())
                 return null;
             var n = top.ToInt32Unchecked();
-            if (n < 5 || n > 12)
+            // Past what the rules before it answer: n = 3 for a hyperbolic cosine, and 5 on.
+            if (n > 12 || n < 3 || n == 4 || n < 5 && (sine || !hyperbolic))
                 return null;
             var a = read[EInteger.Zero];
             var b = read[top];
@@ -25812,8 +25826,8 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             var q = n % 2 == 0 ? 2 : 1;
             var m = n / q;
-            var sine = function is Sinf;
-            var u = q == 2 ? MathS.Tan(argument) : MathS.Tan(argument / 2);
+            var half = q == 2 ? argument : argument / 2;
+            var u = hyperbolic ? MathS.Hyperbolic.Tanh(half) : MathS.Tan(half);
             var radius = MathS.Pow(-a / b, Number.Rational.Create(1, m));
             Entity sum = Number.Integer.Zero;
             for (var k = 0; k < m; k++)
@@ -25823,11 +25837,13 @@ namespace AngouriMath.Functions.Algebra
                 var turn = 2 * MathS.pi * k / m;
                 var r = (k == 0 ? radius : radius * (MathS.Cos(turn) + MathS.i * MathS.Sin(turn))).InnerSimplified;
                 // K^2, the factor in front, and the argument of the arctangent over K.
-                var (square, front, shift) = (q, sine) switch
+                var (square, front, shift) = (q, sine, hyperbolic) switch
                 {
-                    (2, true) => ((r - 1) / r, (Entity)Number.Integer.One, (Entity)Number.Integer.Zero),
-                    (2, false) => (r / (r - 1), r / (r - 1), Number.Integer.Zero),
-                    (1, true) => ((MathS.Sqr(r) - 1) / MathS.Sqr(r), 2, -1 / r),
+                    (2, true, false) => ((r - 1) / r, (Entity)Number.Integer.One, (Entity)Number.Integer.Zero),
+                    (2, false, _) => (r / (r - 1), r / (r - 1), Number.Integer.Zero),
+                    (1, true, false) => ((MathS.Sqr(r) - 1) / MathS.Sqr(r), 2, -1 / r),
+                    (2, true, true) => ((r + 1) / r, Number.Integer.One, Number.Integer.Zero),
+                    (1, true, true) => (1 + 1 / MathS.Sqr(r), 2, 1 / r),
                     _ => ((r - 1) / (r + 1), 2 * r / (r + 1), Number.Integer.Zero),
                 };
                 square = square.InnerSimplified;
@@ -25835,7 +25851,9 @@ namespace AngouriMath.Functions.Algebra
                     return null;
                 var root = MathS.Sqrt(square);
                 // An even power under tan(y), where K multiplies u; an odd one under tan(y/2), where it divides.
-                sum += q == 2 ? front * MathS.Arctan(root * u) / root : front * MathS.Arctan((u + shift) / root) / root;
+                // The hyperbolic ones are the same with the inverse hyperbolic tangent.
+                Entity Inverse(Entity z) => hyperbolic ? MathS.Hyperbolic.Artanh(z) : MathS.Arctan(z);
+                sum += q == 2 ? front * Inverse(root * u) / root : front * Inverse((u + shift) / root) / root;
             }
             var answer = (numerator / (m * a * slope) * sum).InnerSimplified;
             // Refused where it differs, not where it cannot be told: the intervals do not settle

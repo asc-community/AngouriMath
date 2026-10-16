@@ -12,8 +12,8 @@ using Xunit;
 namespace AngouriMath.Tests.Calculus
 {
     /// <summary>
-    /// The reciprocal of <c>a + b s^n</c>, <c>s</c> a sine or a cosine and <c>n</c> past 4, over the
-    /// roots of the binomial: Rubi's 4.1.7 and 4.2.7. Pinned with <c>-a/b</c> of either sign, so the
+    /// The reciprocal of <c>a + b s^n</c>, <c>s</c> a sine or a cosine and <c>n</c> past 4, or a
+    /// hyperbolic sine or cosine, over the roots of the binomial: Rubi's 4.1.7, 4.2.7, 6.1.7 and 6.2.7. Pinned with <c>-a/b</c> of either sign, so the
     /// real root among them is positive or negative.
     /// <a href="https://github.com/asc-community/AngouriMath/issues/718">#718</a>
     /// </summary>
@@ -51,6 +51,11 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("1/(a-b*cos(x)^5)")]
         [InlineData("1/(a+b*cos(x)^6)")]
         [InlineData("3/(a+b*sin(2*x+1)^7)")]
+        [InlineData("1/(a+b*cosh(x)^3)")]
+        [InlineData("1/(a-b*cosh(x)^5)")]
+        [InlineData("1/(a+b*sinh(x)^6)")]
+        [InlineData("1/(a+b*sinh(2*x+1)^5)")]
+        [InlineData("1/(a-b*cosh(x)^8)")]
         public void IsAnsweredAndDifferentiatesBack(string integrand)
         {
             DifferentiatesBack(integrand, ("a", 0.6), ("b", 1.25));
