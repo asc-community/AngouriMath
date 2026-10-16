@@ -664,6 +664,9 @@ namespace AngouriMath.Functions.Algebra
             // A sum free of the variable that comes to a number multiplied out, as that number,
             // before anything reads a coefficient or an exponent in it: `2 + 2 a - 2 (1 + a)`.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingConstantSumsToTheirNumbers(expr, x, integrateByParts)) is { }) return answer;
+            // A whole power of a linear in the inverse sine, cosine or hyperbolic cosine of
+            // `c + d x^2` with `c^2 = 1`, by its recurrence, which closes: by parts it went round.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfAnInverseFunctionOfAQuadraticByTheRecurrence(expr, x)) is { }) return answer;
             // A product of powers of quotients of linears with one linear in two of them, written
             // over each linear once with the constant that takes in front. First, since it answers
             // the question asked only, and the polynomial term below writes `1/u` as `u^(-1)` and

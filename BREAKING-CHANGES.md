@@ -396,6 +396,25 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### A whole power of an inverse function of `c + d x^2` is integrated by its recurrence
+
+**Answers where there were none.** `(a + b acos(1 + d x^2))^4` was declined, and so were twenty-five more of Rubi's
+5.1.5, 5.2.5, 7.1.5 and 7.2.5. For `u` the inverse sine or cosine of `c + d x^2` with `c^2 = 1`, or its inverse
+hyperbolic cosine, `integral (a + b u)^n` is `x (a + b u)^n + 2 e n b H (a + b u)^(n - 1)` less
+`4 e b^2 n (n - 1) integral (a + b u)^(n - 2)`, where `H u' = 2` and `e` is `1` for the circular functions and `-1` for
+the hyperbolic one. It closes at the first two powers
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a+b*acos(1+d*x^2))^4".ToEntity().Integrate("x")` | `integral(...)` | 301 characters |
+| `"(a+b*acos(-1+d*x^2))^2".ToEntity().Integrate("x")` | `integral(...)` | 151 characters |
+| `"(a+b*asin(1+d*x^2))^3".ToEntity().Integrate("x")` | `integral(...)` | 241 characters |
+| `"(a+b*acosh(-1+d*x^2))^2".ToEntity().Integrate("x")` | `integral(...)` | 214 characters |
+| `"(a+b*acosh(1+d*x^2))^3".ToEntity().Integrate("x")` | `integral(...)` | 334 characters |
+| `"acos(1+d*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 76 characters |
+| `"asin(-1+d*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 77 characters |
+
 ### A biquadratic with surds in its coefficients is split by its roots in the square
 
 **Answers where there were none.** `(sqrt(2) - x^2)/(1 - sqrt(2) x^2 + x^4)` was declined, and so was Rubi's 1.2.2.3

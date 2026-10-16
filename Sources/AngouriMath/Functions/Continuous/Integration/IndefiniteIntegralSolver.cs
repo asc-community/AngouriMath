@@ -28845,6 +28845,85 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A whole power of <c>a + b u</c>, where <c>u</c> is the inverse sine or cosine of
+        /// <c>w = c + d x^2</c> with <c>c^2 = 1</c>, the inverse hyperbolic cosine of one, or the
+        /// inverse hyperbolic sine of one with <c>c^2 = -1</c>, by the recurrence
+        /// <c>integral (a + b u)^n = x (a + b u)^n + 2 e n b H (a + b u)^(n - 1) - 4 e b^2 n (n - 1) integral (a + b u)^(n - 2)</c>,
+        /// with <c>H = 1/(d x u'(w))</c>, <c>e = 1</c> for the circular functions and <c>-1</c> for the
+        /// hyperbolic ones. It closes at <c>n = 0</c> and <c>n = 1</c>, so nothing is asked below.
+        /// </summary>
+        /// <remarks>
+        /// Each <c>u</c> has <c>u'' = e w u'^3</c>, and with <c>c^2 = 1</c> (or <c>-1</c>) the radicand of
+        /// <c>u'</c> is <c>d x^2 (2 c + d x^2)</c> up to sign, so <c>H u' = 2</c> and
+        /// <c>(x (a + b u)^n + 2 e n b H (a + b u)^(n - 1))'</c> is <c>(a + b u)^n</c> plus a multiple of
+        /// <c>(a + b u)^(n - 2)</c>. Rubi's 5.1.5, 5.2.5 and 7.2.5 <c>(a + b acos(1 + d x^2))^4</c>
+        /// and the like were declined.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPowerOfAnInverseFunctionOfAQuadraticByTheRecurrence(Entity expr, Entity.Variable x)
+        {
+            var (@base, power) = expr is Powf(var b0, Number.Integer p0) ? (b0, p0) : (expr, Number.Integer.One);
+            if (power.EInteger.Sign <= 0 || power.EInteger.CompareTo(EInteger.FromInt32(12)) > 0)
+                return null;
+            var n = power.EInteger.ToInt32Unchecked();
+            // The inverse function, its argument w, the sign e, the radical H is written with, and
+            // whether w^2 is 1 or -1 at x = 0.
+            (Entity Node, Entity W, int Sign, Entity Root, int Square)? Read(Entity node)
+            {
+                switch (node)
+                {
+                    case Arcsinf(var w):
+                        return (node, w, 1, MathS.Sqrt(1 - MathS.Sqr(w)), 1);
+                    case Arccosf(var w):
+                        return (node, w, 1, -MathS.Sqrt(1 - MathS.Sqr(w)), 1);
+                    // The parser writes acosh(w) and asinh(w) as ln(w + sqrt(w^2 -+ 1)).
+                    case Logf(var logBase, Sumf(var w, Powf(var radicand, Number.Rational half)))
+                        when logBase == MathS.e && half == Number.Rational.Create(1, 2) && w.ContainsNode(x):
+                        foreach (var square in new[] { 1, -1 })
+                            if (VanishesIdentically((radicand - (MathS.Sqr(w) - square)).Expand()))
+                                return (node, w, -1, MathS.Sqrt(radicand), square);
+                        return null;
+                    default:
+                        return null;
+                }
+            }
+            var candidates = @base.Nodes.Select(Read).Where(read => read is not null).Select(read => read!.Value).ToList();
+            if (candidates.Count == 0 || candidates.Any(read => read.Node != candidates[0].Node))
+                return null;
+            var (inverse, argument, sign, root, squareAtZero) = candidates[0];
+            var t = Variable.CreateUnique(expr, "u_inv");
+            var inT = @base.Substitute(inverse, t);
+            if (inT.ContainsNode(x) || !TreeAnalyzer.TryGetPolyLinear(inT, t, out var b, out var a)
+                || Functions.PartialFractions.IsZeroAsAValue(b))
+                return null;
+            if (!TreeAnalyzer.TryGetPolynomial(argument, x, out var read) || read.Keys.Any(key => !key.IsZero && !key.Equals(EInteger.FromInt32(2)))
+                || !read.TryGetValue(EInteger.FromInt32(2), out var d) || d.ContainsNode(x) || Functions.PartialFractions.IsZeroAsAValue(d))
+                return null;
+            var c = read.TryGetValue(EInteger.Zero, out var c0) ? c0 : Number.Integer.Zero;
+            if (c.ContainsNode(x) || !Functions.PartialFractions.IsZeroAsAValue((MathS.Sqr(c) - squareAtZero).Expand().InnerSimplified))
+                return null;
+            var h = root / (d * x);
+            var e = (Entity)Number.Integer.Create(sign);
+            var a_bu = a + b * inverse;
+            // I(k) by the recurrence, from I(0) = x and I(1) = x (a + b u) + 2 e b H.
+            var integrals = new Entity[n + 1];
+            for (var k = 0; k <= n; k++)
+            {
+                Entity term = k == 0 ? x : x * MathS.Pow(a_bu, k) + 2 * e * k * b * h * (k == 1 ? Number.Integer.One : MathS.Pow(a_bu, k - 1));
+                if (k >= 2)
+                    term -= 4 * e * MathS.Sqr(b) * k * (k - 1) * integrals[k - 2];
+                integrals[k] = term;
+            }
+            // The recurrence is exact where H u' = 2 with the derivative the library takes, the one
+            // step that depends on a branch; checked here rather than at sampled points, which for
+            // `c = 1` and a positive `d` put `w` past 1, on the cut of the inverse sine and cosine,
+            // and declined `asin(1 + d x^2)^2`, right for the `d < 0` where it is real.
+            if (!Functions.PartialFractions.IsZeroAsAValue((h * inverse.Differentiate(x) - 2).InnerSimplified))
+                return null;
+            return integrals[n].InnerSimplified;
+        }
+
+        /// <summary>
         /// A power of a constant multiple of a radicand that a logarithm holds under a root,
         /// written over that radicand: <c>acosh(c x)</c> is <c>ln(c x + sqrt(c^2 x^2 - 1))</c>,
         /// and beside it <c>d - c^2 d x^2</c> is <c>-d (c^2 x^2 - 1)</c>. A whole power is the
