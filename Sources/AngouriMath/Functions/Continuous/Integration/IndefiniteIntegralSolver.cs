@@ -26155,6 +26155,113 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A whole power of x times <c>F = a + b atan(c x)</c> times <c>G = d + e ln(1 + c^2 x^2)</c>,
+        /// by parts on the power: with <c>q = c^2</c> and <c>n = k + 1</c>, the remainder is
+        /// <c>(1/n) int x^n (b c G + 2 e q x F)/(1 + q x^2)</c>, and <c>x^n/(1 + q x^2)</c> is a
+        /// polynomial plus <c>(-1/q)^m x^(n - 2m)/(1 + q x^2)</c>, <c>m = floor(n/2)</c>.
+        /// </summary>
+        /// <remarks>
+        /// For an odd <c>k</c> the two remainders over the quadratic, <c>G/(1 + q x^2)</c> and
+        /// <c>x F/(1 + q x^2)</c>, have no elementary antiderivative apiece and come with the same
+        /// factor, and together they are <c>(F G)'/(b c)</c> -- <c>F' = b c/(1 + q x^2)</c>,
+        /// <c>G' = 2 e q x/(1 + q x^2)</c> -- so their integral is that factor times <c>F G</c>.
+        /// Integration by parts as the rules after it apply it never pairs them, and Rubi's 5.3.4
+        /// <c>x^k (a + b atan(c x))(d + e ln(1 + c^2 x^2))</c>, <c>k = 1</c> to <c>4</c>, timed out.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPowerOfXTimesAnArctangentAndTheLogarithmOfItsQuadratic(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var arctangents = expr.Nodes.Where(node => node is Arctanf && node.ContainsNode(x)).Distinct().ToList();
+            if (arctangents.Count != 1 || arctangents[0] is not Arctanf(var argument)
+                || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var c, out var intercept) || !Functions.PartialFractions.IsZeroAsAValue(intercept))
+                return null;
+            var arctangent = arctangents[0];
+            var q = MathS.Sqr(c).InnerSimplified;
+            var quadratic = 1 + q * MathS.Sqr(x);
+            // The logarithm of 1 + q x^2, as `ln` or `log` writes it.
+            var logarithms = expr.Nodes.Where(node => node is Logf(var @base, var of) && @base == MathS.e && of.ContainsNode(x)
+                && Functions.PartialFractions.IsZeroAsAValue((of - quadratic).InnerSimplified)).Distinct().ToList();
+            if (logarithms.Count != 1)
+                return null;
+            var logarithm = logarithms[0];
+            static IEnumerable<Entity> Factors(Entity e) => e is Mulf(var l, var r) ? Factors(l).Concat(Factors(r)) : new[] { e };
+            Entity? f = null, g = null;
+            var k = 0;
+            Entity constant = Number.Integer.One;
+            foreach (var factor in Factors(expr))
+            {
+                if (!factor.ContainsNode(x))
+                    constant *= factor;
+                else if (factor == x)
+                    k += 1;
+                else if (factor is Powf(var b0, Number.Integer { EInteger: var power }) && b0 == x && power.Sign > 0 && power.CanFitInInt32())
+                    k += power.ToInt32Unchecked();
+                else if (f is null && factor.ContainsNode(arctangent) && !factor.ContainsNode(logarithm))
+                    f = factor;
+                else if (g is null && factor.ContainsNode(logarithm) && !factor.ContainsNode(arctangent))
+                    g = factor;
+                else
+                    return null;
+            }
+            if (f is null || g is null || k > 20)
+                return null;
+            // F = a + b atan(c x) and G = d + e ln(1 + q x^2), each linear in its function.
+            var s = Variable.CreateUnique(expr, "s_al");
+            if (f.Substitute(arctangent, s).ContainsNode(x) || g.Substitute(logarithm, s).ContainsNode(x)
+                || !TreeAnalyzer.TryGetPolyLinear(f.Substitute(arctangent, s), s, out var b, out _)
+                || !TreeAnalyzer.TryGetPolyLinear(g.Substitute(logarithm, s), s, out var e, out _)
+                || Functions.PartialFractions.IsZeroAsAValue(b) || Functions.PartialFractions.IsZeroAsAValue(e))
+                return null;
+            // x^n/(1 + q x^2): the polynomial and the factor of x^(n - 2m)/(1 + q x^2).
+            (Entity Polynomial, Entity Remainder) Divided(int n)
+            {
+                Entity polynomial = Number.Integer.Zero;
+                Entity factor = Number.Integer.One;
+                for (var j = 0; j < n / 2; j++)
+                {
+                    // x^0 written as 1: the power brings `provided not x = 0` with it.
+                    var degree = n - 2 - 2 * j;
+                    polynomial += factor / q * (degree == 0 ? Number.Integer.One : degree == 1 ? x : MathS.Pow(x, Number.Integer.Create(degree)));
+                    factor = -factor / q;
+                }
+                return (polynomial, factor);
+            }
+            var n1 = k + 1;
+            var (p1, r1) = Divided(n1);
+            var (p2, r2) = Divided(n1 + 1);
+            // A monomial at a time: `(x^2/q - 1/q^2) atan(c x)` asked whole was declined.
+            Entity? Asked(Entity polynomial, Entity beside)
+            {
+                Entity sum = Number.Integer.Zero;
+                foreach (var term in Sumf.LinearChildren(polynomial).Select(monomial => (monomial * beside).InnerSimplified))
+                {
+                    if (Functions.PartialFractions.IsZeroAsAValue(term))
+                        continue;
+                    if (Integration.ComputeAsAQuestionOfItsOwn(term, x, integrateByParts: true) is not { } integrated)
+                        return null;
+                    sum += integrated;
+                }
+                return sum;
+            }
+            if (Asked(p1, g) is not { } p1g || Asked(p2, f) is not { } p2f)
+                return null;
+            Entity remainders;
+            if (n1 % 2 == 0)
+                // r1 = r2: (r/n) int (b c G + 2 e q x F)/(1 + q x^2) = (r/n) F G.
+                remainders = r1 * f * g;
+            else
+            {
+                if (Asked(x, g / quadratic) is not { } xg || Asked(Number.Integer.One, f / quadratic) is not { } fq)
+                    return null;
+                remainders = b * c * r1 * xg + 2 * e * q * r2 * fq;
+            }
+            var answer = (constant * (MathS.Pow(x, Number.Integer.Create(n1)) * f * g - b * c * p1g - 2 * e * q * p2f - remainders) / n1).InnerSimplified;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
         /// A rational function of a sine, or of a cosine, over a quadratic in it with a symbol
         /// among the coefficients: <c>sin(x)/(a + b sin(x) + c sin(x)^2)</c>, and the same with
         /// the other function to even powers, a cosecant or a secant beside. Written in
