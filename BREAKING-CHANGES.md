@@ -168,6 +168,17 @@ not read back. Both are simplified to the sum now (#1397).
 | `"b - x = 0".Solve("x")` | `{ -b / (-1) }` | `{ b }` |
 | `"1/100 - (-4)*x".ToEntity().Latexize()` | `\frac{1}{100}--4 \cdot x` | `\frac{1}{100}+4 \cdot x` |
 
+### A complex number divided by one beyond `10^50` in modulus is not zero
+
+**A wrong answer.** With the downcasting off, a complex division took the reciprocal of the divisor's squared modulus
+first, and beyond `10^50` that underflowed the context to zero, so `(1.98e119 + i)/(3.39e125 + i)` was `0`. It is
+divided by Smith's method now, which scales by the larger part and squares nothing
+([#1372](https://github.com/asc-community/AngouriMath/issues/1372), #1374).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `(1.98e119 + i)/(3.39e125 + i)` with the downcasting off | `0` | `5.8407…e-7` |
+
 ### A piecewise is defined where the case it takes is
 
 **Domain conditions that were false.** The domain condition of a piecewise asked every case's predicate
