@@ -396,6 +396,128 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### A negative power of an inverse function of `c + d x^2` is integrated in sine and cosine integrals
+
+**Answers where there were none.** `1/(a + b acos(1 + d x^2))` was declined, and so were seventeen more of Rubi's
+5.1.5, 5.2.5 and 7.2.5, to the first three negative powers. `w - c` is a constant times `g(u/2 + beta)^2` for a sine or
+a cosine `g`, so `x/g` is constant on each side of 0; the powers `-1` and `-2` are then sine and cosine integrals of
+`(a + b u)/(2 b)`, hyperbolic ones for the inverse hyperbolic cosine, and the recurrence run backwards gives the
+rest. The answers hold on the real domain of the integrand
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(a+b*acos(1+d*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 184 characters |
+| `"1/(a+b*acos(-1+d*x^2))^2".ToEntity().Integrate("x")` | `integral(...)` | 273 characters |
+| `"1/(a+b*asin(1+d*x^2))^3".ToEntity().Integrate("x")` | `integral(...)` | 380 characters |
+| `"1/(a+b*asin(-1+d*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 224 characters |
+| `"1/(a+b*acosh(1+d*x^2))^2".ToEntity().Integrate("x")` | `integral(...)` | 608 characters |
+| `"1/(a+b*acosh(-1+d*x^2))^3".ToEntity().Integrate("x")` | `integral(...)` | 633 characters |
+
+### The reciprocal of a binomial in a high power of a sine, cosine or hyperbolic one is split over its roots
+
+**Answers where there were none.** `1/(a + b sin(x)^5)` was declined, and so were twenty more of Rubi's 4.1.7, 4.2.7,
+6.1.7 and 6.2.7. With `s` the function, `n` from 5 to 12, `q` 2 for an even `n` and 1 for an odd one, and `r_k` the
+`n/q`-th roots of `-a/b`, `1/(a + b s^n)` is `(q/(n a))` times the sum of `r_k/(r_k - s^q)`, and each term is an
+arctangent, or an inverse hyperbolic tangent, of the tangent of the argument or of its half
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(a+b*sin(x)^5)".ToEntity().Integrate("x")` | `integral(...)` | 2,110 characters |
+| `"1/(a-b*sin(x)^6)".ToEntity().Integrate("x")` | `integral(...)` | 648 characters |
+| `"1/(a+b*sin(x)^8)".ToEntity().Integrate("x")` | `integral(...)` | 569 characters |
+| `"1/(a+b*cos(x)^5)".ToEntity().Integrate("x")` | `integral(...)` | 2,362 characters |
+| `"1/(a-b*cos(x)^8)".ToEntity().Integrate("x")` | `integral(...)` | 841 characters |
+| `"1/(a+b*sinh(x)^5)".ToEntity().Integrate("x")` | `integral(...)` | 2,678 characters |
+| `"1/(a+b*sinh(x)^6)".ToEntity().Integrate("x")` | `integral(...)` | 1,139 characters |
+| `"1/(a+b*cosh(x)^5)".ToEntity().Integrate("x")` | `integral(...)` | 3,607 characters |
+| `"1/(a-b*cosh(x)^8)".ToEntity().Integrate("x")` | `integral(...)` | 1,441 characters |
+
+### A whole power of an inverse function of `c + d x^2` is integrated by its recurrence
+
+**Answers where there were none.** `(a + b acos(1 + d x^2))^4` was declined, and so were twenty-five more of Rubi's
+5.1.5, 5.2.5, 7.1.5 and 7.2.5. For `u` the inverse sine or cosine of `c + d x^2` with `c^2 = 1`, or its inverse
+hyperbolic cosine, `integral (a + b u)^n` is `x (a + b u)^n + 2 e n b H (a + b u)^(n - 1)` less
+`4 e b^2 n (n - 1) integral (a + b u)^(n - 2)`, where `H u' = 2` and `e` is `1` for the circular functions and `-1` for
+the hyperbolic one. It closes at the first two powers
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a+b*acos(1+d*x^2))^4".ToEntity().Integrate("x")` | `integral(...)` | 301 characters |
+| `"(a+b*acos(-1+d*x^2))^2".ToEntity().Integrate("x")` | `integral(...)` | 151 characters |
+| `"(a+b*asin(1+d*x^2))^3".ToEntity().Integrate("x")` | `integral(...)` | 241 characters |
+| `"(a+b*acosh(-1+d*x^2))^2".ToEntity().Integrate("x")` | `integral(...)` | 214 characters |
+| `"(a+b*acosh(1+d*x^2))^3".ToEntity().Integrate("x")` | `integral(...)` | 334 characters |
+| `"acos(1+d*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 76 characters |
+| `"asin(-1+d*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 77 characters |
+
+### A biquadratic with surds in its coefficients is split by its roots in the square
+
+**Answers where there were none.** `(sqrt(2) - x^2)/(1 - sqrt(2) x^2 + x^4)` was declined, and so was Rubi's 1.2.2.3
+`(sqrt(2) + x^2)/(1 + sqrt(2) x^2 + x^4)`. An even polynomial over `a + b x^2 + c x^4` was split by the two roots in
+`x^2` only where a coefficient held a symbol, and numbers were left to the partial fractions, which factor over the
+rationals. It is now split so wherever a coefficient is not rational
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(-x^2+sqrt(2))/(1+x^4-x^2*sqrt(2))".ToEntity().Integrate("x")` | `integral(...)` | 199 characters |
+| `"(x^2+sqrt(2))/(1+x^4+x^2*sqrt(2))".ToEntity().Integrate("x")` | `integral(...)` | 201 characters |
+| `"1/(1+x^4-x^2*sqrt(3))".ToEntity().Integrate("x")` | `integral(...)` | 144 characters |
+
+### A constant sum that comes to a number is folded before an integral is asked
+
+**Answers where there were none.** `1/sqrt(2 + 2 a - 2 (1 + a) + c x^4)` was declined, and so was Rubi's 1.1.1.2
+`(c + d x)^(1 + 2 n - 2 (1 + n))/(a + b x)^2`. The terms of a sum free of the variable that come to a number once
+multiplied out are now written as that number before the integral is asked: `2 + 2 a - 2 (1 + a)` is `0` and
+`1 + 2 n - 2 (1 + n)` is `-1` ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/sqrt(2+2*a-2*(1+a)+c*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 44 characters |
+| `"(c+d*x)^(1+2*n-2*(1+n))/(a+b*x)^2".ToEntity().Integrate("x")` | `integral(...)` | 255 characters |
+
+**A changed answer.** An integrand with such a sum as a coefficient is integrated with the number in its place.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(2+2*c-2*(1+c))*x^4".ToEntity().Integrate("x")` | `(2 + 2 * c - 2 * (1 + c)) * x ^ 5 / 5 + C` | `0 + C` |
+
+### Powers of multiples of powers of one linear are gathered into one power of it
+
+**Answers where there were none.** `1/(sqrt(-2 - b x) sqrt(2 + b x))` was declined, and so were four more of Rubi's
+1.1.1.2, 1.1.1.3, 1.2.2.2 and 1.3.1. A power `B^p` that is not whole, of a polynomial `B` that is a constant times
+`L^k` for one linear `L`, is now written `(B^p/L^(k p)) L^(k p)`, and the powers of one linear are integrated as one.
+The quotient is constant on each interval where it is continuous, so it stays in the answer as written
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(sqrt(-2-b*x)*sqrt(2+b*x))".ToEntity().Integrate("x")` | `integral(...)` | 73 characters |
+| `"sqrt(a+b*x)/(x*sqrt(-a-b*x))".ToEntity().Integrate("x")` | `integral(...)` | 56 characters |
+| `"(a+b*x)^n/(x*(-a-b*x)^n)".ToEntity().Integrate("x")` | `integral(...)` | 52 characters |
+| `"(a^3+3*a^2*b*x+3*a*b^2*x^2+b^3*x^3)^p".ToEntity().Integrate("x")` | `integral(...)` | 187 characters |
+| `"1/sqrt(2+2*a-2*(1+a)+c*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 119 characters |
+
+### A linear below the cube root of a quadratic is integrated in closed form
+
+**Answers where there were none.** `1/((d + e x) (d^2 + 3 e^2 x^2)^(1/3))` was declined, and so were six more of Rubi's
+1.2.1.2. With `y = x + b/(2c)`, `1/((d + e x) (a + b x + c x^2)^(1/3))` is a linear in `y` below the cube root of
+`a' + c y^2`, and where `c d'^2 = 3 a' e^2` or `c d'^2 = -9 a' e^2` it has a closed form of two or three logarithms and
+an arctangent ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((d+k*x)*(d^2+3*k^2*x^2)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 773 characters |
+| `"1/((2+3*i*x)*(4-27*x^2)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 398 characters |
+| `"1/((1+x^2)^(1/3)*(x+sqrt(3)))".ToEntity().Integrate("x")` | `integral(...)` | 290 characters |
+| `"1/((1+x^2)^(1/3)*(-x+sqrt(3)))".ToEntity().Integrate("x")` | `integral(...)` | 302 characters |
+| `"1/((d+k*x)*(d^2-9*k^2*x^2)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 397 characters |
+| `"1/((d+k*x)*(c^2*d^2-b*c*d*k+b^2*k^2+3*b*c*k^2*x+3*c^2*k^2*x^2)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 1,934 characters |
+| `"1/((d+k*x)*(-c^2*d^2+b*c*d*k+2*b^2*k^2+9*b*c*k^2*x+9*c^2*k^2*x^2)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 1,274 characters |
+
 ### A linear and a quadratic to one power are integrated as one binomial
 
 **Answers where there were none.** `1/((1 + x)^(1/3) (1 - x + x^2)^(1/3))` was declined. A linear and a quadratic to
