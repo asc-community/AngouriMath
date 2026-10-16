@@ -665,6 +665,10 @@ namespace AngouriMath.Functions.Algebra
             // over each linear once with the constant that takes in front. First, since it answers
             // the question asked only, and the polynomial term below writes `1/u` as `u^(-1)` and
             // asks that a level down: `1/(e^atanh(a x) (c - c/(a x))^(3/2))` reached it nowhere.
+            // Two linears to one power that is not whole, as one quadratic to that power, before each
+            // linear is written once: `(2 + 3x)^4/((1 - 2x)^(5/2) (3 + 5x)^(5/2))` took forty-five
+            // seconds there, and over `(3 - x - 10x^2)^(5/2)` it takes half of one.
+            if ((answer = IndefiniteIntegralSolver.SolveTwoLinearsToOnePowerAsOneQuadratic(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByWritingEachLinearOnce(expr, x, integrateByParts)) is { }) return answer;
             // A rational function with numbers for coefficients over a denominator past the twelfth
             // degree, by Hermite's reduction before anything searches: nothing below answered one.
@@ -685,6 +689,8 @@ namespace AngouriMath.Functions.Algebra
             // A power of x over a sextic that is a sum of two cubes, split over the cube roots of
             // unity into three quadratics before the partial fractions try the symbolic sextic.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfXOverASumOfTwoCubes(expr, x, integrateByParts)) is { }) return answer;
+            // A power of an even quadratic over a binomial in it, split over the binomial's roots.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfAnEvenQuadraticOverABinomialInIt(expr, x, integrateByParts)) is { }) return answer;
             // A root or a power of a product beside a power of one of its factors, the product
             // split: `(a + b x^2)^(5/2)/sqrt(a^2 - b^2 x^4)` is `K (a + b x^2)^2/sqrt(a - b x^2)`.
             // Early, since what reads the product whole is slower and longer: Rubi's 1.2.1.2:2218,

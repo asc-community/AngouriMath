@@ -447,6 +447,34 @@ case is most of its length ([#718](https://github.com/asc-community/AngouriMath/
 | `"x^4/((a + b*x^2 + c*x^4)*sqrt(d + k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 28,551 characters |
 | `"1/(x^2*(a + b*x^2 + c*x^4)*sqrt(d + k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 10,194 characters |
 
+### Two linears to one power are integrated as one quadratic to that power
+
+**Answers where there were none.** `(2 + 3 x)^4/((1 - 2 x)^(5/2) (3 + 5 x)^(5/2))` ran past any budget, and
+`1/((1 - x)^(1/3) (2 - x)^(1/3) x)` was declined. `L1^p L2^p` for linears with numbers for coefficients and `p` not
+whole, other than `1/2`, is now integrated as `(L1^p L2^p/Q^p)` times the integral over `Q^p`, `Q = L1 L2`. That
+quotient is constant on each interval between the roots, so it stays in the answer as written
+([#718](https://github.com/asc-community/AngouriMath/issues/718)). `e` is Euler's number below.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((1-x)^(1/3)*(2-x)^(1/3)*x)".ToEntity().Integrate("x")` | `integral(...)` | 381 characters |
+| `"(e*x)^(3/2)/((1-x)^(1/4)*(1+x)^(1/4))".ToEntity().Integrate("x")` | `integral(...)` | 1,403 characters |
+| `"1/((1-x)^(1/4)*(e*x)^(1/2)*(1+x)^(1/4))".ToEntity().Integrate("x")` | `integral(...)` | 1,226 characters |
+| `"(2+3*x)^6/((1-2*x)^(5/2)*(3+5*x)^(5/2))".ToEntity().Integrate("x")` | `integral(...)` | 1,236 characters |
+| `"(2+3*x)^4/((1-2*x)^(5/2)*(3+5*x)^(5/2))".ToEntity().Integrate("x")` | `integral(...)` | 784 characters |
+| `"1/((1-2*x)^(5/2)*(2+3*x)^2*(3+5*x)^(5/2))".ToEntity().Integrate("x")` | `integral(...)` | 382 characters |
+
+### A power of an even quadratic over a binomial in it is split over the binomial's roots
+
+**Answers where there were none.** `(1 - x^2)/(a + b (1 - x^2)^4)` was declined. `w^m/(a + b w^n)` for `w = p + q x^2` and
+`m < n` is now split over the `n` roots `r` of `a + b w^n` into `1/(p - r + q x^2)`, each in closed form. The roots
+past the first are complex, so the answer carries `i` ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(1-x^2)/(a+b*(1-x^2)^4)".ToEntity().Integrate("x")` | `integral(...)` | 570 characters |
+| `"(1-x^2)/(a+b*(-1+x^2)^4)".ToEntity().Integrate("x")` | `integral(...)` | 539 characters |
+
 ### A power of x over a sum of two cubes is split over the cube roots of unity
 
 **Answers where there were none.** `x^k/((3 a + b x^2)^3 + 27 a^2 c x^3)` was declined: the integrator's resultant needs
