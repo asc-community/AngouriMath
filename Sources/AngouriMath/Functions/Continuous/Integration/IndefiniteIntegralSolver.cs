@@ -3153,7 +3153,9 @@ namespace AngouriMath.Functions.Algebra
             if (!TreeAnalyzer.TryGetPolynomial(denominator, x, out var belowAsWritten) || belowAsWritten.Count == 0
                 || belowAsWritten.Keys.Any(power => power.Sign < 0 || !power.CanFitInInt32())
                 || belowAsWritten.Values.Any(coefficient => coefficient.ContainsNode(x))
-                || !denominator.Vars.Any(v => v != x))
+                // A symbol, or a number that is not rational, which the partial fractions do not
+                // factor over: `(sqrt(2) - x^2)/(1 - sqrt(2) x^2 + x^4)` was declined.
+                || !denominator.Vars.Any(v => v != x) && belowAsWritten.Values.All(coefficient => coefficient.Evaled is Number.Rational))
                 return null;
             if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var aboveAsWritten) || aboveAsWritten.Count == 0
                 || aboveAsWritten.Keys.Any(power => power.Sign < 0 || !power.CanFitInInt32())

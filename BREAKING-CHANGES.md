@@ -396,6 +396,20 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### A biquadratic with surds in its coefficients is split by its roots in the square
+
+**Answers where there were none.** `(sqrt(2) - x^2)/(1 - sqrt(2) x^2 + x^4)` was declined, and so was Rubi's 1.2.2.3
+`(sqrt(2) + x^2)/(1 + sqrt(2) x^2 + x^4)`. An even polynomial over `a + b x^2 + c x^4` was split by the two roots in
+`x^2` only where a coefficient held a symbol, and numbers were left to the partial fractions, which factor over the
+rationals. It is now split so wherever a coefficient is not rational
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(-x^2+sqrt(2))/(1+x^4-x^2*sqrt(2))".ToEntity().Integrate("x")` | `integral(...)` | 199 characters |
+| `"(x^2+sqrt(2))/(1+x^4+x^2*sqrt(2))".ToEntity().Integrate("x")` | `integral(...)` | 201 characters |
+| `"1/(1+x^4-x^2*sqrt(3))".ToEntity().Integrate("x")` | `integral(...)` | 144 characters |
+
 ### A constant sum that comes to a number is folded before an integral is asked
 
 **Answers where there were none.** `1/sqrt(2 + 2 a - 2 (1 + a) + c x^4)` was declined, and so was Rubi's 1.1.1.2
