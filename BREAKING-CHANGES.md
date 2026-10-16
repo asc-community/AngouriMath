@@ -396,6 +396,22 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### A rational function times a logarithm of nested powers of linears is integrated by parts
+
+**Answers where there were none.** `ln(e (f (a + b x)^p (c + d x)^q)^r)` was declined, and so were four more of Rubi's
+3.2.3 and 3.3. `integral R ln(G)` is now `S ln(G) - integral S G'/G` with `S = integral R` rational, and `G'/G` read off
+`G` as it is written -- a product's is the sum of its factors', a power's the exponent times its base's, a linear's
+`b/(a + b x)` -- which is exact by the chain rule on any branch, and rational
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"ln(k*(f*(a+b*x)^p*(c+d*x)^q)^r)".ToEntity().Integrate("x")` | `integral(...)` | 167 characters |
+| `"x*ln(k*(f*(a+b*x)^p*(c+d*x)^q)^r)".ToEntity().Integrate("x")` | `integral(...)` | 241 characters |
+| `"ln(k*(f*(a+b*x)^p*(c+d*x)^q)^r)/(a+b*x)^5".ToEntity().Integrate("x")` | `integral(...)` | 817 characters |
+| `"ln(k*(f*(a+b*x)^p*(c+d*x)^q)^r)/(g+h*x)^3".ToEntity().Integrate("x")` | `integral(...)` | 960 characters |
+| `"(a+b*ln(c*(d*(k+f*x)^p)^q))/(g+h*x)^2".ToEntity().Integrate("x")` | `integral(...)` | 261 characters |
+
 ### A function of an inverse tangent times its derivative up to a constant factor is integrated by substitution
 
 **Answers where there were none.** `atan(c x/sqrt(a - c^2 x^2))^m/sqrt(d - c^2 d x^2/a)` was declined, and so were

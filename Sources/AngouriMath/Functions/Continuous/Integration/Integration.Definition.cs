@@ -664,6 +664,9 @@ namespace AngouriMath.Functions.Algebra
             // A sum free of the variable that comes to a number multiplied out, as that number,
             // before anything reads a coefficient or an exponent in it: `2 + 2 a - 2 (1 + a)`.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingConstantSumsToTheirNumbers(expr, x, integrateByParts)) is { }) return answer;
+            // A rational function times the logarithm of a nested product of powers of linears, by parts,
+            // its logarithm's derivative read off as written: `ln(e (f (a + b x)^p (c + d x)^q)^r)`.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionTimesALogarithmOfPowersOfLinears(expr, x, integrateByParts)) is { }) return answer;
             // A function of an inverse of something not linear times its derivative up to a factor
             // constant though written with x: `atan(c x/sqrt(a - c^2 x^2))^2/sqrt(d - c^2 d x^2/a)`. Early,
             // since it fires only where that factor holds x, and the rules before it spent 28 seconds on
@@ -1337,6 +1340,8 @@ namespace AngouriMath.Functions.Algebra
             // goes first: asked before the rules for two linears, it wrote `((a + b x)^3)^(1/3)` in
             // 111 characters where they write 25.
             if ((answer = IndefiniteIntegralSolver.SolvePowersOfOneLinearAsOnePower(expr, x, integrateByParts)) is { }) return answer;
+            // And beside a polynomial too, where everything before has declined: `x ln(e (f (a + b x)^p (c + d x)^q)^r)`.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionTimesALogarithmOfPowersOfLinears(expr, x, integrateByParts, besideAPolynomialToo: true)) is { }) return answer;
             // Last of the rewrites, because it is the only one that fires on an integrand nothing
             // is wrong with -- it clears a parameter rather than a shape -- so everything that
             // can answer the problem as written gets to try first.

@@ -29185,6 +29185,88 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A rational function <c>R</c> times the logarithm of <c>G</c>, a product of powers of linears
+        /// nested in powers and constants, by parts: <c>integral R ln(G) = S ln(G) - integral S G'/G</c>
+        /// with <c>S = integral R</c> rational, and <c>G'/G</c> read off <c>G</c> as it is written --
+        /// a product's is the sum of its factors', a power's the exponent times its base's, a linear's
+        /// <c>b/(a + b x)</c> -- which is exact by the chain rule on any branch, and rational.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's 3.2.3 <c>ln(e (f (a + b x)^p (c + d x)^q)^r)</c>, over <c>(a + b x)^5</c> and over
+        /// <c>(g + h x)^3</c>, were declined or ran out of time.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveARationalFunctionTimesALogarithmOfPowersOfLinears(Entity expr, Entity.Variable x, bool integrateByParts, bool besideAPolynomialToo = false)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            Logf? logarithm = null;
+            Entity rest = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(numerator))
+            {
+                if (factor is Logf { Base: var lb } found && lb == MathS.e && found.Antilogarithm.ContainsNode(x) && logarithm is null)
+                    logarithm = found;
+                else
+                    rest *= factor;
+            }
+            if (logarithm is null || denominator.Nodes.Any(node => node is Logf))
+                return null;
+            var g = logarithm.Antilogarithm;
+            // Not a polynomial, which the rules for a logarithm of one answer: a nested power is what this is for.
+            if (TreeAnalyzer.TryGetPolynomial(g, x, out _))
+                return null;
+            Entity? Derivative(Entity node)
+            {
+                if (!node.ContainsNode(x))
+                    return Number.Integer.Zero;
+                if (node is Mulf or Divf)
+                {
+                    var (top, bottom) = Functions.SingleQuotient.Of(node);
+                    Entity sum = Number.Integer.Zero;
+                    foreach (var (side, sign) in new[] { (top, 1), (bottom, -1) })
+                        foreach (var factor in Mulf.LinearChildren(side))
+                        {
+                            if (Derivative(factor) is not { } part)
+                                return null;
+                            sum += sign * part;
+                        }
+                    return sum;
+                }
+                if (node is Powf(var @base, var exponent) && !exponent.ContainsNode(x))
+                    return Derivative(@base) is { } inner ? exponent * inner : null;
+                if (TreeAnalyzer.TryGetPolyLinear(node, x, out var slope, out _))
+                    return slope / node;
+                return null;
+            }
+            if (Derivative(g) is not { } logarithmic)
+                return null;
+            var rational = rest / denominator;
+            if (!TreeAnalyzer.TryGetPolynomial(Functions.SingleQuotient.Of(rational).Numerator, x, out var readAbove)
+                || !TreeAnalyzer.TryGetPolynomial(Functions.SingleQuotient.Of(rational).Denominator, x, out _))
+                return null;
+            // A polynomial of degree one or more beside the logarithm is left to by parts as it was, and
+            // asked here again only once everything else has declined: asked here first,
+            // `(f + g x)^4 (A + B ln(e ((a + b x)/(c + d x))^n))` ran out of time on its remainder, a fifth
+            // power over two linears, where it had been answered, and `x ln(...)` is answered nowhere else.
+            if (!besideAPolynomialToo && !Functions.SingleQuotient.Of(rational).Denominator.ContainsNode(x)
+                && readAbove.Keys.Any(key => key.Sign > 0))
+                return null;
+            if (Integration.ComputeAsAQuestionOfItsOwn(rational, x, integrateByParts) is not { } s
+                || s.Nodes.Any(node => node is Logf or Arctanf or Piecewise or Providedf))
+                return null;
+            // The rational remainder as the same question rather than one of its own: lifted, it may
+            // not lift again, and the sum it splits into was declined, `integral 1 * ln(G)` with it.
+            if (Integration.ComputeAsTheSameQuestion((s * logarithmic).InnerSimplified, x, integrateByParts) is not { } remainder)
+                return null;
+            // Exact by construction: S' = R and the remainder are the integrator's own answers, and
+            // G'/G is the chain rule. Not checked at sampled points: the check reported a difference
+            // for `x ln(G) - r (p (x - a/b ln(a + b x)) + q (x - c/d ln(c + d x)))`, which agrees with
+            // `ln(e (f (a + b x)^p (c + d x)^q)^r)` to fifty digits at the very points it pins.
+            return (s * logarithm - remainder).InnerSimplified;
+        }
+
+        /// <summary>
         /// A power of a constant multiple of a radicand that a logarithm holds under a root,
         /// written over that radicand: <c>acosh(c x)</c> is <c>ln(c x + sqrt(c^2 x^2 - 1))</c>,
         /// and beside it <c>d - c^2 d x^2</c> is <c>-d (c^2 x^2 - 1)</c>. A whole power is the
