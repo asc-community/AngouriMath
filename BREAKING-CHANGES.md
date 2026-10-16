@@ -396,6 +396,26 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### The reciprocal of a binomial in a high power of a sine, cosine or hyperbolic one is split over its roots
+
+**Answers where there were none.** `1/(a + b sin(x)^5)` was declined, and so were twenty more of Rubi's 4.1.7, 4.2.7,
+6.1.7 and 6.2.7. With `s` the function, `n` from 5 to 12, `q` 2 for an even `n` and 1 for an odd one, and `r_k` the
+`n/q`-th roots of `-a/b`, `1/(a + b s^n)` is `(q/(n a))` times the sum of `r_k/(r_k - s^q)`, and each term is an
+arctangent, or an inverse hyperbolic tangent, of the tangent of the argument or of its half
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(a+b*sin(x)^5)".ToEntity().Integrate("x")` | `integral(...)` | 2,110 characters |
+| `"1/(a-b*sin(x)^6)".ToEntity().Integrate("x")` | `integral(...)` | 648 characters |
+| `"1/(a+b*sin(x)^8)".ToEntity().Integrate("x")` | `integral(...)` | 569 characters |
+| `"1/(a+b*cos(x)^5)".ToEntity().Integrate("x")` | `integral(...)` | 2,362 characters |
+| `"1/(a-b*cos(x)^8)".ToEntity().Integrate("x")` | `integral(...)` | 841 characters |
+| `"1/(a+b*sinh(x)^5)".ToEntity().Integrate("x")` | `integral(...)` | 2,678 characters |
+| `"1/(a+b*sinh(x)^6)".ToEntity().Integrate("x")` | `integral(...)` | 1,139 characters |
+| `"1/(a+b*cosh(x)^5)".ToEntity().Integrate("x")` | `integral(...)` | 3,607 characters |
+| `"1/(a-b*cosh(x)^8)".ToEntity().Integrate("x")` | `integral(...)` | 1,441 characters |
+
 ### A whole power of an inverse function of `c + d x^2` is integrated by its recurrence
 
 **Answers where there were none.** `(a + b acos(1 + d x^2))^4` was declined, and so were twenty-five more of Rubi's
