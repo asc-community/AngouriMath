@@ -76,6 +76,20 @@ namespace AngouriMath.Tests.Calculus
             DifferentiatesBack(integrand, ("a", -0.75), ("b", -0.7), ("d", 0.15 * sign));
         }
 
+        // Half an odd power of the inverse hyperbolic cosine, in the error functions of
+        // sqrt(a + b u)/sqrt(2 b).
+        [Theory]
+        [InlineData("(a+b*acosh(1+d*x^2))^(1/2)")]
+        [InlineData("(a+b*acosh(1+d*x^2))^(5/2)")]
+        [InlineData("1/(a+b*acosh(1+d*x^2))^(3/2)")]
+        [InlineData("(a+b*acosh(-1+d*x^2))^(3/2)")]
+        [InlineData("1/(a+b*acosh(-1+d*x^2))^(7/2)")]
+        public void HalfAnOddPowerIsAnsweredAndDifferentiatesBack(string integrand)
+        {
+            DifferentiatesBack(integrand, ("a", 2), ("b", 1.25), ("d", 0.3));
+            DifferentiatesBack(integrand, ("a", 1.5), ("b", 0.7), ("d", 1.5));
+        }
+
         [Fact]
         public void WithNumbersIsAnswered()
             => DifferentiatesBack("asin(1-2*x^2)^2");
