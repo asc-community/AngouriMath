@@ -29072,6 +29072,62 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A function of an inverse sine, cosine or tangent <c>u</c> of something not linear, times
+        /// <c>u'</c> up to a factor that is constant though written with <c>x</c> in it:
+        /// <c>integral G(u) K u' dx = K integral G(t) dt</c> at <c>t = u</c>.
+        /// <c>atan(c x/sqrt(a - c^2 x^2))</c> has the derivative <c>c/sqrt(a - c^2 x^2)</c>, and beside it
+        /// <c>1/sqrt(d - c^2 d x^2/a)</c> is that over <c>c</c> times <c>sqrt(a - c^2 x^2)/sqrt(d - c^2 d x^2/a)</c>,
+        /// which is constant wherever it is real.
+        /// </summary>
+        /// <remarks>
+        /// The factor is taken as constant only where its derivative is zero as a value. Rubi's 5.3.7
+        /// <c>atan(c x/sqrt(a - c^2 x^2))^m/sqrt(d - c^2 d x^2/a)</c> and the like were declined.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAFunctionOfAnInverseTimesItsDerivativeUpToAConstant(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var inverses = expr.Nodes.Where(node => node is Arctanf or Arcsinf or Arccosf && node.ContainsNode(x)
+                && !TreeAnalyzer.TryGetPolyLinear(((Function)node).DirectChildren.First(), x, out _, out _)).Distinct().ToList();
+            foreach (var inverse in inverses)
+            {
+                var t = Variable.CreateUnique(expr, "t_inv");
+                var inT = expr.Substitute(inverse, t);
+                if (!inT.ContainsNode(t))
+                    continue;
+                var derivative = inverse.Differentiate(x).Simplify();
+                if (Functions.PartialFractions.IsZeroAsAValue(derivative))
+                    continue;
+                var (top, bottom) = Functions.SingleQuotient.Of((inT / derivative).InnerSimplified);
+                Entity inTheVariable = Number.Integer.One, constant = Number.Integer.One;
+                foreach (var (side, below) in new[] { (top, false), (bottom, true) })
+                    foreach (var factor in Mulf.LinearChildren(side))
+                    {
+                        if (factor.ContainsNode(t))
+                            inTheVariable = below ? inTheVariable / factor : inTheVariable * factor;
+                        else
+                            constant = below ? constant / factor : constant * factor;
+                    }
+                if (inTheVariable.ContainsNode(x) || !constant.ContainsNode(x) || !HoldsItsValue(constant))
+                    continue;
+                if (Integration.ComputeAsAQuestionOfItsOwn(inTheVariable, t, integrateByParts) is not { } inU)
+                    continue;
+                var answer = (constant * inU.Substitute(t, inverse)).InnerSimplified;
+                if (!Functions.PartialFractions.DerivativeDiffersWhereReal(answer, expr, x))
+                    return answer;
+            }
+            return null;
+
+            // Constant where it takes its value at x = 3/10 at the sampled points, every other symbol
+            // pinned: asking Simplify whether the derivative of the factor vanished took four seconds
+            // on `sqrt(-a e^2/b - e^2 x^2)/(e sqrt(a + b x^2))`, and its square stayed a power of a
+            // quotient of roots. A point it cannot tell at counts against it; the answer is checked too.
+            bool HoldsItsValue(Entity factor)
+                => Functions.PartialFractions.HoldsAtSampledPoints(factor, factor.Substitute(x, Number.Rational.Create(3, 10)), x);
+        }
+
+        /// <summary>
         /// A power of a constant multiple of a radicand that a logarithm holds under a root,
         /// written over that radicand: <c>acosh(c x)</c> is <c>ln(c x + sqrt(c^2 x^2 - 1))</c>,
         /// and beside it <c>d - c^2 d x^2</c> is <c>-d (c^2 x^2 - 1)</c>. A whole power is the
