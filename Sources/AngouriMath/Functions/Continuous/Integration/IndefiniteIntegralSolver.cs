@@ -26017,7 +26017,9 @@ namespace AngouriMath.Functions.Algebra
             // Past what the rules before it answer: they write `1/(a + b cosh(x)^3)` through `e^x` in
             // 655 characters, where this writes 1491. With a power beside it they timed out at n = 3:
             // `sinh(y)^4/(a + b sinh(y)^3)`.
-            if (n > 12 || n < 3 || n < 5 && k == 0 || System.Math.Abs(k) > 24)
+            // And at n = 4 with a power beside it too: they answer `sin(y)^3/(a - b sin(y)^4)` in a tenth
+            // of a second, where asked first this took half of one.
+            if (n > 12 || n < 3 || n < 5 && k == 0 || n == 4 || System.Math.Abs(k) > 24)
                 return null;
             if (!(a + b).Vars.Any() || Functions.PartialFractions.IsZeroAsAValue(a) || Functions.PartialFractions.IsZeroAsAValue(b))
                 return null;
