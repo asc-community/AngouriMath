@@ -9790,7 +9790,9 @@ namespace AngouriMath.Functions.Algebra
             // non-existence is not given.
             if (expr.Vars.Any(symbol => symbol != x) && !Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
                 return null;
-            if (answer.Nodes.Any(node => node is Piecewise) && answer.Simplify().Nodes.Any(node => node == MathS.NaN))
+            // InnerSimplified rather than Simplify: the search ran past a minute on the piecewise answer to
+            // `e^(3 i atan(a + b x))/x^2`, ready and checked in a quarter of a second.
+            if (answer.Nodes.Any(node => node is Piecewise) && answer.InnerSimplified.Nodes.Any(node => node == MathS.NaN))
                 return null;
             return answer;
         }
