@@ -42,6 +42,19 @@ A not-equal written `<>` is read as `not (a = b)`, and printed that way.
 
 ## Unreleased — since 2.5.0
 
+### A high half-odd power of a quadratic beside a power of another is reduced in exact rationals
+
+**Answers where there were none.** Welz's `1/((3 - 2 x + x^2)^(11/2) (1 + x + 2 x^2)^5)` and its `^(21/2)`, `^10` twin
+were declined. The pieces over the first quadratic are a polynomial times its half-odd power, reduced to
+`R Q^(k + 1/2) + K/sqrt(Q)` by one linear solve, which took a numerator of degree 8 and a power of 9/2 at most. With
+numbers for every coefficient the solve is now done in exact rationals, to degree 24 and a power of 25/2
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((3-2*x+x^2)^(11/2)*(1+x+2*x^2)^5)".ToEntity().Integrate("x")` | `integral(...)` | 1,853 characters |
+| `"1/((3-2*x+x^2)^(21/2)*(1+x+2*x^2)^10)".ToEntity().Integrate("x")` | `integral(...)` | 3,475 characters |
+
 ### `|` is divisibility, and was disjunction
 
 **Read this one first.** It is the only entry here that changes what existing input *means* rather
