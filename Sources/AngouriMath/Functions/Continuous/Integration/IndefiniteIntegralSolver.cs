@@ -19793,6 +19793,76 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Two linears to one power that is not whole, as one quadratic:
+        /// <c>integral g L1^p L2^p = (L1^p L2^p/Q^p) integral g Q^p</c> for <c>Q = L1 L2</c>.
+        /// </summary>
+        /// <remarks>
+        /// <c>L1^p L2^p/Q^p</c> is constant wherever it is continuous -- it is 1 where both linears
+        /// are positive and a fixed root of unity on each interval between their roots -- so its
+        /// derivative is zero and the product differentiates back. Rubi's 1.1.1.3
+        /// <c>(e x)^(3/2)/((1 - x)^(1/4) (1 + x)^(1/4))</c> was declined, and
+        /// <c>(2 + 3 x)^4/((1 - 2 x)^(5/2) (3 + 5 x)^(5/2))</c> took forty-five seconds; over
+        /// <c>(1 - x^2)^(1/4)</c> and <c>(3 - x - 10 x^2)^(5/2)</c> they take half a second.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveTwoLinearsToOnePowerAsOneQuadratic(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            // Without a leading `1 *`, which is another spelling to the rules that read the result.
+            static Entity Times(Entity a, Entity b) => a == Number.Integer.One ? b : a * b;
+            static Entity Over(Entity a, Entity b) => a / b;
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            var factors = new List<(Entity Base, Number.Rational Power, bool Below, Entity Factor)>();
+            Entity rest = Number.Integer.One;
+            foreach (var (side, below) in new[] { (numerator, false), (denominator, true) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (factor is Powf(var @base, Number.Rational power) && power is not Number.Integer
+                        && TreeAnalyzer.TryGetPolyLinear(@base, x, out var slope, out _) && !VanishesIdentically(slope))
+                        factors.Add((@base, power, below, factor));
+                    else
+                        rest = below ? Over(rest, factor) : Times(rest, factor);
+                }
+            Number.Rational Signed((Entity Base, Number.Rational Power, bool Below, Entity Factor) f) => f.Below ? (Number.Rational)(-f.Power) : f.Power;
+            for (var i = 0; i < factors.Count; i++)
+                for (var j = i + 1; j < factors.Count; j++)
+                {
+                    var (first, second) = (factors[i], factors[j]);
+                    var power = Signed(first);
+                    if (power != Signed(second)
+                        // Square roots of two linears belong to the rules for Rubi's 1.1.1.6 and
+                        // to the combined radicals, which write the sign as sgn; and with symbols in
+                        // the linears the rules for each of them answer, in a tenth of the time.
+                        || power == Number.Rational.Create(1, 2) || power == Number.Rational.Create(-1, 2)
+                        || (first.Base * second.Base).Vars.Any(symbol => symbol != x)
+                        || !TreeAnalyzer.TryGetPolyLinear(first.Base, x, out var s1, out var c1)
+                        || !TreeAnalyzer.TryGetPolyLinear(second.Base, x, out var s2, out var c2)
+                        // Constant multiples of one linear are one linear, not a quadratic.
+                        || VanishesIdentically((s1 * c2 - s2 * c1).Expand()))
+                        continue;
+                    var quadratic = (first.Base * second.Base).Expand().InnerSimplified;
+                    Entity others = rest;
+                    for (var k = 0; k < factors.Count; k++)
+                        if (k != i && k != j)
+                            others = factors[k].Below ? Over(others, factors[k].Factor) : Times(others, factors[k].Factor);
+                    // Spelled as a quotient where the power is negative, which is how the rules for a
+                    // power of a quadratic read it: as `g Q^(-5/2)` it was as slow as the split form.
+                    var asked = power.IsNegative ? Over(others, MathS.Pow(quadratic, (Number.Rational)(-power))) : Times(others, MathS.Pow(quadratic, power));
+                    if (Integration.ComputeAsAQuestionOfItsOwn(asked, x, integrateByParts) is not { } joined)
+                        return null;
+                    // What is checked is the joined integral against the joined integrand: the constant
+                    // is constant by the argument above, and differentiated it is a sum the sampled
+                    // check does not reduce to zero.
+                    if (!Functions.PartialFractions.DerivativeHoldsAtSampledPoints(joined, asked, x))
+                        return null;
+                    var constant = MathS.Pow(first.Base, power) * MathS.Pow(second.Base, power) / MathS.Pow(quadratic, power);
+                    return constant * joined;
+                }
+            return null;
+        }
+
+        /// <summary>
         /// A power of a linear that is not whole, times a linear, over a whole power of a quadratic,
         /// with the power of the quadratic lowered one at a time:
         /// <c>integral L^m N Q^p = (alpha + beta x) L^(m + 1) Q^(p + 1) + integral L^m W Q^(p + 1)</c>

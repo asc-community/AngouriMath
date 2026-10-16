@@ -665,6 +665,10 @@ namespace AngouriMath.Functions.Algebra
             // over each linear once with the constant that takes in front. First, since it answers
             // the question asked only, and the polynomial term below writes `1/u` as `u^(-1)` and
             // asks that a level down: `1/(e^atanh(a x) (c - c/(a x))^(3/2))` reached it nowhere.
+            // Two linears to one power that is not whole, as one quadratic to that power, before each
+            // linear is written once: `(2 + 3x)^4/((1 - 2x)^(5/2) (3 + 5x)^(5/2))` took forty-five
+            // seconds there, and over `(3 - x - 10x^2)^(5/2)` it takes half of one.
+            if ((answer = IndefiniteIntegralSolver.SolveTwoLinearsToOnePowerAsOneQuadratic(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByWritingEachLinearOnce(expr, x, integrateByParts)) is { }) return answer;
             // A rational function with numbers for coefficients over a denominator past the twelfth
             // degree, by Hermite's reduction before anything searches: nothing below answered one.
