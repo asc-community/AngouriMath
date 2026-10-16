@@ -488,6 +488,21 @@ Rubi's does ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 | `"1/(27*a^3+27*a^2*b*x^2+27*a^2*c*x^3+9*a*b^2*x^4+b^3*x^6)".ToEntity().Integrate("x")` | `integral(...)` | 2,091 characters |
 | `"1/(x^2*(27*a^3+27*a^2*b*x^2+27*a^2*c*x^3+9*a*b^2*x^4+b^3*x^6))".ToEntity().Integrate("x")` | `integral(...)` | 3,820 characters |
 
+### A whole power of the square of a polynomial is integrated over its root
+
+**Answers where there were none.** `1/((d x)^(3/2) (a^2 + 2 a b x^2 + b^2 x^4)^2)` ran past any budget. A whole power
+`P^n` of a polynomial with symbols in it that is the square of a polynomial `R` is now written `R^(2 n)`, which the
+rules for a power of a binomial answer ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((d*x)^(3/2)*(a^2+2*a*b*x^2+b^2*x^4)^2)".ToEntity().Integrate("x")` | `integral(...)` | 965 characters |
+| `"1/((d*x)^(5/2)*(a^2+2*a*b*x^2+b^2*x^4)^2)".ToEntity().Integrate("x")` | `integral(...)` | 892 characters |
+| `"1/((d*x)^(7/2)*(a^2+2*a*b*x^2+b^2*x^4)^2)".ToEntity().Integrate("x")` | `integral(...)` | 1,055 characters |
+| `"1/((d*x)^(3/2)*(a^2+2*a*b*x^2+b^2*x^4)^3)".ToEntity().Integrate("x")` | `integral(...)` | 1,122 characters |
+| `"1/((d*x)^(5/2)*(a^2+2*a*b*x^2+b^2*x^4)^3)".ToEntity().Integrate("x")` | `integral(...)` | 1,044 characters |
+| `"1/((d*x)^(7/2)*(a^2+2*a*b*x^2+b^2*x^4)^3)".ToEntity().Integrate("x")` | `integral(...)` | 1,197 characters |
+
 ### A polynomial of degree six with a large leading coefficient is factored
 
 **Answers where there were none.** The factoring clears a leading coefficient by rescaling the variable, and declined

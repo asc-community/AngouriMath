@@ -676,6 +676,10 @@ namespace AngouriMath.Functions.Algebra
             // A rational function with numbers for coefficients over a denominator past the twelfth
             // degree, by Hermite's reduction before anything searches: nothing below answered one.
             if ((answer = IndefiniteIntegralSolver.SolveAHighDegreeRationalFunctionByHermite(expr, x)) is { }) return answer;
+            // A whole power of the square of a polynomial written out, written over its root: the rules
+            // for a power of a binomial read `(a + b x^2)^4` where `(a^2 + 2 a b x^2 + b^2 x^4)^2` ran
+            // past the budget.
+            if ((answer = IndefiniteIntegralSolver.SolveAWholePowerOfASquareOverItsRoot(expr, x, integrateByParts)) is { }) return answer;
             // A power of a linear beside the derivative of a quadratic over a whole power of it, by
             // parts once, before anything takes the symbolic quadratic apart.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfALinearBesideTheDerivativeOfAQuadraticOverItsPower(expr, x, integrateByParts)) is { }) return answer;
