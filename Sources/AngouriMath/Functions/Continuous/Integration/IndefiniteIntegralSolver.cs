@@ -29129,8 +29129,14 @@ namespace AngouriMath.Functions.Algebra
             if (Derivative(g) is not { } logarithmic)
                 return null;
             var rational = rest / denominator;
-            if (!TreeAnalyzer.TryGetPolynomial(Functions.SingleQuotient.Of(rational).Numerator, x, out _)
+            if (!TreeAnalyzer.TryGetPolynomial(Functions.SingleQuotient.Of(rational).Numerator, x, out var readAbove)
                 || !TreeAnalyzer.TryGetPolynomial(Functions.SingleQuotient.Of(rational).Denominator, x, out _))
+                return null;
+            // A polynomial of degree one or more beside the logarithm is left to by parts as it was: asked
+            // here first, `(f + g x)^4 (A + B ln(e ((a + b x)/(c + d x))^n))` ran out of time on its
+            // remainder, a fifth power over two linears, where it had been answered.
+            if (!Functions.SingleQuotient.Of(rational).Denominator.ContainsNode(x)
+                && readAbove.Keys.Any(key => key.Sign > 0))
                 return null;
             if (Integration.ComputeAsAQuestionOfItsOwn(rational, x, integrateByParts) is not { } s
                 || s.Nodes.Any(node => node is Logf or Arctanf or Piecewise or Providedf))
