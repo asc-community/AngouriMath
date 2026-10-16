@@ -396,6 +396,20 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### A symbolic power of a sine, cosine, secant or cosecant is integrated where it is the derivative of a product
+
+**Answers where there were none.** `sec(c + d x)^m (m - (1 + m) sec(c + d x)^2)` was declined, and so were five more
+of Rubi's 4.1.4.1, 4.2.4.1 and 4.5.4.1. `f^m (alpha + beta f^2)` for `f` a sine, cosine, secant or cosecant of a linear
+is the derivative of `cos sin^(m + 1)`, `sin cos^(m + 1)`, `tan sec^m` or `cot csc^m` where its bracket is a multiple of
+that derivative's, and is now integrated so ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sec(c+d*x)^m*(-q*m/(1+m)+q*sec(c+d*x)^2)".ToEntity().Integrate("x")` | `integral(...)` | 75 characters |
+| `"sec(c+d*x)^m*(A-A*(1+m)*sec(c+d*x)^2/m)".ToEntity().Integrate("x")` | `integral(...)` | 54 characters |
+| `"sec(k+f*x)^m*(m-(1+m)*sec(k+f*x)^2)".ToEntity().Integrate("x")` | `integral(...)` | 54 characters |
+| `"sin(k+f*x)^m*(1+m-(2+m)*sin(k+f*x)^2)".ToEntity().Integrate("x")` | `integral(...)` | 71 characters |
+
 ### A power of a sine or hyperbolic sine over a binomial in a power of it is split over the binomial's roots
 
 **Answers where there were none.** `sinh(c + d x)^4/(a + b sinh(c + d x)^3)` was declined, and so were eight more of
