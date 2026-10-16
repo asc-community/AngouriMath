@@ -29231,8 +29231,12 @@ namespace AngouriMath.Functions.Algebra
             // pinned: asking Simplify whether the derivative of the factor vanished took four seconds
             // on `sqrt(-a e^2/b - e^2 x^2)/(e sqrt(a + b x^2))`, and its square stayed a power of a
             // quotient of roots. A point it cannot tell at counts against it; the answer is checked too.
+            // Or on each side of 0 alone: `sqrt(-b x^2)/(b x)`, which `asin(sqrt(1 + b x^2))` beside
+            // `1/sqrt(1 + b x^2)` leaves, is constant where x keeps its sign and changes with it.
             bool HoldsItsValue(Entity factor)
-                => Functions.PartialFractions.HoldsAtSampledPoints(factor, factor.Substitute(x, Number.Rational.Create(3, 10)), x);
+                => Functions.PartialFractions.HoldsAtSampledPoints(factor, factor.Substitute(x, Number.Rational.Create(3, 10)), x)
+                || Functions.PartialFractions.HoldsAtSampledPoints(factor, factor.Substitute(x, Number.Rational.Create(3, 10)), x, new[] { "0.29", "1.43", "3.17" })
+                   && Functions.PartialFractions.HoldsAtSampledPoints(factor, factor.Substitute(x, Number.Rational.Create(-3, 10)), x, new[] { "-0.61", "-1.37", "-2.9" });
         }
 
         /// <summary>
