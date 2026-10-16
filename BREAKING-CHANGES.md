@@ -401,8 +401,9 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 **Answers where there were none.** `(a + b acos(1 + d x^2))^4` was declined, and so were twenty-five more of Rubi's
 5.1.5, 5.2.5, 7.1.5 and 7.2.5. For `u` the inverse sine or cosine of `c + d x^2` with `c^2 = 1`, or its inverse
 hyperbolic cosine, `integral (a + b u)^n` is `x (a + b u)^n + 2 e n b H (a + b u)^(n - 1)` less
-`4 e b^2 n (n - 1) integral (a + b u)^(n - 2)`, with `H = 1/(d x u')` up to the factor `u'` takes from `x`, and the
-recurrence closes at the first two powers ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+`4 e b^2 n (n - 1) integral (a + b u)^(n - 2)`, where `H u' = 2` and `e` is `1` for the circular functions and `-1` for
+the hyperbolic one. It closes at the first two powers
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
