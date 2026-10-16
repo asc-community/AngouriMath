@@ -19678,6 +19678,121 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of an even quadratic <c>w = p + q x^2</c> over a binomial in it, <c>w^m/(a + b w^n)</c>
+        /// with <c>0 &lt;= m &lt; n</c>, split over the <c>n</c> roots <c>r_j</c> of <c>a + b w^n</c>:
+        /// <c>w^m/(a + b w^n) = -(1/(n a)) sum_j r_j^(m + 1)/(w - r_j)</c>, and each
+        /// <c>1/(p - r_j + q x^2)</c> is integrated in closed form.
+        /// </summary>
+        /// <remarks>
+        /// The residue of <c>w^m/(a + b w^n)</c> at <c>r_j</c> is <c>r_j^m/(n b r_j^(n - 1))</c>, and
+        /// <c>b r_j^n = -a</c> makes it <c>-r_j^(m + 1)/(n a)</c>. The roots are
+        /// <c>(-a/b)^(1/n)</c> times the <c>n</c>-th roots of unity. The one integral <c>1/(P + q x^2)</c> is asked with
+        /// <c>P</c> named, and splits on the sign of <c>P q</c>, which means nothing for a complex
+        /// <c>P</c>: its first arm, the arctangent, differentiates back for any <c>P q != 0</c>, and
+        /// the answer is checked below. Rubi's 1.3.1 <c>(1 - x^2)/(a + b (1 - x^2)^4)</c> was declined.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPowerOfAnEvenQuadraticOverABinomialInIt(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked || !expr.Vars.Any(symbol => symbol != x))
+                return null;
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            Entity constant = Number.Integer.One;
+            Entity? above = null;
+            Entity? below = null;
+            foreach (var (side, under) in new[] { (numerator, false), (denominator, true) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (!factor.ContainsNode(x))
+                        constant = under ? constant / factor : constant * factor;
+                    else if (!under && above is null)
+                        above = factor;
+                    else if (under && below is null)
+                        below = factor;
+                    else
+                        return null;
+                }
+            if (below is null)
+                return null;
+            // a + b w^n: one term in x, a whole power of an even quadratic, beside terms free of it.
+            Entity? inner = null;
+            Entity scale = Number.Integer.One;
+            Entity free = Number.Integer.Zero;
+            var degree = 0;
+            foreach (var term in Sumf.LinearChildren(below))
+            {
+                if (!term.ContainsNode(x))
+                {
+                    free = free + term;
+                    continue;
+                }
+                if (inner is not null)
+                    return null;
+                foreach (var factor in Mulf.LinearChildren(term))
+                {
+                    if (!factor.ContainsNode(x))
+                        scale = scale * factor;
+                    else if (inner is null && factor is Powf(var w, Number.Integer { EInteger: var n }) && n.CompareTo(EInteger.FromInt32(2)) >= 0
+                        && n.CompareTo(EInteger.FromInt32(8)) <= 0)
+                    {
+                        inner = w;
+                        degree = n.ToInt32Unchecked();
+                    }
+                    else
+                        return null;
+                }
+            }
+            if (inner is null || VanishesIdentically(free) || Functions.PartialFractions.HoldsTheImaginaryUnit(expr)
+                || !TreeAnalyzer.TryGetPolyQuadratic(inner, x, out var q, out var linearTerm, out var p)
+                || !VanishesIdentically(linearTerm) || VanishesIdentically(q))
+                return null;
+            // The numerator a constant multiple of w^m, m below n.
+            var power = -1;
+            Entity multiple = Number.Integer.One;
+            if (above is null)
+                power = 0;
+            else
+                for (var m = 1; m < degree && power < 0; m++)
+                {
+                    var wm = MathS.Pow(inner, Number.Integer.Create(m));
+                    if (!TreeAnalyzer.TryGetPolynomial(above, x, out var aboveRead) || !TreeAnalyzer.TryGetPolynomial(wm, x, out var wmRead)
+                        || !aboveRead.TryGetValue(EInteger.FromInt32(2 * m), out var lead) || !wmRead.TryGetValue(EInteger.FromInt32(2 * m), out var wLead))
+                        continue;
+                    var ratio = (lead / wLead).InnerSimplified;
+                    if (!VanishesIdentically((above - ratio * wm).Expand()))
+                        continue;
+                    power = m;
+                    multiple = ratio;
+                }
+            if (power < 0)
+                return null;
+            var a = free.InnerSimplified;
+            var b = scale.InnerSimplified;
+            var namedP = Variable.CreateUnique(expr, "P_b");
+            if (Integration.ComputeAsAQuestionOfItsOwn(1 / (namedP + q * MathS.Pow(x, Number.Integer.Create(2))), x, integrateByParts) is not { } each)
+                return null;
+            // See the remarks: the arctangent arm for every root.
+            each = each.Replace(node => node switch
+            {
+                Piecewise piecewise when piecewise.Cases.Any() => piecewise.Cases.First().Expression,
+                Providedf provided => provided.Expression,
+                _ => node,
+            });
+            var radius = MathS.Pow(Functions.PartialFractions.InLowestTermsOverTheSymbols(-a / b), Number.Rational.Create(1, degree));
+            Entity sum = Number.Integer.Zero;
+            for (var j = 0; j < degree; j++)
+            {
+                // cos + i sin rather than (-1)^(2 j/n): an odd denominator's power of -1 is read as
+                // the real root, and (-1)^(2/3) is 1 (#204).
+                var turn = 2 * MathS.pi * Number.Rational.Create(j, degree);
+                Entity root = j == 0 ? radius : radius * (MathS.Cos(turn) + MathS.i * MathS.Sin(turn)).InnerSimplified;
+                sum = sum + MathS.Pow(root, Number.Integer.Create(power + 1)) * each.Substitute(namedP, p - root);
+            }
+            var answer = (-constant * multiple / (degree * a) * sum).InnerSimplified;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
+
+        /// <summary>
         /// Two linears to one power that is not whole, as one quadratic:
         /// <c>integral g L1^p L2^p = (L1^p L2^p/Q^p) integral g Q^p</c> for <c>Q = L1 L2</c>.
         /// </summary>
