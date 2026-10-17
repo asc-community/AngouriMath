@@ -175,6 +175,20 @@ the working digits, or `MathS.Settings.PrecisionErrorZeroRange` where a caller h
 still that integer, so `e^(-123.456)` is 0 as it was.
 [#1338](https://github.com/asc-community/AngouriMath/issues/1338).
 
+### An arctangent over a power of `d (1 + i c x)` is integrated under the tangent
+
+**Answers where there were none.** `(a + b atan(c x))^2/(d + i c d x)^2` ran out of time, and so did seven more of
+Rubi's 5.3.4. Under `x = tan(u)/c`, `1 + i tan(u)` is `e^(i u)/cos(u)`, so `x^m (a + b atan(c x))^p/(d (1 ± i c x))^k`
+becomes a polynomial in `u` times exponentials and trigonometric functions, and is now integrated so
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a+b*atan(c*x))^2/(d+i*c*d*x)^2".ToEntity().Integrate("x")` | `integral(...)` | 267 characters |
+| `"x*(a+b*atan(c*x))^2/(d+i*c*d*x)^3".ToEntity().Integrate("x")` | `integral(...)` | 671 characters |
+| `"(a+b*atan(c*x))^2/(1+i*c*x)^4".ToEntity().Integrate("x")` | `integral(...)` | 731 characters |
+| `"(a+b*atan(c*x))^3/(d+i*c*d*x)^4".ToEntity().Integrate("x")` | `integral(...)` | 1,202 characters |
+
 ### A constant or an exponential evaluated at a higher precision than before has all of its digits
 
 **More digits where there were a hundred.** `pi`, `e` and an exponential, evaluated once at one precision, went on
