@@ -135,14 +135,19 @@ namespace AngouriMath.Tests
         {
             var tasks = new Task[threadCount];
             for (var i = 0; i < threadCount; i++)
+            {
+                // Each task's own index: the lambda read the loop's variable, which had usually reached
+                // threadCount by the time a task ran, so every thread was asked the same thing.
+                var index = i;
                 tasks[i] = Task.Run(
                     () =>
                     {
                         var iterCountLocal = iterCount;
                         for (var j = 0; j < iterCountLocal; j++)
-                            action(i);
+                            action(index);
                     }
                 );
+            }
             Task.WaitAll(tasks);
         }
     }
