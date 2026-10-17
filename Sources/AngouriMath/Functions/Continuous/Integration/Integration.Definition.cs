@@ -667,6 +667,13 @@ namespace AngouriMath.Functions.Algebra
             // An arctangent over a power of d (1 +- i c x), under x = tan(u)/c, where 1 + i tan(u) is
             // e^(i u)/cos(u): the rules below ran out of time on `(a + b atan(c x))^2/(d + i c d x)^2`.
             if ((answer = IndefiniteIntegralSolver.SolveAnArctangentOverAPowerOfOnePlusICXUnderTheTangent(expr, x, integrateByParts)) is { }) return answer;
+            // An exponential of i times an inverse trigonometric function written algebraically, at the
+            // question asked, before the rules that spent the budget: `e^(3 i atan(a + b x))/x^2` ran out of
+            // time where, rewritten, it is answered in half a second. It is asked again in its place below.
+            if (AnsweringTheQuestionAsked && (answer = IndefiniteIntegralSolver.SolveByWritingAnExponentialOfAnInverseAlgebraically(expr, x, integrateByParts)) is { }) return answer;
+            // A polynomial over a symbolic quartic that splits into two quadratics in a hidden variable,
+            // palindromic or even after a shift: the rules below spent seconds declining both.
+            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialOverASymbolicQuarticThatSplitsIntoTwoQuadratics(expr, x, integrateByParts)) is { }) return answer;
             // A symbolic power of a sine, cosine, secant or cosecant times `alpha + beta f^2`, where it is
             // the derivative of `cos sin^(m + 1)`, `sin cos^(m + 1)`, `tan sec^m` or `cot csc^m`.
             if ((answer = IndefiniteIntegralSolver.SolveASymbolicPowerOfATrigonometricFunctionAsTheDerivativeOfAProduct(expr, x)) is { }) return answer;
