@@ -42,6 +42,35 @@ A not-equal written `<>` is read as `not (a = b)`, and printed that way.
 
 ## Unreleased — since 2.5.0
 
+### A high half-odd power of a quadratic beside a power of another is reduced in exact rationals
+
+**Answers where there were none.** Welz's `1/((3 - 2 x + x^2)^(11/2) (1 + x + 2 x^2)^5)` and its `^(21/2)`, `^10` twin
+were declined. The pieces over the first quadratic are a polynomial times its half-odd power, reduced to
+`R Q^(k + 1/2) + K/sqrt(Q)` by one linear solve, which took a numerator of degree 8 and a power of 9/2 at most. With
+numbers for every coefficient the solve is now done in exact rationals, to degree 24 and a power of 25/2
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((3-2*x+x^2)^(11/2)*(1+x+2*x^2)^5)".ToEntity().Integrate("x")` | `integral(...)` | 1,853 characters |
+| `"1/((3-2*x+x^2)^(21/2)*(1+x+2*x^2)^10)".ToEntity().Integrate("x")` | `integral(...)` | 3,475 characters |
+
+### A polynomial over a symbolic quartic that is two quadratics in a hidden variable is split over them
+
+**Answers where there were none.** `1/(a + b x + c x^2 + b x^3 + a x^4)` was declined, and so were Rubi's 1.3.1
+`(A + B x + C x^2 + D x^3)/(a + b x + c x^2 + b x^3 + a x^4)` and `1/(4 a c + 4 c^2 x^2 + 4 c d x^3 + d^2 x^4)`. A
+palindromic quartic is `x^2` times a quadratic in `x + 1/x`, and a quartic whose odd terms vanish under
+`y = x + c/d` is a quadratic in `y^2`; either is the product of two quadratics in x whose
+coefficients are the roots of that quadratic, and the polynomial over it is split over the two
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(a+b*x+c*x^2+b*x^3+a*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 1,620 characters |
+| `"(A+B*x+C*x^2+D*x^3)/(a+b*x+c*x^2+b*x^3+a*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 3,416 characters |
+| `"1/(4*a*c+4*c^2*x^2+4*c*d*x^3+d^2*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 3,920 characters |
+| `"x/(4*a*c+4*c^2*x^2+4*c*d*x^3+d^2*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 2,315 characters |
+
 ### `|` is divisibility, and was disjunction
 
 **Read this one first.** It is the only entry here that changes what existing input *means* rather
@@ -74,6 +103,18 @@ since semantic versioning admits it.
 Measured on the suite: **7 of 8,525 tests** referenced the old reading — five boolean-solver inputs
 written `A | B`, and two that existed to record this spelling as at risk.
 
+### A power of x is taken out of a bracket to find the derivative of a product of powers
+
+**Answers where there were none.** `x^(2n) (c + d x)^n (2 c x + 3 d x^2)`, Rubi's 1.3.1, was declined. A bracket that
+is a polynomial with a power of x in every term now has that power taken out to join the powers it multiplies, and the
+integrand is then `x^(2n + 1) (c + d x)^n (2 c + 3 d x)`, the derivative of `x^(2n + 2) (c + d x)^(n + 1)/(n + 1)`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^(2*n)*(c+d*x)^n*(2*c*x+3*d*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 61 characters |
+| `"x^(n-1)*(c+d*x^2)^n*(c*x+3*d*x^3)".ToEntity().Integrate("x")` | `integral(...)` | 65 characters |
+
 ### The last digits of an evaluated sine, cosine, tangent, arcsine or arctangent
 
 **Silent, and in the hundredth digit.** `EvalNumerical` at the default hundred digits gives the
@@ -94,6 +135,22 @@ Of the twenty values pinned in `NumericDigits`, seventeen moved towards the true
 and the complex arcsine's real part moved two units away. A caller comparing a hundred-digit
 result to a pinned string will see the last digits differ; a caller comparing to a tolerance
 will not. [#1338](https://github.com/asc-community/AngouriMath/issues/1338).
+
+### A function of an inverse sine of `sqrt(1 + b x^2)` beside its derivative keeps the sign of x
+
+**A wrong answer, and answers where there were none.** `1/(asin(sqrt(1 + b x^2)) sqrt(1 + b x^2))` was
+`sqrt(-b) ln(b asin(sqrt(1 + b x^2)))/b`, whose derivative is the integrand times the sign of x, so it was wrong for
+every negative x. `asin(sqrt(1 + b x^2))^n/sqrt(1 + b x^2)` was declined, and so were the arccosine twins of both
+(Rubi's 5.1.5 and 5.2.5). The ratio of the integrand to the inverse's derivative, `sqrt(-b x^2)/(b x)`, is constant
+on each side of 0 and changes sign across it. It is now compared on each side with that side's value, where it was
+compared everywhere with its value at one positive point
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(asin(sqrt(1+b*x^2))*sqrt(1+b*x^2))".ToEntity().Integrate("x")` | `sqrt(-b) * ln(b * arcsin(sqrt(1 + b * x ^ 2))) / b + C`, wrong for x < 0 | 120 characters, `sqrt(1 - (1 + b x^2))/(b x) ln(arcsin(sqrt(1 + b x^2)))` |
+| `"asin(sqrt(1+b*x^2))^n/sqrt(1+b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 136 characters |
+| `"acos(sqrt(1+b*x^2))^n/sqrt(1+b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 137 characters |
 
 ### A rational evaluated at a higher precision than before has all of its digits
 
@@ -133,6 +190,96 @@ comparing to a tolerance will not. A value within ten to the minus fifty of an i
 the working digits, or `MathS.Settings.PrecisionErrorZeroRange` where a caller has set it -- is
 still that integer, so `e^(-123.456)` is 0 as it was.
 [#1338](https://github.com/asc-community/AngouriMath/issues/1338).
+
+### An arctangent over a power of `d (1 + i c x)` is integrated under the tangent
+
+**Answers where there were none.** `(a + b atan(c x))^2/(d + i c d x)^2` ran out of time, and so did seven more of
+Rubi's 5.3.4. Under `x = tan(u)/c`, `1 + i tan(u)` is `e^(i u)/cos(u)`, so `x^m (a + b atan(c x))^p/(d (1 ± i c x))^k`
+becomes a polynomial in `u` times exponentials and trigonometric functions, and is now integrated so
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a+b*atan(c*x))^2/(d+i*c*d*x)^2".ToEntity().Integrate("x")` | `integral(...)` | 267 characters |
+| `"x*(a+b*atan(c*x))^2/(d+i*c*d*x)^3".ToEntity().Integrate("x")` | `integral(...)` | 671 characters |
+| `"(a+b*atan(c*x))^2/(1+i*c*x)^4".ToEntity().Integrate("x")` | `integral(...)` | 731 characters |
+| `"(a+b*atan(c*x))^3/(d+i*c*d*x)^4".ToEntity().Integrate("x")` | `integral(...)` | 1,202 characters |
+
+### A constant or an exponential evaluated at a higher precision than before has all of its digits
+
+**More digits where there were a hundred.** `pi`, `e` and an exponential, evaluated once at one precision, went on
+answering in that precision under a higher one: in 2.5.0 `pi` read under 300 digits after a read under 100 had 100
+digits, and `e^(1/3)` the same. Each is now worked out in the precision asked for
+([#1367](https://github.com/asc-community/AngouriMath/issues/1367), #1368).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `MathS.pi.Evaled` under 300 digits, after a read under 100 | 100 digits | 300 digits |
+| `"e^(1/3)".Evaled` under 300 digits, after a read under 100 | 100 digits | 300 digits |
+
+### An exponential of i times an arctangent of a linear is written algebraically before the other rules
+
+**Answers where there were none.** `e^(3 i atan(a + b x))/x^2` ran out of time, and so did fifteen more of Rubi's
+5.3.6, all `e^(n i atan(a + b x))` over a power of x or `e^(n i atan(a x))` beside a high power of `c + a^2 c x^2`.
+The exponential is now written as powers of linears, `(1 + i L)^(n/2) (1 - i L)^(-n/2)`, at the question asked, ahead
+of the rules that spent the budget, and for every `n` beside a pole at 0 where the argument has a constant term. A
+piecewise answer is checked for `NaN` without `Simplify`, whose search on one of them ran past a minute
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(3*i*atan(a+b*x))/x^2".ToEntity().Integrate("x")` | `integral(...)` | 1,945 characters |
+| `"1/(e^(3*i*atan(a+b*x))*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 8,542 characters |
+| `"e^(3*i*atan(a+b*x))/x^4".ToEntity().Integrate("x")` | `integral(...)` | 35,041 characters |
+| `"e^(6*i*atan(a*x))*x^2/(c+a^2*c*x^2)^19".ToEntity().Integrate("x")` | `integral(...)` | 233 characters |
+
+### A string parsed once is parsed again under the other downcasting setting
+
+**A different number.** `MathS.FromString` remembered what it had parsed, keyed on the parsing setting alone. A string
+parsed with downcasting on came back with its exact numbers under downcasting off, and the other way round. The
+cache is now keyed on the downcasting setting too
+([#1513](https://github.com/asc-community/AngouriMath/issues/1513), #1517).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `MathS.FromString("1/3").Evaled` under downcasting off, after the same parse with it on | `1/3` | `0.3333…` (one hundred digits) |
+
+### A polynomial in a sine over a power of a binomial in it is written in powers of the binomial
+
+**Answers where there were none.** `(A + B cos(c + d x) + C cos(c + d x)^2)/(a + b cos(c + d x))^4` ran out of time, and
+so did twelve more of Rubi's 4.1.3.1, 4.2.3.1 and 4.2.4.2. `P(f)/(a + b f)^n`, for `f` a sine or cosine, is now
+written in powers of `u = a + b f`, with coefficients `c_j = sum_i p_i C(i, j) (-a)^(i - j)/b^i`, and each power
+`u^(j - n)` is integrated on its own
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(A+B*cos(c+d*x)+C*cos(c+d*x)^2)/(a+b*cos(c+d*x))^4".ToEntity().Integrate("x")` | `integral(...)` | 9,003 characters |
+| `"(A+B*sin(e+f*x))*(c+d*sin(e+f*x))^3/(a+a*sin(e+f*x))^3".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
+| `"(a+b*sin(e+f*x))^2*(A+B*sin(e+f*x))/(c+d*sin(e+f*x))^2".ToEntity().Integrate("x")` | `integral(...)` | 3,337 characters |
+| `"cos(c+d*x)^4*(A+C*cos(c+d*x)^2)/(a+b*cos(c+d*x))^4".ToEntity().Integrate("x")` | `integral(...)` | 10,859 characters |
+
+### A difference of a negated term is printed as a sum
+
+**A printed form.** A solution and a difference were printed with the sign of a negative factor left inside:
+`b - x = 0` solved for `x` printed `-b / (-1)`, and LaTeX printed `1/100 - (-4) x` as `\frac{1}{100}--4 \cdot x`, which does
+not read back. Both are simplified to the sum now (#1397).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"b - x = 0".Solve("x")` | `{ -b / (-1) }` | `{ b }` |
+| `"1/100 - (-4)*x".ToEntity().Latexize()` | `\frac{1}{100}--4 \cdot x` | `\frac{1}{100}+4 \cdot x` |
+
+### A complex number divided by one beyond `10^50` in modulus is not zero
+
+**A wrong answer.** With the downcasting off, a complex division took the reciprocal of the divisor's squared modulus
+first, and beyond `10^50` that underflowed the context to zero, so `(1.98e119 + i)/(3.39e125 + i)` was `0`. It is
+divided by Smith's method now, which scales by the larger part and squares nothing
+([#1372](https://github.com/asc-community/AngouriMath/issues/1372), #1374).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `(1.98e119 + i)/(3.39e125 + i)` with the downcasting off | `0` | `5.8407…e-7` |
 
 ### A piecewise is defined where the case it takes is
 
@@ -2903,6 +3050,18 @@ read as though it were not.
 Each of these was checked by differentiating it back with the parameters pinned and comparing at
 four points. The Rubi sample is unchanged at 231 of 463 with no wrong answers, so nothing that
 already had an antiderivative moves.
+
+### `NaN` a fifth time, from an exponential times a cosine with a complex rate
+
+**A wrong answer.** `e^(-i x) cos(x)` was answered `NaN + C`: the closed form `P(x) e^(a x) cos(b x)` divides by
+`a^2 + b^2`, which is `(-i)^2 + 1 = 0` here, the resonance that leaves a term linear in `x`. It is integrated through the
+exponential form now, and so is `e^(-i arctan(a x))/(c + a^2 c x^2)^(3/2)`, which comes to it
+(PR [#1380](https://github.com/asc-community/AngouriMath/pull/1380)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(-i*x)*cos(x)".Integrate("x")` | `NaN + C` | `x/2 + e^(-2 i x)/(-4 i)` up to form |
+| `"e^(-i*atan(a*x))/(c+a^2*c*x^2)^(3/2)".Integrate("x")` | `integral(...)` | an answer |
 
 ### `NaN` a fourth time, from an exponent that is `-1` only as a value
 
