@@ -664,6 +664,9 @@ namespace AngouriMath.Functions.Algebra
             // A sum free of the variable that comes to a number multiplied out, as that number,
             // before anything reads a coefficient or an exponent in it: `2 + 2 a - 2 (1 + a)`.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingConstantSumsToTheirNumbers(expr, x, integrateByParts)) is { }) return answer;
+            // A polynomial over a symbolic quartic that splits into two quadratics in a hidden variable,
+            // palindromic or even after a shift: the rules below spent seconds declining both.
+            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialOverASymbolicQuarticThatSplitsIntoTwoQuadratics(expr, x, integrateByParts)) is { }) return answer;
             // A symbolic power of a sine, cosine, secant or cosecant times `alpha + beta f^2`, where it is
             // the derivative of `cos sin^(m + 1)`, `sin cos^(m + 1)`, `tan sec^m` or `cot csc^m`.
             if ((answer = IndefiniteIntegralSolver.SolveASymbolicPowerOfATrigonometricFunctionAsTheDerivativeOfAProduct(expr, x)) is { }) return answer;

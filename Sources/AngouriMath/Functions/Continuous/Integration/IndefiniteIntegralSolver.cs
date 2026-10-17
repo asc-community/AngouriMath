@@ -29303,6 +29303,93 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A polynomial over a quartic with symbols in it that splits into two quadratics in a hidden
+        /// variable: a palindromic one, <c>c x^4 + b x^3 + e x^2 + b x + c</c>, is
+        /// <c>c (x^2 - p x + 1)(x^2 - q x + 1)</c> with <c>p</c> and <c>q</c> the roots of
+        /// <c>c w^2 + b w + e - 2 c</c>, since it is <c>x^2</c> times a quadratic in <c>w = x + 1/x</c>;
+        /// and one whose odd terms vanish under <c>y = x + c3/(4 c4)</c> is <c>c4 (y^2 - p)(y^2 - q)</c>.
+        /// The integral over the factored quartic is asked with <c>p</c> and <c>q</c> named, and they are
+        /// written back.
+        /// </summary>
+        /// <remarks>
+        /// The integral over two real quadratics splits on the signs of their discriminants, which mean
+        /// nothing for roots that may be complex; the first arm differentiates back for any of them, and
+        /// the answer is checked. A quartic already even is the biquadratic rule's. Rubi's 1.3.1
+        /// <c>(A + B x + C x^2 + D x^3)/(a + b x + c x^2 + b x^3 + a x^4)</c> and
+        /// <c>1/(4 a c + 4 c^2 x^2 + 4 c d x^3 + d^2 x^4)</c> were declined.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPolynomialOverASymbolicQuarticThatSplitsIntoTwoQuadratics(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked || !TryReadAsQuotient(expr, out var numerator, out var denominator)
+                || !denominator.Vars.Any(v => v != x))
+                return null;
+            // A quartic written as one sum only: the factored one asked below is palindromic again once
+            // multiplied out, and read as one the rule split it again, four levels deep.
+            if (Mulf.LinearChildren(denominator).Count(factor => factor.ContainsNode(x)) != 1
+                || Mulf.LinearChildren(denominator).First(factor => factor.ContainsNode(x)) is not (Sumf or Minusf))
+                return null;
+            if (!TreeAnalyzer.TryGetPolynomial(denominator, x, out var read) || read.Keys.Any(key => key.Sign < 0 || key.CompareTo(EInteger.FromInt32(4)) > 0)
+                || !read.ContainsKey(EInteger.FromInt32(4)) || read.Values.Any(value => value.ContainsNode(x))
+                || !TreeAnalyzer.TryGetPolynomial(numerator, x, out var readAbove) || readAbove.Values.Any(value => value.ContainsNode(x)))
+                return null;
+            Entity At(int k) => read.TryGetValue(EInteger.FromInt32(k), out var value) ? value : Number.Integer.Zero;
+            var (c0, c1, c2, c3, c4) = (At(0), At(1), At(2), At(3), At(4));
+            if (VanishesIdentically(c1.Expand()) && VanishesIdentically(c3.Expand()))
+                return null;
+            var p = Variable.CreateUnique(expr, "p_quart");
+            var q = Variable.CreateUnique(expr + p, "q_quart");
+            Entity first, second, pValue, qValue;
+            if (VanishesIdentically((c0 - c4).Expand()) && VanishesIdentically((c1 - c3).Expand()))
+            {
+                var discriminant = (c3 * c3 - 4 * c4 * (c2 - 2 * c4)).Expand().InnerSimplified;
+                if (Functions.PartialFractions.IsZeroAsAValue(discriminant))
+                    return null;
+                pValue = (-c3 + MathS.Sqrt(discriminant)) / (2 * c4);
+                qValue = (-c3 - MathS.Sqrt(discriminant)) / (2 * c4);
+                (first, second) = (MathS.Sqr(x) - p * x + 1, MathS.Sqr(x) - q * x + 1);
+            }
+            else
+            {
+                var shift = Functions.PartialFractions.InLowestTermsOverTheSymbols(c3 / (4 * c4));
+                // The coefficients in y = x + s by the binomial theorem, d_k = sum_j c_j C(j, k) (-s)^(j - k),
+                // each in lowest terms over the symbols: the shift puts `c/d` into them, and `d^2 (c/d)^3`
+                // beside `c^3/d` is not seen to cancel as written.
+                var coefficients = new[] { c0, c1, c2, c3, c4 };
+                int[,] binomial = { { 1, 0, 0, 0, 0 }, { 1, 1, 0, 0, 0 }, { 1, 2, 1, 0, 0 }, { 1, 3, 3, 1, 0 }, { 1, 4, 6, 4, 1 } };
+                Entity Shifted(int k)
+                {
+                    Entity sum = Number.Integer.Zero;
+                    for (var j = k; j <= 4; j++)
+                        sum += coefficients[j] * binomial[j, k] * MathS.Pow(-shift, Number.Integer.Create(j - k));
+                    return Functions.PartialFractions.InLowestTermsOverTheSymbols(sum);
+                }
+                if (!Functions.PartialFractions.IsZeroAsAValue(Shifted(1)) || !Functions.PartialFractions.IsZeroAsAValue(Shifted(3)))
+                    return null;
+                var e2 = Functions.PartialFractions.InLowestTermsOverTheSymbols(Shifted(2) / c4);
+                var e0 = Functions.PartialFractions.InLowestTermsOverTheSymbols(Shifted(0) / c4);
+                var discriminant = (e2 * e2 - 4 * e0).Expand().InnerSimplified;
+                if (Functions.PartialFractions.IsZeroAsAValue(discriminant))
+                    return null;
+                pValue = (-e2 + MathS.Sqrt(discriminant)) / 2;
+                qValue = (-e2 - MathS.Sqrt(discriminant)) / 2;
+                (first, second) = (MathS.Sqr(x + shift) - p, MathS.Sqr(x + shift) - q);
+            }
+            if (Integration.ComputeAsAQuestionOfItsOwn(numerator / (c4 * first * second), x, integrateByParts) is not { } inPQ)
+                return null;
+            inPQ = inPQ.Replace(node => node switch
+            {
+                Piecewise piecewise when piecewise.Cases.Any() => piecewise.Cases.First().Expression,
+                Providedf provided => provided.Expression,
+                _ => node,
+            });
+            // The roots written in without simplifying after: simplified, the answer to
+            // `1/(a + b x + c x^2 + b x^3 + a x^4)` multiplied out to 370,884 characters from about one thousand.
+            var answer = inPQ.InnerSimplified.Substitute(p, pValue).Substitute(q, qValue);
+            return Functions.PartialFractions.DerivativeDiffersWhereReal(answer, expr, x) ? null : answer;
+        }
+
+        /// <summary>
         /// A rational function <c>R</c> times the logarithm of <c>G</c>, a product of powers of linears
         /// nested in powers and constants, by parts: <c>integral R ln(G) = S ln(G) - integral S G'/G</c>
         /// with <c>S = integral R</c> rational, and <c>G'/G</c> read off <c>G</c> as it is written --

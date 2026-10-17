@@ -55,6 +55,22 @@ numbers for every coefficient the solve is now done in exact rationals, to degre
 | `"1/((3-2*x+x^2)^(11/2)*(1+x+2*x^2)^5)".ToEntity().Integrate("x")` | `integral(...)` | 1,853 characters |
 | `"1/((3-2*x+x^2)^(21/2)*(1+x+2*x^2)^10)".ToEntity().Integrate("x")` | `integral(...)` | 3,475 characters |
 
+### A polynomial over a symbolic quartic that is two quadratics in a hidden variable is split over them
+
+**Answers where there were none.** `1/(a + b x + c x^2 + b x^3 + a x^4)` was declined, and so were Rubi's 1.3.1
+`(A + B x + C x^2 + D x^3)/(a + b x + c x^2 + b x^3 + a x^4)` and `1/(4 a c + 4 c^2 x^2 + 4 c d x^3 + d^2 x^4)`. A
+palindromic quartic is `x^2` times a quadratic in `x + 1/x`, and a quartic whose odd terms vanish under
+`y = x + c/d` is a quadratic in `y^2`; either is the product of two quadratics in x whose
+coefficients are the roots of that quadratic, and the polynomial over it is split over the two
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(a+b*x+c*x^2+b*x^3+a*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 1,620 characters |
+| `"(A+B*x+C*x^2+D*x^3)/(a+b*x+c*x^2+b*x^3+a*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 3,416 characters |
+| `"1/(4*a*c+4*c^2*x^2+4*c*d*x^3+d^2*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 3,920 characters |
+| `"x/(4*a*c+4*c^2*x^2+4*c*d*x^3+d^2*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 2,315 characters |
+
 ### `|` is divisibility, and was disjunction
 
 **Read this one first.** It is the only entry here that changes what existing input *means* rather
