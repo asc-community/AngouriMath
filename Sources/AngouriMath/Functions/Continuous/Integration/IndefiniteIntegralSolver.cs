@@ -29570,6 +29570,70 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>x^m (a + b atan(c x))^p</c> over a power of <c>d (1 +- i c x)</c>, under <c>x = tan(u)/c</c>, where
+        /// <c>1 + i tan(u)</c> is <c>e^(i u)/cos(u)</c>: the integrand in <c>u</c> is
+        /// <c>(a + b u)^p (tan(u)/c)^m d^(-k) e^(-+i k u) cos(u)^k/(c cos(u)^2)</c>, a polynomial in <c>u</c> times
+        /// exponentials and trigonometric functions, and the answer is written back at <c>u = atan(c x)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <c>1 + i tan(u) = (cos(u) + i sin(u))/cos(u)</c> holds for every <c>u</c> where the tangent is defined,
+        /// and <c>atan(c x)</c> takes each real <c>x</c> into <c>(-pi/2, pi/2)</c>, where it is. Rubi's 5.3.4
+        /// <c>(a + b atan(c x))^2/(d + i c d x)^2</c> and seven like it ran out of time.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAnArctangentOverAPowerOfOnePlusICXUnderTheTangent(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            Arctanf? arctangent = null;
+            Entity? rate = null;
+            foreach (var node in numerator.Nodes)
+                if (node is Arctanf found && found.ContainsNode(x))
+                {
+                    if (arctangent is not null && arctangent != found)
+                        return null;
+                    if (!TreeAnalyzer.TryGetPolyLinear(found.Argument, x, out var slope, out var offset) || !Functions.PartialFractions.IsZeroAsAValue(offset))
+                        return null;
+                    (arctangent, rate) = (found, slope);
+                }
+            if (arctangent is null || rate is null)
+                return null;
+            // Below the bar one power of a linear d (1 + s i c x), s = +-1, and nothing else with x.
+            Entity? linear = null;
+            var k = 0;
+            Entity constant = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x)) { constant *= factor; continue; }
+                var (b, e) = factor is Powf(var pb, Number.Integer { EInteger: var pe }) && pe.Sign > 0 && pe.CanFitInInt32() ? (pb, pe.ToInt32Unchecked()) : (factor, 1);
+                if (linear is not null)
+                    return null;
+                (linear, k) = (b, e);
+            }
+            if (linear is null || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var lSlope, out var lOffset) || Functions.PartialFractions.IsZeroAsAValue(lOffset))
+                return null;
+            // The ratio of slope to constant is +-i c.
+            var ratio = (lSlope / (lOffset * MathS.i * rate)).InnerSimplified;
+            int sign;
+            if (Functions.PartialFractions.IsZeroAsAValue((ratio - 1).InnerSimplified)) sign = 1;
+            else if (Functions.PartialFractions.IsZeroAsAValue((ratio + 1).InnerSimplified)) sign = -1;
+            else return null;
+            var u = Variable.CreateUnique(expr, "u_atan");
+            // Above the bar: a power of x and the function of the arctangent.
+            var above = numerator.Substitute(arctangent, u);
+            if (above.Substitute(x, Number.Integer.Zero).ContainsNode(x))
+                return null;
+            var inU = above.Substitute(x, MathS.Tan(u) / rate)
+                * MathS.Pow(lOffset, Number.Integer.Create(-k)) * MathS.Pow(MathS.e, -sign * k * MathS.i * u) * (k == 2 ? Number.Integer.One : MathS.Pow(MathS.Cos(u), Number.Integer.Create(k - 2)))
+                / (constant * rate);
+            if (Integration.ComputeAsAQuestionOfItsOwn(inU.InnerSimplified, u, integrateByParts) is not { } integrated)
+                return null;
+            var answer = integrated.Substitute(u, arctangent).InnerSimplified;
+            return Functions.PartialFractions.DerivativeDiffersWhereReal(answer, expr, x) ? null : answer;
+        }
+
+        /// <summary>
         /// A power of a constant multiple of a radicand that a logarithm holds under a root,
         /// written over that radicand: <c>acosh(c x)</c> is <c>ln(c x + sqrt(c^2 x^2 - 1))</c>,
         /// and beside it <c>d - c^2 d x^2</c> is <c>-d (c^2 x^2 - 1)</c>. A whole power is the
