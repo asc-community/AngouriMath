@@ -1223,6 +1223,11 @@ namespace AngouriMath.Functions.Algebra
             if (expr is Entity.Sumf or Entity.Minusf
                 && (answer = IndefiniteIntegralSolver.SolveByGatheringACommonPolynomialFactorOfASum(expr, x, integrateByParts)) is { })
                 return answer;
+            // A cubic below the bar with symbolic coefficients and a repeated root, written over
+            // its roots: `1/(x^3 - 3b x + 2b^(3/2))` is `1/((x - sqrt(b))^2 (x + 2 sqrt(b)))`.
+            if (expr is Entity.Divf or Entity.Powf
+                && (answer = IndefiniteIntegralSolver.SolveACubicWithARepeatedRootOverItsRoots(expr, x, integrateByParts)) is { })
+                return answer;
             // A power of the secant that is not whole beside the cosine, written as the cosine's
             // with the constant that takes in front, which the substitutions below read.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAPowerOfTheSecantInTheCosine(expr, x, integrateByParts)) is { }) return answer;
