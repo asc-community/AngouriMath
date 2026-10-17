@@ -9691,6 +9691,21 @@ namespace AngouriMath.Functions.Algebra
         /// </summary>
         internal static Entity? SolveByWritingAnExponentialOfAnInverseAlgebraically(Entity expr, Entity.Variable x, bool integrateByParts)
         {
+            // An exponential below the bar taken above it with its exponent negated, so that a
+            // negative multiple is read as one: `x^2/(e^(i arctan(a x)) (c + a^2 c x^2)^(3/2))` is
+            // `x^2 e^(-i arctan(a x))/(c + a^2 c x^2)^(3/2)`, which is written over the conjugate.
+            if (expr is Divf(var overIt, var underIt) && Mulf.LinearChildren(underIt).Any(IsAnExponentialOfAnInverse))
+            {
+                Entity kept = Number.Integer.One, raised = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(underIt))
+                    if (IsAnExponentialOfAnInverse(factor) && factor is Powf(_, var power))
+                        raised *= MathS.Pow(MathS.e, -power);
+                    else
+                        kept *= factor;
+                expr = overIt * raised / kept;
+            }
+            bool IsAnExponentialOfAnInverse(Entity node) => node is Powf(var e0, var power0) && e0 == MathS.e && power0.ContainsNode(x)
+                && power0.Nodes.Any(inner => inner is Arctanf or Arcsinf or Arccosf);
             var rewrote = false;
             // A power of a quadratic in x outside the exponentials, which `(1 + L^2)^(-n/2)` meets.
             var quadraticElsewhere = expr.Nodes.Any(node => node is Powf(var q, _) && q.ContainsNode(x) && !q.Nodes.Any(inner => inner is Arctanf or Arcsinf or Arccosf)
@@ -9759,6 +9774,16 @@ namespace AngouriMath.Functions.Algebra
                     var halfPower = Number.Rational.Create(n.ERational.Negate().Divide(2));
                     if (n is not Number.Integer)
                         return MathS.Pow((1 + MathS.i * argument) / (1 - MathS.i * argument), Number.Rational.Create(n.ERational.Divide(2)));
+                    // A negative n over the conjugate, `(1 + i L)^(-1)` being `(1 - i L)/(1 + L^2)`:
+                    // the linear with `i` in it is then above the bar, where the rational rules read
+                    // it, and `x^2/((1 + i a x)(1 + a^2 x^2))` beside it was left unevaluated where
+                    // `x^2 (1 - i a x)/(1 + a^2 x^2)^2` is answered.
+                    if (n is Number.Integer { IsNegative: true })
+                    {
+                        var conjugatePower = Number.Integer.Create(((Number.Integer)n).EInteger.Negate());
+                        return (conjugatePower == Number.Integer.One ? 1 - MathS.i * argument : MathS.Pow(1 - MathS.i * argument, conjugatePower))
+                            * MathS.Pow(1 + MathS.Sqr(argument), Number.Rational.Create(n.ERational.Divide(2)));
+                    }
                     return (n == Number.Integer.One ? 1 + MathS.i * argument : MathS.Pow(1 + MathS.i * argument, n)) * MathS.Pow(1 + MathS.Sqr(argument), halfPower);
                 }
                 Entity unit = inverse is Arcsinf
