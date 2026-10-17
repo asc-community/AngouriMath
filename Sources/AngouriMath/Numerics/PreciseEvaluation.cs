@@ -411,7 +411,32 @@ namespace AngouriMath.Numerics
             return value;
         }
 
+        /// <remarks>
+        /// The arithmetic is what nests deep, so it is kept apart from the other arms, whose
+        /// temporaries would otherwise widen every frame of the recursion, as in
+        /// <see cref="IntervalEvaluation"/>.
+        /// </remarks>
         private PreciseComplexInterval EvaluateNode(Entity expr)
+        {
+            switch (expr)
+            {
+                case Sumf(var left, var right):
+                    return Evaluate(left) is { IsFinite: true } lSumf ? Add(lSumf, Evaluate(right)) : undefined;
+                case Minusf(var left, var right):
+                    return Evaluate(left) is { IsFinite: true } lMinusf ? Subtract(lMinusf, Evaluate(right)) : undefined;
+                case Mulf(var left, var right):
+                    return Multiply(Evaluate(left), Evaluate(right));
+                case Divf(var left, var right):
+                    return Evaluate(left) is { IsFinite: true } lDivf ? Divide(lDivf, Evaluate(right)) : undefined;
+                case Powf(var @base, Number.Integer power) when power.EInteger.CanFitInInt32():
+                    return Pow(Evaluate(@base), power.EInteger.ToInt32Checked());
+                default:
+                    return EvaluateOtherThanArithmetic(expr);
+            }
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private PreciseComplexInterval EvaluateOtherThanArithmetic(Entity expr)
         {
             switch (expr)
             {
@@ -430,16 +455,6 @@ namespace AngouriMath.Numerics
                     return Real(Pi());
                 case Variable variable when variable == MathS.e:
                     return Real(E());
-                case Sumf(var left, var right):
-                    return Evaluate(left) is { IsFinite: true } lSumf ? Add(lSumf, Evaluate(right)) : undefined;
-                case Minusf(var left, var right):
-                    return Evaluate(left) is { IsFinite: true } lMinusf ? Subtract(lMinusf, Evaluate(right)) : undefined;
-                case Mulf(var left, var right):
-                    return Multiply(Evaluate(left), Evaluate(right));
-                case Divf(var left, var right):
-                    return Evaluate(left) is { IsFinite: true } lDivf ? Divide(lDivf, Evaluate(right)) : undefined;
-                case Powf(var @base, Number.Integer power) when power.EInteger.CanFitInInt32():
-                    return Pow(Evaluate(@base), power.EInteger.ToInt32Checked());
                 case Powf(var @base, var exponent):
                     return @base == MathS.e ? Exp(Evaluate(exponent)) : Pow(Evaluate(@base), Evaluate(exponent));
                 case Sinf(var argument):
