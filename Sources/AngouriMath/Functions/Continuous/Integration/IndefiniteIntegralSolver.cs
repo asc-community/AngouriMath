@@ -9696,7 +9696,11 @@ namespace AngouriMath.Functions.Algebra
             var quadraticElsewhere = expr.Nodes.Any(node => node is Powf(var q, _) && q.ContainsNode(x) && !q.Nodes.Any(inner => inner is Arctanf or Arcsinf or Arccosf)
                 && TreeAnalyzer.TryGetPolyQuadratic(q, x, out var leading, out _, out _) && !TreeAnalyzer.IsZero(leading));
             // The variable outside the exponentials.
-            var xElsewhere = expr.Replace(node => node is Powf(var e, var power) && e == MathS.e && power.ContainsNode(x) ? Number.Integer.One : node).ContainsNode(x);
+            var withoutTheExponentials = expr.Replace(node => node is Powf(var e, var power) && e == MathS.e && power.ContainsNode(x) ? Number.Integer.One : node);
+            var xElsewhere = withoutTheExponentials.ContainsNode(x);
+            // The variable in a denominator, a pole beside the exponentials: not `x^2/e^(i arctan(a + b x))`.
+            var xInADenominator = withoutTheExponentials.Nodes.Any(node => node is Divf(_, var denominator) && denominator.ContainsNode(x)
+                || node is Powf(var @base, Number.Real { IsNegative: true }) && @base.ContainsNode(x));
             var rewritten = expr.Replace(node =>
             {
                 if (node is not Powf(var @base, var exponent) || @base != MathS.e || !exponent.ContainsNode(x))
@@ -9740,7 +9744,14 @@ namespace AngouriMath.Functions.Algebra
                     // ran past thirty seconds, and `x^3 e^(-i arctan(a x))` came out in 26 thousand
                     // characters where so it is 218. Alone the exponential is answered shorter as the
                     // root, and for a power not whole the quotient's power is.
-                    if ((n == Number.Integer.One || n == Number.Integer.MinusOne) && !quadraticElsewhere && xElsewhere)
+                    // So for every n beside a pole at 0 and an argument with a constant term:
+                    // `e^(3 i arctan(a + b x))/x^2` as `(1 + i L)^3 (1 + L^2)^(-3/2)` ran out of time, and
+                    // as the two powers it is answered in half a second. Not for `a x` or a polynomial
+                    // beside it, which the root answers: `x^3 e^(-(3/2) i arctan(a x))` and
+                    // `e^(3 i arctan(a x))/x` were answered and as the two powers ran out of time.
+                    if (!quadraticElsewhere && xElsewhere && (n == Number.Integer.One || n == Number.Integer.MinusOne
+                        || xInADenominator && TreeAnalyzer.TryGetPolyLinear(argument, x, out _, out var argumentConstant)
+                            && argumentConstant is { } && !TreeAnalyzer.IsZero(argumentConstant)))
                     {
                         var half = Number.Rational.Create(n.ERational.Divide(2));
                         return MathS.Pow(1 + MathS.i * argument, half) * MathS.Pow(1 - MathS.i * argument, Number.Rational.Create(half.ERational.Negate()));
@@ -9787,7 +9798,9 @@ namespace AngouriMath.Functions.Algebra
             // non-existence is not given.
             if (expr.Vars.Any(symbol => symbol != x) && !Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
                 return null;
-            if (answer.Nodes.Any(node => node is Piecewise) && answer.Simplify().Nodes.Any(node => node == MathS.NaN))
+            // InnerSimplified rather than Simplify: the search ran past a minute on the piecewise answer to
+            // `e^(3 i atan(a + b x))/x^2`, ready and checked in a quarter of a second.
+            if (answer.Nodes.Any(node => node is Piecewise) && answer.InnerSimplified.Nodes.Any(node => node == MathS.NaN))
                 return null;
             return answer;
         }

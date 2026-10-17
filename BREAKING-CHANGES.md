@@ -187,6 +187,22 @@ digits, and `e^(1/3)` the same. Each is now worked out in the precision asked fo
 | `MathS.pi.Evaled` under 300 digits, after a read under 100 | 100 digits | 300 digits |
 | `"e^(1/3)".Evaled` under 300 digits, after a read under 100 | 100 digits | 300 digits |
 
+### An exponential of i times an arctangent of a linear is written algebraically before the other rules
+
+**Answers where there were none.** `e^(3 i atan(a + b x))/x^2` ran out of time, and so did fifteen more of Rubi's
+5.3.6, all `e^(n i atan(a + b x))` over a power of x or `e^(n i atan(a x))` beside a high power of `c + a^2 c x^2`.
+The exponential is now written as powers of linears, `(1 + i L)^(n/2) (1 - i L)^(-n/2)`, at the question asked, ahead
+of the rules that spent the budget, and for every `n` beside a pole at 0 where the argument has a constant term. A
+piecewise answer is checked for `NaN` without `Simplify`, whose search on one of them ran past a minute
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(3*i*atan(a+b*x))/x^2".ToEntity().Integrate("x")` | `integral(...)` | 1,945 characters |
+| `"1/(e^(3*i*atan(a+b*x))*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 8,542 characters |
+| `"e^(3*i*atan(a+b*x))/x^4".ToEntity().Integrate("x")` | `integral(...)` | 35,041 characters |
+| `"e^(6*i*atan(a*x))*x^2/(c+a^2*c*x^2)^19".ToEntity().Integrate("x")` | `integral(...)` | 233 characters |
+
 ### A string parsed once is parsed again under the other downcasting setting
 
 **A different number.** `MathS.FromString` remembered what it had parsed, keyed on the parsing setting alone. A string
