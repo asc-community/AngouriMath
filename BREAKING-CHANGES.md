@@ -457,6 +457,19 @@ back after. Each answer is in three cases by the sign of `4 a/c - (b/c)^2`
 | `"(a + b*x^3)^(1/3)/(x^2*(a*d - b*d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 773 characters |
 | `"1/(x^2*(1 - x^3)^(2/3)*(1 + x^3))".ToEntity().Integrate("x")` | `integral(...)` | 471 characters |
 
+### A function of an inverse function of a linear beside powers of multiples of that linear is integrated under it
+
+**Answers where there were none.** `(c k + d k x)^3 (a + b asinh(c + d x))^2` ran out of time, and so did three more
+of Rubi's 7.1.5 and 7.2.5. Under `u = c + d x` it is `k^3 u^3 (a + b asinh(u))^2`, which is answered, divided by `d`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(c*k+d*k*x)^3*(a+b*asinh(c+d*x))^2".ToEntity().Integrate("x")` | `integral(...)` | 3,574 characters |
+| `"(c*k+d*k*x)^3*(a+b*asinh(c+d*x))^3".ToEntity().Integrate("x")` | `integral(...)` | 6,188 characters |
+| `"(c*k+d*k*x)^3*(a+b*asinh(c+d*x))^4".ToEntity().Integrate("x")` | `integral(...)` | 9,539 characters |
+| `"(c*k+d*k*x)*(a+b*acosh(c+d*x))^4".ToEntity().Integrate("x")` | `integral(...)` | 3,607 characters |
+
 ### `a + i a tan` beside the tangent's differential is lowered over its conjugate
 
 **Answers where there were none.** `sqrt(a + i a tan(x))/(c + d tan(x))^(3/2)` ran past thirty seconds:

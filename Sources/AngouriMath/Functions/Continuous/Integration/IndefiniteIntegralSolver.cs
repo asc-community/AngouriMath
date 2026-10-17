@@ -26648,6 +26648,72 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A function of an inverse function of a linear <c>L = c + d x</c> times powers of multiples of
+        /// <c>L</c>, <c>(c e + d e x)^3 (a + b arsinh(c + d x))^2</c>, under <c>u = L</c>: each power of
+        /// <c>k L</c> is <c>(k u)^m</c>, the inverse function's argument is <c>u</c>, and the integral is
+        /// the one in <c>u</c> over <c>d</c>.
+        /// </summary>
+        /// <remarks>
+        /// <c>x^3 (a + b arsinh(x))^2</c> is answered in half a second, and the rules timed out on
+        /// Rubi's 7.1.5 <c>(c e + d e x)^3 (a + b arsinh(c + d x))^2</c>, which is that in <c>u</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAFunctionOfAnInverseOfALinearBesideItsPowersUnderTheLinear(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            // The linear: the argument of an inverse function, with a constant term, as in `arsinh(c + d x)`,
+            // which arrives as `ln(c + d x + sqrt((c + d x)^2 + 1))`.
+            Entity? linear = null;
+            foreach (var node in expr.Nodes)
+            {
+                Entity? argument = node switch
+                {
+                    Arcsinf(var y) => y, Arccosf(var y) => y, Arctanf(var y) => y,
+                    _ => null
+                };
+                // The logarithm's argument without its root: `c + d x` of `ln(c + d x + sqrt((c + d x)^2 + 1))`.
+                if (argument is null && node is Logf(var b0, var of) && b0 == MathS.e && of is Sumf)
+                {
+                    var terms = Sumf.LinearChildren(of).ToList();
+                    var roots = terms.Where(term => term is Powf(_, Number.Rational { ERational.Denominator: var den }) && den.Equals(EInteger.FromInt32(2))).ToList();
+                    if (roots.Count == 1)
+                        argument = terms.Where(term => term != roots[0]).Aggregate((Entity)Number.Integer.Zero, (sum, term) => sum == Number.Integer.Zero ? term : sum + term);
+                }
+                if (argument is null || !argument.ContainsNode(x))
+                    continue;
+                if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope0, out var intercept0)
+                    || Functions.PartialFractions.IsZeroAsAValue(slope0) || Functions.PartialFractions.IsZeroAsAValue(intercept0))
+                    continue;
+                linear = argument;
+                break;
+            }
+            if (linear is null)
+                return null;
+            if (!TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out var intercept) || slope is null || intercept is null)
+                return null;
+            var u = Variable.CreateUnique(expr, "u_lin");
+            // Every node that is a constant multiple of L becomes that multiple of u.
+            var inU = expr.Replace(node =>
+            {
+                if (node == linear)
+                    return u;
+                if (node is not (Sumf or Minusf) || !node.ContainsNode(x)
+                    || !TreeAnalyzer.TryGetPolyLinear(node, x, out var s1, out var c1) || s1 is null || c1 is null
+                    || Functions.PartialFractions.IsZeroAsAValue(s1))
+                    return node;
+                var k = (s1 / slope).InnerSimplified;
+                return Functions.PartialFractions.IsZeroAsAValue((c1 - k * intercept).InnerSimplified) ? k * u : node;
+            });
+            if (inU.ContainsNode(x))
+                return null;
+            if (Integration.ComputeAsAQuestionOfItsOwn(inU.InnerSimplified, u, integrateByParts: true) is not { } integrated)
+                return null;
+            var answer = (integrated.Substitute(u, linear) / slope).InnerSimplified;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
         /// A rational function of a sine, or of a cosine, over a quadratic in it with a symbol
         /// among the coefficients: <c>sin(x)/(a + b sin(x) + c sin(x)^2)</c>, and the same with
         /// the other function to even powers, a cosecant or a secant beside. Written in
