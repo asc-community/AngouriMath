@@ -310,6 +310,20 @@ carried the discriminant's being real in its condition, and held nowhere when it
 | `"piecewise(2 * x provided not x = 0, 3 * x ^ 2 provided i - 1 < 0)".ToEntity().DomainCondition` | `false` | `not x = 0` |
 | `"1/(sqrt(a + i*a*x)*(c + d*x)^(3/2)*(a - i*a*x))".ToEntity().Integrate("x")` | `integral(...)`; on the unreleased master, an answer with no value at any point | 3,267 characters, defined |
 
+### A rational function over the quadratic of an inverse tangent beside it is split
+
+**Answers where there were none.** `x^4 atan(a x)/(c + a^2 c x^2)` ran out of time, and so did three more of Rubi's 5.3.4.
+The rational factor is now divided down and split over `c + a^2 c x^2` and the powers of x, and each part beside the
+inverse tangent is integrated on its own
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^4*atan(a*x)/(c+a^2*c*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 233 characters |
+| `"x^2*atan(a*x)/(c+a^2*c*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 126 characters |
+| `"atan(a*x)/(x^2*(c+a^2*c*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 612 characters |
+| `"atan(a*x)/(x^4*(c+a^2*c*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 894 characters |
+
 ### A piecewise case whose condition is undefined is passed over
 
 **A different answer.** A case whose predicate evaluates to NaN -- an order comparison of a number

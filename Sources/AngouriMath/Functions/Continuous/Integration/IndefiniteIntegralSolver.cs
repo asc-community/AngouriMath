@@ -26446,6 +26446,101 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A rational function over the quadratic an inverse tangent's derivative is written over,
+        /// times a function of that inverse tangent, <c>x^4 atan(a x)/(c + a^2 c x^2)</c>, with the
+        /// rational function split into partial fractions over its written factors and each piece
+        /// beside the function its own question: <c>atan(a x)/(1 + a^2 x^2)</c> is
+        /// <c>atan(a x)^2/(2a)</c>, and the rest is a power of x beside the inverse tangent.
+        /// </summary>
+        /// <remarks>
+        /// The rules before it timed out on Rubi's 5.3.4 <c>x^4 atan(a x)/(c + a^2 c x^2)</c> and
+        /// <c>atan(a x)/(x^4 (c + a^2 c x^2))</c>, and declined <c>x^2 atan(a x)/(c + a^2 c x^2)</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveARationalFunctionOverTheQuadraticOfAnArctangentBesideIt(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            static IEnumerable<(Entity Factor, bool Below)> Factors(Entity e, bool below) => e switch
+            {
+                Mulf(var l, var r) => Factors(l, below).Concat(Factors(r, below)),
+                Divf(var l, var r) => Factors(l, below).Concat(Factors(r, !below)),
+                _ => new[] { (e, below) }
+            };
+            Entity? function = null;
+            Entity above = Number.Integer.One, below = Number.Integer.One;
+            foreach (var (factor, isBelow) in Factors(expr, false))
+            {
+                if (factor.Nodes.Any(node => node is Arctanf && node.ContainsNode(x)))
+                {
+                    if (function is not null || isBelow)
+                        return null;
+                    function = factor;
+                }
+                else if (isBelow)
+                    below *= factor;
+                else
+                    above *= factor;
+            }
+            if (function is null || !below.ContainsNode(x))
+                return null;
+            var arctangents = function.Nodes.Where(node => node is Arctanf && node.ContainsNode(x)).Distinct().ToList();
+            if (arctangents.Count != 1 || arctangents[0] is not Arctanf(var argument)
+                || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out var intercept)
+                || !Functions.PartialFractions.IsZeroAsAValue(intercept))
+                return null;
+            // The rest is a rational function in x, and one written factor below the bar is a
+            // multiple of 1 + (a x)^2.
+            var quadratic = 1 + MathS.Sqr(slope) * MathS.Sqr(x);
+            var (numerator, denominator) = Functions.SingleQuotient.Of(above / below);
+            if (!IsARationalFunction(numerator / denominator, x)
+                || !Mulf.LinearChildren(denominator).Any(part => part.ContainsNode(x)
+                    && part.Substitute(x, Number.Integer.Zero).InnerSimplified is var atZero
+                    && !Functions.PartialFractions.IsZeroAsAValue(atZero)
+                    && Functions.PartialFractions.IsZeroAsAValue((part - atZero * quadratic).InnerSimplified)))
+                return null;
+            // An improper one divided first: `x^2/(c + a^2 c x^2)` is `1/(a^2 c) - 1/(a^2 (c + a^2 c x^2))`.
+            var pieces = new List<Entity>();
+            if (!IsProperByDegree(numerator, denominator, x))
+            {
+                if (TreeAnalyzer.PolynomialLongDivision(numerator, denominator, genericCase: true, inTermsOf: x) is not var (quotient, properPart))
+                    return null;
+                pieces.Add(quotient);
+                // The generic case, as the integrator answers it: the remainder carries the
+                // condition that the leading coefficient is not zero.
+                properPart = properPart.Replace(node => node is Providedf(var expression, _) ? expression : node).InnerSimplified;
+                (numerator, denominator) = Functions.SingleQuotient.Of(properPart);
+                if (Functions.PartialFractions.IsZeroAsAValue(numerator))
+                    numerator = Number.Integer.Zero;
+            }
+            Entity decomposition;
+            if (numerator == Number.Integer.Zero)
+                decomposition = Number.Integer.Zero;
+            else if (!Functions.PartialFractions.TrySplitOverWrittenFactors(numerator, denominator, x, out var split))
+            {
+                if (pieces.Count == 0)
+                    return null;
+                decomposition = numerator / denominator;
+            }
+            else
+                decomposition = split;
+            // The split comes back as one sum over a factor free of x, `(0 + 1/(c x^2) + ...)/1`.
+            var (terms, divisor) = decomposition is Divf(var sum, var free) && !free.ContainsNode(x) ? (sum, free) : (decomposition, (Entity)Number.Integer.One);
+            pieces.AddRange(Sumf.LinearChildren(terms).Where(term => !Functions.PartialFractions.IsZeroAsAValue(term)).Select(term => term / divisor));
+            if (pieces.Count < 2)
+                return null;
+            Entity answer = Number.Integer.Zero;
+            foreach (var piece in pieces)
+            {
+                if (Integration.ComputeAsAQuestionOfItsOwn((piece * function).InnerSimplified, x, integrateByParts: true) is not { } integrated)
+                    return null;
+                answer += integrated;
+            }
+            answer = answer.InnerSimplified;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
         /// A rational function of a sine, or of a cosine, over a quadratic in it with a symbol
         /// among the coefficients: <c>sin(x)/(a + b sin(x) + c sin(x)^2)</c>, and the same with
         /// the other function to even powers, a cosecant or a secant beside. Written in

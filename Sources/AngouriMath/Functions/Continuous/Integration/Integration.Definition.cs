@@ -680,6 +680,9 @@ namespace AngouriMath.Functions.Algebra
             // A power of a sine, cosine or hyperbolic one over a binomial in a power of it, over the
             // binomial's roots, before the rules that spent the budget on `sinh(y)^4/(a + b sinh(y)^3)`.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOverABinomialInAPowerOfASineOverItsRoots(expr, x)) is { }) return answer;
+            // A rational function over the quadratic of an inverse tangent beside it, split, before the
+            // rules that timed out on `x^4 atan(a x)/(c + a^2 c x^2)`.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOverTheQuadraticOfAnArctangentBesideIt(expr, x)) is { }) return answer;
             // A power of x times a power of a sum holding an inverse function of x^n, under t = x^n,
             // before the rules that timed out on `x^3 (a + b atanh(c x^2))^2`.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfXTimesAFunctionOfAnotherUnderThatPower(expr, x)) is { }) return answer;
