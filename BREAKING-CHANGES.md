@@ -486,6 +486,20 @@ of a linear over a linear, which is answered in a second
 | `"1/(sqrt(a + i*a*tan(x))*(c + d*tan(x))^(3/2))".ToEntity().Integrate("x")` | `integral(...)`; past thirty seconds on the unreleased master | 2,217 characters |
 | `"1/((a + i*a*tan(x))^(3/2)*(c + d*tan(x))^(5/2))".ToEntity().Integrate("x")` | `integral(...)`; past thirty seconds on the unreleased master | 3,333 characters |
 
+### A power of a cosine over `a + a sin` is cancelled to a polynomial in the sine
+
+**Answers where there were none.** `cos(c + d x)^2/((e + f x) (a + a sin(c + d x)))` was left unevaluated, and so were three
+more of Rubi's 4.1.10. `cos^2/(1 + sin)` is `1 - sin` wherever it is defined, so the integrand becomes a sine or cosine
+over a power of a linear. That is answered with `Si` and `Ci`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"cos(c+d*x)^2/((pe+f*x)*(a+a*sin(c+d*x)))".ToEntity().Integrate("x")` | `integral(...)` | 132 characters |
+| `"cos(c+d*x)^2/((pe+f*x)^2*(a+a*sin(c+d*x)))".ToEntity().Integrate("x")` | `integral(...)` | 413 characters |
+| `"cos(c+d*x)^3/((pe+f*x)*(a+a*sin(c+d*x)))".ToEntity().Integrate("x")` | `integral(...)` | 246 characters |
+| `"cos(c+d*x)^3/((pe+f*x)^2*(a+a*sin(c+d*x)))".ToEntity().Integrate("x")` | `integral(...)` | 790 characters |
+
 ### Every linear beside a block is split off, a quadratic with rational roots among them
 
 **Answers where there were none.** `sec(c + d x)/(a + b sin(c + d x)^3)` was declined, and so were

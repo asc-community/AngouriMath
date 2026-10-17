@@ -680,6 +680,8 @@ namespace AngouriMath.Functions.Algebra
             // A power of a sine, cosine or hyperbolic one over a binomial in a power of it, over the
             // binomial's roots, before the rules that spent the budget on `sinh(y)^4/(a + b sinh(y)^3)`.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOverABinomialInAPowerOfASineOverItsRoots(expr, x)) is { }) return answer;
+            // A power of a cosine over a power of k (1 +- sin), cancelled: `cos^2/((e + f x)(a + a sin))`.
+            if ((answer = IndefiniteIntegralSolver.SolveACosinePowerOverABinomialInTheSineByCancelling(expr, x)) is { }) return answer;
             // A function of an inverse function of c + d x beside powers of multiples of it, under
             // u = c + d x, before the rules that timed out on `(c e + d e x)^3 (a + b arsinh(c + d x))^2`.
             if ((answer = IndefiniteIntegralSolver.SolveAFunctionOfAnInverseOfALinearBesideItsPowersUnderTheLinear(expr, x)) is { }) return answer;
