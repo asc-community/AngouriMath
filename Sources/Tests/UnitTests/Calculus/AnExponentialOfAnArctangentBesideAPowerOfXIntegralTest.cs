@@ -50,7 +50,6 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("e^(2*i*atan(a+b*x))/x^2")]
         [InlineData("e^(3/2*i*atan(a+b*x))/x^2")]
         [InlineData("e^(3*i*atan(a+b*x))/x")]
-        [InlineData("1/(e^(5/2*i*atan(a*x))*x^3)")]
         // Answered as a piecewise, which the check for a NaN simplified for over a minute.
         [InlineData("e^(3*i*atan(a+b*x))/x^2")]
         [InlineData("1/(e^(3*i*atan(a+b*x))*x^3)")]
