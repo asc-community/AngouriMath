@@ -32679,6 +32679,33 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A rational function of <paramref name="t"/> as a polynomial over a polynomial, both divided by
+        /// the denominator's leading coefficient with each coefficient in lowest terms over the symbols,
+        /// so that a constant common to the denominator's coefficients cancels; null where either side is
+        /// not a polynomial in <paramref name="t"/> with coefficients free of it.
+        /// </summary>
+        private static Entity? WithTheLeadingCoefficientDividedOut(Entity rational, Entity.Variable t)
+        {
+            var (above, below) = Functions.SingleQuotient.Of(rational);
+            if (!TreeAnalyzer.TryGetPolynomial(above.Expand(), t, out var top) || !TreeAnalyzer.TryGetPolynomial(below.Expand(), t, out var bottom)
+                || bottom.Count == 0 || top.Keys.Concat(bottom.Keys).Any(key => key.Sign < 0 || !key.CanFitInInt32())
+                || top.Values.Concat(bottom.Values).Any(coefficient => coefficient.ContainsNode(t)))
+                return null;
+            var lead = bottom[bottom.Keys.Max()!];
+            // Only where the symbols in the denominator are one factor common to all of it: there the
+            // rules below formed `k^2/k^2`, and anywhere else this respelling sent fifteen of Rubi's
+            // 4.x problems the half-angle answered in a second to a timeout.
+            if (!lead.Vars.Any() || bottom.Values.Any(coefficient => Functions.PartialFractions.InLowestTermsOverTheSymbols(coefficient / lead) is not Number))
+                return null;
+            Entity Rebuilt(Dictionary<EInteger, Entity> monomials)
+                => monomials.Aggregate((Entity)Number.Integer.Zero, (sum, pair)
+                    => sum + Functions.PartialFractions.InLowestTermsOverTheSymbols(pair.Value / lead)
+                        // t^0 written as 1: as a power it brings `provided not t = 0` with it.
+                        * (pair.Key.IsZero ? Number.Integer.One : MathS.Pow(t, Number.Integer.Create(pair.Key))));
+            return (Rebuilt(top) / Rebuilt(bottom)).InnerSimplified;
+        }
+
+        /// <summary>
         /// A rational function of <c>sin(x)</c> and <c>cos(x)</c>, turned into a rational function
         /// of one variable by the half-angle substitution <c>t = tan(x/2)</c> and handed to the
         /// machinery for those.
@@ -32868,6 +32895,14 @@ namespace AngouriMath.Functions.Algebra
             }
             if (divided)
                 integrand = (numerator / denominator).InnerSimplified;
+
+            // Over the denominator's leading coefficient, every coefficient in lowest terms over the
+            // symbols: `1/(k + k sin(x))^2` is `2 (1 + t^2)/(k^2 (t + 1)^4)`, and with `k^2` left in the
+            // coefficients the rules below formed `k^2/k^2`, which the simplification does not cancel,
+            // so the quadratic's discriminant was not decidably zero and `x/(k + k sin(x))^2` was
+            // answered `NaN` through a branch of the piecewise that can never hold.
+            if (integrand.Vars.Any(symbol => symbol != t) && WithTheLeadingCoefficientDividedOut(integrand, t) is { } normalized)
+                integrand = normalized;
 
             return Integration.ComputeIndefiniteIntegral(integrand, t, integrateByParts) is { } result
                 ? result.Substitute(t, MathS.Tan(argument / 2))

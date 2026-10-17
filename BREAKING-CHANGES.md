@@ -294,6 +294,20 @@ angle, each of which the integrator answers
 | `"x^3*(1-c^2*x^2)^(5/2)/(a+b*asin(c*x))".ToEntity().Integrate("x")` | `integral(...)` | 508 characters |
 | `"x^3*(1-c^2*x^2)^(5/2)/(a+b*asin(c*x))^2".ToEntity().Integrate("x")` | `integral(...)` | 1,470 characters |
 
+### A constant common to a half-angle denominator is divided out
+
+**Answers where there were none.** `x/(k + k sin(x))^2` was declined, and so were `x/(d c + c d sin(x))^2` and Rubi's
+5.1.4 `(a + b asin(c x))/((d + c d x)^(5/2) sqrt(f - c f x))`. After the half-angle substitution, such a denominator
+is a constant times a polynomial with number coefficients, `k^2 (t + 1)^4`. The constant is now divided out before the
+partial fractions
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x/(k+k*sin(x))^2".ToEntity().Integrate("x")` | `integral(...)` | 285 characters |
+| `"x/(d*c+c*d*sin(x))^2".ToEntity().Integrate("x")` | `integral(...)` | 329 characters |
+| `"(a+b*asin(c*x))/((d+c*d*x)^(5/2)*sqrt(f-c*f*x))".ToEntity().Integrate("x")` | `integral(...)` | 927 characters |
+
 ### A piecewise is defined where the case it takes is
 
 **Domain conditions that were false.** The domain condition of a piecewise asked every case's predicate
