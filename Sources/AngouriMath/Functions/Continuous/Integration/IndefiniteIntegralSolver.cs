@@ -9696,9 +9696,10 @@ namespace AngouriMath.Functions.Algebra
             var quadraticElsewhere = expr.Nodes.Any(node => node is Powf(var q, _) && q.ContainsNode(x) && !q.Nodes.Any(inner => inner is Arctanf or Arcsinf or Arccosf)
                 && TreeAnalyzer.TryGetPolyQuadratic(q, x, out var leading, out _, out _) && !TreeAnalyzer.IsZero(leading));
             // The variable outside the exponentials.
-            var xElsewhere = expr.Replace(node => node is Powf(var e, var power) && e == MathS.e && power.ContainsNode(x) ? Number.Integer.One : node).ContainsNode(x);
-            // The variable in a denominator, a pole beside the exponentials.
-            var xInADenominator = expr.Nodes.Any(node => node is Divf(_, var denominator) && denominator.ContainsNode(x)
+            var withoutTheExponentials = expr.Replace(node => node is Powf(var e, var power) && e == MathS.e && power.ContainsNode(x) ? Number.Integer.One : node);
+            var xElsewhere = withoutTheExponentials.ContainsNode(x);
+            // The variable in a denominator, a pole beside the exponentials: not `x^2/e^(i arctan(a + b x))`.
+            var xInADenominator = withoutTheExponentials.Nodes.Any(node => node is Divf(_, var denominator) && denominator.ContainsNode(x)
                 || node is Powf(var @base, Number.Real { IsNegative: true }) && @base.ContainsNode(x));
             var rewritten = expr.Replace(node =>
             {
