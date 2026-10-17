@@ -9697,6 +9697,9 @@ namespace AngouriMath.Functions.Algebra
                 && TreeAnalyzer.TryGetPolyQuadratic(q, x, out var leading, out _, out _) && !TreeAnalyzer.IsZero(leading));
             // The variable outside the exponentials.
             var xElsewhere = expr.Replace(node => node is Powf(var e, var power) && e == MathS.e && power.ContainsNode(x) ? Number.Integer.One : node).ContainsNode(x);
+            // The variable in a denominator, a pole beside the exponentials.
+            var xInADenominator = expr.Nodes.Any(node => node is Divf(_, var denominator) && denominator.ContainsNode(x)
+                || node is Powf(var @base, Number.Real { IsNegative: true }) && @base.ContainsNode(x));
             var rewritten = expr.Replace(node =>
             {
                 if (node is not Powf(var @base, var exponent) || @base != MathS.e || !exponent.ContainsNode(x))
@@ -9740,10 +9743,14 @@ namespace AngouriMath.Functions.Algebra
                     // ran past thirty seconds, and `x^3 e^(-i arctan(a x))` came out in 26 thousand
                     // characters where so it is 218. Alone the exponential is answered shorter as the
                     // root, and for a power not whole the quotient's power is.
-                    // So for every n beside a function of x and no quadratic: `e^(3 i arctan(a + b x))/x^2`
-                    // as `(1 + i L)^3 (1 + L^2)^(-3/2)` ran out of time, and as the two powers it is
-                    // answered in half a second.
-                    if (!quadraticElsewhere && xElsewhere)
+                    // So for every n beside a pole at 0 and an argument with a constant term:
+                    // `e^(3 i arctan(a + b x))/x^2` as `(1 + i L)^3 (1 + L^2)^(-3/2)` ran out of time, and
+                    // as the two powers it is answered in half a second. Not for `a x` or a polynomial
+                    // beside it, which the root answers: `x^3 e^(-(3/2) i arctan(a x))` and
+                    // `e^(3 i arctan(a x))/x` were answered and as the two powers ran out of time.
+                    if (!quadraticElsewhere && xElsewhere && (n == Number.Integer.One || n == Number.Integer.MinusOne
+                        || xInADenominator && TreeAnalyzer.TryGetPolyLinear(argument, x, out _, out var argumentConstant)
+                            && argumentConstant is { } && !TreeAnalyzer.IsZero(argumentConstant)))
                     {
                         var half = Number.Rational.Create(n.ERational.Divide(2));
                         return MathS.Pow(1 + MathS.i * argument, half) * MathS.Pow(1 - MathS.i * argument, Number.Rational.Create(half.ERational.Negate()));
