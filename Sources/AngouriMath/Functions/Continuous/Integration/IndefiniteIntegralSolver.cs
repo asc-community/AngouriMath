@@ -14636,10 +14636,10 @@ namespace AngouriMath.Functions.Algebra
                 {
                     var shift = lowest.ToInt32Unchecked();
                     Entity reduced = Number.Integer.Zero;
-                    foreach (var (power, coefficient) in read)
+                    foreach (var monomial in read)
                     {
-                        var k = power.ToInt32Unchecked() - shift;
-                        reduced += coefficient * (k == 0 ? Number.Integer.One : MathS.Pow(x, Number.Integer.Create(k)));
+                        var k = monomial.Key.ToInt32Unchecked() - shift;
+                        reduced += monomial.Value * (k == 0 ? Number.Integer.One : MathS.Pow(x, Number.Integer.Create(k)));
                     }
                     rebuilt *= MathS.Pow(x, Number.Integer.Create(shift)) * reduced;
                     changed = true;
