@@ -26287,6 +26287,67 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of x times a whole power, past the first, of a sum holding an inverse function or a
+        /// logarithm of a power of x, <c>x^m (a + b atanh(c x^n))^p</c>, under <c>t = x^n</c> where
+        /// <c>(m + 1)/n</c> is whole: <c>x^m dx = t^((m + 1)/n - 1) dt/n</c>.
+        /// </summary>
+        /// <remarks>
+        /// The rules before it timed out on Rubi's 5.3.2 <c>(a + b atan(c x^2))^2/x^5</c> and 7.3.2
+        /// <c>x^3 (a + b atanh(c x^2))^2</c>, <c>(a + b atanh(c/x^2))^2/x^5</c> and
+        /// <c>(a + b atanh(c x^(3/2)))^2/x^4</c>, each a problem in <c>t</c> they answer in a second.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPowerOfXTimesAFunctionOfAnotherUnderThatPower(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            // The factors of a product and a quotient, each with the sign of its exponent.
+            static IEnumerable<(Entity Factor, bool Below)> Factors(Entity e, bool below) => e switch
+            {
+                Mulf(var l, var r) => Factors(l, below).Concat(Factors(r, below)),
+                Divf(var l, var r) => Factors(l, below).Concat(Factors(r, !below)),
+                _ => new[] { (e, below) }
+            };
+            ERational m = ERational.Zero;
+            Entity? function = null;
+            Entity constant = Number.Integer.One;
+            foreach (var (factor, below) in Factors(expr, false))
+            {
+                if (!factor.ContainsNode(x))
+                    constant = below ? constant / factor : constant * factor;
+                else if (factor == x)
+                    m = below ? m - ERational.One : m + ERational.One;
+                else if (factor is Powf(var b0, Number.Rational { ERational: var r }) && b0 == x)
+                    m = below ? m - r : m + r;
+                else if (function is null && !below && factor is Powf(var sum, Number.Integer { EInteger: var power }) && power.CompareTo(EInteger.FromInt32(2)) >= 0)
+                    function = factor;
+                else
+                    return null;
+            }
+            if (function is null)
+                return null;
+            // The one power of x the function is written in, and an inverse function or a logarithm of it.
+            var powers = function.Nodes.Where(node => node is Powf(var b1, Number.Rational) && b1 == x).Distinct().ToList();
+            if (powers.Count != 1 || powers[0] is not Powf(_, Number.Rational { ERational: var n }) || n.IsZero || n.Equals(ERational.One))
+                return null;
+            var t = Variable.CreateUnique(expr, "t_pow");
+            var inT = function.Substitute(powers[0], t);
+            if (inT.ContainsNode(x)
+                || !inT.Nodes.Any(node => node is Arcsinf or Arccosf or Arctanf or Arccotanf or Logf && node.ContainsNode(t)))
+                return null;
+            // PeterO keeps a quotient as written: -4/2 has the denominator 2 until it is reduced.
+            var k = ((m + ERational.One) / n).ToLowestTerms();
+            if (!k.Denominator.Equals(EInteger.One) || !k.Numerator.CanFitInInt32())
+                return null;
+            var exponent = k.Numerator.ToInt32Unchecked() - 1;
+            var inTWhole = (exponent == 0 ? inT : MathS.Pow(t, Number.Integer.Create(exponent)) * inT).InnerSimplified;
+            if (Integration.ComputeAsAQuestionOfItsOwn(inTWhole, t, integrateByParts: true) is not { } integrated)
+                return null;
+            var answer = (constant / Number.Rational.Create(n.Numerator, n.Denominator) * integrated.Substitute(t, powers[0])).InnerSimplified;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
         /// A rational function of a sine, or of a cosine, over a quadratic in it with a symbol
         /// among the coefficients: <c>sin(x)/(a + b sin(x) + c sin(x)^2)</c>, and the same with
         /// the other function to even powers, a cosecant or a secant beside. Written in

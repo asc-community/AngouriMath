@@ -312,6 +312,20 @@ an arm for each sign of a quantity that is not real, `x^2 provided not x = 0` be
 | `"piecewise(2 * x provided not x = 0, 3 * x ^ 2 provided i - 1 < 0)".ToEntity().InnerSimplified` | `NaN` | `2 * x` where `x` is not 0 |
 | `"piecewise(1 provided i < 0, 2 provided i > 0)".ToEntity().InnerSimplified` | `NaN` | `NaN`, as before: no case holds |
 
+### A power of x times a power of a function of another power of x is integrated under that power
+
+**Answers where there were none.** `x^3 (a + b atanh(c x^2))^2` ran out of time, and so did ten more of Rubi's 3.4, 5.3.2
+and 7.3.2. `x^m F(x^n)^p`, with `F` a sum holding an inverse tangent, inverse hyperbolic tangent or logarithm of
+`x^n` and `p` at least 2, is now integrated under `t = x^n` wherever `(m + 1)/n` is whole
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^3*(a+b*atanh(c*x^2))^2".ToEntity().Integrate("x")` | `integral(...)` | 308 characters |
+| `"(a+b*atan(c*x^2))^2/x^5".ToEntity().Integrate("x")` | `integral(...)` | 870 characters |
+| `"(a+b*atanh(c*x^(3/2)))^2/x^4".ToEntity().Integrate("x")` | `integral(...)` | 330 characters |
+| `"(a+b*ln(c*(d+k/x^(2/3))^n))^2/x^5".ToEntity().Integrate("x")` | `integral(...)` | 2,034 characters |
+
 ### Zero times a power with a non-real exponent is zero where the power is defined
 
 **A value where there was NaN.** `0 b^i` simplified to NaN, and so did `b^i - b^i`. That in turn made `x b^i`'s
