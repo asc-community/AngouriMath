@@ -26206,6 +26206,87 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A polynomial in a sine or a cosine of a linear over a whole power of a binomial in it,
+        /// <c>(A + B cos(y) + C cos(y)^2)/(a + b cos(y))^4</c>, written in powers of the binomial:
+        /// with <c>u = a + b f</c>, <c>f = (u - a)/b</c>, and <c>P(f)/u^n = sum c_j u^(j - n)</c> with
+        /// <c>c_j = sum_(i >= j) p_i C(i, j) (-a)^(i - j)/b^i</c>, each power of the binomial its own
+        /// question.
+        /// </summary>
+        /// <remarks>
+        /// The rules after it took the whole quotient through the half-angle and wrote 30 million
+        /// characters for <c>(A + B cos(x) + C cos(x)^2)/(a + b cos(x))^4</c> in eighteen seconds, where
+        /// <c>1/(a + b cos(x))^4</c> alone is 44 thousand. Rubi's 4.1.4 and 4.2.4
+        /// <c>(a + b cos)^m (A + B cos + C cos^2)</c> at <c>m = -4</c> timed out.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPolynomialInASineOverAPowerOfABinomialInItInPowersOfTheBinomial(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var functions = expr.Nodes.Where(node => node is Sinf or Cosf && node.ContainsNode(x)).Distinct().ToList();
+            if (functions.Count != 1)
+                return null;
+            var function = functions[0];
+            var argument = function switch { Sinf(var y) => y, Cosf(var y) => y, _ => null! };
+            if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out _) || Functions.PartialFractions.IsZeroAsAValue(slope))
+                return null;
+            var s = Variable.CreateUnique(expr, "s_pow");
+            var inS = expr.Substitute(function, s);
+            if (inS.ContainsNode(x))
+                return null;
+            var (above, below) = Functions.SingleQuotient.Of(inS);
+            // Below the bar a factor free of s times one whole power of a binomial in s.
+            static IEnumerable<Entity> Factors(Entity e) => e is Mulf(var l, var r) ? Factors(l).Concat(Factors(r)) : new[] { e };
+            Entity constant = Number.Integer.One;
+            Entity? binomial = null;
+            var n = 0;
+            foreach (var factor in Factors(below))
+            {
+                if (!factor.ContainsNode(s))
+                {
+                    constant *= factor;
+                    continue;
+                }
+                if (binomial is not null)
+                    return null;
+                (binomial, n) = factor is Powf(var b0, Number.Integer { EInteger: var power }) && power.CanFitInInt32() ? (b0, power.ToInt32Unchecked()) : (factor, 1);
+            }
+            if (binomial is null || n < 2 || n > 12
+                || !TreeAnalyzer.TryGetPolyLinear(binomial, s, out var b, out var a)
+                || Functions.PartialFractions.IsZeroAsAValue(a) || Functions.PartialFractions.IsZeroAsAValue(b)
+                || !TreeAnalyzer.TryGetPolynomial(above, s, out var p) || p.Keys.Any(key => key.Sign < 0 || !key.CanFitInInt32()))
+                return null;
+            var degree = p.Keys.Max()!.ToInt32Unchecked();
+            // The reciprocal of the power alone is what the rules after it answer, in a few milliseconds.
+            if (degree == 0 || degree > 12)
+                return null;
+            var u = a + b * function;
+            Entity answer = Number.Integer.Zero;
+            for (var j = 0; j <= degree; j++)
+            {
+                Entity c = Number.Integer.Zero;
+                var choose = EInteger.One;
+                for (var i = j; i <= degree; i++)
+                {
+                    // C(i, j) from C(i - 1, j).
+                    if (i > j)
+                        choose = choose * i / (i - j);
+                    if (p.TryGetValue(EInteger.FromInt32(i), out var pi))
+                        c += pi * Number.Integer.Create(choose) * (i == j ? Number.Integer.One : MathS.Pow(-a, Number.Integer.Create(i - j))) / (i == 0 ? Number.Integer.One : MathS.Pow(b, Number.Integer.Create(i)));
+                }
+                c = c.InnerSimplified;
+                if (Functions.PartialFractions.IsZeroAsAValue(c))
+                    continue;
+                var piece = j - n == 0 ? (Entity)Number.Integer.One : MathS.Pow(u, Number.Integer.Create(j - n));
+                if (Integration.ComputeAsAQuestionOfItsOwn(piece, x, integrateByParts: true) is not { } integrated)
+                    return null;
+                answer += c * integrated;
+            }
+            answer = (answer / constant).InnerSimplified;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
         /// A rational function of a sine, or of a cosine, over a quadratic in it with a symbol
         /// among the coefficients: <c>sin(x)/(a + b sin(x) + c sin(x)^2)</c>, and the same with
         /// the other function to even powers, a cosecant or a secant beside. Written in
