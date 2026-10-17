@@ -14,8 +14,8 @@ namespace AngouriMath.Tests.Calculus
     /// <summary>
     /// An exponential of a whole multiple of an inverse hyperbolic tangent beside powers of its
     /// quadratic, written as powers of the two linears: Rubi's 7.3.6
-    /// <c>e^(n artanh(a x)) x^m (c - a^2 c x^2)^p</c>, which timed out. Pinned where <c>|a x| &lt; 1</c>,
-    /// the only place the integrand is real.
+    /// <c>e^(n artanh(a x)) x^m (c - a^2 c x^2)^p</c> with <c>p</c> whole, which timed out. Pinned
+    /// where <c>|a x| &lt; 1</c>, the only place the integrand is real for a whole <c>p</c>.
     /// <a href="https://github.com/asc-community/AngouriMath/issues/718">#718</a>
     /// </summary>
     [Trait("Area", "Calculus")]
@@ -49,7 +49,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("e^atanh(a*x)*x^2/(q-a^2*q*x^2)^2")]
         [InlineData("e^(4*atanh(a*x))/(q-a^2*q*x^2)^2")]
         [InlineData("1/(e^(2*atanh(a*x))*(q-a^2*q*x^2)^3)")]
-        [InlineData("x^2/(e^(5*atanh(a*x))*(q-a^2*q*x^2)^(27/2))")]
+        [InlineData("e^atanh(x)*x*(1+x)^2")]
         [InlineData("e^atanh(a+b*x)/(x*(1-a^2-2*a*b*x-b^2*x^2))")]
         public void IsAnsweredAndDifferentiatesBack(string integrand)
         {

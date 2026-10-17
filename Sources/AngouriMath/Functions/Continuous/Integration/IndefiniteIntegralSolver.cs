@@ -26315,6 +26315,7 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             var rewrote = false;
             var odd = false;
+            Entity? oddU = null;
             var matched = new HashSet<Entity>();
             var rewritten = expr.Replace(node =>
             {
@@ -26361,7 +26362,11 @@ namespace AngouriMath.Functions.Algebra
                 var m = System.Math.Abs(n);
                 if (m % 2 == 0)
                     return Power(above, m / 2) / Power(below, m / 2);
+                // Two odd multiples of different inverses would need two signs.
+                if (odd && oddU is not null && oddU != u)
+                    return node;
                 odd = true;
+                oddU = u;
                 return Power(above, m) / MathS.Pow(1 - MathS.Sqr(u), Number.Rational.Create(m, 2));
             });
             if (!rewrote)
@@ -26378,7 +26383,11 @@ namespace AngouriMath.Functions.Algebra
             if (odd && expr.Nodes.Any(node => node is Powf(var b2, var p2) && b2 != MathS.e && b2.ContainsNode(x)
                     && p2 is not Number.Integer && !matched.Contains(node)))
                 return null;
-            return Integration.ComputeAsAQuestionOfItsOwn((WithThePowersOfTheLinearsGathered(expr, x) ?? rewritten.InnerSimplified), x, integrateByParts: true);
+            var answer = Integration.ComputeAsAQuestionOfItsOwn((WithThePowersOfTheLinearsGathered(expr, x) ?? rewritten.InnerSimplified), x, integrateByParts: true);
+            // An odd n is written with sqrt(1 - u^2), which is e^(artanh(u)) on its principal
+            // branch for u < 1 and its negative beyond: the sign sgn(1 - u) is a constant on each
+            // side of u = 1, where the integrand has its pole, and goes in front of the integral.
+            return odd && oddU is not null && answer is not null ? MathS.Signum(1 - oddU) * answer : answer;
         }
 
         /// <summary>
