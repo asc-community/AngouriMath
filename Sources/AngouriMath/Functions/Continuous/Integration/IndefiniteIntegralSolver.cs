@@ -14619,6 +14619,38 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <paramref name="expr"/> with each factor above the bar that is a sum and a polynomial in
+        /// <paramref name="x"/> divisible by a power of it written as that power times the quotient,
+        /// rebuilt from its coefficients; null where no factor is.
+        /// </summary>
+        private static Entity? WithAPowerOfXOutOfTheBracket(Entity expr, Entity.Variable x)
+        {
+            var (top, bottom) = Functions.SingleQuotient.Of(expr);
+            var changed = false;
+            Entity rebuilt = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(top))
+            {
+                if (factor is Sumf or Minusf && TreeAnalyzer.TryGetPolynomial(factor, x, out var read) && read.Count > 1
+                    && read.Values.All(value => !value.ContainsNode(x)) && read.Keys.All(key => key.Sign >= 0 && key.CanFitInInt32())
+                    && read.Keys.Min()! is { Sign: > 0 } lowest)
+                {
+                    var shift = lowest.ToInt32Unchecked();
+                    Entity reduced = Number.Integer.Zero;
+                    foreach (var monomial in read)
+                    {
+                        var k = monomial.Key.ToInt32Unchecked() - shift;
+                        reduced += monomial.Value * (k == 0 ? Number.Integer.One : MathS.Pow(x, Number.Integer.Create(k)));
+                    }
+                    rebuilt *= MathS.Pow(x, Number.Integer.Create(shift)) * reduced;
+                    changed = true;
+                }
+                else
+                    rebuilt *= factor;
+            }
+            return changed ? rebuilt / bottom : null;
+        }
+
+        /// <summary>
         /// A product of powers times a sum that is the derivative of the product with some of
         /// the powers raised by one: <c>e^x x^2 ln(x)^2 (3 + (3 + x) ln(x))</c> is
         /// <c>(e^x x^3 ln(x)^3)'</c>, and Rubi's
@@ -14657,6 +14689,12 @@ namespace AngouriMath.Functions.Algebra
             // elementary.
             if (expr is Sumf or Minusf)
                 return WithTheCommonPowersOut(expr, x) is { } factored ? SolveAsTheDerivativeOfAProductOfPowers(factored, x) : null;
+            // A bracket that is a polynomial with a power of x in every term has that power taken out, to
+            // join the powers it multiplies: `x^(2n) (c + d x)^n (2 c x + 3 d x^2)` is
+            // `x^(2n + 1) (c + d x)^n (2 c + 3 d x)`, the derivative of `x^(2n + 2) (c + d x)^(n + 1)/(n + 1)`,
+            // and with the x in the bracket nothing raised x by enough.
+            if (WithAPowerOfXOutOfTheBracket(expr, x) is { } outOfTheBracket)
+                return SolveAsTheDerivativeOfAProductOfPowers(outOfTheBracket, x);
             Entity constant = Number.Integer.One;
             Entity? bracket = null;
             var raisable = new List<(Entity Base, Entity Exponent)>();
