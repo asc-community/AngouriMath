@@ -566,6 +566,35 @@ split. It is written `b (s + r)(s^2 - r s + r^2)` now, with `r = (a/b)^(1/3)`, w
 | `"sec(c + d*x)^2/(a + b*sin(c + d*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 7,010 characters |
 | `"sec(c + d*x)^4/(a + b*sin(c + d*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 11,646 characters |
 
+### A linear factor common to a sum below the bar is taken out of it
+
+**Answers where there were none.** `1/(a x + b x/log(c x^n))` was left unevaluated. With x taken out of the sum below the
+bar it is `1/(x (a + b/log(c x^n)))`, a function of the logarithm beside its differential, which is answered. The same
+holds for the higher powers of the logarithm and for Rubi's 3.5:37
+([#718](https://github.com/asc-community/AngouriMath/issues/718)). `tanh(a + 2 log(x))^2/x^3`, which 2.5.0 left
+unevaluated, is answered by this route as well.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(a*x+b*x/ln(c*x^n))".ToEntity().Integrate("x")` | `integral(...)` | 72 characters |
+| `"1/(a*x+b*x/ln(c*x^n)^2)".ToEntity().Integrate("x")` | `integral(...)` | 503 characters |
+| `"1/(a*x+b*x/ln(c*x^n)^3)".ToEntity().Integrate("x")` | `integral(...)` | 514 characters |
+| `"1/(a*x+b*x/ln(c*x^n)^4)".ToEntity().Integrate("x")` | `integral(...)` | 337 characters |
+| `"(a*x+2*b*n*ln(c*x^n))/(a*x^2+b*x*ln(c*x^n)^2)".ToEntity().Integrate("x")` | `integral(...)` | 37 characters |
+| `"tanh(a+2*ln(x))^2/x^3".ToEntity().Integrate("x")` | `integral(...)` | 7,796 characters |
+
+### A symbolic cubic with a repeated root is written over its roots
+
+**Answers where there were none.** `1/(x^3 - 3b x + 2b^(3/2))` was left unevaluated: its coefficients are symbolic, so
+no numeric root finder applies, and its discriminant vanishes identically. Such a cubic is `a (x - r)^2 (x - t)` with
+`r` and `t` rational in its coefficients, and is written so before the partial fractions
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(x^3-3*b*x+2*b^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | 122 characters |
+| `"1/(-9*b*x+9*x^3+2*b^(3/2)*sqrt(3))".ToEntity().Integrate("x")` | `integral(...)` | 176 characters |
+
 ### A symbol shared by a numerator sum's coefficients is taken out before the partial fractions
 
 **Answers where there were none.** `(b d + 2c d x)^9/(a + b x + c x^2)^3` ran past a minute, where

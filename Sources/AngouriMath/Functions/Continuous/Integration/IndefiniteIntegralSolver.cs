@@ -29422,6 +29422,110 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A quotient with a cubic in <paramref name="x"/> below the bar whose coefficients are
+        /// symbolic and whose discriminant vanishes identically, with the cubic written over its
+        /// roots: <c>a x^3 + b x^2 + c x + d</c> is <c>a (x - r)^2 (x - s)</c> with the double root
+        /// <c>r = (9ad - bc)/(2(b^2 - 3ac))</c> and the simple one
+        /// <c>s = (4abc - 9a^2 d - b^3)/(a(b^2 - 3ac))</c>, or <c>a (x + b/(3a))^3</c> where
+        /// <c>b^2 - 3ac</c> vanishes too.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's 1.3.1 <c>1/(9x^3 - 9bx + 2 sqrt(3) b^(3/2))</c> was left unevaluated, and the same
+        /// written <c>9 (x - sqrt(b/3))^2 (x + 2 sqrt(b/3))</c> is answered in 60 ms. The factored
+        /// form is checked against the cubic before it is handed on.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveACubicWithARepeatedRootOverItsRoots(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr));
+            if (!below.ContainsNode(x))
+                return null;
+            Entity rest = Number.Integer.One;
+            Entity? written = null;
+            foreach (var factor in Mulf.LinearChildren(below))
+            {
+                if (written is null && factor is Sumf or Minusf && TreeAnalyzer.TryGetPolynomial(factor, x, out var monomials)
+                    && monomials.Keys.All(k => k.Sign >= 0 && k.CompareTo(EInteger.FromInt32(3)) <= 0)
+                    && monomials.TryGetValue(EInteger.FromInt32(3), out var a) && !VanishesIdentically(a)
+                    && monomials.Values.All(coefficient => !coefficient.ContainsNode(x))
+                    && monomials.Values.Any(coefficient => coefficient.InnerSimplified.Evaled is not Number.Complex))
+                {
+                    Entity Coefficient(int k) => monomials.TryGetValue(EInteger.FromInt32(k), out var value) ? value : Number.Integer.Zero;
+                    var (b, c, d) = (Coefficient(2), Coefficient(1), Coefficient(0));
+                    var discriminant = 18 * a * b * c * d - 4 * MathS.Pow(b, 3) * d + MathS.Sqr(b) * MathS.Sqr(c) - 4 * a * MathS.Pow(c, 3) - 27 * MathS.Sqr(a) * MathS.Sqr(d);
+                    if (!VanishesIdentically(discriminant))
+                        return null;
+                    var depressed = (MathS.Sqr(b) - 3 * a * c).InnerSimplified;
+                    Entity? over = null;
+                    // The roots simplified first, which folds the quotients of the coefficients to
+                    // short ones -- `sqrt(b)` rather than a product of six numbers and it -- where
+                    // the simplified form still expands back to the cubic, and as they are where not.
+                    foreach (var simplify in new[] { true, false })
+                    {
+                        // Without the condition the simplification adds for b^2 - 3ac, which this
+                        // case already assumes: the generic case is the one answered.
+                        Entity Tidy(Entity e) => simplify ? e.Simplify() is Providedf(var value, _) ? value : e.Simplify() : e.InnerSimplified;
+                        Entity candidate;
+                        if (VanishesIdentically(depressed))
+                            candidate = a * MathS.Pow(x + Tidy(b / (3 * a)), 3);
+                        else
+                        {
+                            var r = Tidy((9 * a * d - b * c) / (2 * depressed));
+                            var t = Tidy((4 * a * b * c - 9 * MathS.Sqr(a) * d - MathS.Pow(b, 3)) / (a * depressed));
+                            candidate = a * MathS.Sqr(x - r) * (x - t);
+                        }
+                        if (VanishesIdentically((candidate - factor).Expand()))
+                        {
+                            over = candidate;
+                            break;
+                        }
+                    }
+                    if (over is null)
+                        return null;
+                    written = over;
+                    continue;
+                }
+                rest *= factor;
+            }
+            if (written is null)
+                return null;
+            return Integration.ComputeAsTheSameQuestion(above / (rest * written), x, integrateByParts);
+        }
+
+        /// <summary>
+        /// A quotient whose denominator is a sum every term of which carries the same power of one
+        /// linear form in <paramref name="x"/>, with that power taken out below the bar:
+        /// <c>1/(a x + b x/ln(c x^n))</c> is <c>1/(x (a + b/ln(c x^n)))</c>, a function of the
+        /// logarithm times its differential.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's 3.5 <c>1/(a x + b x/log(c x^n)^k)</c> were left unevaluated, and the same with
+        /// <c>x</c> taken out is answered in a tenth of a second.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByGatheringACommonLinearFactorOfASumBelowTheBar(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            static bool IsASum(Entity e) => e is Sumf or Minusf;
+            Entity above, below;
+            var power = 1;
+            if (expr is Divf(var n, Powf(var d, Number.Integer k)) && IsASum(d) && k.EInteger.Sign > 0 && k.EInteger.CanFitInInt32())
+                (above, below, power) = (n, d, k.EInteger.ToInt32Unchecked());
+            else if (expr is Divf(var n1, var d1) && IsASum(d1))
+                (above, below) = (n1, d1);
+            else if (expr is Powf(var d2, Number.Integer k2) && IsASum(d2) && k2.EInteger.Sign < 0 && k2.EInteger.CanFitInInt32())
+                (above, below, power) = (Number.Integer.One, d2, -k2.EInteger.ToInt32Unchecked());
+            else
+                return null;
+            if (TryTakeACommonLinearFactorOfASum(below, x) is not var (factored, inside))
+                return null;
+            var taken = factored * inside;
+            var written = above / (power == 1 ? taken : MathS.Pow(factored, Number.Integer.Create(power)) * MathS.Pow(inside, Number.Integer.Create(power)));
+            return Integration.ComputeAsTheSameQuestion(written, x, integrateByParts);
+        }
+
+        /// <summary>
         /// The sum with the highest power of one linear form in <paramref name="x"/> that every
         /// term carries taken out of it, as that power and what is left; <see langword="null"/>
         /// where the terms carry no such factor in common. Each term is rebuilt from the
