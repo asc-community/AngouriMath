@@ -103,6 +103,18 @@ since semantic versioning admits it.
 Measured on the suite: **7 of 8,525 tests** referenced the old reading — five boolean-solver inputs
 written `A | B`, and two that existed to record this spelling as at risk.
 
+### A power of x is taken out of a bracket to find the derivative of a product of powers
+
+**Answers where there were none.** `x^(2n) (c + d x)^n (2 c x + 3 d x^2)`, Rubi's 1.3.1, was declined. A bracket that
+is a polynomial with a power of x in every term now has that power taken out to join the powers it multiplies, and the
+integrand is then `x^(2n + 1) (c + d x)^n (2 c + 3 d x)`, the derivative of `x^(2n + 2) (c + d x)^(n + 1)/(n + 1)`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^(2*n)*(c+d*x)^n*(2*c*x+3*d*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 61 characters |
+| `"x^(n-1)*(c+d*x^2)^n*(c*x+3*d*x^3)".ToEntity().Integrate("x")` | `integral(...)` | 65 characters |
+
 ### The last digits of an evaluated sine, cosine, tangent, arcsine or arctangent
 
 **Silent, and in the hundredth digit.** `EvalNumerical` at the default hundred digits gives the
