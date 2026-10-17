@@ -26155,6 +26155,77 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of a cosine over a power of <c>k (1 +- sin(y))</c>, or of a sine over one of
+        /// <c>k (1 +- cos(y))</c>, cancelled where the power above is at least twice the one below:
+        /// <c>cos^2 = (1 - sin)(1 + sin)</c>, so <c>cos(y)^m/(k (1 + sin(y)))^n</c> is
+        /// <c>cos(y)^(m - 2n) (1 - sin(y))^n/k^n</c>. What else is beside it stays as it is.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's 4.1.10 <c>cos(c + d x)^2/((e + f x)(a + a sin(c + d x)))</c> was declined, and
+        /// <c>(1 - sin(c + d x))/(e + f x)</c> is answered in sine and cosine integrals.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveACosinePowerOverABinomialInTheSineByCancelling(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            static IEnumerable<(Entity Factor, bool Below)> Factors(Entity e, bool below) => e switch
+            {
+                Mulf(var l, var r) => Factors(l, below).Concat(Factors(r, below)),
+                Divf(var l, var r) => Factors(l, below).Concat(Factors(r, !below)),
+                _ => new[] { (e, below) }
+            };
+            var factors = Factors(expr, false).ToList();
+            foreach (var (candidate, isBelow) in factors)
+            {
+                if (!isBelow)
+                    continue;
+                var (binomial, n) = candidate is Powf(var b0, Number.Integer { EInteger: var p0 }) && p0.Sign > 0 && p0.CanFitInInt32()
+                    ? (b0, p0.ToInt32Unchecked()) : (candidate, 1);
+                // k (1 + sigma f(y)), f a sine or a cosine.
+                var functions = binomial.Nodes.Where(node => node is Sinf or Cosf && node.ContainsNode(x)).Distinct().ToList();
+                if (functions.Count != 1)
+                    continue;
+                var function = functions[0];
+                var s0 = Variable.CreateUnique(expr, "s_cs");
+                if (!TreeAnalyzer.TryGetPolyLinear(binomial.Substitute(function, s0), s0, out var slope, out var k)
+                    || slope is null || k is null || slope.ContainsNode(x) || k.ContainsNode(x)
+                    || Functions.PartialFractions.IsZeroAsAValue(k))
+                    continue;
+                var sigma = (slope / k).InnerSimplified;
+                int sign;
+                if (Functions.PartialFractions.IsZeroAsAValue((sigma - 1).InnerSimplified)) sign = 1;
+                else if (Functions.PartialFractions.IsZeroAsAValue((sigma + 1).InnerSimplified)) sign = -1;
+                else continue;
+                var argument = function is Sinf(var ys) ? ys : ((Cosf)function).Argument;
+                Entity complement = function is Sinf ? MathS.Cos(argument) : MathS.Sin(argument);
+                // The complement's power above the bar.
+                var m = 0;
+                foreach (var (factor, below) in factors)
+                    if (!below && (factor == complement ? 1 : factor is Powf(var b1, Number.Integer { EInteger: var p1 }) && b1 == complement && p1.CanFitInInt32() ? p1.ToInt32Unchecked() : 0) is var power and > 0)
+                        m += power;
+                if (m < 2 * n)
+                    continue;
+                // Everything but the binomial and the complement's powers, times what the cancelling leaves.
+                Entity rest = Number.Integer.One;
+                foreach (var (factor, below) in factors)
+                {
+                    if (below && factor == candidate)
+                        continue;
+                    if (!below && (factor == complement || factor is Powf(var b2, Number.Integer) && b2 == complement))
+                        continue;
+                    rest = below ? rest / factor : rest * factor;
+                }
+                var left = m - 2 * n;
+                Entity cancelled = (left == 0 ? Number.Integer.One : left == 1 ? complement : MathS.Pow(complement, Number.Integer.Create(left)))
+                    * (n == 1 ? 1 - sign * function : MathS.Pow(1 - sign * function, Number.Integer.Create(n)))
+                    / (n == 1 ? k : MathS.Pow(k, Number.Integer.Create(n)));
+                return Integration.ComputeAsAQuestionOfItsOwn((rest * cancelled).InnerSimplified, x, integrateByParts: true);
+            }
+            return null;
+        }
+
+        /// <summary>
         /// A rational function of a sine, or of a cosine, over a quadratic in it with a symbol
         /// among the coefficients: <c>sin(x)/(a + b sin(x) + c sin(x)^2)</c>, and the same with
         /// the other function to even powers, a cosecant or a secant beside. Written in
