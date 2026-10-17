@@ -26210,7 +26210,7 @@ namespace AngouriMath.Functions.Algebra
             {
                 var bySine = step < sines;
                 var (nextCosine, nextSine) = (new Dictionary<int, ERational>(), new Dictionary<int, ERational>());
-                foreach (var (k, value) in cosine)
+                foreach (var (k, value) in cosine.Select(pair => (pair.Key, pair.Value)))
                     if (bySine)
                     {   // cos(k y) sin y = (sin((k + 1) y) - sin((k - 1) y))/2
                         Add(nextSine, k + 1, value * half);
@@ -26222,7 +26222,7 @@ namespace AngouriMath.Functions.Algebra
                         Add(nextCosine, k + 1, value * half);
                         Add(nextCosine, System.Math.Abs(k - 1), value * half);
                     }
-                foreach (var (k, value) in sine)
+                foreach (var (k, value) in sine.Select(pair => (pair.Key, pair.Value)))
                     if (bySine)
                     {   // sin(k y) sin y = (cos((k - 1) y) - cos((k + 1) y))/2
                         Add(nextCosine, System.Math.Abs(k - 1), value * half);
@@ -26238,7 +26238,7 @@ namespace AngouriMath.Functions.Algebra
             }
             Entity answer = Number.Integer.Zero;
             foreach (var (terms, isSine) in new[] { (cosine, false), (sine, true) })
-                foreach (var (k, value) in terms.OrderBy(term => term.Key))
+                foreach (var (k, value) in terms.OrderBy(term => term.Key).Select(pair => (pair.Key, pair.Value)))
                 {
                     if (value.IsZero)
                         continue;
