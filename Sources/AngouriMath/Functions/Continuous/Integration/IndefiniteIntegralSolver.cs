@@ -9679,6 +9679,93 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An exponential of a symbolic multiple of <c>i arctan(L)</c>, <c>L</c> linear, beside
+        /// powers of multiples of <c>1 + L^2</c>, written as powers of the two linears:
+        /// <c>e^(k i arctan(L))</c> is <c>(1 + i L)^(k/2) (1 - i L)^(-k/2)</c> and
+        /// <c>(K (1 + L^2))^q</c> is <c>K^q (1 + i L)^q (1 - i L)^q</c>, each exactly for a real
+        /// <c>L</c> and any <c>k</c> and <c>q</c>: the two principal arguments are
+        /// <c>arctan(L)</c> and its negative, and <c>1 + L^2</c> is positive.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's 5.3.6 <c>(c + a^2 c x^2)^p/e^(2 i p arctan(a x))</c> is then
+        /// <c>c^p (1 - i a x)^(2p)</c>, a power of a linear; it was left unevaluated.
+        /// <see cref="SolveByWritingAnExponentialOfAnInverseAlgebraically"/> takes a rational
+        /// multiple, and this the rest.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAnExponentialOfASymbolicMultipleOfAnArctangentAsPowersOfTheLinears(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            static IEnumerable<(Entity Factor, bool Below)> Factors(Entity e, bool below) => e switch
+            {
+                Mulf(var l, var r) => Factors(l, below).Concat(Factors(r, below)),
+                Divf(var l, var r) => Factors(l, below).Concat(Factors(r, !below)),
+                _ => new[] { (e, below) }
+            };
+            var factors = Factors(expr, false).ToList();
+            Entity? argument = null;
+            Entity? multiple = null;
+            foreach (var (factor, below) in factors)
+            {
+                if (factor is not Powf(var e, var exponent) || e != MathS.e || !exponent.ContainsNode(x))
+                    continue;
+                if (argument is not null)
+                    return null;
+                var arctangents = exponent.Nodes.OfType<Arctanf>().Distinct().ToList();
+                if (arctangents.Count != 1 || !TreeAnalyzer.TryGetPolyLinear(arctangents[0].Argument, x, out var slope, out _) || TreeAnalyzer.IsZero(slope))
+                    return null;
+                var placeholder = Variable.CreateUnique(exponent, "u_atan");
+                if (!TreeAnalyzer.TryGetPolyLinear(exponent.Replace(node => node == arctangents[0] ? placeholder : node), placeholder, out var coefficient, out var free)
+                    || coefficient is null || free is null || coefficient.ContainsNode(x) || !TreeAnalyzer.IsZero(free))
+                    return null;
+                // Simplified, since `2 i p/i` is not reduced to `2 p` short of it.
+                var k = (coefficient / MathS.i).Simplify();
+                // A rational multiple is the other rule's.
+                if (k.Evaled is Number.Rational)
+                    return null;
+                argument = arctangents[0].Argument;
+                multiple = below ? -k : k;
+            }
+            if (argument is null || multiple is null)
+                return null;
+            var quadratic = 1 + MathS.Sqr(argument);
+            Entity constant = Number.Integer.One;
+            Entity plusPower = multiple / 2, minusPower = -multiple / 2;
+            foreach (var (factor, below) in factors)
+            {
+                if (factor is Powf(var e, var exponent) && e == MathS.e && exponent.ContainsNode(x))
+                    continue;
+                if (!factor.ContainsNode(x))
+                {
+                    constant = below ? constant / factor : constant * factor;
+                    continue;
+                }
+                var (@base, power) = factor is Powf(var b, var q) ? (b, q) : (factor, (Entity)Number.Integer.One);
+                if (power.ContainsNode(x)
+                    || !TreeAnalyzer.TryGetPolyQuadratic(@base, x, out var a2, out var b2, out var c2)
+                    || !TreeAnalyzer.TryGetPolyQuadratic(quadratic, x, out var a3, out var b3, out var c3)
+                    || a2 is null || b2 is null || c2 is null || a3 is null || b3 is null || c3 is null || TreeAnalyzer.IsZero(a3))
+                    return null;
+                var ratio = (a2 / a3).InnerSimplified;
+                if (!Functions.PartialFractions.IsZeroAsAValue((b2 - ratio * b3).InnerSimplified)
+                    || !Functions.PartialFractions.IsZeroAsAValue((c2 - ratio * c3).InnerSimplified))
+                    return null;
+                var signed = below ? -power : power;
+                constant *= MathS.Pow(ratio, signed);
+                plusPower += signed;
+                minusPower += signed;
+            }
+            // Simplified, x-free and small: `-p + p` is a zero power only so.
+            plusPower = plusPower.Simplify();
+            minusPower = minusPower.Simplify();
+            Entity written = constant;
+            if (!TreeAnalyzer.IsZero(plusPower))
+                written *= MathS.Pow(1 + MathS.i * argument, plusPower);
+            if (!TreeAnalyzer.IsZero(minusPower))
+                written *= MathS.Pow(1 - MathS.i * argument, minusPower);
+            return Integration.ComputeAsAQuestionOfItsOwn(written, x, integrateByParts);
+        }
+
+        /// <summary>
         /// An exponential of <c>i</c> times an inverse trigonometric function, written
         /// algebraically: <c>e^(i arctan(L))</c> is <c>(1 + i L)/sqrt(1 + L^2)</c>,
         /// <c>e^(i arcsin(L))</c> is <c>sqrt(1 - L^2) + i L</c> and <c>e^(i arccos(L))</c> is

@@ -671,6 +671,8 @@ namespace AngouriMath.Functions.Algebra
             // question asked, before the rules that spent the budget: `e^(3 i atan(a + b x))/x^2` ran out of
             // time where, rewritten, it is answered in half a second. It is asked again in its place below.
             if (AnsweringTheQuestionAsked && (answer = IndefiniteIntegralSolver.SolveByWritingAnExponentialOfAnInverseAlgebraically(expr, x, integrateByParts)) is { }) return answer;
+            // The same for a symbolic multiple of the arctangent, beside powers of its quadratic.
+            if (AnsweringTheQuestionAsked && (answer = IndefiniteIntegralSolver.SolveAnExponentialOfASymbolicMultipleOfAnArctangentAsPowersOfTheLinears(expr, x, integrateByParts)) is { }) return answer;
             // A polynomial over a symbolic quartic that splits into two quadratics in a hidden variable,
             // palindromic or even after a shift: the rules below spent seconds declining both.
             if ((answer = IndefiniteIntegralSolver.SolveAPolynomialOverASymbolicQuarticThatSplitsIntoTwoQuadratics(expr, x, integrateByParts)) is { }) return answer;
