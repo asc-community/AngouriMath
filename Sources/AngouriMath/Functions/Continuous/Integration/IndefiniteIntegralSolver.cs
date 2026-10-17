@@ -29408,6 +29408,37 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A quotient whose denominator is a sum every term of which carries the same power of one
+        /// linear form in <paramref name="x"/>, with that power taken out below the bar:
+        /// <c>1/(a x + b x/ln(c x^n))</c> is <c>1/(x (a + b/ln(c x^n)))</c>, a function of the
+        /// logarithm times its differential.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's 3.5 <c>1/(a x + b x/log(c x^n)^k)</c> were left unevaluated, and the same with
+        /// <c>x</c> taken out is answered in a tenth of a second.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByGatheringACommonLinearFactorOfASumBelowTheBar(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            static bool IsASum(Entity e) => e is Sumf or Minusf;
+            Entity above, below;
+            var power = 1;
+            if (expr is Divf(var n, Powf(var d, Number.Integer k)) && IsASum(d) && k.EInteger.Sign > 0 && k.EInteger.CanFitInInt32())
+                (above, below, power) = (n, d, k.EInteger.ToInt32Unchecked());
+            else if (expr is Divf(var n1, var d1) && IsASum(d1))
+                (above, below) = (n1, d1);
+            else if (expr is Powf(var d2, Number.Integer k2) && IsASum(d2) && k2.EInteger.Sign < 0 && k2.EInteger.CanFitInInt32())
+                (above, below, power) = (Number.Integer.One, d2, -k2.EInteger.ToInt32Unchecked());
+            else
+                return null;
+            if (TryTakeACommonLinearFactorOfASum(below, x) is not var (factored, inside))
+                return null;
+            var taken = factored * inside;
+            var written = above / (power == 1 ? taken : MathS.Pow(factored, Number.Integer.Create(power)) * MathS.Pow(inside, Number.Integer.Create(power)));
+            return Integration.ComputeAsTheSameQuestion(written, x, integrateByParts);
+        }
+
+        /// <summary>
         /// The sum with the highest power of one linear form in <paramref name="x"/> that every
         /// term carries taken out of it, as that power and what is left; <see langword="null"/>
         /// where the terms carry no such factor in common. Each term is rebuilt from the

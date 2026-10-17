@@ -1228,6 +1228,11 @@ namespace AngouriMath.Functions.Algebra
             if (expr is Entity.Divf or Entity.Powf
                 && (answer = IndefiniteIntegralSolver.SolveACubicWithARepeatedRootOverItsRoots(expr, x, integrateByParts)) is { })
                 return answer;
+            // The same factor taken out of a sum below the bar: `1/(a x + b x/ln(c x^n))` is
+            // `1/(x (a + b/ln(c x^n)))`, a function of the logarithm beside its differential.
+            if (expr is Entity.Divf or Entity.Powf
+                && (answer = IndefiniteIntegralSolver.SolveByGatheringACommonLinearFactorOfASumBelowTheBar(expr, x, integrateByParts)) is { })
+                return answer;
             // A power of the secant that is not whole beside the cosine, written as the cosine's
             // with the constant that takes in front, which the substitutions below read.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAPowerOfTheSecantInTheCosine(expr, x, integrateByParts)) is { }) return answer;
