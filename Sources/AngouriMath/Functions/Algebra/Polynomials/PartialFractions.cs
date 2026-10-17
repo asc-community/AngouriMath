@@ -2147,18 +2147,37 @@ namespace AngouriMath.Functions
             using var _ = MathS.Settings.DowncastingEnabled.Set(false);
             (left, right) = Pinned(left, right, x);
             var tolerance = EDecimal.FromString("1e-9");
+            var inDecimals = new System.Lazy<PreciseEvaluation>[] { new(() => PreciseEvaluation.In(40)), new(() => PreciseEvaluation.In(80)) };
             foreach (var at in DefaultSamplePoints)
             {
                 var point = Real.Create(EDecimal.FromString(at));
-                if (right.Substitute(x, point).Evaled is not Complex r || r.IsNaN)
+                var rightAt = right.Substitute(x, point);
+                if (rightAt.Evaled is not Complex r || r.IsNaN)
                     continue;
                 var scale = EDecimal.Max(EDecimal.One, r.Abs().EDecimal);
                 if (r.ImaginaryPart.EDecimal.Abs().CompareTo(scale.Multiply(tolerance)) > 0)
                     continue;
-                if (left.Substitute(x, point).Evaled is not Complex l || l.IsNaN)
-                    return true;
-                if ((l - r).Abs().EDecimal.CompareTo(scale.Multiply(tolerance)) > 0)
-                    return true;
+                var leftAt = left.Substitute(x, point);
+                if (leftAt.Evaled is Complex l && !l.IsNaN && (l - r).Abs().EDecimal.CompareTo(scale.Multiply(tolerance)) <= 0)
+                    continue;
+                // A difference, or no value, at the default precision is decided again in forty and
+                // eighty digits: `tanh` written as `(e^(2 y) - 1)/(e^(2 y) + 1)` is inf/inf there at
+                // y near 30, and a right answer to `sinh(c + d x)^5/(a + b sinh(c + d x)^3)` was
+                // refused for it. Still no value where the integrand has one is a difference; a
+                // precision that cannot tell says nothing.
+                foreach (var precise in inDecimals)
+                {
+                    if (precise.Value.ValueOf(rightAt) is not { } rightPrecise)
+                        continue;
+                    if (precise.Value.ValueOf(leftAt) is not { } leftPrecise)
+                        return true;
+                    if (PreciseEvaluation.Agree(leftPrecise, rightPrecise, 1e-9) is { } decided)
+                    {
+                        if (!decided)
+                            return true;
+                        break;
+                    }
+                }
             }
             return false;
         }

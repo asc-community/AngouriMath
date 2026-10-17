@@ -61,5 +61,20 @@ namespace AngouriMath.Tests.Calculus
             DifferentiatesBack(integrand, ("a", 0.6), ("b", 1.25));
             DifferentiatesBack(integrand, ("a", -0.75), ("b", 0.4));
         }
+
+        // A power of the function above or below the binomial: divided down, or up, to a power between
+        // 0 and n over the binomial, over all n roots, and the powers of the function beside.
+        // `sinh(y)^5` is answered only because a value the default precision cannot form is decided
+        // in decimals before it counts as a difference.
+        [Theory]
+        [InlineData("sinh(c+d*x)^5/(a+b*sinh(c+d*x)^3)")]
+        [InlineData("sinh(c+d*x)^2/(a+b*sinh(c+d*x)^3)")]
+        [InlineData("csch(c+d*x)^3/(a+b*sinh(c+d*x)^3)")]
+        [InlineData("sin(x)^2/(a+b*sin(x)^5)")]
+        public void APowerOverItIsAnsweredAndDifferentiatesBack(string integrand)
+        {
+            DifferentiatesBack(integrand, ("a", 0.6), ("b", 1.25), ("c", 0.3), ("d", 0.75));
+            DifferentiatesBack(integrand, ("a", -0.75), ("b", 0.4), ("c", -1), ("d", 0.5));
+        }
     }
 }
