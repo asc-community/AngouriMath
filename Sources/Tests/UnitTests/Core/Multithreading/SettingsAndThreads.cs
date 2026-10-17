@@ -54,7 +54,8 @@ namespace AngouriMath.Tests.Core.Multithreading
                 {
                     var roots = "x2 + e^x + sin(x)".SolveEquation("x");
                     var set = (Set)roots.Simplify();
-                    Assert.Equal(num % 2 == 0, !set.IsSetEmpty);
+                    // With Newton the roots are numbers; without, the equation is left as the set it defines.
+                    Assert.Equal(num % 2 == 0, set is Set.FiniteSet { IsSetEmpty: false });
                 });
             new ThreadingChecker(Solve).Run();
         }
@@ -123,7 +124,8 @@ namespace AngouriMath.Tests.Core.Multithreading
                 using var _ = MathS.Settings.AllowNewton.Set(num % 2 == 0);
                 var roots = "x2 + e^x + sin(x)".SolveEquation("x");
                 var set = (Set)roots.Simplify();
-                Assert.Equal(num % 2 == 0, !set.IsSetEmpty);
+                // With Newton the roots are numbers; without, the equation is left as the set it defines.
+                Assert.Equal(num % 2 == 0, set is Set.FiniteSet { IsSetEmpty: false });
             }
             new ThreadingChecker(Solve).Run();
         }
