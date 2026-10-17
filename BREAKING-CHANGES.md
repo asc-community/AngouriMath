@@ -244,6 +244,21 @@ cache is now keyed on the downcasting setting too
 |---|---|---|
 | `MathS.FromString("1/3").Evaled` under downcasting off, after the same parse with it on | `1/3` | `0.3333…` (one hundred digits) |
 
+### A polynomial in a sine over a power of a binomial in it is written in powers of the binomial
+
+**Answers where there were none.** `(A + B cos(c + d x) + C cos(c + d x)^2)/(a + b cos(c + d x))^4` ran out of time, and
+so did twelve more of Rubi's 4.1.3.1, 4.2.3.1 and 4.2.4.2. `P(f)/(a + b f)^n`, for `f` a sine or cosine, is now
+written in powers of `u = a + b f`, with coefficients `c_j = sum_i p_i C(i, j) (-a)^(i - j)/b^i`, and each power
+`u^(j - n)` is integrated on its own
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(A+B*cos(c+d*x)+C*cos(c+d*x)^2)/(a+b*cos(c+d*x))^4".ToEntity().Integrate("x")` | `integral(...)` | 9,003 characters |
+| `"(A+B*sin(e+f*x))*(c+d*sin(e+f*x))^3/(a+a*sin(e+f*x))^3".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
+| `"(a+b*sin(e+f*x))^2*(A+B*sin(e+f*x))/(c+d*sin(e+f*x))^2".ToEntity().Integrate("x")` | `integral(...)` | 3,337 characters |
+| `"cos(c+d*x)^4*(A+C*cos(c+d*x)^2)/(a+b*cos(c+d*x))^4".ToEntity().Integrate("x")` | `integral(...)` | 10,859 characters |
+
 ### A difference of a negated term is printed as a sum
 
 **A printed form.** A solution and a difference were printed with the sign of a negative factor left inside:
