@@ -221,9 +221,15 @@ namespace AngouriMath.Tests.Convenience
             var wrong = new List<string>();
             var offending = new HashSet<string>();
 
+            var run = 0;
             foreach (var example in Examples())
             {
                 var (printed, error) = Run(example.Program, options);
+                // Each example is a compilation of its own, garbage once it has run, and the collector
+                // left it standing: alone this test peaked at 2.4 GB, and beside the rest of the suite the
+                // test host reached 8 GB. Collected every fifth example it peaks at 570 MB, for 3 s more.
+                if (++run % 5 == 0)
+                    GC.Collect();
                 if (error is null && printed == example.Prints) continue;
                 offending.Add(example.Member);
                 wrong.Add(error is not null

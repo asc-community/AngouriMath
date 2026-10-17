@@ -9696,7 +9696,11 @@ namespace AngouriMath.Functions.Algebra
             var quadraticElsewhere = expr.Nodes.Any(node => node is Powf(var q, _) && q.ContainsNode(x) && !q.Nodes.Any(inner => inner is Arctanf or Arcsinf or Arccosf)
                 && TreeAnalyzer.TryGetPolyQuadratic(q, x, out var leading, out _, out _) && !TreeAnalyzer.IsZero(leading));
             // The variable outside the exponentials.
-            var xElsewhere = expr.Replace(node => node is Powf(var e, var power) && e == MathS.e && power.ContainsNode(x) ? Number.Integer.One : node).ContainsNode(x);
+            var withoutTheExponentials = expr.Replace(node => node is Powf(var e, var power) && e == MathS.e && power.ContainsNode(x) ? Number.Integer.One : node);
+            var xElsewhere = withoutTheExponentials.ContainsNode(x);
+            // The variable in a denominator, a pole beside the exponentials: not `x^2/e^(i arctan(a + b x))`.
+            var xInADenominator = withoutTheExponentials.Nodes.Any(node => node is Divf(_, var denominator) && denominator.ContainsNode(x)
+                || node is Powf(var @base, Number.Real { IsNegative: true }) && @base.ContainsNode(x));
             var rewritten = expr.Replace(node =>
             {
                 if (node is not Powf(var @base, var exponent) || @base != MathS.e || !exponent.ContainsNode(x))
@@ -9740,7 +9744,14 @@ namespace AngouriMath.Functions.Algebra
                     // ran past thirty seconds, and `x^3 e^(-i arctan(a x))` came out in 26 thousand
                     // characters where so it is 218. Alone the exponential is answered shorter as the
                     // root, and for a power not whole the quotient's power is.
-                    if ((n == Number.Integer.One || n == Number.Integer.MinusOne) && !quadraticElsewhere && xElsewhere)
+                    // So for every n beside a pole at 0 and an argument with a constant term:
+                    // `e^(3 i arctan(a + b x))/x^2` as `(1 + i L)^3 (1 + L^2)^(-3/2)` ran out of time, and
+                    // as the two powers it is answered in half a second. Not for `a x` or a polynomial
+                    // beside it, which the root answers: `x^3 e^(-(3/2) i arctan(a x))` and
+                    // `e^(3 i arctan(a x))/x` were answered and as the two powers ran out of time.
+                    if (!quadraticElsewhere && xElsewhere && (n == Number.Integer.One || n == Number.Integer.MinusOne
+                        || xInADenominator && TreeAnalyzer.TryGetPolyLinear(argument, x, out _, out var argumentConstant)
+                            && argumentConstant is { } && !TreeAnalyzer.IsZero(argumentConstant)))
                     {
                         var half = Number.Rational.Create(n.ERational.Divide(2));
                         return MathS.Pow(1 + MathS.i * argument, half) * MathS.Pow(1 - MathS.i * argument, Number.Rational.Create(half.ERational.Negate()));
@@ -9787,7 +9798,9 @@ namespace AngouriMath.Functions.Algebra
             // non-existence is not given.
             if (expr.Vars.Any(symbol => symbol != x) && !Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
                 return null;
-            if (answer.Nodes.Any(node => node is Piecewise) && answer.Simplify().Nodes.Any(node => node == MathS.NaN))
+            // InnerSimplified rather than Simplify: the search ran past a minute on the piecewise answer to
+            // `e^(3 i atan(a + b x))/x^2`, ready and checked in a quarter of a second.
+            if (answer.Nodes.Any(node => node is Piecewise) && answer.InnerSimplified.Nodes.Any(node => node == MathS.NaN))
                 return null;
             return answer;
         }
@@ -14619,6 +14632,38 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <paramref name="expr"/> with each factor above the bar that is a sum and a polynomial in
+        /// <paramref name="x"/> divisible by a power of it written as that power times the quotient,
+        /// rebuilt from its coefficients; null where no factor is.
+        /// </summary>
+        private static Entity? WithAPowerOfXOutOfTheBracket(Entity expr, Entity.Variable x)
+        {
+            var (top, bottom) = Functions.SingleQuotient.Of(expr);
+            var changed = false;
+            Entity rebuilt = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(top))
+            {
+                if (factor is Sumf or Minusf && TreeAnalyzer.TryGetPolynomial(factor, x, out var read) && read.Count > 1
+                    && read.Values.All(value => !value.ContainsNode(x)) && read.Keys.All(key => key.Sign >= 0 && key.CanFitInInt32())
+                    && read.Keys.Min()! is { Sign: > 0 } lowest)
+                {
+                    var shift = lowest.ToInt32Unchecked();
+                    Entity reduced = Number.Integer.Zero;
+                    foreach (var monomial in read)
+                    {
+                        var k = monomial.Key.ToInt32Unchecked() - shift;
+                        reduced += monomial.Value * (k == 0 ? Number.Integer.One : MathS.Pow(x, Number.Integer.Create(k)));
+                    }
+                    rebuilt *= MathS.Pow(x, Number.Integer.Create(shift)) * reduced;
+                    changed = true;
+                }
+                else
+                    rebuilt *= factor;
+            }
+            return changed ? rebuilt / bottom : null;
+        }
+
+        /// <summary>
         /// A product of powers times a sum that is the derivative of the product with some of
         /// the powers raised by one: <c>e^x x^2 ln(x)^2 (3 + (3 + x) ln(x))</c> is
         /// <c>(e^x x^3 ln(x)^3)'</c>, and Rubi's
@@ -14657,6 +14702,12 @@ namespace AngouriMath.Functions.Algebra
             // elementary.
             if (expr is Sumf or Minusf)
                 return WithTheCommonPowersOut(expr, x) is { } factored ? SolveAsTheDerivativeOfAProductOfPowers(factored, x) : null;
+            // A bracket that is a polynomial with a power of x in every term has that power taken out, to
+            // join the powers it multiplies: `x^(2n) (c + d x)^n (2 c x + 3 d x^2)` is
+            // `x^(2n + 1) (c + d x)^n (2 c + 3 d x)`, the derivative of `x^(2n + 2) (c + d x)^(n + 1)/(n + 1)`,
+            // and with the x in the bracket nothing raised x by enough.
+            if (WithAPowerOfXOutOfTheBracket(expr, x) is { } outOfTheBracket)
+                return SolveAsTheDerivativeOfAProductOfPowers(outOfTheBracket, x);
             Entity constant = Number.Integer.One;
             Entity? bracket = null;
             var raisable = new List<(Entity Base, Entity Exponent)>();
@@ -26155,6 +26206,148 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A polynomial in a sine or a cosine of a linear over a whole power of a binomial in it,
+        /// <c>(A + B cos(y) + C cos(y)^2)/(a + b cos(y))^4</c>, written in powers of the binomial:
+        /// with <c>u = a + b f</c>, <c>f = (u - a)/b</c>, and <c>P(f)/u^n = sum c_j u^(j - n)</c> with
+        /// <c>c_j = sum_(i >= j) p_i C(i, j) (-a)^(i - j)/b^i</c>, each power of the binomial its own
+        /// question.
+        /// </summary>
+        /// <remarks>
+        /// The rules after it took the whole quotient through the half-angle and wrote 30 million
+        /// characters for <c>(A + B cos(x) + C cos(x)^2)/(a + b cos(x))^4</c> in eighteen seconds, where
+        /// <c>1/(a + b cos(x))^4</c> alone is 44 thousand. Rubi's 4.1.4 and 4.2.4
+        /// <c>(a + b cos)^m (A + B cos + C cos^2)</c> at <c>m = -4</c> timed out.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPolynomialInASineOverAPowerOfABinomialInItInPowersOfTheBinomial(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var functions = expr.Nodes.Where(node => node is Sinf or Cosf && node.ContainsNode(x)).Distinct().ToList();
+            if (functions.Count != 1)
+                return null;
+            var function = functions[0];
+            var argument = function switch { Sinf(var y) => y, Cosf(var y) => y, _ => null! };
+            if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out _) || Functions.PartialFractions.IsZeroAsAValue(slope))
+                return null;
+            var s = Variable.CreateUnique(expr, "s_pow");
+            var inS = expr.Substitute(function, s);
+            if (inS.ContainsNode(x))
+                return null;
+            var (above, below) = Functions.SingleQuotient.Of(inS);
+            // Below the bar a factor free of s times one whole power of a binomial in s.
+            static IEnumerable<Entity> Factors(Entity e) => e is Mulf(var l, var r) ? Factors(l).Concat(Factors(r)) : new[] { e };
+            Entity constant = Number.Integer.One;
+            Entity? binomial = null;
+            var n = 0;
+            foreach (var factor in Factors(below))
+            {
+                if (!factor.ContainsNode(s))
+                {
+                    constant *= factor;
+                    continue;
+                }
+                if (binomial is not null)
+                    return null;
+                (binomial, n) = factor is Powf(var b0, Number.Integer { EInteger: var power }) && power.CanFitInInt32() ? (b0, power.ToInt32Unchecked()) : (factor, 1);
+            }
+            if (binomial is null || n < 2 || n > 12
+                || !TreeAnalyzer.TryGetPolyLinear(binomial, s, out var b, out var a)
+                || Functions.PartialFractions.IsZeroAsAValue(a) || Functions.PartialFractions.IsZeroAsAValue(b)
+                || !TreeAnalyzer.TryGetPolynomial(above, s, out var p) || p.Keys.Any(key => key.Sign < 0 || !key.CanFitInInt32()))
+                return null;
+            var degree = p.Keys.Max()!.ToInt32Unchecked();
+            // The reciprocal of the power alone is what the rules after it answer, in a few milliseconds.
+            if (degree == 0 || degree > 12)
+                return null;
+            var u = a + b * function;
+            Entity answer = Number.Integer.Zero;
+            for (var j = 0; j <= degree; j++)
+            {
+                Entity c = Number.Integer.Zero;
+                var choose = EInteger.One;
+                for (var i = j; i <= degree; i++)
+                {
+                    // C(i, j) from C(i - 1, j).
+                    if (i > j)
+                        choose = choose * i / (i - j);
+                    if (p.TryGetValue(EInteger.FromInt32(i), out var pi))
+                        c += pi * Number.Integer.Create(choose) * (i == j ? Number.Integer.One : MathS.Pow(-a, Number.Integer.Create(i - j))) / (i == 0 ? Number.Integer.One : MathS.Pow(b, Number.Integer.Create(i)));
+                }
+                c = c.InnerSimplified;
+                if (Functions.PartialFractions.IsZeroAsAValue(c))
+                    continue;
+                var piece = j - n == 0 ? (Entity)Number.Integer.One : MathS.Pow(u, Number.Integer.Create(j - n));
+                if (Integration.ComputeAsAQuestionOfItsOwn(piece, x, integrateByParts: true) is not { } integrated)
+                    return null;
+                answer += c * integrated;
+            }
+            answer = (answer / constant).InnerSimplified;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
+        /// A power of x times a whole power, past the first, of a sum holding an inverse function or a
+        /// logarithm of a power of x, <c>x^m (a + b atanh(c x^n))^p</c>, under <c>t = x^n</c> where
+        /// <c>(m + 1)/n</c> is whole: <c>x^m dx = t^((m + 1)/n - 1) dt/n</c>.
+        /// </summary>
+        /// <remarks>
+        /// The rules before it timed out on Rubi's 5.3.2 <c>(a + b atan(c x^2))^2/x^5</c> and 7.3.2
+        /// <c>x^3 (a + b atanh(c x^2))^2</c>, <c>(a + b atanh(c/x^2))^2/x^5</c> and
+        /// <c>(a + b atanh(c x^(3/2)))^2/x^4</c>, each a problem in <c>t</c> they answer in a second.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPowerOfXTimesAFunctionOfAnotherUnderThatPower(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            // The factors of a product and a quotient, each with the sign of its exponent.
+            static IEnumerable<(Entity Factor, bool Below)> Factors(Entity e, bool below) => e switch
+            {
+                Mulf(var l, var r) => Factors(l, below).Concat(Factors(r, below)),
+                Divf(var l, var r) => Factors(l, below).Concat(Factors(r, !below)),
+                _ => new[] { (e, below) }
+            };
+            ERational m = ERational.Zero;
+            Entity? function = null;
+            Entity constant = Number.Integer.One;
+            foreach (var (factor, below) in Factors(expr, false))
+            {
+                if (!factor.ContainsNode(x))
+                    constant = below ? constant / factor : constant * factor;
+                else if (factor == x)
+                    m = below ? m - ERational.One : m + ERational.One;
+                else if (factor is Powf(var b0, Number.Rational { ERational: var r }) && b0 == x)
+                    m = below ? m - r : m + r;
+                else if (function is null && !below && factor is Powf(var sum, Number.Integer { EInteger: var power }) && power.CompareTo(EInteger.FromInt32(2)) >= 0)
+                    function = factor;
+                else
+                    return null;
+            }
+            if (function is null)
+                return null;
+            // The one power of x the function is written in, and an inverse function or a logarithm of it.
+            var powers = function.Nodes.Where(node => node is Powf(var b1, Number.Rational) && b1 == x).Distinct().ToList();
+            if (powers.Count != 1 || powers[0] is not Powf(_, Number.Rational { ERational: var n }) || n.IsZero || n.Equals(ERational.One))
+                return null;
+            var t = Variable.CreateUnique(expr, "t_pow");
+            var inT = function.Substitute(powers[0], t);
+            if (inT.ContainsNode(x)
+                || !inT.Nodes.Any(node => node is Arcsinf or Arccosf or Arctanf or Arccotanf or Logf && node.ContainsNode(t)))
+                return null;
+            // PeterO keeps a quotient as written: -4/2 has the denominator 2 until it is reduced.
+            var k = ((m + ERational.One) / n).ToLowestTerms();
+            if (!k.Denominator.Equals(EInteger.One) || !k.Numerator.CanFitInInt32())
+                return null;
+            var exponent = k.Numerator.ToInt32Unchecked() - 1;
+            var inTWhole = (exponent == 0 ? inT : MathS.Pow(t, Number.Integer.Create(exponent)) * inT).InnerSimplified;
+            if (Integration.ComputeAsAQuestionOfItsOwn(inTWhole, t, integrateByParts: true) is not { } integrated)
+                return null;
+            var answer = (constant / Number.Rational.Create(n.Numerator, n.Denominator) * integrated.Substitute(t, powers[0])).InnerSimplified;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
         /// A product of whole powers of a sine and a cosine of one linear times something else in x
         /// that is no polynomial, <c>sin(u)^3 cos(u)^6/(a + b u)</c>, linearised: the product is a sum
         /// of <c>cos(k u)</c> and <c>sin(k u)</c> by the product-to-sum formulas, and each term beside
@@ -29396,8 +29589,99 @@ namespace AngouriMath.Functions.Algebra
             // pinned: asking Simplify whether the derivative of the factor vanished took four seconds
             // on `sqrt(-a e^2/b - e^2 x^2)/(e sqrt(a + b x^2))`, and its square stayed a power of a
             // quotient of roots. A point it cannot tell at counts against it; the answer is checked too.
+            // Or on each side of 0 alone: `sqrt(-b x^2)/(b x)`, which `asin(sqrt(1 + b x^2))` beside
+            // `1/sqrt(1 + b x^2)` leaves, is constant where x keeps its sign and changes with it.
             bool HoldsItsValue(Entity factor)
-                => Functions.PartialFractions.HoldsAtSampledPoints(factor, factor.Substitute(x, Number.Rational.Create(3, 10)), x);
+                => Functions.PartialFractions.HoldsAtSampledPoints(factor, factor.Substitute(x, Number.Rational.Create(3, 10)), x)
+                || Functions.PartialFractions.HoldsAtSampledPoints(factor, factor.Substitute(x, Number.Rational.Create(3, 10)), x, new[] { "0.29", "1.43", "3.17" })
+                   && Functions.PartialFractions.HoldsAtSampledPoints(factor, factor.Substitute(x, Number.Rational.Create(-3, 10)), x, new[] { "-0.61", "-1.37", "-2.9" });
+        }
+
+        /// <summary>
+        /// A polynomial over a quartic with symbols in it that splits into two quadratics in a hidden
+        /// variable: a palindromic one, <c>c x^4 + b x^3 + e x^2 + b x + c</c>, is
+        /// <c>c (x^2 - p x + 1)(x^2 - q x + 1)</c> with <c>p</c> and <c>q</c> the roots of
+        /// <c>c w^2 + b w + e - 2 c</c>, since it is <c>x^2</c> times a quadratic in <c>w = x + 1/x</c>;
+        /// and one whose odd terms vanish under <c>y = x + c3/(4 c4)</c> is <c>c4 (y^2 - p)(y^2 - q)</c>.
+        /// The integral over the factored quartic is asked with <c>p</c> and <c>q</c> named, and they are
+        /// written back.
+        /// </summary>
+        /// <remarks>
+        /// The integral over two real quadratics splits on the signs of their discriminants, which mean
+        /// nothing for roots that may be complex; the first arm differentiates back for any of them, and
+        /// the answer is checked. A quartic already even is the biquadratic rule's. Rubi's 1.3.1
+        /// <c>(A + B x + C x^2 + D x^3)/(a + b x + c x^2 + b x^3 + a x^4)</c> and
+        /// <c>1/(4 a c + 4 c^2 x^2 + 4 c d x^3 + d^2 x^4)</c> were declined.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPolynomialOverASymbolicQuarticThatSplitsIntoTwoQuadratics(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked || !TryReadAsQuotient(expr, out var numerator, out var denominator)
+                || !denominator.Vars.Any(v => v != x))
+                return null;
+            // A quartic written as one sum only: the factored one asked below is palindromic again once
+            // multiplied out, and read as one the rule split it again, four levels deep.
+            if (Mulf.LinearChildren(denominator).Count(factor => factor.ContainsNode(x)) != 1
+                || Mulf.LinearChildren(denominator).First(factor => factor.ContainsNode(x)) is not (Sumf or Minusf))
+                return null;
+            if (!TreeAnalyzer.TryGetPolynomial(denominator, x, out var read) || read.Keys.Any(key => key.Sign < 0 || key.CompareTo(EInteger.FromInt32(4)) > 0)
+                || !read.ContainsKey(EInteger.FromInt32(4)) || read.Values.Any(value => value.ContainsNode(x))
+                || !TreeAnalyzer.TryGetPolynomial(numerator, x, out var readAbove) || readAbove.Values.Any(value => value.ContainsNode(x)))
+                return null;
+            Entity At(int k) => read.TryGetValue(EInteger.FromInt32(k), out var value) ? value : Number.Integer.Zero;
+            var (c0, c1, c2, c3, c4) = (At(0), At(1), At(2), At(3), At(4));
+            if (VanishesIdentically(c1.Expand()) && VanishesIdentically(c3.Expand()))
+                return null;
+            var p = Variable.CreateUnique(expr, "p_quart");
+            var q = Variable.CreateUnique(expr + p, "q_quart");
+            Entity first, second, pValue, qValue;
+            if (VanishesIdentically((c0 - c4).Expand()) && VanishesIdentically((c1 - c3).Expand()))
+            {
+                var discriminant = (c3 * c3 - 4 * c4 * (c2 - 2 * c4)).Expand().InnerSimplified;
+                if (Functions.PartialFractions.IsZeroAsAValue(discriminant))
+                    return null;
+                pValue = (-c3 + MathS.Sqrt(discriminant)) / (2 * c4);
+                qValue = (-c3 - MathS.Sqrt(discriminant)) / (2 * c4);
+                (first, second) = (MathS.Sqr(x) - p * x + 1, MathS.Sqr(x) - q * x + 1);
+            }
+            else
+            {
+                var shift = Functions.PartialFractions.InLowestTermsOverTheSymbols(c3 / (4 * c4));
+                // The coefficients in y = x + s by the binomial theorem, d_k = sum_j c_j C(j, k) (-s)^(j - k),
+                // each in lowest terms over the symbols: the shift puts `c/d` into them, and `d^2 (c/d)^3`
+                // beside `c^3/d` is not seen to cancel as written.
+                var coefficients = new[] { c0, c1, c2, c3, c4 };
+                int[,] binomial = { { 1, 0, 0, 0, 0 }, { 1, 1, 0, 0, 0 }, { 1, 2, 1, 0, 0 }, { 1, 3, 3, 1, 0 }, { 1, 4, 6, 4, 1 } };
+                Entity Shifted(int k)
+                {
+                    Entity sum = Number.Integer.Zero;
+                    for (var j = k; j <= 4; j++)
+                        sum += coefficients[j] * binomial[j, k] * MathS.Pow(-shift, Number.Integer.Create(j - k));
+                    return Functions.PartialFractions.InLowestTermsOverTheSymbols(sum);
+                }
+                if (!Functions.PartialFractions.IsZeroAsAValue(Shifted(1)) || !Functions.PartialFractions.IsZeroAsAValue(Shifted(3)))
+                    return null;
+                var e2 = Functions.PartialFractions.InLowestTermsOverTheSymbols(Shifted(2) / c4);
+                var e0 = Functions.PartialFractions.InLowestTermsOverTheSymbols(Shifted(0) / c4);
+                var discriminant = (e2 * e2 - 4 * e0).Expand().InnerSimplified;
+                if (Functions.PartialFractions.IsZeroAsAValue(discriminant))
+                    return null;
+                pValue = (-e2 + MathS.Sqrt(discriminant)) / 2;
+                qValue = (-e2 - MathS.Sqrt(discriminant)) / 2;
+                (first, second) = (MathS.Sqr(x + shift) - p, MathS.Sqr(x + shift) - q);
+            }
+            if (Integration.ComputeAsAQuestionOfItsOwn(numerator / (c4 * first * second), x, integrateByParts) is not { } inPQ)
+                return null;
+            inPQ = inPQ.Replace(node => node switch
+            {
+                Piecewise piecewise when piecewise.Cases.Any() => piecewise.Cases.First().Expression,
+                Providedf provided => provided.Expression,
+                _ => node,
+            });
+            // The roots written in without simplifying after: simplified, the answer to
+            // `1/(a + b x + c x^2 + b x^3 + a x^4)` multiplied out to 370,884 characters from about one thousand.
+            var answer = inPQ.InnerSimplified.Substitute(p, pValue).Substitute(q, qValue);
+            return Functions.PartialFractions.DerivativeDiffersWhereReal(answer, expr, x) ? null : answer;
         }
 
         /// <summary>
@@ -29527,6 +29811,70 @@ namespace AngouriMath.Functions.Algebra
                 || !Functions.PartialFractions.IsZeroAsAValue((beta * p0 - alpha * p2).Expand().InnerSimplified))
                 return null;
             return (alpha / (p0 * slope) * product).InnerSimplified;
+        }
+
+        /// <summary>
+        /// <c>x^m (a + b atan(c x))^p</c> over a power of <c>d (1 +- i c x)</c>, under <c>x = tan(u)/c</c>, where
+        /// <c>1 + i tan(u)</c> is <c>e^(i u)/cos(u)</c>: the integrand in <c>u</c> is
+        /// <c>(a + b u)^p (tan(u)/c)^m d^(-k) e^(-+i k u) cos(u)^k/(c cos(u)^2)</c>, a polynomial in <c>u</c> times
+        /// exponentials and trigonometric functions, and the answer is written back at <c>u = atan(c x)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <c>1 + i tan(u) = (cos(u) + i sin(u))/cos(u)</c> holds for every <c>u</c> where the tangent is defined,
+        /// and <c>atan(c x)</c> takes each real <c>x</c> into <c>(-pi/2, pi/2)</c>, where it is. Rubi's 5.3.4
+        /// <c>(a + b atan(c x))^2/(d + i c d x)^2</c> and seven like it ran out of time.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAnArctangentOverAPowerOfOnePlusICXUnderTheTangent(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            Arctanf? arctangent = null;
+            Entity? rate = null;
+            foreach (var node in numerator.Nodes)
+                if (node is Arctanf found && found.ContainsNode(x))
+                {
+                    if (arctangent is not null && arctangent != found)
+                        return null;
+                    if (!TreeAnalyzer.TryGetPolyLinear(found.Argument, x, out var slope, out var offset) || !Functions.PartialFractions.IsZeroAsAValue(offset))
+                        return null;
+                    (arctangent, rate) = (found, slope);
+                }
+            if (arctangent is null || rate is null)
+                return null;
+            // Below the bar one power of a linear d (1 + s i c x), s = +-1, and nothing else with x.
+            Entity? linear = null;
+            var k = 0;
+            Entity constant = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x)) { constant *= factor; continue; }
+                var (b, e) = factor is Powf(var pb, Number.Integer { EInteger: var pe }) && pe.Sign > 0 && pe.CanFitInInt32() ? (pb, pe.ToInt32Unchecked()) : (factor, 1);
+                if (linear is not null)
+                    return null;
+                (linear, k) = (b, e);
+            }
+            if (linear is null || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var lSlope, out var lOffset) || Functions.PartialFractions.IsZeroAsAValue(lOffset))
+                return null;
+            // The ratio of slope to constant is +-i c.
+            var ratio = (lSlope / (lOffset * MathS.i * rate)).InnerSimplified;
+            int sign;
+            if (Functions.PartialFractions.IsZeroAsAValue((ratio - 1).InnerSimplified)) sign = 1;
+            else if (Functions.PartialFractions.IsZeroAsAValue((ratio + 1).InnerSimplified)) sign = -1;
+            else return null;
+            var u = Variable.CreateUnique(expr, "u_atan");
+            // Above the bar: a power of x and the function of the arctangent.
+            var above = numerator.Substitute(arctangent, u);
+            if (above.Substitute(x, Number.Integer.Zero).ContainsNode(x))
+                return null;
+            var inU = above.Substitute(x, MathS.Tan(u) / rate)
+                * MathS.Pow(lOffset, Number.Integer.Create(-k)) * MathS.Pow(MathS.e, -sign * k * MathS.i * u) * (k == 2 ? Number.Integer.One : MathS.Pow(MathS.Cos(u), Number.Integer.Create(k - 2)))
+                / (constant * rate);
+            if (Integration.ComputeAsAQuestionOfItsOwn(inU.InnerSimplified, u, integrateByParts) is not { } integrated)
+                return null;
+            var answer = integrated.Substitute(u, arctangent).InnerSimplified;
+            return Functions.PartialFractions.DerivativeDiffersWhereReal(answer, expr, x) ? null : answer;
         }
 
         /// <summary>
