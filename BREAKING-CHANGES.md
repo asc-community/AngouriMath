@@ -281,6 +281,19 @@ divided by Smith's method now, which scales by the larger part and squares nothi
 |---|---|---|
 | `(1.98e119 + i)/(3.39e125 + i)` with the downcasting off | `0` | `5.8407…e-7` |
 
+### A product of powers of a sine and a cosine beside a non-polynomial is linearised
+
+**Answers where there were none.** `x^3 (1 - c^2 x^2)^(5/2)/(a + b asin(c x))` was declined, and its square ran out of
+time (Rubi's 5.1.4). Under `x = sin(u)/c` they become `sin(u)^p cos(u)^q` beside a power of `a + b u`. A product of
+powers of a sine and a cosine beside such a factor is now written as a sum of sines and cosines of multiples of the
+angle, each of which the integrator answers
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^3*(1-c^2*x^2)^(5/2)/(a+b*asin(c*x))".ToEntity().Integrate("x")` | `integral(...)` | 508 characters |
+| `"x^3*(1-c^2*x^2)^(5/2)/(a+b*asin(c*x))^2".ToEntity().Integrate("x")` | `integral(...)` | 1,470 characters |
+
 ### A piecewise is defined where the case it takes is
 
 **Domain conditions that were false.** The domain condition of a piecewise asked every case's predicate
