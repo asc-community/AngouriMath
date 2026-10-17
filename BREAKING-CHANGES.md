@@ -521,6 +521,33 @@ roots, `1 - x^2`, is taken as its two ([#718](https://github.com/asc-community/A
 | `"1/((1 - x^2)*(a + b*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,600 characters |
 | `"1/(x*(1 - x^2)*(a + b*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,637 characters |
 
+### An exponential of a whole multiple of an inverse hyperbolic tangent is written algebraically first
+
+**Answers where there were none.** `e^(n artanh(u))` with u linear is written as powers of `1 + u` and `1 - u`, and then
+asked as a question of its own:
+- For an even `n` it is `((1 + u)/(1 - u))^(n/2)`.
+- For an odd `n` it is `(1 + u)^n/(1 - u^2)^(n/2)`, times `sgn(1 - u)`. That factor is constant on each side of the pole
+  at `u = 1`, and it keeps the principal branch where the integrand is not real.
+
+The integrand is left to the other rules in two cases: an odd `n` beside a power that is not whole, where the integrand
+is real beyond `|u| = 1`, and a sum holding a reciprocal of x. Twelve of Rubi's 7.3.6 that ran out of time or were left
+unevaluated are now answered ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^atanh(a+b*x)/(x*(1-a^2-2*a*b*x-b^2*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 5,868 characters |
+| `"e^atanh(a+b*x)/(x^2*(1-a^2-2*a*b*x-b^2*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 9,684 characters |
+| `"e^atanh(a*x)*x^2/(k-a^2*k*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 515 characters |
+| `"e^atanh(a*x)/(x^2*(k-a^2*k*x^2)^2)".ToEntity().Integrate("x")` | `integral(...)` | 1,147 characters |
+| `"e^(4*atanh(a*x))/(k-a^2*k*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 79 characters |
+| `"e^(4*atanh(a*x))/(k-a^2*k*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 286 characters |
+| `"e^(4*atanh(a*x))/(k-a^2*k*x^2)^4".ToEntity().Integrate("x")` | `integral(...)` | 384 characters |
+| `"1/(e^(2*atanh(a*x))*(k-a^2*k*x^2)^3)".ToEntity().Integrate("x")` | `integral(...)` | 283 characters |
+| `"e^(4*atanh(a*x))*x^2/(k-a^2*k*x^2)^9".ToEntity().Integrate("x")` | `integral(...)` | 787 characters |
+| `"x^2/(e^(4*atanh(a*x))*(k-a^2*k*x^2)^9)".ToEntity().Integrate("x")` | `integral(...)` | 774 characters |
+| `"e^(4*atanh(a*x))*(k-a*k*x)^p".ToEntity().Integrate("x")` | `integral(...)` | 434 characters |
+| `"e^atanh(x)*x*(1+x)^2".ToEntity().Integrate("x")` | `integral(...)` | 1,110 characters |
+
 ### A sine's binomial cube below the bar is split over the cube's two factors
 
 **Answers where there were none.** `csc(c + d x)/(a + b sin(c + d x)^3)` was declined, and so were the second to fifth
