@@ -136,6 +136,22 @@ and the complex arcsine's real part moved two units away. A caller comparing a h
 result to a pinned string will see the last digits differ; a caller comparing to a tolerance
 will not. [#1338](https://github.com/asc-community/AngouriMath/issues/1338).
 
+### A function of an inverse sine of `sqrt(1 + b x^2)` beside its derivative keeps the sign of x
+
+**A wrong answer, and answers where there were none.** `1/(asin(sqrt(1 + b x^2)) sqrt(1 + b x^2))` was
+`sqrt(-b) ln(b asin(sqrt(1 + b x^2)))/b`, whose derivative is the integrand times the sign of x, so it was wrong for
+every negative x. `asin(sqrt(1 + b x^2))^n/sqrt(1 + b x^2)` was declined, and so were the arccosine twins of both
+(Rubi's 5.1.5 and 5.2.5). The ratio of the integrand to the inverse's derivative, `sqrt(-b x^2)/(b x)`, is constant
+on each side of 0 and changes sign across it. It is now compared on each side with that side's value, where it was
+compared everywhere with its value at one positive point
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(asin(sqrt(1+b*x^2))*sqrt(1+b*x^2))".ToEntity().Integrate("x")` | `sqrt(-b) * ln(b * arcsin(sqrt(1 + b * x ^ 2))) / b + C`, wrong for x < 0 | 120 characters, `sqrt(1 - (1 + b x^2))/(b x) ln(arcsin(sqrt(1 + b x^2)))` |
+| `"asin(sqrt(1+b*x^2))^n/sqrt(1+b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 136 characters |
+| `"acos(sqrt(1+b*x^2))^n/sqrt(1+b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 137 characters |
+
 ### A rational evaluated at a higher precision than before has all of its digits
 
 **More digits where there were a hundred.** A rational kept its decimal value in the precision current when it was
