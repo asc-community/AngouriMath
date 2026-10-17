@@ -667,6 +667,15 @@ namespace AngouriMath.Functions.Algebra
             // A polynomial over a symbolic quartic that splits into two quadratics in a hidden variable,
             // palindromic or even after a shift: the rules below spent seconds declining both.
             if ((answer = IndefiniteIntegralSolver.SolveAPolynomialOverASymbolicQuarticThatSplitsIntoTwoQuadratics(expr, x, integrateByParts)) is { }) return answer;
+            // A symbolic power of a sine, cosine, secant or cosecant times `alpha + beta f^2`, where it is
+            // the derivative of `cos sin^(m + 1)`, `sin cos^(m + 1)`, `tan sec^m` or `cot csc^m`.
+            if ((answer = IndefiniteIntegralSolver.SolveASymbolicPowerOfATrigonometricFunctionAsTheDerivativeOfAProduct(expr, x)) is { }) return answer;
+            // A power of a sine, cosine or hyperbolic one over a binomial in a power of it, over the
+            // binomial's roots, before the rules that spent the budget on `sinh(y)^4/(a + b sinh(y)^3)`.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOverABinomialInAPowerOfASineOverItsRoots(expr, x)) is { }) return answer;
+            // A rational function times the logarithm of a nested product of powers of linears, by parts,
+            // its logarithm's derivative read off as written: `ln(e (f (a + b x)^p (c + d x)^q)^r)`.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionTimesALogarithmOfPowersOfLinears(expr, x, integrateByParts)) is { }) return answer;
             // A function of an inverse of something not linear times its derivative up to a factor
             // constant though written with x: `atan(c x/sqrt(a - c^2 x^2))^2/sqrt(d - c^2 d x^2/a)`. Early,
             // since it fires only where that factor holds x, and the rules before it spent 28 seconds on
@@ -1340,6 +1349,8 @@ namespace AngouriMath.Functions.Algebra
             // goes first: asked before the rules for two linears, it wrote `((a + b x)^3)^(1/3)` in
             // 111 characters where they write 25.
             if ((answer = IndefiniteIntegralSolver.SolvePowersOfOneLinearAsOnePower(expr, x, integrateByParts)) is { }) return answer;
+            // And beside a polynomial too, where everything before has declined: `x ln(e (f (a + b x)^p (c + d x)^q)^r)`.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionTimesALogarithmOfPowersOfLinears(expr, x, integrateByParts, besideAPolynomialToo: true)) is { }) return answer;
             // Last of the rewrites, because it is the only one that fires on an integrand nothing
             // is wrong with -- it clears a parameter rather than a shape -- so everything that
             // can answer the problem as written gets to try first.
