@@ -664,6 +664,16 @@ namespace AngouriMath.Functions.Algebra
             // A sum free of the variable that comes to a number multiplied out, as that number,
             // before anything reads a coefficient or an exponent in it: `2 + 2 a - 2 (1 + a)`.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingConstantSumsToTheirNumbers(expr, x, integrateByParts)) is { }) return answer;
+            // An arctangent over a power of d (1 +- i c x), under x = tan(u)/c, where 1 + i tan(u) is
+            // e^(i u)/cos(u): the rules below ran out of time on `(a + b atan(c x))^2/(d + i c d x)^2`.
+            if ((answer = IndefiniteIntegralSolver.SolveAnArctangentOverAPowerOfOnePlusICXUnderTheTangent(expr, x, integrateByParts)) is { }) return answer;
+            // An exponential of i times an inverse trigonometric function written algebraically, at the
+            // question asked, before the rules that spent the budget: `e^(3 i atan(a + b x))/x^2` ran out of
+            // time where, rewritten, it is answered in half a second. It is asked again in its place below.
+            if (AnsweringTheQuestionAsked && (answer = IndefiniteIntegralSolver.SolveByWritingAnExponentialOfAnInverseAlgebraically(expr, x, integrateByParts)) is { }) return answer;
+            // A polynomial over a symbolic quartic that splits into two quadratics in a hidden variable,
+            // palindromic or even after a shift: the rules below spent seconds declining both.
+            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialOverASymbolicQuarticThatSplitsIntoTwoQuadratics(expr, x, integrateByParts)) is { }) return answer;
             // A symbolic power of a sine, cosine, secant or cosecant times `alpha + beta f^2`, where it is
             // the derivative of `cos sin^(m + 1)`, `sin cos^(m + 1)`, `tan sec^m` or `cot csc^m`.
             if ((answer = IndefiniteIntegralSolver.SolveASymbolicPowerOfATrigonometricFunctionAsTheDerivativeOfAProduct(expr, x)) is { }) return answer;
@@ -673,6 +683,12 @@ namespace AngouriMath.Functions.Algebra
             // A rational function over the quadratic of an inverse tangent beside it, split, before the
             // rules that timed out on `x^4 atan(a x)/(c + a^2 c x^2)`.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOverTheQuadraticOfAnArctangentBesideIt(expr, x)) is { }) return answer;
+            // A power of x times a power of a sum holding an inverse function of x^n, under t = x^n,
+            // before the rules that timed out on `x^3 (a + b atanh(c x^2))^2`.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfXTimesAFunctionOfAnotherUnderThatPower(expr, x)) is { }) return answer;
+            // A polynomial in a sine or a cosine over a whole power of a binomial in it, in powers of the
+            // binomial, before the half-angle wrote 30 million characters for `(A + B cos + C cos^2)/(a + b cos)^4`.
+            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialInASineOverAPowerOfABinomialInItInPowersOfTheBinomial(expr, x)) is { }) return answer;
             // A rational function times the logarithm of a nested product of powers of linears, by parts,
             // its logarithm's derivative read off as written: `ln(e (f (a + b x)^p (c + d x)^q)^r)`.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionTimesALogarithmOfPowersOfLinears(expr, x, integrateByParts)) is { }) return answer;
@@ -1351,6 +1367,9 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolvePowersOfOneLinearAsOnePower(expr, x, integrateByParts)) is { }) return answer;
             // And beside a polynomial too, where everything before has declined: `x ln(e (f (a + b x)^p (c + d x)^q)^r)`.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionTimesALogarithmOfPowersOfLinears(expr, x, integrateByParts, besideAPolynomialToo: true)) is { }) return answer;
+            // A product of powers of a sine and a cosine beside something that is no polynomial,
+            // linearised, where everything answering it as written has declined: `sin(u)^3 cos(u)^6/(a + b u)`.
+            if ((answer = IndefiniteIntegralSolver.SolveAProductOfPowersOfASineAndACosineByLinearising(expr, x)) is { }) return answer;
             // Last of the rewrites, because it is the only one that fires on an integrand nothing
             // is wrong with -- it clears a parameter rather than a shape -- so everything that
             // can answer the problem as written gets to try first.
