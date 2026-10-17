@@ -324,16 +324,16 @@ namespace AngouriMath.Numerics
 
         [AngouriMath.Core.ConstantField] private static readonly ComplexInterval Undefined = new(new(double.NaN, double.NaN), new(double.NaN, double.NaN));
 
+        /// <remarks>
+        /// The arithmetic is what nests deep -- a sum of a few hundred terms is a few hundred
+        /// frames -- so it is kept apart from the other arms, whose temporaries and closures would
+        /// otherwise widen every one of those frames: with them in one method, 228 nested sums
+        /// overflowed a 1 MB stack.
+        /// </remarks>
         private static ComplexInterval Evaluate(Entity expr)
         {
             switch (expr)
             {
-                case Number.Complex number:
-                    return FromNumber(number);
-                case Variable variable when variable == MathS.pi:
-                    return ComplexInterval.Real(Interval.Around(Math.PI));
-                case Variable variable when variable == MathS.e:
-                    return ComplexInterval.Real(Interval.Around(Math.E));
                 case Sumf(var left, var right):
                     return Evaluate(left) + Evaluate(right);
                 case Minusf(var left, var right):
@@ -345,6 +345,22 @@ namespace AngouriMath.Numerics
                 // In the range of an int, so that the reciprocal's negation cannot overflow.
                 case Powf(var @base, Number.Integer power) when power.EInteger.CanFitInInt32():
                     return Evaluate(@base).Pow(power.EInteger.ToInt32Checked());
+                default:
+                    return EvaluateOtherThanArithmetic(expr);
+            }
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private static ComplexInterval EvaluateOtherThanArithmetic(Entity expr)
+        {
+            switch (expr)
+            {
+                case Number.Complex number:
+                    return FromNumber(number);
+                case Variable variable when variable == MathS.pi:
+                    return ComplexInterval.Real(Interval.Around(Math.PI));
+                case Variable variable when variable == MathS.e:
+                    return ComplexInterval.Real(Interval.Around(Math.E));
                 case Powf(var @base, var exponent):
                     if (@base == MathS.e)
                         return Evaluate(exponent).Exp();

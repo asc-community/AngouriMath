@@ -57,5 +57,15 @@ namespace AngouriMath.Tests.Calculus
             DifferentiatesBack(integrand, ("a", 9), ("b", -1.25), ("c", 0.7), ("d", 1.4), ("k", 0.75), ("m", 2.5));
             DifferentiatesBack(integrand, ("a", 7), ("b", -2), ("c", -0.5), ("d", 0.6), ("k", -0.3), ("m", 1.0 / 3));
         }
+
+        // A factor constant on each side of 0 and not across it: sqrt(-b x^2)/(b x).
+        [Theory]
+        [InlineData("asin(sqrt(1+b*x^2))^m/sqrt(1+b*x^2)")]
+        [InlineData("1/(acos(sqrt(1+b*x^2))*sqrt(1+b*x^2))")]
+        public void AFactorConstantOnEachSideOfZero(string integrand)
+        {
+            DifferentiatesBack(integrand, ("b", -0.1), ("m", 2.5));
+            DifferentiatesBack(integrand, ("b", -0.15), ("m", 1.0 / 3));
+        }
     }
 }
