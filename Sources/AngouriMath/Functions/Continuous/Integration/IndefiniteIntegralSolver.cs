@@ -26237,6 +26237,12 @@ namespace AngouriMath.Functions.Algebra
                 var (@base, power) = factor is Powf(var b1, Number.Rational p1) ? (b1, p1.ERational) : (factor, ERational.One);
                 if (below)
                     power = -power;
+                // A power of a product splits into the powers of its factors only where it is
+                // whole: (c - a c x)^(9/2) is not c^(9/2) (1 - a x)^(9/2) where both are negative,
+                // and beyond |u| = 1 that integrand is real while the split one changes its sign.
+                if (!power.ToLowestTerms().Denominator.Equals(EInteger.One)
+                    && (MultipleOf(@base, quadratic, 2) is not null || MultipleOf(@base, 1 + u, 1) is not null || MultipleOf(@base, 1 - u, 1) is not null))
+                    return null;
                 if (MultipleOf(@base, quadratic, 2) is { } k2)
                 {
                     plusPower += power; minusPower += power;
@@ -26308,6 +26314,8 @@ namespace AngouriMath.Functions.Algebra
             if (!Integration.AnsweringTheQuestionAsked)
                 return null;
             var rewrote = false;
+            var odd = false;
+            var matched = new HashSet<Entity>();
             var rewritten = expr.Replace(node =>
             {
                 // `e^((n/2) ln((1 + u)/(1 - u)))`, or the same written `((1 + u)/(1 - u))^(n/2)`.
@@ -26343,6 +26351,7 @@ namespace AngouriMath.Functions.Algebra
                 if (System.Math.Abs(n) > 24)
                     return node;
                 rewrote = true;
+                matched.Add(node);
                 // An even n as a quotient of powers of the linears, an odd one as a power of a linear
                 // over a power of the root of the quadratic: `e^(artanh(u))` is `(1 + u)/sqrt(1 - u^2)`.
                 // Quotients, as the rules read them: `(1 + a x)^2 (1 - a x)^(-2)/(c - a^2 c x^2)^2`
@@ -26352,9 +26361,22 @@ namespace AngouriMath.Functions.Algebra
                 var m = System.Math.Abs(n);
                 if (m % 2 == 0)
                     return Power(above, m / 2) / Power(below, m / 2);
+                odd = true;
                 return Power(above, m) / MathS.Pow(1 - MathS.Sqr(u), Number.Rational.Create(m, 2));
             });
             if (!rewrote)
+                return null;
+            // Beside a sum with a reciprocal of x in it, `(c - c/(a x))^3`, the rules after this
+            // answer the integrand as it was in under half a second, and written so it took a
+            // minute or more.
+            if (expr.Nodes.Any(node => node is Sumf or Minusf && node.DirectChildren.Any(term => term.Nodes.Any(inner =>
+                    inner is Divf(_, var under) && under.ContainsNode(x) || inner is Powf(var b5, Number.Integer { IsNegative: true }) && b5.ContainsNode(x)))))
+                return null;
+            // An odd n is written with sqrt(1 - u^2), which beyond u = 1 has the other sign from
+            // e^(artanh(u)) on its principal branch. The integrand is real there only beside a power
+            // of x that is not whole -- `e^(artanh(a x)) (c - a c x)^(9/2)` -- so there it is left.
+            if (odd && expr.Nodes.Any(node => node is Powf(var b2, var p2) && b2 != MathS.e && b2.ContainsNode(x)
+                    && p2 is not Number.Integer && !matched.Contains(node)))
                 return null;
             return Integration.ComputeAsAQuestionOfItsOwn((WithThePowersOfTheLinearsGathered(expr, x) ?? rewritten.InnerSimplified), x, integrateByParts: true);
         }
