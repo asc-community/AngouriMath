@@ -353,6 +353,20 @@ and 7.3.2. `x^m F(x^n)^p`, with `F` a sum holding an inverse tangent, inverse hy
 | `"(a+b*atanh(c*x^(3/2)))^2/x^4".ToEntity().Integrate("x")` | `integral(...)` | 330 characters |
 | `"(a+b*ln(c*(d+k/x^(2/3))^n))^2/x^5".ToEntity().Integrate("x")` | `integral(...)` | 2,034 characters |
 
+### A power of x times an inverse tangent and the logarithm of its quadratic is integrated by parts
+
+**Answers where there were none.** `x^4 (a + b atan(c x)) (d + e ln(1 + c^2 x^2))` ran out of time, and so did three more
+of Rubi's 5.3.4. It is now integrated by parts. For an odd power of x, the two remainders that have no elementary
+antiderivative on their own are paired into the derivative of a product of the inverse tangent and the logarithm
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x*(a+b*atan(c*x))*(d+pe*ln(1+c^2*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 1,742 characters |
+| `"x^2*(a+b*atan(c*x))*(d+pe*ln(1+c^2*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 1,710 characters |
+| `"x^3*(a+b*atan(c*x))*(d+pe*ln(1+c^2*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 3,470 characters |
+| `"x^4*(a+b*atan(c*x))*(d+pe*ln(1+c^2*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 5,027 characters |
+
 ### Zero times a power with a non-real exponent is zero where the power is defined
 
 **A value where there was NaN.** `0 b^i` simplified to NaN, and so did `b^i - b^i`. That in turn made `x b^i`'s
