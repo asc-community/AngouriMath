@@ -26785,6 +26785,242 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>e^(n artanh(u)) (K (1 - u^2))^p (1 + u)^q (1 - u)^r</c> times the rest, written as
+        /// <c>K^p (1 + u)^(n/2 + p + q) (1 - u)^(-n/2 + p + r)</c> times the rest, as Rubi writes it,
+        /// both powers whole or both half an odd number, the generic case for the constant; else null.
+        /// <c>e^(4 artanh(a x))/(c - a^2 c x^2)^2</c> is <c>1/(c^2 (1 - a x)^4)</c>.
+        /// </summary>
+        private static Entity? WithThePowersOfTheLinearsGathered(Entity expr, Entity.Variable x)
+        {
+            static IEnumerable<(Entity Factor, bool Below)> Factors(Entity e, bool below) => e switch
+            {
+                Mulf(var l, var r) => Factors(l, below).Concat(Factors(r, below)),
+                Divf(var l, var r) => Factors(l, below).Concat(Factors(r, !below)),
+                _ => new[] { (e, below) }
+            };
+            Entity? u = null;
+            ERational plusPower = ERational.Zero, minusPower = ERational.Zero;
+            Entity constant = Number.Integer.One, rest = Number.Integer.One;
+            var factors = Factors(expr, false).ToList();
+            // The exponentials first, which fix u.
+            foreach (var (factor, below) in factors)
+            {
+                if (factor is not Powf(var e0, var exponent) || e0 != MathS.e || !exponent.ContainsNode(x))
+                    continue;
+                var logarithms = exponent.Nodes.Where(inner => inner is Logf(var b0, var of) && b0 == MathS.e && of.ContainsNode(x)).Distinct().ToList();
+                if (logarithms.Count != 1 || logarithms[0] is not Logf(_, Divf(var plus, var minus))
+                    || !Functions.PartialFractions.IsZeroAsAValue((plus + minus - 2).InnerSimplified))
+                    return null;
+                var placeholder = Variable.CreateUnique(exponent, "l_ah");
+                if (!TreeAnalyzer.TryGetPolyLinear(exponent.Substitute(logarithms[0], placeholder), placeholder, out var multiple, out var free)
+                    || !Functions.PartialFractions.IsZeroAsAValue(free) || multiple.InnerSimplified.Evaled is not Number.Rational half)
+                    return null;
+                var thisU = ((plus - minus) / 2).InnerSimplified;
+                if (u is not null && !Functions.PartialFractions.IsZeroAsAValue((u - thisU).InnerSimplified))
+                    return null;
+                u = thisU;
+                var signed = below ? -half.ERational : half.ERational;
+                plusPower += signed;
+                minusPower -= signed;
+            }
+            if (u is null || !TreeAnalyzer.TryGetPolyLinear(u, x, out var slope, out var intercept))
+                return null;
+            var quadratic = 1 - MathS.Sqr(u);
+            // K with candidate = K target as polynomials in x, else null.
+            Entity? MultipleOf(Entity candidate, Entity target, int degree)
+            {
+                Entity ca, cb, ta, tb;
+                Entity? cc = null, tc = null;
+                if (degree == 2)
+                {
+                    if (!TreeAnalyzer.TryGetPolyQuadratic(candidate, x, out var a2, out var b2, out var c2)
+                        || !TreeAnalyzer.TryGetPolyQuadratic(target, x, out var a3, out var b3, out var c3)
+                        || a2 is null || b2 is null || c2 is null || a3 is null || b3 is null || c3 is null)
+                        return null;
+                    (ca, cb, cc, ta, tb, tc) = (a2, b2, c2, a3, b3, c3);
+                }
+                else
+                {
+                    if (!TreeAnalyzer.TryGetPolyLinear(candidate, x, out var a2, out var b2)
+                        || !TreeAnalyzer.TryGetPolyLinear(target, x, out var a3, out var b3)
+                        || a2 is null || b2 is null || a3 is null || b3 is null)
+                        return null;
+                    (ca, cb, ta, tb) = (a2, b2, a3, b3);
+                }
+                if (Functions.PartialFractions.IsZeroAsAValue(ta))
+                    return null;
+                var k = (ca / ta).InnerSimplified;
+                if (!Functions.PartialFractions.IsZeroAsAValue((cb - k * tb).InnerSimplified)
+                    || cc is not null && tc is not null && !Functions.PartialFractions.IsZeroAsAValue((cc - k * tc).InnerSimplified))
+                    return null;
+                return k;
+            }
+            foreach (var (factor, below) in factors)
+            {
+                if (factor is Powf(var e0, var exponent) && e0 == MathS.e && exponent.ContainsNode(x))
+                    continue;
+                if (!factor.ContainsNode(x))
+                {
+                    constant = below ? constant / factor : constant * factor;
+                    continue;
+                }
+                var (@base, power) = factor is Powf(var b1, Number.Rational p1) ? (b1, p1.ERational) : (factor, ERational.One);
+                if (below)
+                    power = -power;
+                // A power of a product splits into the powers of its factors only where it is
+                // whole: (c - a c x)^(9/2) is not c^(9/2) (1 - a x)^(9/2) where both are negative,
+                // and beyond |u| = 1 that integrand is real while the split one changes its sign.
+                if (!power.ToLowestTerms().Denominator.Equals(EInteger.One)
+                    && (MultipleOf(@base, quadratic, 2) is not null || MultipleOf(@base, 1 + u, 1) is not null || MultipleOf(@base, 1 - u, 1) is not null))
+                    return null;
+                if (MultipleOf(@base, quadratic, 2) is { } k2)
+                {
+                    plusPower += power; minusPower += power;
+                    constant *= MathS.Pow(k2, Number.Rational.Create(power.ToLowestTerms().Numerator, power.ToLowestTerms().Denominator));
+                }
+                else if (MultipleOf(@base, 1 + u, 1) is { } kPlus)
+                {
+                    plusPower += power;
+                    constant *= MathS.Pow(kPlus, Number.Rational.Create(power.ToLowestTerms().Numerator, power.ToLowestTerms().Denominator));
+                }
+                else if (MultipleOf(@base, 1 - u, 1) is { } kMinus)
+                {
+                    minusPower += power;
+                    constant *= MathS.Pow(kMinus, Number.Rational.Create(power.ToLowestTerms().Numerator, power.ToLowestTerms().Denominator));
+                }
+                else
+                    rest = below ? rest / factor : rest * factor;
+            }
+            plusPower = plusPower.ToLowestTerms();
+            minusPower = minusPower.ToLowestTerms();
+            static bool Whole(ERational r) => r.Denominator.Equals(EInteger.One);
+            static bool HalfOdd(ERational r) => r.Denominator.Equals(EInteger.FromInt32(2));
+            // Both half an odd number: (1 + u)^A (1 - u)^B is (1 + u)^(A - B) (1 - u^2)^B, one power of
+            // the quadratic, `(1 + a x)/(1 - a^2 x^2)^(5/2)`, which the radical rules read.
+            ERational? quadraticPower = null;
+            if (HalfOdd(plusPower) && HalfOdd(minusPower))
+            {
+                quadraticPower = minusPower;
+                plusPower = (plusPower - minusPower).ToLowestTerms();
+                minusPower = ERational.Zero;
+            }
+            else if (!Whole(plusPower) || !Whole(minusPower))
+                return null;
+            if (!plusPower.Numerator.CanFitInInt32() || !minusPower.Numerator.CanFitInInt32())
+                return null;
+            // Powers above the bar and below it, as the rules read a quotient.
+            Entity above = constant * rest, under = Number.Integer.One;
+            void Put(Entity b2, int k)
+            {
+                if (k > 0) above *= k == 1 ? b2 : MathS.Pow(b2, Number.Integer.Create(k));
+                else if (k < 0) under *= k == -1 ? b2 : MathS.Pow(b2, Number.Integer.Create(-k));
+            }
+            Put(1 + u, plusPower.Numerator.ToInt32Unchecked());
+            Put(1 - u, minusPower.Numerator.ToInt32Unchecked());
+            if (quadraticPower is { } qp)
+            {
+                if (qp.Sign > 0)
+                    above *= MathS.Pow(quadratic, Number.Rational.Create(qp.Numerator, qp.Denominator));
+                else
+                    under *= MathS.Pow(quadratic, Number.Rational.Create(-qp.Numerator, qp.Denominator));
+            }
+            return (above / under).InnerSimplified;
+        }
+
+        /// <summary>
+        /// An exponential of a whole multiple of an inverse hyperbolic tangent of a linear, written
+        /// algebraically: <c>e^(n artanh(u))</c> arrives as <c>e^((n/2) ln((1 + u)/(1 - u)))</c>, and
+        /// is <c>(1 + u)^n (1 - u^2)^(-n/2)</c> for <c>|u| &lt; 1</c>, where the inverse is real. The
+        /// integrand so written is asked as a question of its own.
+        /// </summary>
+        /// <remarks>
+        /// The rules after it timed out on Rubi's 7.3.6 <c>e^(artanh(a x)) x^2/(c - a^2 c x^2)^2</c>,
+        /// which written so is <c>(1 + a x) x^2/(c^2 (1 - a^2 x^2)^(5/2))</c>, answered in half a
+        /// second, and on <c>e^(4 artanh(a x))/(c - a^2 c x^2)^2</c>, a rational function.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAnExponentialOfAnInverseHyperbolicTangentAlgebraically(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var rewrote = false;
+            var odd = false;
+            Entity? oddU = null;
+            var matched = new HashSet<Entity>();
+            var rewritten = expr.Replace(node =>
+            {
+                // `e^((n/2) ln((1 + u)/(1 - u)))`, or the same written `((1 + u)/(1 - u))^(n/2)`.
+                Entity plus, minus;
+                ERational half;
+                if (node is Powf(var @base, var exponent) && @base == MathS.e && exponent.ContainsNode(x))
+                {
+                    var logarithms = exponent.Nodes.Where(inner => inner is Logf(var b0, var of) && b0 == MathS.e && of.ContainsNode(x)).Distinct().ToList();
+                    if (logarithms.Count != 1 || logarithms[0] is not Logf(_, Divf(var p0, var m0)))
+                        return node;
+                    // The multiple of the logarithm read as a linear coefficient: `(1/2 ln(q))/ln(q)`
+                    // is not reduced by the simplification.
+                    var placeholder = Variable.CreateUnique(exponent, "l_ah");
+                    if (!TreeAnalyzer.TryGetPolyLinear(exponent.Substitute(logarithms[0], placeholder), placeholder, out var multiple, out var rest)
+                        || !Functions.PartialFractions.IsZeroAsAValue(rest) || multiple.InnerSimplified.Evaled is not Number.Rational r)
+                        return node;
+                    (plus, minus, half) = (p0, m0, r.ERational);
+                }
+                else if (node is Powf(Divf(var p1, var m1), Number.Rational r1) && node.ContainsNode(x))
+                    (plus, minus, half) = (p1, m1, r1.ERational);
+                else
+                    return node;
+                // The quotient (1 + u)/(1 - u): its two sides add to 2.
+                if (!Functions.PartialFractions.IsZeroAsAValue((plus + minus - 2).InnerSimplified))
+                    return node;
+                var u = ((plus - minus) / 2).InnerSimplified;
+                if (!TreeAnalyzer.TryGetPolyLinear(u, x, out var slope, out _) || Functions.PartialFractions.IsZeroAsAValue(slope))
+                    return node;
+                var twice = (half * 2).ToLowestTerms();
+                if (!twice.Denominator.Equals(EInteger.One) || !twice.Numerator.CanFitInInt32() || twice.IsZero)
+                    return node;
+                var n = twice.Numerator.ToInt32Unchecked();
+                if (System.Math.Abs(n) > 24)
+                    return node;
+                rewrote = true;
+                matched.Add(node);
+                // An even n as a quotient of powers of the linears, an odd one as a power of a linear
+                // over a power of the root of the quadratic: `e^(artanh(u))` is `(1 + u)/sqrt(1 - u^2)`.
+                // Quotients, as the rules read them: `(1 + a x)^2 (1 - a x)^(-2)/(c - a^2 c x^2)^2`
+                // timed out where the same over `(1 - a x)^2` is answered at once.
+                Entity Power(Entity b1, int k) => k == 1 ? b1 : MathS.Pow(b1, Number.Integer.Create(k));
+                var (above, below) = n > 0 ? (1 + u, 1 - u) : (1 - u, 1 + u);
+                var m = System.Math.Abs(n);
+                if (m % 2 == 0)
+                    return Power(above, m / 2) / Power(below, m / 2);
+                // Two odd multiples of different inverses would need two signs.
+                if (odd && oddU is not null && oddU != u)
+                    return node;
+                odd = true;
+                oddU = u;
+                return Power(above, m) / MathS.Pow(1 - MathS.Sqr(u), Number.Rational.Create(m, 2));
+            });
+            if (!rewrote)
+                return null;
+            // Beside a sum with a reciprocal of x in it, `(c - c/(a x))^3`, the rules after this
+            // answer the integrand as it was in under half a second, and written so it took a
+            // minute or more.
+            if (expr.Nodes.Any(node => node is Sumf or Minusf && node.DirectChildren.Any(term => term.Nodes.Any(inner =>
+                    inner is Divf(_, var under) && under.ContainsNode(x) || inner is Powf(var b5, Number.Integer { IsNegative: true }) && b5.ContainsNode(x)))))
+                return null;
+            // An odd n is written with sqrt(1 - u^2), which beyond u = 1 has the other sign from
+            // e^(artanh(u)) on its principal branch. The integrand is real there only beside a power
+            // of x that is not whole -- `e^(artanh(a x)) (c - a c x)^(9/2)` -- so there it is left.
+            if (odd && expr.Nodes.Any(node => node is Powf(var b2, var p2) && b2 != MathS.e && b2.ContainsNode(x)
+                    && p2 is not Number.Integer && !matched.Contains(node)))
+                return null;
+            var answer = Integration.ComputeAsAQuestionOfItsOwn((WithThePowersOfTheLinearsGathered(expr, x) ?? rewritten.InnerSimplified), x, integrateByParts: true);
+            // An odd n is written with sqrt(1 - u^2), which is e^(artanh(u)) on its principal
+            // branch for u < 1 and its negative beyond: the sign sgn(1 - u) is a constant on each
+            // side of u = 1, where the integrand has its pole, and goes in front of the integral.
+            return odd && oddU is not null && answer is not null ? MathS.Signum(1 - oddU) * answer : answer;
+        }
+
+        /// <summary>
         /// A rational function of a sine, or of a cosine, over a quadratic in it with a symbol
         /// among the coefficients: <c>sin(x)/(a + b sin(x) + c sin(x)^2)</c>, and the same with
         /// the other function to even powers, a cosecant or a secant beside. Written in
