@@ -670,6 +670,8 @@ namespace AngouriMath.Functions.Algebra
             // An exponential of i times an inverse trigonometric function written algebraically, at the
             // question asked, before the rules that spent the budget: `e^(3 i atan(a + b x))/x^2` ran out of
             // time where, rewritten, it is answered in half a second. It is asked again in its place below.
+            // An exact derivative among them first, closed: `e^(i n arctan(a x)) x^2 (c + a^2 c x^2)^(-1 - n^2/2)`.
+            if ((answer = IndefiniteIntegralSolver.SolveAnExactDerivativeOfAnExponentialOfAnArctangent(expr, x)) is { }) return answer;
             if (AnsweringTheQuestionAsked && (answer = IndefiniteIntegralSolver.SolveByWritingAnExponentialOfAnInverseAlgebraically(expr, x, integrateByParts)) is { }) return answer;
             // The same for a symbolic multiple of the arctangent, beside powers of its quadratic.
             if (AnsweringTheQuestionAsked && (answer = IndefiniteIntegralSolver.SolveAnExponentialOfASymbolicMultipleOfAnArctangentAsPowersOfTheLinears(expr, x, integrateByParts)) is { }) return answer;

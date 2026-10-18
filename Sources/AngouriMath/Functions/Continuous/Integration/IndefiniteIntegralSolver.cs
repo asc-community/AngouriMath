@@ -9679,6 +9679,69 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An exponential of a multiple of <c>arctan(a x)</c> times a quadratic polynomial times a
+        /// power of <c>c + a^2 c x^2</c>, where it is an exact derivative:
+        /// <c>(e^(N arctan(a x)) (alpha + beta x) Q^s)'</c> is
+        /// <c>c e^(N arctan(a x)) Q^(s - 1) (a N alpha + beta + (a N beta + 2 s a^2 alpha) x + a^2 beta (1 + 2 s) x^2)</c>
+        /// for <c>Q = c + a^2 c x^2</c>, since <c>Q^s/(1 + a^2 x^2) = c Q^(s - 1)</c>. The
+        /// constant and squared coefficients give <c>alpha</c> and <c>beta</c>; the linear one is
+        /// the condition. Rubi's 5.3.6:504, <c>e^(i n arctan(a x)) x^2 (c + a^2 c x^2)^(-1 - n^2/2)</c>,
+        /// meets it exactly, and was left unevaluated: as powers of the two linears its exponents
+        /// do not sum to a whole number.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        internal static Entity? SolveAnExactDerivativeOfAnExponentialOfAnArctangent(Entity expr, Entity.Variable x)
+        {
+            Entity? multiple = null, slope = null, quadratic = null, power = null;
+            Entity polynomial = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(expr))
+            {
+                if (factor is Powf(var e, var exponent) && e == MathS.e && exponent.ContainsNode(x))
+                {
+                    if (multiple is not null)
+                        return null;
+                    var inverse = exponent.Nodes.OfType<Arctanf>().FirstOrDefault();
+                    if (inverse is null || !TreeAnalyzer.TryGetPolyLinear(inverse.Argument, x, out var a, out var b) || !TreeAnalyzer.IsZero(b))
+                        return null;
+                    var placeholder = Variable.CreateUnique(exponent, "u_atan");
+                    var inThePlaceholder = exponent.Replace(node => node == inverse ? placeholder : node);
+                    if (inThePlaceholder.ContainsNode(x) || !TreeAnalyzer.TryGetPolyLinear(inThePlaceholder, placeholder, out var n, out var constantPart)
+                        || !TreeAnalyzer.IsZero(constantPart) || TreeAnalyzer.IsZero(n))
+                        return null;
+                    (multiple, slope) = (n, a);
+                }
+                else if (factor is Powf(var q, var p) && !p.ContainsNode(x) && p is not Number.Integer && q.ContainsNode(x))
+                {
+                    if (quadratic is not null)
+                        return null;
+                    (quadratic, power) = (q, p);
+                }
+                else
+                    polynomial *= factor;
+            }
+            if (multiple is null || slope is null || quadratic is null || power is null)
+                return null;
+            if (!TreeAnalyzer.TryGetPolyQuadratic(quadratic, x, out var c2, out var c1, out var c0) || !TreeAnalyzer.IsZero(c1) || TreeAnalyzer.IsZero(c0)
+                || !VanishesIdentically((c2 - MathS.Sqr(slope) * c0).Expand()))
+                return null;
+            if (!TreeAnalyzer.TryGetPolyQuadratic(polynomial, x, out var p2, out var p1, out var p0))
+                return null;
+            var s = (power + 1).Simplify();
+            var twice = (1 + 2 * s).Simplify();
+            if (TreeAnalyzer.IsZero(twice) || TreeAnalyzer.IsZero(p2))
+                return null;
+            var beta = (p2 / (c0 * MathS.Sqr(slope) * twice)).Simplify();
+            var alpha = ((p0 / c0 - beta) / (slope * multiple)).Simplify();
+            if (!VanishesIdentically((c0 * (slope * multiple * beta + 2 * s * MathS.Sqr(slope) * alpha) - p1).Simplify()))
+                return null;
+            var exponential = Mulf.LinearChildren(expr).First(factor => factor is Powf(var e, _) && e == MathS.e && factor.ContainsNode(x));
+            var candidate = exponential * (alpha + beta * x) * MathS.Pow(quadratic, s);
+            if (!AreProportionalAtSampledPoints(candidate.Differentiate(x), expr, x))
+                return null;
+            return candidate;
+        }
+
+        /// <summary>
         /// An exponential of a symbolic multiple of <c>i arctan(L)</c>, <c>L</c> linear, beside
         /// powers of multiples of <c>1 + L^2</c>, written as powers of the two linears:
         /// <c>e^(k i arctan(L))</c> is <c>(1 + i L)^(k/2) (1 - i L)^(-k/2)</c> and
