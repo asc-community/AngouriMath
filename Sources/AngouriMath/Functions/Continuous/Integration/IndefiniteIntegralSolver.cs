@@ -29242,9 +29242,22 @@ namespace AngouriMath.Functions.Algebra
                             return -c / s;
                         case Divf(Number.Integer { EInteger: var m }, var inner) when m.Equals(EInteger.One) && ReadTheTwo(inner) is { } read:
                             return 1 / read;
+                        // The difference and the sum with their halves taken elsewhere, as a whole
+                        // power only: `csch(y)` arrives as `(e^y - e^-y)^(-1)` beside a 2 the
+                        // product gathered. Inside a fractional power, or below a constant other
+                        // than 1, the reading hands the caller a root it then declines.
+                        case Powf(var b, Number.Integer { EInteger: var n }) when ReadTheBare(b) is { } bare:
+                            return MathS.Pow(bare, n);
                     }
                     return null;
                 }
+                Entity? ReadTheBare(Entity node) => node switch
+                {
+                    Minusf(var a, var b) when Is(a, one) && Is(b, one?.Negate()) => 2 * s,
+                    Minusf(var a, var b) when Is(a, one?.Negate()) && Is(b, one) => -2 * s,
+                    Sumf(var a, var b) when Is(a, one) && Is(b, one?.Negate()) || Is(a, one?.Negate()) && Is(b, one) => 2 * c,
+                    _ => null
+                };
                 bool Is(Entity node, EInteger? k) => k is { } wanted && exponentials.TryGetValue(node, out var found) && found.Equals(wanted);
                 var read = expr.Replace(node => node.ContainsNode(x) && ReadTheTwo(node) is { } inTheTwo ? inTheTwo : node);
                 if (read.ContainsNode(s) || read.ContainsNode(c))
