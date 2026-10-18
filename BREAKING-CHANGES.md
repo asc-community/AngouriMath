@@ -534,6 +534,19 @@ power, and the integrand is answered in a fraction of a second
 | `"csch(c+d*x)*(a+b*sinh(c+d*x)^4)^2".ToEntity().Integrate("x")` | past fifteen minutes | 426 characters |
 | `"csch(c+d*x)*(a+b*sinh(c+d*x)^4)^3".ToEntity().Integrate("x")` | past fifteen minutes | 646 characters |
 
+### A power of a polynomial whose leading coefficient is zero spelled otherwise is not divided by it
+
+**Answers where there were none.** `1/((a (1 + x^2))^2 - (a (1 - x^2))^2)^3` was left unevaluated. That is
+`1/(64 a^6 x^6)`: the polynomial's fourth power cancels, and its leading coefficient as read, `a^2 - a^2` spelled
+otherwise, was divided by to make it monic. The radical substitution writes this shape for an exponential of an
+inverse hyperbolic cotangent ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((a*(1+x^2))^2-(a*(1-x^2))^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 133 characters |
+| `"x^2/((a*(1+x^2))^2-(a*(1-x^2))^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 235 characters |
+| `"1/((-1/a^2+((1+x^2)/(a*(1-x^2)))^2)^2*(1-x^2)^2)".ToEntity().Integrate("x")` | `integral(...)` | 518 characters |
+
 ### An exponential of a whole multiple of an inverse hyperbolic tangent is written algebraically first
 
 **Answers where there were none.** `e^(n artanh(u))` with u linear is written as powers of `1 + u` and `1 - u`, and then
