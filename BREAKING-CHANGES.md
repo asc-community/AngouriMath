@@ -609,6 +609,20 @@ unevaluated, is answered by this route as well.
 | `"(a*x+2*b*n*ln(c*x^n))/(a*x^2+b*x*ln(c*x^n)^2)".ToEntity().Integrate("x")` | `integral(...)` | 37 characters |
 | `"tanh(a+2*ln(x))^2/x^3".ToEntity().Integrate("x")` | `integral(...)` | 7,796 characters |
 
+### A quotient over a sum of two powers of even quadratics is split over the roots of its binomial
+
+**Answers where there were none.** `(1 + x^2)^2/(a x^6 + b (1 + x^2)^3)` was left unevaluated. The rule that splits
+`w^m/(a + b w^n)` over the `n` roots of the binomial, for an even quadratic `w`, took a constant beside the power
+only. A second power of an even quadratic `v` is read as well. `w^m v^(n - 1 - m)/(a v^n + b w^n)` is the same
+sum in `t = w/v`, and each root's `1/(w - r v)` is again an even quadratic
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(1+x^2)^2/(a*x^6+b*(1+x^2)^3)".ToEntity().Integrate("x")` | `integral(...)` | 878 characters |
+| `"x^2*(1+x^2)/(a*x^6+b*(1+x^2)^3)".ToEntity().Integrate("x")` | `integral(...)` | 896 characters |
+| `"(1+x^2)/(a*x^4+b*(1+x^2)^2)".ToEntity().Integrate("x")` | `integral(...)` | 289 characters |
+
 ### A symbolic cubic with a repeated root is written over its roots
 
 **Answers where there were none.** `1/(x^3 - 3b x + 2b^(3/2))` was left unevaluated: its coefficients are symbolic, so
