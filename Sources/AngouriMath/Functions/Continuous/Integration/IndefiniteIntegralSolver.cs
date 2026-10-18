@@ -2688,6 +2688,32 @@ namespace AngouriMath.Functions.Algebra
         {
             if (!TryReadAsQuotient(expr, out var numerator, out var denominator))
                 return null;
+            // A factor whose coefficients are one complex number times real ones gives that number
+            // up first, factor by factor and before anything is expanded: `(i + i x^4)^3` is
+            // `i^3 (1 + x^4)^3`, a whole power of a product. `1/(x^2 (i + i x^4)^3)`, what the
+            // root of `(1 + i x)/(1 - i x)` makes of `1/(e^((5/2) i arctan(x)) x^3)`, expanded to a
+            // degree past the bound below and was declined, where the real quotient left is
+            // answered at once (Rubi's 5.3.6:129 and :130).
+            var tookAUnitOut = false;
+            Entity WithTheUnitsOut(Entity side)
+            {
+                Entity product = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    var (@base, power) = factor is Powf(var b, Number.Integer k) ? (b, (Entity)k) : (factor, Number.Integer.One);
+                    if (ACommonComplexUnit(@base, x) is var (unit, real))
+                    {
+                        tookAUnitOut = true;
+                        product *= power == Number.Integer.One ? unit * real : MathS.Pow(unit, power) * MathS.Pow(real, power);
+                    }
+                    else
+                        product *= factor;
+                }
+                return product;
+            }
+            var unitsOut = WithTheUnitsOut(numerator) / WithTheUnitsOut(denominator);
+            if (tookAUnitOut)
+                return Integration.ComputeAsAQuestionOfItsOwn(unitsOut, x, integrateByParts);
             Entity constant = Number.Integer.One;
             Number.Complex[]? Read(Entity side, bool below)
             {
@@ -2782,6 +2808,48 @@ namespace AngouriMath.Functions.Algebra
         // The degree past which a rational function with complex coefficients is left alone: its
         // denominator's degree doubles under the conjugate.
         private const int MaximumComplexRationalDegree = 12;
+
+        /// <summary>
+        /// A polynomial in <paramref name="x"/> whose coefficients are each a number times one
+        /// product of symbols common to them all, the numbers all the same complex number off
+        /// the real line times real ones, as that number times the symbols and the real
+        /// polynomial: <c>i a + i a x^4</c> is <c>i a</c> and <c>1 + x^4</c>. Null for anything else.
+        /// </summary>
+        private static (Entity Unit, Entity Real)? ACommonComplexUnit(Entity polynomial, Entity.Variable x)
+        {
+            if (polynomial is not (Sumf or Minusf) || !polynomial.ContainsNode(x)
+                || !TreeAnalyzer.TryGetPolynomial(polynomial, x, out var terms) || terms.Count < 2
+                || terms.Keys.Any(power => power.Sign < 0))
+                return null;
+            var values = new Dictionary<EInteger, Number.Complex>();
+            Entity? symbols = null;
+            foreach (var term in terms)
+            {
+                Number.Complex number = Number.Integer.One;
+                Entity rest = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(term.Value.InnerSimplified))
+                    if (factor is Number.Complex value)
+                        number *= value;
+                    else
+                        rest = rest == Number.Integer.One ? factor : rest * factor;
+                if (number.IsZero || symbols is { } && rest != symbols)
+                    return null;
+                symbols = rest;
+                values[term.Key] = number;
+            }
+            var leading = values[terms.Keys.Max()!];
+            if (leading.ImaginaryPart.IsZero)
+                return null;
+            var unit = symbols is null || symbols == Number.Integer.One ? (Entity)leading : leading * symbols;
+            Entity real = Number.Integer.Zero;
+            foreach (var pair in values.OrderBy(pair => pair.Key))
+            {
+                if ((pair.Value / leading) is not Number.Real coefficient)
+                    return null;
+                real += pair.Key.IsZero ? coefficient : coefficient * MathS.Pow(x, Number.Integer.Create(pair.Key));
+            }
+            return (unit, real);
+        }
 
         /// <summary>
         /// <paramref name="numerator"/> over <paramref name="denominator"/> with the greatest
@@ -12385,7 +12453,16 @@ namespace AngouriMath.Functions.Algebra
             // Timofeev's 314 -- the distributed spelling sent the radical rules down a path
             // that answered with a sign function, where the undistributed one is answered exactly.
             if (!integrand.Nodes.Any(node => node is Powf(var radicand, Number.Rational fractional) && fractional is not Number.Integer && radicand.ContainsNode(u)))
+            {
                 integrand = WithWholePowersOfProductsDistributed(integrand);
+                // And a whole power of a quotient as the quotient of the powers, gathered into
+                // one again: with a symbol in the linears, `x^(-3)` comes through as
+                // `(-i (u^4 - 1)/(a (u^4 + 1)))^(-3)`, which the combining leaves a power of a
+                // quotient and the rational reader does not read (Rubi's 5.3.6:129 and :130).
+                if (integrand.Nodes.Any(node => node is Powf(Divf, Number.Integer)))
+                    integrand = Functions.SingleQuotient.Combine(WithWholePowersOfProductsDistributed(integrand.Replace(node =>
+                        node is Powf(Divf(var above, var below), Number.Integer power) ? MathS.Pow(above, power) / MathS.Pow(below, power) : node)));
+            }
             // For an even q the principal root is not negative wherever it is real, and a root
             // holding a power of u gives that power up: `1/sqrt(t + t^(3/2))` under `u = sqrt(t)`
             // is `2u/sqrt(u^2 + u^3)`, a root of a cubic, and is `2/sqrt(1 + u)`. Where the

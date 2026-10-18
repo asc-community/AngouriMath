@@ -648,6 +648,23 @@ partial fractions divide. It is taken out in front of the integral first
 | `"(b*d + 2*c*d*x)^9/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | past a minute | 76,249 characters, the length the content-free one already had |
 | `"(b*d + 2*c*d*x)^8/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | past a minute | 65,236 characters |
 
+### A complex unit common to a polynomial's coefficients is taken out before it is expanded
+
+**Answers where there were none.** `1/(e^(5/2 i arctan(a x)) x^3)` was left unevaluated: written algebraically it
+puts a power of a polynomial whose coefficients share `i`, `(i a + i a x^4)^3`, below the bar, and the rule for
+complex coefficients expanded it past the degree it reads. The common unit is taken out as a power of its own, and a
+whole power of a quotient under a root of a quotient is distributed over its two sides
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(e^(5/2*i*atan(a*x))*x^3)".ToEntity().Integrate("x")` | `integral(...)` | 464 characters |
+| `"1/(e^(5/2*i*atan(a*x))*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 523 characters |
+| `"1/(x^2*(i+i*x^4)^3)".ToEntity().Integrate("x")` | `integral(...)` | 331 characters |
+| `"1/(e^acoth(a*x)*(c-a^2*c*x^2)^2)".ToEntity().Integrate("x")` | `integral(...)` | 486 characters |
+| `"1/(e^acoth(a*x)*(c-a^2*c*x^2)^3)".ToEntity().Integrate("x")` | `integral(...)` | 893 characters |
+| `"1/(e^acoth(a*x)*(c-a^2*c*x^2)^4)".ToEntity().Integrate("x")` | `integral(...)` | 1157 characters |
+
 ### An exponential of a symbolic multiple of i arctan is written as powers of the linears
 
 **Answers where there were none.** `(c + a^2 c x^2)^p/e^(2 i p arctan(a x))` was left unevaluated. For a real `L`,
