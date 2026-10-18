@@ -40,7 +40,7 @@ A not-equal written `<>` is read as `not (a = b)`, and printed that way.
 
 ---
 
-## Unreleased — since 2.5.0
+## 2.6.0 — since 2.5.0
 
 ### A high half-odd power of a quadratic beside a power of another is reduced in exact rationals
 
