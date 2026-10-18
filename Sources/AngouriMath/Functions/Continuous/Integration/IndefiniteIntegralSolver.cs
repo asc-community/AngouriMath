@@ -19926,6 +19926,14 @@ namespace AngouriMath.Functions.Algebra
         /// <c>P</c> named, and splits on the sign of <c>P q</c>, which means nothing for a complex
         /// <c>P</c>: its first arm, the arctangent, differentiates back for any <c>P q != 0</c>, and
         /// the answer is checked below. Rubi's 1.3.1 <c>(1 - x^2)/(a + b (1 - x^2)^4)</c> was declined.
+        /// <para>
+        /// Two powers of even quadratics, <c>w^m v^(n - 1 - m)/(a v^n + b w^n)</c>, are the same sum in
+        /// <c>t = w/v</c>: the integrand is <c>t^m/(v (a + b t^n))</c>, and <c>1/(v (t - r_j))</c> is
+        /// <c>1/(w - r_j v)</c>, again an even quadratic <c>P + Q x^2</c>, whose integral
+        /// <c>arctan(sqrt(Q) x/sqrt(P))/(sqrt(P) sqrt(Q))</c> differentiates back for any <c>P</c> and
+        /// <c>Q</c> off zero. Rubi's 1.3.1 <c>(1 + x^2)^2/(a x^6 + b (1 + x^2)^3)</c>, a sum of two cubes,
+        /// was declined.
+        /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveAPowerOfAnEvenQuadraticOverABinomialInIt(Entity expr, Entity.Variable x, bool integrateByParts)
@@ -19941,20 +19949,19 @@ namespace AngouriMath.Functions.Algebra
                 {
                     if (!factor.ContainsNode(x))
                         constant = under ? constant / factor : constant * factor;
-                    else if (!under && above is null)
-                        above = factor;
-                    else if (under && below is null)
+                    else if (!under)
+                        above = above is null ? factor : above * factor;
+                    else if (below is null)
                         below = factor;
                     else
                         return null;
                 }
             if (below is null)
                 return null;
-            // a + b w^n: one term in x, a whole power of an even quadratic, beside terms free of it.
-            Entity? inner = null;
-            Entity scale = Number.Integer.One;
+            // a + b w^n: one term in x, a whole power of an even quadratic, beside terms free of it; or
+            // a v^n + b w^n, two such powers, a power of x^2 among them written as one of x.
+            var powers = new List<(Entity Scale, Entity Base, int Degree)>();
             Entity free = Number.Integer.Zero;
-            var degree = 0;
             foreach (var term in Sumf.LinearChildren(below))
             {
                 if (!term.ContainsNode(x))
@@ -19962,37 +19969,78 @@ namespace AngouriMath.Functions.Algebra
                     free = free + term;
                     continue;
                 }
-                if (inner is not null)
+                if (powers.Count == 2)
                     return null;
+                Entity termScale = Number.Integer.One;
+                Entity? termBase = null;
+                var termDegree = 0;
                 foreach (var factor in Mulf.LinearChildren(term))
                 {
                     if (!factor.ContainsNode(x))
-                        scale = scale * factor;
-                    else if (inner is null && factor is Powf(var w, Number.Integer { EInteger: var n }) && n.CompareTo(EInteger.FromInt32(2)) >= 0
-                        && n.CompareTo(EInteger.FromInt32(8)) <= 0)
+                        termScale = termScale * factor;
+                    else if (termBase is null && factor is Powf(var w, Number.Integer { EInteger: var n }) && n.CompareTo(EInteger.FromInt32(2)) >= 0
+                        && n.CompareTo(EInteger.FromInt32(16)) <= 0)
                     {
-                        inner = w;
-                        degree = n.ToInt32Unchecked();
+                        termBase = w;
+                        termDegree = n.ToInt32Unchecked();
                     }
                     else
                         return null;
                 }
+                if (termBase is null)
+                    return null;
+                powers.Add((termScale, termBase, termDegree));
             }
-            if (inner is null || VanishesIdentically(free) || Functions.PartialFractions.HoldsTheImaginaryUnit(expr)
+            if (powers.Count == 2)
+            {
+                if (!VanishesIdentically(free))
+                    return null;
+                // x^(2 n) beside v^n is (x^2)^n.
+                for (var k = 0; k < 2; k++)
+                    if (powers[k].Base == x && powers[k].Degree % 2 == 0 && powers[1 - k].Base != x)
+                        powers[k] = (powers[k].Scale, MathS.Pow(x, Number.Integer.Create(2)), powers[k].Degree / 2);
+            }
+            if (powers.Count == 0 || powers.Any(power => power.Degree > 8) || powers.Count == 2 && powers[0].Degree != powers[1].Degree)
+                return null;
+            var (scale, inner, degree) = powers[0];
+            Entity? other = powers.Count == 2 ? powers[1].Base : null;
+            if (other is not null)
+                free = powers[1].Scale;
+            Entity otherP = Number.Integer.One, otherQ = Number.Integer.Zero;
+            if (VanishesIdentically(free) || Functions.PartialFractions.HoldsTheImaginaryUnit(expr)
                 || !TreeAnalyzer.TryGetPolyQuadratic(inner, x, out var q, out var linearTerm, out var p)
                 || !VanishesIdentically(linearTerm) || VanishesIdentically(q))
                 return null;
-            // The numerator a constant multiple of w^m, m below n.
+            if (other is not null)
+            {
+                if (!TreeAnalyzer.TryGetPolyQuadratic(other, x, out var readQ, out var otherLinear, out var readP)
+                    || !VanishesIdentically(otherLinear) || VanishesIdentically(readQ))
+                    return null;
+                (otherP, otherQ) = (readP, readQ);
+            }
+            // The numerator a constant multiple of w^m v^(n - 1 - m), m below n, which is w^m alone
+            // for a binomial: then t^m/(V (a + b t^n)) for t = w/v, split over the roots in t, and
+            // 1/(V (t - r)) is 1/(w - r v).
             var power = -1;
             Entity multiple = Number.Integer.One;
-            if (above is null)
+            if (above is null && other is null)
                 power = 0;
-            else
-                for (var m = 1; m < degree && power < 0; m++)
+            else if (above is not null)
+                for (var m = other is null ? 1 : 0; m < degree && power < 0; m++)
                 {
                     var wm = MathS.Pow(inner, Number.Integer.Create(m));
-                    if (!TreeAnalyzer.TryGetPolynomial(above, x, out var aboveRead) || !TreeAnalyzer.TryGetPolynomial(wm, x, out var wmRead)
-                        || !aboveRead.TryGetValue(EInteger.FromInt32(2 * m), out var lead) || !wmRead.TryGetValue(EInteger.FromInt32(2 * m), out var wLead))
+                    if (other is not null)
+                    {
+                        // No zeroth powers: InnerSimplified writes w^0 as 1 provided w is not 0.
+                        var rest = degree - 1 - m;
+                        wm = m == 0 ? MathS.Pow(other, Number.Integer.Create(rest))
+                            : rest == 0 ? wm : wm * MathS.Pow(other, Number.Integer.Create(rest));
+                    }
+                    var top = other is null ? 2 * m : 2 * (degree - 1);
+                    // Expanded for two powers: the reader takes a sum of monomials, and v^k is not one.
+                    var (aboveAsRead, wmAsRead) = other is null ? (above, wm) : (above.Expand(), wm.Expand());
+                    if (!TreeAnalyzer.TryGetPolynomial(aboveAsRead, x, out var aboveRead) || !TreeAnalyzer.TryGetPolynomial(wmAsRead, x, out var wmRead)
+                        || !aboveRead.TryGetValue(EInteger.FromInt32(top), out var lead) || !wmRead.TryGetValue(EInteger.FromInt32(top), out var wLead))
                         continue;
                     var ratio = (lead / wLead).InnerSimplified;
                     if (!VanishesIdentically((above - ratio * wm).Expand()))
@@ -20004,16 +20052,20 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             var a = free.InnerSimplified;
             var b = scale.InnerSimplified;
+            Entity? each = null;
             var namedP = Variable.CreateUnique(expr, "P_b");
-            if (Integration.ComputeAsAQuestionOfItsOwn(1 / (namedP + q * MathS.Pow(x, Number.Integer.Create(2))), x, integrateByParts) is not { } each)
-                return null;
-            // See the remarks: the arctangent arm for every root.
-            each = each.Replace(node => node switch
+            if (other is null)
             {
-                Piecewise piecewise when piecewise.Cases.Any() => piecewise.Cases.First().Expression,
-                Providedf provided => provided.Expression,
-                _ => node,
-            });
+                if (Integration.ComputeAsAQuestionOfItsOwn(1 / (namedP + q * MathS.Pow(x, Number.Integer.Create(2))), x, integrateByParts) is not { } asked)
+                    return null;
+                // See the remarks: the arctangent arm for every root.
+                each = asked.Replace(node => node switch
+                {
+                    Piecewise piecewise when piecewise.Cases.Any() => piecewise.Cases.First().Expression,
+                    Providedf provided => provided.Expression,
+                    _ => node,
+                });
+            }
             var radius = MathS.Pow(Functions.PartialFractions.InLowestTermsOverTheSymbols(-a / b), Number.Rational.Create(1, degree));
             Entity sum = Number.Integer.Zero;
             for (var j = 0; j < degree; j++)
@@ -20022,7 +20074,20 @@ namespace AngouriMath.Functions.Algebra
                 // the real root, and (-1)^(2/3) is 1 (#204).
                 var turn = 2 * MathS.pi * Number.Rational.Create(j, degree);
                 Entity root = j == 0 ? radius : radius * (MathS.Cos(turn) + MathS.i * MathS.Sin(turn)).InnerSimplified;
-                sum = sum + MathS.Pow(root, Number.Integer.Create(power + 1)) * each.Substitute(namedP, p - root);
+                Entity over;
+                if (each is not null)
+                    over = each.Substitute(namedP, p - root);
+                else
+                {
+                    // 1/(P + Q x^2) for w - r v: arctan(sqrt(Q) x/sqrt(P))/(sqrt(P) sqrt(Q)), whose
+                    // derivative is 1/(P + Q x^2) for any P, Q off zero, the two roots squaring back.
+                    var atP = Functions.PartialFractions.InLowestTermsOverTheSymbols(p - root * otherP);
+                    var atQ = Functions.PartialFractions.InLowestTermsOverTheSymbols(q - root * otherQ);
+                    if (VanishesIdentically(atP) || VanishesIdentically(atQ))
+                        return null;
+                    over = MathS.Arctan(MathS.Sqrt(atQ) * x / MathS.Sqrt(atP)) / (MathS.Sqrt(atP) * MathS.Sqrt(atQ));
+                }
+                sum = sum + MathS.Pow(root, Number.Integer.Create(power + 1)) * over;
             }
             var answer = (-constant * multiple / (degree * a) * sum).InnerSimplified;
             return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
