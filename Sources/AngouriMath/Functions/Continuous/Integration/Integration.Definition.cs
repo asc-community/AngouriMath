@@ -671,6 +671,8 @@ namespace AngouriMath.Functions.Algebra
             // question asked, before the rules that spent the budget: `e^(3 i atan(a + b x))/x^2` ran out of
             // time where, rewritten, it is answered in half a second. It is asked again in its place below.
             if (AnsweringTheQuestionAsked && (answer = IndefiniteIntegralSolver.SolveByWritingAnExponentialOfAnInverseAlgebraically(expr, x, integrateByParts)) is { }) return answer;
+            // The same for a symbolic multiple of the arctangent, beside powers of its quadratic.
+            if (AnsweringTheQuestionAsked && (answer = IndefiniteIntegralSolver.SolveAnExponentialOfASymbolicMultipleOfAnArctangentAsPowersOfTheLinears(expr, x, integrateByParts)) is { }) return answer;
             // A polynomial over a symbolic quartic that splits into two quadratics in a hidden variable,
             // palindromic or even after a shift: the rules below spent seconds declining both.
             if ((answer = IndefiniteIntegralSolver.SolveAPolynomialOverASymbolicQuarticThatSplitsIntoTwoQuadratics(expr, x, integrateByParts)) is { }) return answer;
@@ -1222,6 +1224,11 @@ namespace AngouriMath.Functions.Algebra
             // neither half of which is elementary, which the split cannot answer and parts can.
             if (expr is Entity.Sumf or Entity.Minusf
                 && (answer = IndefiniteIntegralSolver.SolveByGatheringACommonPolynomialFactorOfASum(expr, x, integrateByParts)) is { })
+                return answer;
+            // A cubic below the bar with symbolic coefficients and a repeated root, written over
+            // its roots: `1/(x^3 - 3b x + 2b^(3/2))` is `1/((x - sqrt(b))^2 (x + 2 sqrt(b)))`.
+            if (expr is Entity.Divf or Entity.Powf
+                && (answer = IndefiniteIntegralSolver.SolveACubicWithARepeatedRootOverItsRoots(expr, x, integrateByParts)) is { })
                 return answer;
             // The same factor taken out of a sum below the bar: `1/(a x + b x/ln(c x^n))` is
             // `1/(x (a + b/ln(c x^n)))`, a function of the logarithm beside its differential.
