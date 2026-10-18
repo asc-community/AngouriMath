@@ -2510,6 +2510,10 @@ namespace AngouriMath.Functions.Algebra
                 else if (factor is Powf(var polynomial, Number.Integer power) && power.EInteger.CompareTo(EInteger.FromInt32(2)) >= 0
                          && TreeAnalyzer.TryGetPolynomial(polynomial, x, out var read) && read.Count > 1
                          && read.Keys.Max() is { } top && read[top] is var leading && !leading.ContainsNode(x) && leading.Evaled is not Number
+                         // A leading coefficient that is zero spelled otherwise, `-a^2 + a^2` in
+                         // `(a (1 + u^2))^2 - (a (1 - u^2))^2`, is not one: divided by, every other
+                         // coefficient was over zero, and the answer `NaN + C`.
+                         && Functions.PartialFractions.InLowestTermsOverTheSymbols(leading) is not Number.Complex { IsZero: true }
                          && !numerator.Nodes.Concat(denominator.Nodes).Any(node =>
                                 node is Powf(var radicand, Number.Rational r) && r is not Number.Integer && radicand.Nodes.Contains(polynomial)))
                 {
