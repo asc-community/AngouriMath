@@ -180,6 +180,106 @@ honest reason -- a compiled delegate over `Complex` has nothing to put on the he
 
 ---
 
+## The 1957th and the 2549th, measured together on one machine — the pair for 2.6.0
+
+The pair the release checklist owes: `v2.5.0`
+([`ab7a8bd6`](https://github.com/asc-community/AngouriMath/commit/ab7a8bd6b92d9ae99b3e23e51b10dca5c0e8fe11), the 1957th)
+re-measured beside
+[`001b1caa`](https://github.com/asc-community/AngouriMath/commit/001b1caa694f1dd8476c3a54d93d10d7a7fcfe4d), the
+2549th, which is the last change to the kernel before the release. Both columns come from one run of
+`Sources/Utils/benchmark_key_commits.sh`, on 2026-10-18, on one machine with nothing else on it. The period is the
+whole of 2.6.0, 592 commits.
+
+The `v2.5.0` column agrees with the 1954th column of the 2.5.0 pair, measured on 2026-09-09 three commits earlier.
+Every row the gate measures agrees to within 0.02%, and five agree to the byte, `SimplifyEasy` among them.
+`CompileEasy` and `CompileHard` differ by 0.30% and 0.19%. The gate leaves those two ungated because their
+allocation includes building a delegate.
+
+### Allocation
+
+| benchmark | v2.5.0 | 2549th | change |
+|---|--:|--:|--:|
+| `CompileEasy` | 10,970 | 11,003 | +0.30% |
+| `CompileHard` | 20,434 | 20,434 | 0.00% |
+| `Derivate` | 53,239 | 56,190 | **+5.54%** |
+| `EvalPolynomialFresh` | 650,888 | 12,536 | **−98.07%** |
+| `EvalPolynomialFresh15Digits` | 265,816 | 12,064 | **−95.46%** |
+| `EvalTranscendentalFresh` | 5,668,395 | 34,760 | **−99.39%** |
+| `EvalTrig` | 1,341,457 | 69,944 | **−94.79%** |
+| `EvalTrigPrecise` | 12,742,285 | 336,552 | **−97.36%** |
+| `ParseEasy` | 18,261 | 18,421 | +0.88% |
+| `ParseHard` | 3,584,817 | 60,103 | **−98.32%** |
+| `SimplifyEasy` | 79,282 | 78,978 | −0.38% |
+| `SimplifyHard` | 331,710,136 | 176,205,784 | **−46.88%** |
+| `SolveEasy` | 8,865,872 | 454,021 | **−94.88%** |
+| `SolveEasyMedium` | 65,648 | 66,744 | **+1.67%** |
+| `SolveHard` | 11,884,272 | 10,001,832 | **−15.84%** |
+| `SolveMedium` | 455,893 | 459,134 | +0.71% |
+| `SolveMediumHard` | 1,449,394 | 1,411,524 | −2.61% |
+
+Bytes allocated per call. `EvalEasy`, `RunEasy`, `RunMedium` and `RunHard` allocate nothing in both columns and are
+left out.
+
+- **The evaluation rows** are the numerical-evaluation work of the 2050th to the 2077th, recorded below.
+- **`ParseHard`** is the 2203rd, the parser predicting in SLL first.
+
+### The steps compose, and that was checked
+
+`SolveEasy` was measured in six steps:
+- −29.2% at the 2050th;
+- −29.6% and −62.1% at the 2052nd and 2053rd;
+- −41.4% and −20.2% at the 2054th to the 2075th;
+- −42.1% at the 2077th.
+
+Composed, they predict −94.9%, and the end-to-end measurement is −94.88%.
+
+`SimplifyHard`'s recorded steps predict about −44.5%, and the measurement is −46.88%. The 2.4 points between them
+are not attributed to any section of this file.
+
+### `Derivate` went up 5.5%, in steps none of which the gate could see
+
+`Derivate` differentiates a parsed constant, so no parser change reaches it. Its gate baseline moved five times
+across the release, each move within the gate's 3%:
+
+| baseline recorded at | allocation | step |
+|---|--:|--:|
+| `v2.5.0`, re-measured here | 53,239 | |
+| 2053rd | 53,111 | −0.2% |
+| 2084th | 53,528 | +0.8% |
+| 2117th | 54,567 | +1.9% |
+| 2130th | 55,095 | +1.0% |
+| 2203rd | 55,783 | +1.2% |
+| 2549th, measured here | 56,190 | +0.7% |
+
+A baseline is re-recorded by the pull request that moves it, so each step covers every commit since the step before it,
+not one change. The largest step, +1,039 bytes, is the 2117th,
+[#1426](https://github.com/asc-community/AngouriMath/pull/1426). It gives a sum, a product and the other flat operators
+a cached list of their operands, and so makes each of those nodes larger. That is a candidate, not a finding:
+**no step is bisected**, so the increase is recorded here as unattributed. This file has one other case of steps each free by the gate summing to a real cost, the
+rule-set exchange's +13%. This is the same pattern at a smaller size, and it is why the pair is measured end to end.
+
+`SolveEasyMedium` +1.67%, `ParseEasy` +0.88% and `SolveMedium` +0.71% are below the gate's resolution for a single step
+and are not attributed either.
+
+### Timings
+
+These moved well outside this machine's run-to-run spread and agree in sign with the allocation beside them:
+
+| benchmark | change |
+|---|--:|
+| `EvalTranscendentalFresh` | −99.50% |
+| `EvalPolynomialFresh` | −98.81% |
+| `EvalTrigPrecise` | −98.20% |
+| `ParseHard` | −98.17% |
+| `SolveEasy` | −95.81% |
+| `EvalTrig` | −95.47% |
+| `EvalPolynomialFresh15Digits` | −94.63% |
+| `SimplifyHard` | −43.90% |
+| `SolveHard` | −37.69% |
+
+`Derivate` was +5.15% (13.7 → 14.5 µs), in line with its allocation. The smaller rows from the same run are not worth
+reading and are not quoted.
+
 ## The 1845th and the 1954th, measured together on one machine — the pair for 2.5.0
 
 The pair the release checklist owes: `v2.4.0` (`de7189b1`, the 1845th) re-measured beside the
