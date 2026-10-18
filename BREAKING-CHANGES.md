@@ -595,6 +595,21 @@ no numeric root finder applies, and its discriminant vanishes identically. Such 
 | `"1/(x^3-3*b*x+2*b^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | 122 characters |
 | `"1/(-9*b*x+9*x^3+2*b^(3/2)*sqrt(3))".ToEntity().Integrate("x")` | `integral(...)` | 176 characters |
 
+### An exponential of i arctan below the bar is read as a negative multiple
+
+**Answers where there were none.** `x^2/(e^(i arctan(a x)) (c + a^2 c x^2)^(3/2))` was left unevaluated: the exponential
+below the bar was read as `n = 1`. It is taken above the bar with its exponent negated, and for a negative whole `n`,
+`e^(n i arctan(L))` is written over the conjugate, `(1 - i L)^(-n) (1 + L^2)^(n/2)`, which puts the linear with `i` in
+it above the bar where the rational rules read it
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2/(e^(i*atan(a*x))*(c+a^2*c*x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | 211 characters |
+| `"x/(e^(i*atan(a*x))*(c+a^2*c*x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | 109 characters |
+| `"1/(e^(i*atan(a*x))*(c+a^2*c*x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | 132 characters |
+| `"x^2/(e^(5*i*atan(a*x))*(c+a^2*c*x^2)^(27/2))".ToEntity().Integrate("x")` | `integral(...)` | 189 characters |
+
 ### A symbol shared by a numerator sum's coefficients is taken out before the partial fractions
 
 **Answers where there were none.** `(b d + 2c d x)^9/(a + b x + c x^2)^3` ran past a minute, where
