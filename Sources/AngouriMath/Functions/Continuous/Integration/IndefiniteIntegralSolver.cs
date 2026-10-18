@@ -9679,6 +9679,93 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An exponential of a symbolic multiple of <c>i arctan(L)</c>, <c>L</c> linear, beside
+        /// powers of multiples of <c>1 + L^2</c>, written as powers of the two linears:
+        /// <c>e^(k i arctan(L))</c> is <c>(1 + i L)^(k/2) (1 - i L)^(-k/2)</c> and
+        /// <c>(K (1 + L^2))^q</c> is <c>K^q (1 + i L)^q (1 - i L)^q</c>, each exactly for a real
+        /// <c>L</c> and any <c>k</c> and <c>q</c>: the two principal arguments are
+        /// <c>arctan(L)</c> and its negative, and <c>1 + L^2</c> is positive.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's 5.3.6 <c>(c + a^2 c x^2)^p/e^(2 i p arctan(a x))</c> is then
+        /// <c>c^p (1 - i a x)^(2p)</c>, a power of a linear; it was left unevaluated.
+        /// <see cref="SolveByWritingAnExponentialOfAnInverseAlgebraically"/> takes a rational
+        /// multiple, and this the rest.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAnExponentialOfASymbolicMultipleOfAnArctangentAsPowersOfTheLinears(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            static IEnumerable<(Entity Factor, bool Below)> Factors(Entity e, bool below) => e switch
+            {
+                Mulf(var l, var r) => Factors(l, below).Concat(Factors(r, below)),
+                Divf(var l, var r) => Factors(l, below).Concat(Factors(r, !below)),
+                _ => new[] { (e, below) }
+            };
+            var factors = Factors(expr, false).ToList();
+            Entity? argument = null;
+            Entity? multiple = null;
+            foreach (var (factor, below) in factors)
+            {
+                if (factor is not Powf(var e, var exponent) || e != MathS.e || !exponent.ContainsNode(x))
+                    continue;
+                if (argument is not null)
+                    return null;
+                var arctangents = exponent.Nodes.OfType<Arctanf>().Distinct().ToList();
+                if (arctangents.Count != 1 || !TreeAnalyzer.TryGetPolyLinear(arctangents[0].Argument, x, out var slope, out _) || TreeAnalyzer.IsZero(slope))
+                    return null;
+                var placeholder = Variable.CreateUnique(exponent, "u_atan");
+                if (!TreeAnalyzer.TryGetPolyLinear(exponent.Replace(node => node == arctangents[0] ? placeholder : node), placeholder, out var coefficient, out var free)
+                    || coefficient is null || free is null || coefficient.ContainsNode(x) || !TreeAnalyzer.IsZero(free))
+                    return null;
+                // Simplified, since `2 i p/i` is not reduced to `2 p` short of it.
+                var k = (coefficient / MathS.i).Simplify();
+                // A rational multiple is the other rule's.
+                if (k.Evaled is Number.Rational)
+                    return null;
+                argument = arctangents[0].Argument;
+                multiple = below ? -k : k;
+            }
+            if (argument is null || multiple is null)
+                return null;
+            var quadratic = 1 + MathS.Sqr(argument);
+            Entity constant = Number.Integer.One;
+            Entity plusPower = multiple / 2, minusPower = -multiple / 2;
+            foreach (var (factor, below) in factors)
+            {
+                if (factor is Powf(var e, var exponent) && e == MathS.e && exponent.ContainsNode(x))
+                    continue;
+                if (!factor.ContainsNode(x))
+                {
+                    constant = below ? constant / factor : constant * factor;
+                    continue;
+                }
+                var (@base, power) = factor is Powf(var b, var q) ? (b, q) : (factor, (Entity)Number.Integer.One);
+                if (power.ContainsNode(x)
+                    || !TreeAnalyzer.TryGetPolyQuadratic(@base, x, out var a2, out var b2, out var c2)
+                    || !TreeAnalyzer.TryGetPolyQuadratic(quadratic, x, out var a3, out var b3, out var c3)
+                    || a2 is null || b2 is null || c2 is null || a3 is null || b3 is null || c3 is null || TreeAnalyzer.IsZero(a3))
+                    return null;
+                var ratio = (a2 / a3).InnerSimplified;
+                if (!Functions.PartialFractions.IsZeroAsAValue((b2 - ratio * b3).InnerSimplified)
+                    || !Functions.PartialFractions.IsZeroAsAValue((c2 - ratio * c3).InnerSimplified))
+                    return null;
+                var signed = below ? -power : power;
+                constant *= MathS.Pow(ratio, signed);
+                plusPower += signed;
+                minusPower += signed;
+            }
+            // Simplified, x-free and small: `-p + p` is a zero power only so.
+            plusPower = plusPower.Simplify();
+            minusPower = minusPower.Simplify();
+            Entity written = constant;
+            if (!TreeAnalyzer.IsZero(plusPower))
+                written *= MathS.Pow(1 + MathS.i * argument, plusPower);
+            if (!TreeAnalyzer.IsZero(minusPower))
+                written *= MathS.Pow(1 - MathS.i * argument, minusPower);
+            return Integration.ComputeAsAQuestionOfItsOwn(written, x, integrateByParts);
+        }
+
+        /// <summary>
         /// An exponential of <c>i</c> times an inverse trigonometric function, written
         /// algebraically: <c>e^(i arctan(L))</c> is <c>(1 + i L)/sqrt(1 + L^2)</c>,
         /// <c>e^(i arcsin(L))</c> is <c>sqrt(1 - L^2) + i L</c> and <c>e^(i arccos(L))</c> is
@@ -9691,6 +9778,21 @@ namespace AngouriMath.Functions.Algebra
         /// </summary>
         internal static Entity? SolveByWritingAnExponentialOfAnInverseAlgebraically(Entity expr, Entity.Variable x, bool integrateByParts)
         {
+            // An exponential below the bar taken above it with its exponent negated, so that a
+            // negative multiple is read as one: `x^2/(e^(i arctan(a x)) (c + a^2 c x^2)^(3/2))` is
+            // `x^2 e^(-i arctan(a x))/(c + a^2 c x^2)^(3/2)`, which is written over the conjugate.
+            if (expr is Divf(var overIt, var underIt) && Mulf.LinearChildren(underIt).Any(IsAnExponentialOfAnInverse))
+            {
+                Entity kept = Number.Integer.One, raised = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(underIt))
+                    if (IsAnExponentialOfAnInverse(factor) && factor is Powf(_, var power))
+                        raised *= MathS.Pow(MathS.e, -power);
+                    else
+                        kept *= factor;
+                expr = overIt * raised / kept;
+            }
+            bool IsAnExponentialOfAnInverse(Entity node) => node is Powf(var e0, var power0) && e0 == MathS.e && power0.ContainsNode(x)
+                && power0.Nodes.Any(inner => inner is Arctanf or Arcsinf or Arccosf);
             var rewrote = false;
             // A power of a quadratic in x outside the exponentials, which `(1 + L^2)^(-n/2)` meets.
             var quadraticElsewhere = expr.Nodes.Any(node => node is Powf(var q, _) && q.ContainsNode(x) && !q.Nodes.Any(inner => inner is Arctanf or Arcsinf or Arccosf)
@@ -9759,6 +9861,16 @@ namespace AngouriMath.Functions.Algebra
                     var halfPower = Number.Rational.Create(n.ERational.Negate().Divide(2));
                     if (n is not Number.Integer)
                         return MathS.Pow((1 + MathS.i * argument) / (1 - MathS.i * argument), Number.Rational.Create(n.ERational.Divide(2)));
+                    // A negative n over the conjugate, `(1 + i L)^(-1)` being `(1 - i L)/(1 + L^2)`:
+                    // the linear with `i` in it is then above the bar, where the rational rules read
+                    // it, and `x^2/((1 + i a x)(1 + a^2 x^2))` beside it was left unevaluated where
+                    // `x^2 (1 - i a x)/(1 + a^2 x^2)^2` is answered.
+                    if (n is Number.Integer { IsNegative: true })
+                    {
+                        var conjugatePower = Number.Integer.Create(((Number.Integer)n).EInteger.Negate());
+                        return (conjugatePower == Number.Integer.One ? 1 - MathS.i * argument : MathS.Pow(1 - MathS.i * argument, conjugatePower))
+                            * MathS.Pow(1 + MathS.Sqr(argument), Number.Rational.Create(n.ERational.Divide(2)));
+                    }
                     return (n == Number.Integer.One ? 1 + MathS.i * argument : MathS.Pow(1 + MathS.i * argument, n)) * MathS.Pow(1 + MathS.Sqr(argument), halfPower);
                 }
                 Entity unit = inverse is Arcsinf
@@ -29345,6 +29457,110 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             var written = (factored * inside).InnerSimplified;
             return written == expr ? null : Integration.ComputeAsTheSameQuestion(written, x, integrateByParts);
+        }
+
+        /// <summary>
+        /// A quotient with a cubic in <paramref name="x"/> below the bar whose coefficients are
+        /// symbolic and whose discriminant vanishes identically, with the cubic written over its
+        /// roots: <c>a x^3 + b x^2 + c x + d</c> is <c>a (x - r)^2 (x - s)</c> with the double root
+        /// <c>r = (9ad - bc)/(2(b^2 - 3ac))</c> and the simple one
+        /// <c>s = (4abc - 9a^2 d - b^3)/(a(b^2 - 3ac))</c>, or <c>a (x + b/(3a))^3</c> where
+        /// <c>b^2 - 3ac</c> vanishes too.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's 1.3.1 <c>1/(9x^3 - 9bx + 2 sqrt(3) b^(3/2))</c> was left unevaluated, and the same
+        /// written <c>9 (x - sqrt(b/3))^2 (x + 2 sqrt(b/3))</c> is answered in 60 ms. The factored
+        /// form is checked against the cubic before it is handed on.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveACubicWithARepeatedRootOverItsRoots(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr));
+            if (!below.ContainsNode(x))
+                return null;
+            Entity rest = Number.Integer.One;
+            Entity? written = null;
+            foreach (var factor in Mulf.LinearChildren(below))
+            {
+                if (written is null && factor is Sumf or Minusf && TreeAnalyzer.TryGetPolynomial(factor, x, out var monomials)
+                    && monomials.Keys.All(k => k.Sign >= 0 && k.CompareTo(EInteger.FromInt32(3)) <= 0)
+                    && monomials.TryGetValue(EInteger.FromInt32(3), out var a) && !VanishesIdentically(a)
+                    && monomials.Values.All(coefficient => !coefficient.ContainsNode(x))
+                    && monomials.Values.Any(coefficient => coefficient.InnerSimplified.Evaled is not Number.Complex))
+                {
+                    Entity Coefficient(int k) => monomials.TryGetValue(EInteger.FromInt32(k), out var value) ? value : Number.Integer.Zero;
+                    var (b, c, d) = (Coefficient(2), Coefficient(1), Coefficient(0));
+                    var discriminant = 18 * a * b * c * d - 4 * MathS.Pow(b, 3) * d + MathS.Sqr(b) * MathS.Sqr(c) - 4 * a * MathS.Pow(c, 3) - 27 * MathS.Sqr(a) * MathS.Sqr(d);
+                    if (!VanishesIdentically(discriminant))
+                        return null;
+                    var depressed = (MathS.Sqr(b) - 3 * a * c).InnerSimplified;
+                    Entity? over = null;
+                    // The roots simplified first, which folds the quotients of the coefficients to
+                    // short ones -- `sqrt(b)` rather than a product of six numbers and it -- where
+                    // the simplified form still expands back to the cubic, and as they are where not.
+                    foreach (var simplify in new[] { true, false })
+                    {
+                        // Without the condition the simplification adds for b^2 - 3ac, which this
+                        // case already assumes: the generic case is the one answered.
+                        Entity Tidy(Entity e) => simplify ? e.Simplify() is Providedf(var value, _) ? value : e.Simplify() : e.InnerSimplified;
+                        Entity candidate;
+                        if (VanishesIdentically(depressed))
+                            candidate = a * MathS.Pow(x + Tidy(b / (3 * a)), 3);
+                        else
+                        {
+                            var r = Tidy((9 * a * d - b * c) / (2 * depressed));
+                            var t = Tidy((4 * a * b * c - 9 * MathS.Sqr(a) * d - MathS.Pow(b, 3)) / (a * depressed));
+                            candidate = a * MathS.Sqr(x - r) * (x - t);
+                        }
+                        if (VanishesIdentically((candidate - factor).Expand()))
+                        {
+                            over = candidate;
+                            break;
+                        }
+                    }
+                    if (over is null)
+                        return null;
+                    written = over;
+                    continue;
+                }
+                rest *= factor;
+            }
+            if (written is null)
+                return null;
+            return Integration.ComputeAsTheSameQuestion(above / (rest * written), x, integrateByParts);
+        }
+
+        /// <summary>
+        /// A quotient whose denominator is a sum every term of which carries the same power of one
+        /// linear form in <paramref name="x"/>, with that power taken out below the bar:
+        /// <c>1/(a x + b x/ln(c x^n))</c> is <c>1/(x (a + b/ln(c x^n)))</c>, a function of the
+        /// logarithm times its differential.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's 3.5 <c>1/(a x + b x/log(c x^n)^k)</c> were left unevaluated, and the same with
+        /// <c>x</c> taken out is answered in a tenth of a second.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByGatheringACommonLinearFactorOfASumBelowTheBar(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            static bool IsASum(Entity e) => e is Sumf or Minusf;
+            Entity above, below;
+            var power = 1;
+            if (expr is Divf(var n, Powf(var d, Number.Integer k)) && IsASum(d) && k.EInteger.Sign > 0 && k.EInteger.CanFitInInt32())
+                (above, below, power) = (n, d, k.EInteger.ToInt32Unchecked());
+            else if (expr is Divf(var n1, var d1) && IsASum(d1))
+                (above, below) = (n1, d1);
+            else if (expr is Powf(var d2, Number.Integer k2) && IsASum(d2) && k2.EInteger.Sign < 0 && k2.EInteger.CanFitInInt32())
+                (above, below, power) = (Number.Integer.One, d2, -k2.EInteger.ToInt32Unchecked());
+            else
+                return null;
+            if (TryTakeACommonLinearFactorOfASum(below, x) is not var (factored, inside))
+                return null;
+            var taken = factored * inside;
+            var written = above / (power == 1 ? taken : MathS.Pow(factored, Number.Integer.Create(power)) * MathS.Pow(inside, Number.Integer.Create(power)));
+            return Integration.ComputeAsTheSameQuestion(written, x, integrateByParts);
         }
 
         /// <summary>
