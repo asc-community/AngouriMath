@@ -521,6 +521,19 @@ roots, `1 - x^2`, is taken as its two ([#718](https://github.com/asc-community/A
 | `"1/((1 - x^2)*(a + b*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,600 characters |
 | `"1/(x*(1 - x^2)*(a + b*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,637 characters |
 
+### A hyperbolic cosecant beside a power of a binomial in the sine is read through its exponentials
+
+**Answers where there were none.** `csch(c + d x) (a + b sinh(c + d x)^4)^2` ran past fifteen minutes. `csch(y)` arrives
+as `(e^y - e^-y)^(-1)` beside a 2 the product gathered, and the reader of the hyperbolic functions recognised the
+difference only with its half; it now reads `e^y - e^-y` as `2 sinh(y)` and `e^y + e^-y` as `2 cosh(y)` under a whole
+power, and the integrand is answered in a fraction of a second
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"csch(c+d*x)*(a+b*sinh(c+d*x)^4)^2".ToEntity().Integrate("x")` | past fifteen minutes | 426 characters |
+| `"csch(c+d*x)*(a+b*sinh(c+d*x)^4)^3".ToEntity().Integrate("x")` | past fifteen minutes | 646 characters |
+
 ### An exponential of a whole multiple of an inverse hyperbolic tangent is written algebraically first
 
 **Answers where there were none.** `e^(n artanh(u))` with u linear is written as powers of `1 + u` and `1 - u`, and then
