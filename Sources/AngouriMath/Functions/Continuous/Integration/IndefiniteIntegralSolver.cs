@@ -2688,6 +2688,32 @@ namespace AngouriMath.Functions.Algebra
         {
             if (!TryReadAsQuotient(expr, out var numerator, out var denominator))
                 return null;
+            // A factor whose coefficients are one complex number times real ones gives that number
+            // up first, factor by factor and before anything is expanded: `(i + i x^4)^3` is
+            // `i^3 (1 + x^4)^3`, a whole power of a product. `1/(x^2 (i + i x^4)^3)`, what the
+            // root of `(1 + i x)/(1 - i x)` makes of `1/(e^((5/2) i arctan(x)) x^3)`, expanded to a
+            // degree past the bound below and was declined, where the real quotient left is
+            // answered at once (Rubi's 5.3.6:129 and :130).
+            var tookAUnitOut = false;
+            Entity WithTheUnitsOut(Entity side)
+            {
+                Entity product = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    var (@base, power) = factor is Powf(var b, Number.Integer k) ? (b, (Entity)k) : (factor, Number.Integer.One);
+                    if (ACommonComplexUnit(@base, x) is var (unit, real))
+                    {
+                        tookAUnitOut = true;
+                        product *= power == Number.Integer.One ? unit * real : MathS.Pow(unit, power) * MathS.Pow(real, power);
+                    }
+                    else
+                        product *= factor;
+                }
+                return product;
+            }
+            var unitsOut = WithTheUnitsOut(numerator) / WithTheUnitsOut(denominator);
+            if (tookAUnitOut)
+                return Integration.ComputeAsAQuestionOfItsOwn(unitsOut, x, integrateByParts);
             Entity constant = Number.Integer.One;
             Number.Complex[]? Read(Entity side, bool below)
             {
@@ -2782,6 +2808,48 @@ namespace AngouriMath.Functions.Algebra
         // The degree past which a rational function with complex coefficients is left alone: its
         // denominator's degree doubles under the conjugate.
         private const int MaximumComplexRationalDegree = 12;
+
+        /// <summary>
+        /// A polynomial in <paramref name="x"/> whose coefficients are each a number times one
+        /// product of symbols common to them all, the numbers all the same complex number off
+        /// the real line times real ones, as that number times the symbols and the real
+        /// polynomial: <c>i a + i a x^4</c> is <c>i a</c> and <c>1 + x^4</c>. Null for anything else.
+        /// </summary>
+        private static (Entity Unit, Entity Real)? ACommonComplexUnit(Entity polynomial, Entity.Variable x)
+        {
+            if (polynomial is not (Sumf or Minusf) || !polynomial.ContainsNode(x)
+                || !TreeAnalyzer.TryGetPolynomial(polynomial, x, out var terms) || terms.Count < 2
+                || terms.Keys.Any(power => power.Sign < 0))
+                return null;
+            var values = new Dictionary<EInteger, Number.Complex>();
+            Entity? symbols = null;
+            foreach (var term in terms)
+            {
+                Number.Complex number = Number.Integer.One;
+                Entity rest = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(term.Value.InnerSimplified))
+                    if (factor is Number.Complex value)
+                        number *= value;
+                    else
+                        rest = rest == Number.Integer.One ? factor : rest * factor;
+                if (number.IsZero || symbols is { } && rest != symbols)
+                    return null;
+                symbols = rest;
+                values[term.Key] = number;
+            }
+            var leading = values[terms.Keys.Max()!];
+            if (leading.ImaginaryPart.IsZero)
+                return null;
+            var unit = symbols is null || symbols == Number.Integer.One ? (Entity)leading : leading * symbols;
+            Entity real = Number.Integer.Zero;
+            foreach (var pair in values.OrderBy(pair => pair.Key))
+            {
+                if ((pair.Value / leading) is not Number.Real coefficient)
+                    return null;
+                real += pair.Key.IsZero ? coefficient : coefficient * MathS.Pow(x, Number.Integer.Create(pair.Key));
+            }
+            return (unit, real);
+        }
 
         /// <summary>
         /// <paramref name="numerator"/> over <paramref name="denominator"/> with the greatest
@@ -9679,6 +9747,69 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An exponential of a multiple of <c>arctan(a x)</c> times a quadratic polynomial times a
+        /// power of <c>c + a^2 c x^2</c>, where it is an exact derivative:
+        /// <c>(e^(N arctan(a x)) (alpha + beta x) Q^s)'</c> is
+        /// <c>c e^(N arctan(a x)) Q^(s - 1) (a N alpha + beta + (a N beta + 2 s a^2 alpha) x + a^2 beta (1 + 2 s) x^2)</c>
+        /// for <c>Q = c + a^2 c x^2</c>, since <c>Q^s/(1 + a^2 x^2) = c Q^(s - 1)</c>. The
+        /// constant and squared coefficients give <c>alpha</c> and <c>beta</c>; the linear one is
+        /// the condition. Rubi's 5.3.6:504, <c>e^(i n arctan(a x)) x^2 (c + a^2 c x^2)^(-1 - n^2/2)</c>,
+        /// meets it exactly, and was left unevaluated: as powers of the two linears its exponents
+        /// do not sum to a whole number.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        internal static Entity? SolveAnExactDerivativeOfAnExponentialOfAnArctangent(Entity expr, Entity.Variable x)
+        {
+            Entity? multiple = null, slope = null, quadratic = null, power = null;
+            Entity polynomial = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(expr))
+            {
+                if (factor is Powf(var e, var exponent) && e == MathS.e && exponent.ContainsNode(x))
+                {
+                    if (multiple is not null)
+                        return null;
+                    var inverse = exponent.Nodes.OfType<Arctanf>().FirstOrDefault();
+                    if (inverse is null || !TreeAnalyzer.TryGetPolyLinear(inverse.Argument, x, out var a, out var b) || !TreeAnalyzer.IsZero(b))
+                        return null;
+                    var placeholder = Variable.CreateUnique(exponent, "u_atan");
+                    var inThePlaceholder = exponent.Replace(node => node == inverse ? placeholder : node);
+                    if (inThePlaceholder.ContainsNode(x) || !TreeAnalyzer.TryGetPolyLinear(inThePlaceholder, placeholder, out var n, out var constantPart)
+                        || !TreeAnalyzer.IsZero(constantPart) || TreeAnalyzer.IsZero(n))
+                        return null;
+                    (multiple, slope) = (n, a);
+                }
+                else if (factor is Powf(var q, var p) && !p.ContainsNode(x) && p is not Number.Integer && q.ContainsNode(x))
+                {
+                    if (quadratic is not null)
+                        return null;
+                    (quadratic, power) = (q, p);
+                }
+                else
+                    polynomial *= factor;
+            }
+            if (multiple is null || slope is null || quadratic is null || power is null)
+                return null;
+            if (!TreeAnalyzer.TryGetPolyQuadratic(quadratic, x, out var c2, out var c1, out var c0) || !TreeAnalyzer.IsZero(c1) || TreeAnalyzer.IsZero(c0)
+                || !VanishesIdentically((c2 - MathS.Sqr(slope) * c0).Expand()))
+                return null;
+            if (!TreeAnalyzer.TryGetPolyQuadratic(polynomial, x, out var p2, out var p1, out var p0))
+                return null;
+            var s = (power + 1).Simplify();
+            var twice = (1 + 2 * s).Simplify();
+            if (TreeAnalyzer.IsZero(twice) || TreeAnalyzer.IsZero(p2))
+                return null;
+            var beta = (p2 / (c0 * MathS.Sqr(slope) * twice)).Simplify();
+            var alpha = ((p0 / c0 - beta) / (slope * multiple)).Simplify();
+            if (!VanishesIdentically((c0 * (slope * multiple * beta + 2 * s * MathS.Sqr(slope) * alpha) - p1).Simplify()))
+                return null;
+            var exponential = Mulf.LinearChildren(expr).First(factor => factor is Powf(var e, _) && e == MathS.e && factor.ContainsNode(x));
+            var candidate = exponential * (alpha + beta * x) * MathS.Pow(quadratic, s);
+            if (!AreProportionalAtSampledPoints(candidate.Differentiate(x), expr, x))
+                return null;
+            return candidate;
+        }
+
+        /// <summary>
         /// An exponential of a symbolic multiple of <c>i arctan(L)</c>, <c>L</c> linear, beside
         /// powers of multiples of <c>1 + L^2</c>, written as powers of the two linears:
         /// <c>e^(k i arctan(L))</c> is <c>(1 + i L)^(k/2) (1 - i L)^(-k/2)</c> and
@@ -12322,7 +12453,16 @@ namespace AngouriMath.Functions.Algebra
             // Timofeev's 314 -- the distributed spelling sent the radical rules down a path
             // that answered with a sign function, where the undistributed one is answered exactly.
             if (!integrand.Nodes.Any(node => node is Powf(var radicand, Number.Rational fractional) && fractional is not Number.Integer && radicand.ContainsNode(u)))
+            {
                 integrand = WithWholePowersOfProductsDistributed(integrand);
+                // And a whole power of a quotient as the quotient of the powers, gathered into
+                // one again: with a symbol in the linears, `x^(-3)` comes through as
+                // `(-i (u^4 - 1)/(a (u^4 + 1)))^(-3)`, which the combining leaves a power of a
+                // quotient and the rational reader does not read (Rubi's 5.3.6:129 and :130).
+                if (integrand.Nodes.Any(node => node is Powf(Divf, Number.Integer)))
+                    integrand = Functions.SingleQuotient.Combine(WithWholePowersOfProductsDistributed(integrand.Replace(node =>
+                        node is Powf(Divf(var above, var below), Number.Integer power) ? MathS.Pow(above, power) / MathS.Pow(below, power) : node)));
+            }
             // For an even q the principal root is not negative wherever it is real, and a root
             // holding a power of u gives that power up: `1/sqrt(t + t^(3/2))` under `u = sqrt(t)`
             // is `2u/sqrt(u^2 + u^3)`, a root of a cubic, and is `2/sqrt(1 + u)`. Where the
