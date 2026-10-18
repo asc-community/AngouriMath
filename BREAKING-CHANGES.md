@@ -608,6 +608,19 @@ no numeric root finder applies, and its discriminant vanishes identically. Such 
 | `"1/(x^3-3*b*x+2*b^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | 122 characters |
 | `"1/(-9*b*x+9*x^3+2*b^(3/2)*sqrt(3))".ToEntity().Integrate("x")` | `integral(...)` | 176 characters |
 
+### An exponential of an arctangent beside a power of its quadratic is answered where it is an exact derivative
+
+**Answers where there were none.** `e^(i n arctan(a x)) x^2 (c + a^2 c x^2)^(-1 - n^2/2)` was left unevaluated: no rule
+reads a polynomial beside the exponential and a symbolic power of `c + a^2 c x^2`. Where the integrand is the
+derivative of `e^(N arctan(a x)) (α + β x) (c + a^2 c x^2)^(p + 1)` for a quadratic polynomial beside it, the two
+coefficients are solved for and that is the answer, checked by differentiating it back
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(i*n*atan(a*x))*x^2*(c+a^2*c*x^2)^(-1-n^2/2)".ToEntity().Integrate("x")` | `integral(...)` | 148 characters |
+| `"e^(2*atan(x))*(3+8/3*x+5/3*x^2)*(1+x^2)^(-2/3)".ToEntity().Integrate("x")` | `integral(...)` | `e ^ (2 * arctan(x)) * (1 + x) * (1 + x ^ 2) ^ (1/3) + C` |
+
 ### An exponential of i arctan below the bar is read as a negative multiple
 
 **Answers where there were none.** `x^2/(e^(i arctan(a x)) (c + a^2 c x^2)^(3/2))` was left unevaluated: the exponential
