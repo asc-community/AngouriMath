@@ -607,6 +607,19 @@ partial fractions divide. It is taken out in front of the integral first
 | `"(b*d + 2*c*d*x)^9/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | past a minute | 76,249 characters, the length the content-free one already had |
 | `"(b*d + 2*c*d*x)^8/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | past a minute | 65,236 characters |
 
+### An exponential of a symbolic multiple of i arctan is written as powers of the linears
+
+**Answers where there were none.** `(c + a^2 c x^2)^p/e^(2 i p arctan(a x))` was left unevaluated. For a real `L`,
+`e^(k i arctan(L))` is `(1 + i L)^(k/2) (1 - i L)^(-k/2)` and `(K (1 + L^2))^q` is `K^q (1 + i L)^q (1 - i L)^q`, for any
+`k` and `q`, so the integrand is a product of powers of two linears, and with these exponents a single power
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(c+a^2*c*x^2)^p/e^(2*i*p*atan(a*x))".ToEntity().Integrate("x")` | `integral(...)` | 84 characters |
+| `"e^(2*i*p*atan(a*x))*(c+a^2*c*x^2)^p".ToEntity().Integrate("x")` | `integral(...)` | 86 characters |
+| `"e^(i*n*atan(a*x))/(c+a^2*c*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 123 characters |
+
 ### A whole power is taken out of a power of a product, in front of a constant
 
 **Answers where there were none.** `(c sin(a + b x)^3)^(1/3)/x` was declined: nothing read a function under a root of
