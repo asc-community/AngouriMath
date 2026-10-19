@@ -13802,6 +13802,58 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A polynomial times powers of error functions of one shifted linear, written in
+        /// <c>u = a + b x</c>: <c>x erf(a + b x)^2</c> is <c>(u - a) erf(u)^2/b^2</c>, which by parts
+        /// answers, since there the Gaussian the error function differentiates to is of the
+        /// variable itself.
+        /// </summary>
+        /// <remarks>
+        /// In x, by parts leaves <c>x^n e^(-(a + b x)^2) erf(a + b x)</c>, which nothing reads, and
+        /// the remainder is declined term by term rather than asked (see
+        /// <c>TheRemainderIsAskedTermByTerm</c>): <c>(c + d x)^2 erf(a + b x)^2</c> ran past twenty
+        /// seconds. Only where the offset is not zero, since without it there is nothing to move,
+        /// and only error functions, whose derivatives are Gaussians of their argument rather than
+        /// quotients by it. Rubi's 8.1.
+        /// https://github.com/asc-community/AngouriMath/issues/1945
+        /// </remarks>
+        internal static Entity? SolveAPolynomialBesideErrorFunctionsOfAShiftedLinear(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            Entity? argument = null;
+            Entity? polynomial = null;
+            foreach (var factor in Mulf.LinearChildren(expr))
+            {
+                var special = factor is Powf(var @base, Number.Integer power) && power.EInteger.Sign > 0 ? @base : factor;
+                if (special is Entity.Erff or Entity.Erfcf or Entity.Erfif && special.DirectChildren[0] is var inner)
+                {
+                    if (argument is null)
+                        argument = inner;
+                    else if (inner != argument)
+                        return null;
+                }
+                else if (!factor.ContainsNode(x))
+                    continue;
+                else if (ThePolynomialIn(factor, x) is not null)
+                    polynomial = polynomial is null ? factor : polynomial * factor;
+                else
+                    return null;
+            }
+            if (argument is null || polynomial is null
+                || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out var offset)
+                || slope.ContainsNode(x) || offset.ContainsNode(x) || TreeAnalyzer.IsZero(slope) || VanishesIdentically(offset))
+                return null;
+            // x = (u - a)/b, so that each error function is of u, and dx = du/b.
+            var u = Variable.CreateUnique(expr, "u_linear");
+            var inU = expr.Replace(node => node == argument ? u : node).Substitute(x, (u - offset) / slope);
+            if (inU.ContainsNode(x)
+                || Integration.ComputeAsAQuestionOfItsOwn((inU / slope).InnerSimplified, u, integrateByParts) is not { } answer)
+                return null;
+            var back = answer.Substitute(u, argument);
+            return back.Nodes.Any(node => node == MathS.NaN) ? null : back;
+        }
+
+        /// <summary>
         /// A sine or a cosecant of twice an argument beside functions of the argument, written as the
         /// product it is: <c>sin(2A) = 2 sin(A) cos(A)</c>, so that every trigonometric function is of
         /// <c>A</c>. <c>csc(a + b x)^3 sin(2a + 2b x)^7</c> is <c>2^7 sin(a + b x)^4 cos(a + b x)^7</c>,
