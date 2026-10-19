@@ -782,6 +782,8 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveAPowerTimesAnExponentialOfAQuadraticInALogarithm(expr, x)) is { }) return answer;
             // And a negative whole power of one, onto the exponential integral by t = A + B ln(c x^r).
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOverAPowerOfALogarithm(expr, x)) is { }) return answer;
+            // And x^m artanh(A x/sqrt(d + A^2 x^2)), by parts, the logarithm's derivative read as the root it is.
+            if ((answer = IndefiniteIntegralSolver.SolveByPartsAgainstAnArtanhWhoseDerivativeIsARoot(expr, x, integrateByParts)) is { }) return answer;
             // A power of an exponential with a positive base is the exponential of the product,
             // exactly, and only that spelling is one the exponential rules read.
             if ((answer = IndefiniteIntegralSolver.SolveByFlatteningAPowerOfAnExponential(expr, x, integrateByParts)) is { }) return answer;
