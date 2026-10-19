@@ -827,6 +827,8 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveAProductOfExponentialsOfQuadratics(expr, x)) is { }) return answer;
             // An exponential of a linear over a power of a linear, onto the exponential integral.
             if ((answer = IndefiniteIntegralSolver.SolveAnExponentialOfALinearOverAPowerOfALinear(expr, x)) is { }) return answer;
+            // And of a quadratic over a power of the linear through its vertex, onto the moments about 0.
+            if ((answer = IndefiniteIntegralSolver.SolveAnExponentialOfAQuadraticOverTheLinearThroughItsVertex(expr, x, integrateByParts)) is { }) return answer;
             // And a sum of exponentials, which is how sinh and cosh arrive, onto Shi and Chi.
             if ((answer = IndefiniteIntegralSolver.SolveAHyperbolicOfALinearOverAPowerOfALinear(expr, x)) is { }) return answer;
             // And either over several linears, split into partial fractions over them first, as the

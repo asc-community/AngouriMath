@@ -6996,6 +6996,65 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An exponential of a quadratic over a whole power of the linear through its vertex:
+        /// <c>F^(A x^2 + B x + C)/(p + q x)^n</c> with <c>2 A p = q B</c>, which is how
+        /// <c>f^(a + b x + c x^2)/(b + 2 c x)^n</c> arrives. Under <c>u = p + q x</c> the exponent is
+        /// <c>A/q^2 u^2 + C - B^2/(4 A)</c>, with no linear part, and the integrand
+        /// <c>F^(A/q^2 u^2 + C - B^2/(4 A))/(q u^n)</c> is a moment about 0 of the Gaussian: the
+        /// exponential integral of the square for an odd <c>n</c>, the error function for an even
+        /// one. Rubi's 2.3. https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// Only through the vertex: anywhere else the shift leaves a linear part in the exponent,
+        /// and the moments about 0 do not answer it. The exponent in <c>u</c> is written from the
+        /// coefficients, not by substituting <c>x = (u - p)/q</c> and asking the simplifier to see
+        /// that the linear part cancels.
+        /// </remarks>
+        internal static Entity? SolveAnExponentialOfAQuadraticOverTheLinearThroughItsVertex(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (expr is not Divf)
+                return null;
+            Powf? exponential = null;
+            Entity? linear = null;
+            var power = EInteger.Zero;
+            Entity constant = Number.Integer.One;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (!underneath && exponential is null && factor is Powf(var @base, var exponent) && !@base.ContainsNode(x) && exponent.ContainsNode(x))
+                {
+                    exponential = (Powf)factor;
+                    continue;
+                }
+                // The linear, or a whole power of it, below the bar; nothing else.
+                if (!underneath)
+                    return null;
+                var (candidate, k) = factor is Powf(var below, Number.Integer n) && n.EInteger.Sign > 0 && n.EInteger.CanFitInInt32()
+                    ? (below, n.EInteger) : (factor, EInteger.One);
+                if (linear is not null && linear != candidate)
+                    return null;
+                linear = candidate;
+                power += k;
+            }
+            if (exponential is null || linear is null || power.CompareTo(EInteger.FromInt32(32)) > 0
+                || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var q, out var p) || TreeAnalyzer.IsZero(q)
+                || !TreeAnalyzer.TryGetPolyQuadratic(exponential.Exponent, x, out var a, out var b, out var c) || TreeAnalyzer.IsZero(a)
+                || !VanishesIdentically(2 * a * p - q * b))
+                return null;
+            var u = Variable.CreateUnique(expr, "u");
+            var exponentInU = (a / MathS.Sqr(q)).InnerSimplified * MathS.Sqr(u) + (c - MathS.Sqr(b) / (4 * a)).InnerSimplified;
+            var question = MathS.Pow(exponential.Base, exponentInU) / (power.Equals(EInteger.One) ? u : MathS.Pow(u, Number.Integer.Create(power)));
+            if (Integration.ComputeAsAQuestionOfItsOwn(question, u, integrateByParts) is not { } answer
+                || answer.Nodes.Any(node => node is Integralf || node == MathS.NaN))
+                return null;
+            return (constant / q * answer.Substitute(u, linear)).InnerSimplified;
+        }
+
+        /// <summary>
         /// <c>int u^m e^(k u) du</c>, where <paramref name="exponential"/> is <c>e^(k u)</c>, as its
         /// elementary part and the coefficient of <c>Ei(k u)</c> in it:
         /// <c>e^(k u) sum_i (-1)^i m!/(m - i)! u^(m - i)/k^(i + 1)</c> for <c>m >= 0</c>, <c>Ei(k u)</c> for

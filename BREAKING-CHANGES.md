@@ -84,6 +84,19 @@ coefficients are the roots of that quadratic, and the polynomial over it is spli
 | `"1/(4*a*c+4*c^2*x^2+4*c*d*x^3+d^2*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 3,920 characters |
 | `"x/(4*a*c+4*c^2*x^2+4*c*d*x^3+d^2*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 2,315 characters |
 
+### An exponential of a quadratic over a power of the linear through its vertex is a moment about it
+
+**Answers where there were none.** `f^(a + b x + c x^2)/(b + 2 c x)` was declined, and so were five more of Rubi's 2.3,
+`f^(a + b x + c x^2)/(b + 2 c x)^n` and `f^(b x + c x^2)/(b + 2 c x)^n` for `n` up to 3. Under `u = b + 2 c x` the exponent is
+`u^2/(4 c) + a - b^2/(4 c)`, with no linear part, and the integrand is a moment about 0 of the Gaussian: the
+exponential integral of the square for an odd `n`, the error function for an even one
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"f^(a+b*x+c*x^2)/(b+2*c*x)".ToEntity().Integrate("x")` | `integral(...)` | `f^(a - b^2/(4 c)) Ei(ln(f) (b + 2 c x)^2/(4 c))/(4 c)` |
+| `"e^(x^2+2*x)/(x+2)".ToEntity().Integrate("x")` | `integral(...)` | `integral(...)`, not through the vertex |
+
 ### `|` is divisibility, and was disjunction
 
 **Read this one first.** It is the only entry here that changes what existing input *means* rather
