@@ -765,6 +765,9 @@ namespace AngouriMath.Functions.Algebra
             // the sum and writes what is left out in powers of x, where the linear is gone; and
             // before the substitution search, which reads one function at a time.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAFunctionOfOneShiftedLinear(expr, x, integrateByParts)) is { }) return answer;
+            // A polynomial beside error functions of one shifted linear, written in it: by parts in
+            // x leaves a Gaussian of the shifted linear beside a polynomial, which nothing reads.
+            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialBesideErrorFunctionsOfAShiftedLinear(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x, integrateByParts)) is { }) return answer;
             // A product of powers of the variable with a power of a constant multiple of it
             // among them, `(c x)^m x^n`, by the power rule with the written power kept as
