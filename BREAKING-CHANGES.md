@@ -154,6 +154,18 @@ integrand is then `x^(2n + 1) (c + d x)^n (2 c + 3 d x)`, the derivative of `x^(
 | `"x^(2*n)*(c+d*x)^n*(2*c*x+3*d*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 61 characters |
 | `"x^(n-1)*(c+d*x^2)^n*(c*x+3*d*x^3)".ToEntity().Integrate("x")` | `integral(...)` | 65 characters |
 
+### A power of a quotient of linears beside whole powers of them is integrated under the quotient
+
+**Answers where there were none.** `e^(n acoth(a x))/(c - a^2 c x^2)^2` was declined, and so were its `^3` and `^4`, Rubi's
+7.4.2. The parser folds `e^(n acoth(a x))` into `((a x + 1)/(a x - 1))^(n/2)`, and under `t = (a x + 1)/(a x - 1)` -- the
+Moebius substitution, `p + q x = t (r + s x)` and `dx = (q r - p s)/(q - s t)^2 dt` -- a whole power of the quadratic
+is a polynomial in `t` times a power of it ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(n*acoth(a*x))/(c-a^2*c*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | three powers of `(a x + 1)/(a x - 1)`, `n/2 - 1` to `n/2 + 1` |
+| `"e^(n*acoth(a*x))/(c-a^2*c*x^2)^4".ToEntity().Integrate("x")` | `integral(...)` | seven powers of it, `n/2 - 3` to `n/2 + 3` |
+
 ### The last digits of an evaluated sine, cosine, tangent, arcsine or arctangent
 
 **Silent, and in the hundredth digit.** `EvalNumerical` at the default hundred digits gives the

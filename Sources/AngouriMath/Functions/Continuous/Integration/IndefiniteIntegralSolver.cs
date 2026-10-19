@@ -710,6 +710,109 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of a quotient of two linears beside whole powers of the two, under the Moebius
+        /// substitution <c>t = (p + q x)/(r + s x)</c>: then <c>p + q x = t (r + s x)</c>,
+        /// <c>r + s x = D/(q - s t)</c> and <c>dx = D/(q - s t)^2 dt</c> with <c>D = q r - p s</c>, so
+        /// <c>t^alpha (p + q x)^j (r + s x)^k dx</c> is <c>D^(j + k + 1) t^(alpha + j) (q - s t)^(-(j + k + 2)) dt</c>,
+        /// a polynomial in <c>t</c> times a power of it wherever <c>j + k &lt;= -2</c>. A whole power of
+        /// a quadratic that is a multiple of the two linears' product counts as a power of each.
+        /// <c>e^(n acoth(a x))</c> arrives folded as <c>((a x + 1)/(a x - 1))^(n/2)</c>, and over
+        /// <c>(c - a^2 c x^2)^m</c> it is Rubi's 7.4.2.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// Only for a power <c>alpha</c> that is not whole: a whole one makes a rational function,
+        /// which the partial fractions answer. <c>t^gamma</c> is differentiated to
+        /// <c>gamma t^(gamma - 1) t'</c> on the principal branch wherever <c>t</c> is not 0, the
+        /// negative half-line included, so the answer written back in the quotient holds where
+        /// the integrand is defined. A half-odd power of the quadratic is left alone: it is not
+        /// the product of the linears' powers on every side of their roots.
+        /// </remarks>
+        internal static Entity? SolveByTheMoebiusSubstitutionOfAQuotientOfLinears(Entity expr, Entity.Variable x)
+        {
+            Powf? power = null;
+            Entity constant = Number.Integer.One;
+            var others = new List<(Entity Base, EInteger Power)>();
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (!underneath && power is null && factor is Powf(Divf(var above, var below), var alpha)
+                    && !alpha.ContainsNode(x) && alpha.Evaled is not Number.Integer
+                    && above.ContainsNode(x) && below.ContainsNode(x))
+                {
+                    power = (Powf)factor;
+                    continue;
+                }
+                var (@base, whole) = factor is Powf(var b, Number.Integer n) && n.EInteger.CanFitInInt32() ? (b, n.EInteger) : (factor, EInteger.One);
+                others.Add((@base, underneath ? -whole : whole));
+            }
+            if (power is null || others.Count == 0 || power.Base is not Divf(var top, var bottom)
+                || !TreeAnalyzer.TryGetPolyLinear(top, x, out var q, out var p) || TreeAnalyzer.IsZero(q)
+                || !TreeAnalyzer.TryGetPolyLinear(bottom, x, out var s, out var r) || TreeAnalyzer.IsZero(s))
+                return null;
+            var determinant = (q * r - p * s).InnerSimplified;
+            if (VanishesIdentically(determinant))
+                return null;
+            // Each factor a multiple of the top, of the bottom, or of their product.
+            var j = EInteger.Zero;
+            var k = EInteger.Zero;
+            foreach (var (@base, n) in others)
+            {
+                Entity multiple;
+                if (TreeAnalyzer.TryGetPolyLinear(@base, x, out var slope, out var intercept))
+                {
+                    if (VanishesIdentically(slope * p - intercept * q))
+                    {
+                        multiple = (slope / q).InnerSimplified;
+                        j += n;
+                    }
+                    else if (VanishesIdentically(slope * r - intercept * s))
+                    {
+                        multiple = (slope / s).InnerSimplified;
+                        k += n;
+                    }
+                    else
+                        return null;
+                }
+                else if (TreeAnalyzer.TryGetPolyQuadratic(@base, x, out var a2, out var b2, out var c2) && !TreeAnalyzer.IsZero(a2))
+                {
+                    multiple = (a2 / (q * s)).InnerSimplified;
+                    if (!VanishesIdentically(b2 - multiple * (p * s + q * r)) || !VanishesIdentically(c2 - multiple * p * r))
+                        return null;
+                    j += n;
+                    k += n;
+                }
+                else
+                    return null;
+                constant *= n.Equals(EInteger.One) ? multiple : MathS.Pow(multiple, Number.Integer.Create(n));
+            }
+            var degree = (j + k + EInteger.FromInt32(2)).Negate();
+            if (degree.Sign < 0 || degree.CompareTo(EInteger.FromInt32(24)) > 0 || !j.CanFitInInt32())
+                return null;
+            // D^(j + k + 1) t^(alpha + j) (q - s t)^degree, term by term in t.
+            var m = degree.ToInt32Checked();
+            Entity sum = Number.Integer.Zero;
+            Entity binomial = Number.Integer.One;
+            for (var i = 0; i <= m; i++)
+            {
+                var offset = j + EInteger.FromInt32(i + 1);
+                var raised = (offset.IsZero ? power.Exponent : power.Exponent + Number.Integer.Create(offset)).InnerSimplified;
+                if (raised.Evaled is Number.Complex { IsZero: true })
+                    return null;
+                // Free of x and small, so simplified: the multiples are otherwise left as
+                // `(1/(a (-a)))^(-2) (a - (-a))^(-3)`.
+                var coefficient = (binomial * MathS.Pow(q, Number.Integer.Create(m - i)) * MathS.Pow(-s, Number.Integer.Create(i)) / raised).Simplify();
+                sum += coefficient * MathS.Pow(power.Base, raised);
+                binomial = binomial * (m - i) / (i + 1);
+            }
+            return ((constant * MathS.Pow(determinant, Number.Integer.Create(j + k + EInteger.One))).Simplify() * sum).InnerSimplified;
+        }
+
+        /// <summary>
         /// A quotient by the square of a base, by parts against the base's reciprocal, where the
         /// base's derivative makes the rest exact: <c>N/(M v^2)</c> is <c>g v'/v^2</c> with
         /// <c>g = N/(M v')</c>, and <c>v'/v^2</c> is the derivative of <c>-1/v</c>, so the integral
