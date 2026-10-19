@@ -203,6 +203,20 @@ compared everywhere with its value at one positive point
 | `"asin(sqrt(1+b*x^2))^n/sqrt(1+b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 136 characters |
 | `"acos(sqrt(1+b*x^2))^n/sqrt(1+b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 137 characters |
 
+### A power of a sum beside its derivative is read with the logarithms in it as factors
+
+**Answers where there were none.** `(a m x^m + b n q ln(c x^n)^(q - 1))/(x (a x^m + b ln(c x^n)^q))` was declined, and so
+were five more of Rubi's 3.5, the sum's square and the powers of `a x^2 + b x ln(c x^n)^2` among them. Each is a
+constant times `g' g^k` for a sum `g`, but the derivative of `ln(c x^n)^q` is written `q ln(c x^n)^(q - 1) c n x^(n - 1)/(c x^n)`,
+which nothing brought down to the `n q ln(c x^n)^(q - 1)/x` the integrand writes. The terms are now read as a
+coefficient times powers of x and of the other functions of x in them, and a power of x common to the sum is taken
+out of it ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a*m*x^m+b*n*q*ln(c*x^n)^(q-1))/(x*(a*x^m+b*ln(c*x^n)^q))".ToEntity().Integrate("x")` | `integral(...)` | `ln(a x^m + b ln(c x^n)^q)` |
+| `"(a*(m-1)*x^(m-1)+b*n*q*ln(c*x^n)^(q-1))/(a*x^m+b*x*ln(c*x^n)^q)".ToEntity().Integrate("x")` | `integral(...)` | `ln(a x^(m - 1) + b ln(c x^n)^q)` |
+
 ### A rational evaluated at a higher precision than before has all of its digits
 
 **More digits where there were a hundred.** A rational kept its decimal value in the precision current when it was
