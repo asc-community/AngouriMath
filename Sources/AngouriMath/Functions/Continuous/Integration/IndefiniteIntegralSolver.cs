@@ -23268,6 +23268,12 @@ namespace AngouriMath.Functions.Algebra
                         && (Mulf.LinearChildren(rest).Where(part => part.ContainsNode(x)).ToList() is not [Sumf or Minusf]
                             || Sumf.LinearChildren(rest).All(term => PowerOfX(term, x) is (_, Number.Integer { EInteger: var degree }) && degree.CompareTo(1) <= 0 && degree.Sign >= 0)))
                         continue;
+                    // The rest of the integrand a constant times the sum's derivative is the plain
+                    // substitution's, u = the sum, which answers it as a power of u, where the sum
+                    // with x taken out is a search: `(x - 3 sqrt(x))^(2/3) (2 sqrt(x) - 3)/sqrt(x)`
+                    // was answered in a fifth of a second before this rule and not in twenty after.
+                    if (IsAConstantTimesTheDerivativeOf(side == above ? expr / factor : expr * factor, sum, x))
+                        continue;
                     // Two such would want two factors.
                     if (found is { })
                         return null;
@@ -31573,6 +31579,44 @@ namespace AngouriMath.Functions.Algebra
                 return Functions.SingleQuotient.Combine(rest * constant * MathS.Pow(uSub, power)).InnerSimplified;
             }
             return null;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="rest"/> is a nonzero constant times the derivative of
+        /// <paramref name="sum"/>: their quotient one number at three positive points, every other
+        /// symbol pinned, agreeing to nine digits relative to its size. Positive points, since a
+        /// fractional power of x is real there; a point where either side cannot be evaluated
+        /// answers no.
+        /// </summary>
+        private static bool IsAConstantTimesTheDerivativeOf(Entity rest, Entity sum, Entity.Variable x)
+        {
+            var derivative = sum.Differentiate(x);
+            var pinned = new Dictionary<Variable, Entity>();
+            var values = new[] { 1.37, 0.61, 2.23, 1.91, 0.83, 1.13 };
+            var index = 0;
+            foreach (var symbol in rest.Vars.Concat(sum.Vars).Distinct())
+                if (symbol != x)
+                    pinned[symbol] = values[index++ % values.Length];
+            Number.Complex? At(Entity function, double point)
+            {
+                var value = function.Substitute(x, point);
+                foreach (var pair in pinned)
+                    value = value.Substitute(pair.Key, pair.Value);
+                return value.Evaled is Number.Complex { IsNaN: false } number && number.IsFinite && !number.IsZero ? number : null;
+            }
+            Number.Complex? first = null;
+            foreach (var point in new[] { 0.37, 1.71, 2.93 })
+            {
+                if (At(rest, point) is not { } above || At(derivative, point) is not { } below)
+                    return false;
+                var ratio = (Number.Complex)(above / below);
+                var size = ((Number.Real)ratio.Abs()).EDecimal.ToDouble();
+                if (!(size > 1e-12 && size < 1e12)
+                    || first is { } earlier && ((Number.Real)(ratio - earlier).Abs()).EDecimal.ToDouble() > 1e-9 * size)
+                    return false;
+                first ??= ratio;
+            }
+            return true;
         }
 
         /// <summary>
