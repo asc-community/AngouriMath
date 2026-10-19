@@ -63,7 +63,7 @@
     Remove this line once that package ships a build whose own dependency is patched.
     https://github.com/asc-community/AngouriMath/issues/542
     -->
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.18" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.21" />
     <!--
     <PackageReference Include="AngouriMath.Interactive" Version="1.4.0-preview.3" />
     -->
