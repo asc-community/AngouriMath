@@ -22156,17 +22156,35 @@ namespace AngouriMath.Functions.Algebra
         /// exponential of the product: <c>(e^x)^(1/3)</c> is <c>e^(x/3)</c> and <c>(3^(3x))^(1/4)</c>
         /// is <c>3^(3x/4)</c>, exactly, since the base is positive; and it is only in that
         /// spelling that the exponential rules read them. Timofeev's
-        /// <c>(cos(x/2) + sin(x/2))/(e^x)^(1/3)</c> and <c>cos(3x/2)/(3^(3x))^(1/4)</c>.
+        /// <c>(cos(x/2) + sin(x/2))/(e^x)^(1/3)</c> and <c>cos(3x/2)/(3^(3x))^(1/4)</c>. And a whole
+        /// power of a constant times one, <c>(-e^(-b x))^2</c>, as the constant's power times the
+        /// exponential of the multiple, whatever the constant is.
         /// </summary>
         internal static Entity? SolveByFlatteningAPowerOfAnExponential(Entity expr, Entity.Variable x, bool integrateByParts)
         {
-            var flattened = expr.Replace(node =>
-                node is Powf(Powf(var @base, var inner), var outer)
-                && !@base.ContainsNode(x) && inner.ContainsNode(x) && !outer.ContainsNode(x)
-                && (@base == MathS.e || @base.Evaled is Number.Real { IsPositive: true })
-                && outer.Evaled is Number.Real
-                    ? MathS.Pow(@base, (outer * inner).InnerSimplified)
-                    : node);
+            bool IsAnExponential(Entity @base, Entity inner) =>
+                !@base.ContainsNode(x) && inner.ContainsNode(x)
+                && (@base == MathS.e || @base.Evaled is Number.Real { IsPositive: true });
+            // A whole power of a constant times an exponential: (k E)^n is k^n E^n for every k and
+            // E when n is whole, so (-e^(-b x))^2 is e^(-2 b x). The product of two of them, which
+            // sinh(b x)^3 sinh(d x)^3 expands into, is read by nothing else.
+            Entity? Distributed(Entity left, Entity right, Number.Integer whole) =>
+                (left, right) switch
+                {
+                    (Powf(var b, var p), var k) when !k.ContainsNode(x) && IsAnExponential(b, p) =>
+                        MathS.Pow(k, whole) * MathS.Pow(b, (whole * p).InnerSimplified),
+                    (var k, Powf(var b, var p)) when !k.ContainsNode(x) && IsAnExponential(b, p) =>
+                        MathS.Pow(k, whole) * MathS.Pow(b, (whole * p).InnerSimplified),
+                    _ => null
+                };
+            var flattened = expr.Replace(node => node switch
+            {
+                Powf(Powf(var @base, var inner), var outer)
+                    when IsAnExponential(@base, inner) && !outer.ContainsNode(x) && outer.Evaled is Number.Real =>
+                    MathS.Pow(@base, (outer * inner).InnerSimplified),
+                Powf(Mulf(var left, var right), Number.Integer whole) => Distributed(left, right, whole) ?? node,
+                _ => node
+            });
             // The same question in another spelling, asked as one of its own, so that the
             // closed rules that answer only at the top -- the exponential times a
             // trigonometric -- are consulted for it.
