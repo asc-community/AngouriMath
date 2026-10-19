@@ -19205,27 +19205,28 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// A rational function with a trinomial in the square below the bar, beside a root of a
-        /// quadratic, taken apart over the trinomial's factors in the square: where its roots in
-        /// x^2 are real, <c>a + b x^2 + c x^4</c> is <c>c (x^2 - r) (x^2 - s)</c> with
-        /// <c>r, s = (-b -+ sqrt(b^2 - 4 a c))/(2c)</c>, and where they are a conjugate pair it is
-        /// <c>c (x^2 + p x + m) (x^2 - p x + m)</c> with <c>m = sqrt(a/c)</c> and
-        /// <c>p = sqrt(2 m - b/c)</c>. Each factor is a quadratic the rule before this one splits
-        /// the integrand over and closes beside the root, and the answer is the piecewise of the
-        /// two on the sign of the discriminant. Rubi's 1.2.2.4
-        /// <c>sqrt(d + e x^2)/(a + b x^2 + c x^4)</c> was declined.
+        /// quadratic, taken apart over the trinomial's roots in the square: <c>a + b x^2 + c x^4</c>
+        /// is <c>c (x^2 - r) (x^2 - s)</c> with <c>r, s = (-b -+ sqrt(b^2 - 4 a c))/(2c)</c>, and each
+        /// factor is a quadratic the rule before this one splits the integrand over and closes
+        /// beside the root. Rubi's 1.2.2.4 <c>sqrt(d + e x^2)/(a + b x^2 + c x^4)</c> was declined.
         /// </summary>
         /// <remarks>
-        /// Asked with <c>r</c>, <c>s</c>, <c>m</c> and <c>p</c> symbols of their own and written
-        /// back after: the integrand so written is an integrand for every value of them, and the
-        /// one asked for at theirs. Named, each stays one atom through the split: with
+        /// Asked with <c>r</c> and <c>s</c> symbols of their own and written back after: the
+        /// integrand so written is an integrand for every value of them, and the one asked for at
+        /// theirs. Named, each stays one atom through the split: with
         /// <c>(sqrt(b^2 - 4 a c) - b)/(2c)</c> in place of <c>r</c> the split declined
-        /// <c>x^2 sqrt(d + e x^2)/(a + b x^2 + c x^4)</c>, and over <c>x^2 - r</c> it is 1,458
-        /// characters (<a href="https://github.com/asc-community/AngouriMath/issues/1877">#1877</a>
-        /// was the same with a quadratic). The real roots' writing alone is not enough: with
-        /// <c>r</c> complex the pieces' cases read the sign of a number off the real line, and the
-        /// answer was NaN wherever <c>b^2 &lt; 4 a c</c>. Not where the discriminant vanishes,
-        /// the generic case's. With a symbol in the trinomial only, and in a function of x^2 only.
-        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// <c>x^2 sqrt(d + e x^2)/(a + b x^2 + c x^4)</c>
+        /// (<a href="https://github.com/asc-community/AngouriMath/issues/1877">#1877</a> was the
+        /// same with a quadratic). The same writing where the roots are a conjugate pair: each
+        /// piece over <c>x^2 - r</c> is an arctangent of <c>w x/sqrt(d + e x^2)</c> with
+        /// <c>w^2 = (d + e r)/(-r)</c>, which holds on either branch of <c>w</c>, and for <c>r</c>
+        /// off the real line <c>w x/sqrt(d + e x^2)</c> stays off the arctangent's cuts, so the
+        /// two conjugate pieces add to a real, continuous antiderivative. Written instead over
+        /// the two real quadratics <c>x^2 -+ p x + m</c>, the answer to
+        /// <c>x^2 sqrt(d + e x^2)/(a + b x^2 + c x^4)</c> was 29,139 characters where this one is
+        /// under 2,000. Not where the discriminant vanishes, the generic case's. With a symbol in
+        /// the trinomial only, and in a function of x^2 only.
+        /// https://github.com/asc-community/AngouriMath/issues/1885
         /// </remarks>
         internal static Entity? SolveATrinomialInTheSquareBesideTheRootOfAQuadratic(Entity expr, Entity.Variable x)
         {
@@ -19261,43 +19262,20 @@ namespace AngouriMath.Functions.Algebra
             var discriminant = (middle * middle - 4 * constant * leading).InnerSimplified;
             if (VanishesIdentically(discriminant))
                 return null;
-            // Two writings of the trinomial, each real where it is taken, its roots and
-            // coefficients named so that each stays one atom through the split. Two real roots
-            // in x^2: c (x^2 - r) (x^2 - s). None: the roots are a conjugate pair and the pieces' cases
-            // read the sign of an imaginary q, so it is the product of two real quadratics
-            // c (x^2 + p x + m) (x^2 - p x + m) with m = sqrt(a/c) and p = sqrt(2 m - b/c), both
-            // real there since b^2 < 4 a c makes a/c positive and |b/c| < 2 m. Each is an
-            // identity in its symbols, so each answer is an antiderivative wherever its symbols
-            // are what they stand for. A root twice, where the discriminant vanishes, is the
-            // case the generic answer leaves, as `ln(a x + b)/a` leaves a = 0.
+            // c (x^2 - r) (x^2 - s), its roots named so that each stays one atom through the split.
+            // An identity in r and s, so the answer is an antiderivative wherever they are the
+            // roots, a conjugate pair included. A root twice, where the discriminant vanishes, is
+            // the case the generic answer leaves, as `ln(a x + b)/a` leaves a = 0.
             var square = MathS.Pow(x, Number.Integer.Create(2));
             var r = Variable.CreateUnique(expr, "r");
             var s = Variable.CreateUnique(expr + r, "s");
-            var m = Variable.CreateUnique(expr + r + s, "m");
-            var p = Variable.CreateUnique(expr + r + s + m, "p");
             var q = MathS.Sqrt(discriminant);
-            var writings = new (Entity Written, Entity[] Named, Entity[] Values, Entity Condition)[]
-            {
-                (leading * (square - r) * (square - s),
-                    new Entity[] { r, s }, new[] { (q - middle) / (2 * leading), (-q - middle) / (2 * leading) }, discriminant > 0),
-                (leading * (square + p * x + m) * (square - p * x + m),
-                    new Entity[] { m, p }, new[] { MathS.Sqrt(constant / leading), MathS.Sqrt(2 * MathS.Sqrt(constant / leading) - middle / leading) }, discriminant < 0),
-            };
-            var cases = new List<Providedf>();
-            foreach (var (overTheRoots, named, values, condition) in writings)
-            {
-                var written = expr.Replace(node => node == trinomial ? overTheRoots : node);
-                if (SolveARationalFunctionBesideTheRootOfAQuadratic(written, x) is not { } inNamed)
-                    return null;
-                var answered = inNamed;
-                for (var i = named.Length - 1; i >= 0; i--)
-                    answered = answered.Substitute(named[i], values[i]);
-                answered = answered.InnerSimplified;
-                if (answered.Nodes.Any(node => node is Number.Complex { IsNaN: true }))
-                    return null;
-                cases.Add(new Providedf(answered, condition));
-            }
-            var answer = MathS.Piecewise(cases);
+            var written = expr.Replace(node => node == trinomial ? leading * (square - r) * (square - s) : node);
+            if (SolveARationalFunctionBesideTheRootOfAQuadratic(written, x) is not { } inNamed)
+                return null;
+            var answer = inNamed.Substitute(s, (-q - middle) / (2 * leading)).Substitute(r, (q - middle) / (2 * leading)).InnerSimplified;
+            if (answer.Nodes.Any(node => node is Number.Complex { IsNaN: true }))
+                return null;
             return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
         }
 
