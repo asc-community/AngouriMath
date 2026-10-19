@@ -640,6 +640,76 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of <c>x</c> times <c>artanh(A x/sqrt(d + B x^2))</c> with <c>A^2 = B</c>, by parts:
+        /// the logarithm <c>ln((1 + u)/(1 - u))</c> that <c>artanh(u)</c> is written as has the
+        /// derivative <c>2 u'/(1 - u^2)</c>, and for this <c>u</c>, <c>1 - u^2 = d/(d + B x^2)</c> and
+        /// <c>u' = A d/(d + B x^2)^(3/2)</c>, so it is <c>2 A/sqrt(d + B x^2)</c>. So
+        /// <c>integral x^m ln(...) = x^(m + 1)/(m + 1) ln(...) - 2 A/(m + 1) integral x^(m + 1)/sqrt(d + B x^2)</c>,
+        /// for every whole <c>m</c> but <c>-1</c>. Rubi's 7.3.7, <c>x^m artanh(sqrt(e) x/sqrt(d + e x^2))</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// The search takes it by parts too, and differentiates the logarithm as written: a quotient
+        /// of two sums with a root in each, which it never brought down to the root alone, and the
+        /// remainder it asked about ran past the budget. The identity is algebraic, with no branch in
+        /// it: it holds wherever <c>d</c> is not 0 and the root is.
+        /// </remarks>
+        internal static Entity? SolveByPartsAgainstAnArtanhWhoseDerivativeIsARoot(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            Entity constant = Number.Integer.One;
+            Logf? logarithm = null;
+            var power = 0;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (!underneath && logarithm is null && factor is Logf ln && ln.Base == MathS.e)
+                {
+                    logarithm = ln;
+                    continue;
+                }
+                if (APowerOfTheVariable(factor, x) is not { } k)
+                    return null;
+                power += underneath ? -k : k;
+            }
+            if (logarithm is null || power == -1 || System.Math.Abs(power) > 24
+                || logarithm.Antilogarithm is not Divf(Sumf(var one, var u), Minusf(var alsoOne, var alsoU))
+                || one != Number.Integer.One || alsoOne != Number.Integer.One || u != alsoU)
+                return null;
+            // u read as A x/sqrt(Q): a constant, x once above the bar, and the root of Q.
+            Entity slope = Number.Integer.One;
+            Entity? radicand = null;
+            var sawX = false;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(u))
+            {
+                if (!factor.ContainsNode(x))
+                    slope = underneath ? slope / factor : slope * factor;
+                else if (factor == x && !underneath && !sawX)
+                    sawX = true;
+                else if (radicand is null && factor is Powf(var @base, Number.Rational half)
+                         && (underneath ? half == Number.Rational.Create(1, 2) : half == Number.Rational.Create(-1, 2)))
+                    radicand = @base;
+                else
+                    return null;
+            }
+            if (!sawX || radicand is null
+                || !TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var square, out var linear, out var free)
+                || !TreeAnalyzer.IsZero(linear) || TreeAnalyzer.IsZero(free) || !VanishesIdentically(slope * slope - square))
+                return null;
+            var raised = power + 1;
+            var rest = raised == 0 ? 1 / MathS.Sqrt(radicand)
+                : raised > 0 ? (raised == 1 ? x : MathS.Pow(x, raised)) / MathS.Sqrt(radicand)
+                : 1 / ((raised == -1 ? x : MathS.Pow(x, -raised)) * MathS.Sqrt(radicand));
+            if (Integration.ComputeAsAQuestionOfItsOwn(rest, x, integrateByParts) is not { } integral
+                || integral.Nodes.Any(node => node is Integralf || node == MathS.NaN))
+                return null;
+            return (constant * (MathS.Pow(x, raised) * logarithm - 2 * slope * integral) / raised).InnerSimplified;
+        }
+
+        /// <summary>
         /// A quotient by the square of a base, by parts against the base's reciprocal, where the
         /// base's derivative makes the rest exact: <c>N/(M v^2)</c> is <c>g v'/v^2</c> with
         /// <c>g = N/(M v')</c>, and <c>v'/v^2</c> is the derivative of <c>-1/v</c>, so the integral

@@ -129,6 +129,19 @@ since semantic versioning admits it.
 Measured on the suite: **7 of 8,525 tests** referenced the old reading — five boolean-solver inputs
 written `A | B`, and two that existed to record this spelling as at risk.
 
+### A power of x times `atanh(sqrt(e) x/sqrt(d + e x^2))` is integrated by parts against the root
+
+**Answers where there were none.** `x atanh(sqrt(e) x/sqrt(d + e x^2))` was declined, and so were twelve more of Rubi's
+7.3.7, every power of `x` from `x^6` to `1/x^9` but `1/x`. The logarithm `atanh` is written as has the derivative
+`sqrt(e)/sqrt(d + e x^2)`, and by parts what is left is `x^(m + 1)/sqrt(d + e x^2)`; differentiated as written it was a
+quotient of two sums with a root in each, which the search never brought down to the root
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"atanh(x*sqrt(k)/sqrt(d+k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | `x atanh(...) - sqrt(d + k x^2)/sqrt(k)`, written in the logarithm |
+| `"atanh(x*sqrt(k)/sqrt(d+k*x^2))/x^5".ToEntity().Integrate("x")` | `integral(...)` | by parts onto `1/(x^4 sqrt(d + k x^2))` |
+
 ### A power of x is taken out of a bracket to find the derivative of a product of powers
 
 **Answers where there were none.** `x^(2n) (c + d x)^n (2 c x + 3 d x^2)`, Rubi's 1.3.1, was declined. A bracket that
