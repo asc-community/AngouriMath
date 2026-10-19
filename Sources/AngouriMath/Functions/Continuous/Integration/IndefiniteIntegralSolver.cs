@@ -34501,6 +34501,161 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of a sum beside a constant multiple of the sum's derivative, with symbolic powers
+        /// about: <c>c g' g^k</c> is <c>c g^(k + 1)/(k + 1)</c>, and <c>c ln(g)</c> for <c>k = -1</c>.
+        /// Each term is read as a coefficient times a power of <c>x</c> times powers of the other
+        /// functions of <c>x</c> in it, the powers of each merged, so that
+        /// <c>d/dx ln(c x^n)^q = q n ln(c x^n)^(q - 1)/x</c> is matched against
+        /// <c>b n q ln(c x^n)^(q - 1)/x</c> as written. Where the terms do not match, a power of
+        /// <c>x</c> common to every term of the sum is taken out of it into the rest:
+        /// <c>a x^m + b x ln(c x^n)^q</c> is <c>x (a x^(m - 1) + b ln(c x^n)^q)</c>. Rubi's 3.5.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// <see cref="SolveALogarithmicDerivativeWithASymbolicExponent"/> reads only powers of
+        /// <c>x</c>, and the substitution's simplification of the quotient by <c>du/dx</c> never
+        /// brings <c>c n x^(n - 1)/(c x^n)</c> down to <c>n/x</c>. Only where a power is symbolic:
+        /// otherwise the substitution answers it.
+        /// </remarks>
+        internal static Entity? SolveAPowerOfASumBesideItsDerivativeWithSymbolicPowers(Entity expr, Entity.Variable x)
+        {
+            if (!expr.Nodes.Any(node => node is Powf(var @base, var exponent) && @base.ContainsNode(x) && !exponent.ContainsNode(x) && exponent.Vars.Any()))
+                return null;
+            var factors = FactorsOfTheIntegrand(expr);
+            for (var chosen = 0; chosen < factors.Count; chosen++)
+            {
+                var (factor, underneath) = factors[chosen];
+                var (sum, power) = factor is Powf(var b, var e) && !e.ContainsNode(x) ? (b, e) : (factor, (Entity)Number.Integer.One);
+                if (sum is not (Sumf or Minusf) || !sum.ContainsNode(x) || power.Evaled is not Number.Rational k)
+                    continue;
+                if (underneath)
+                    k = (Number.Rational)(-k);
+                // The rest: at most one sum above the bar, every other factor one term.
+                Entity? restSum = null;
+                Entity monomial = Number.Integer.One;
+                var readable = true;
+                for (var other = 0; other < factors.Count && readable; other++)
+                {
+                    if (other == chosen)
+                        continue;
+                    var (f, below) = factors[other];
+                    if (!below && restSum is null && f is Sumf or Minusf && f.ContainsNode(x))
+                        restSum = f;
+                    else if (f is Sumf or Minusf && f.ContainsNode(x))
+                        readable = false;
+                    else
+                        monomial = below ? monomial / f : monomial * f;
+                }
+                if (!readable)
+                    continue;
+                var rest = (restSum is null ? new[] { monomial } : Sumf.LinearChildren(restSum).Select(term => term * monomial)).ToList();
+                if (Matched(rest, sum, x) is { } constant)
+                    return Answer(constant, sum, k);
+                // A power of x common to the sum's terms, taken out: x^j g, so that c x^(j k) g'... is read against g.
+                if (Terms(Sumf.LinearChildren(sum), x) is not { } terms)
+                    continue;
+                foreach (var common in terms.Select(t => t.Exponent).Where(e => e.Evaled is Number.Integer { IsZero: false }).Distinct().ToList())
+                {
+                    Entity reduced = Number.Integer.Zero;
+                    foreach (var t in terms)
+                    {
+                        var exponent = (t.Exponent - common).InnerSimplified;
+                        Entity written = t.Atoms.Aggregate(t.Coefficient, (product, atom) => product * MathS.Pow(atom.Base, atom.Power));
+                        if (exponent.Evaled is not Number.Complex { IsZero: true })
+                            written *= exponent == Number.Integer.One ? x : MathS.Pow(x, exponent);
+                        reduced = reduced == Number.Integer.Zero ? written : reduced + written;
+                    }
+                    // x^(common k) moves into the rest.
+                    var moved = MathS.Pow(x, (common * k).InnerSimplified);
+                    if (Matched(rest.Select(term => term * moved).ToList(), reduced, x) is { } c)
+                        return Answer(c, reduced, k);
+                }
+            }
+            return null;
+
+            static Entity Answer(Entity constant, Entity sum, Number.Rational k)
+                => k == Number.Integer.MinusOne
+                    ? constant * MathS.Ln(sum)
+                    : constant / (k + 1) * MathS.Pow(sum, (Entity)(k + 1));
+
+            // The constant c with the rest's terms c times the sum's derivative's, or null.
+            static Entity? Matched(List<Entity> rest, Entity sum, Entity.Variable x)
+            {
+                var derivative = sum.Differentiate(x);
+                if (derivative is Providedf(var bare, _))
+                    derivative = bare;
+                if (Terms(rest, x) is not { } above || Terms(Sumf.LinearChildren(derivative), x) is not { } below || above.Count != below.Count)
+                    return null;
+                Entity? constant = null;
+                foreach (var term in above)
+                {
+                    var matching = below.Where(other => SameMonomial(term, other)).ToList();
+                    if (matching.Count != 1)
+                        return null;
+                    var ratio = Bare((term.Coefficient / matching[0].Coefficient).Simplify());
+                    if (ratio.ContainsNode(x) || ratio.Nodes.Any(node => node == MathS.NaN))
+                        return null;
+                    if (constant is null)
+                        constant = ratio;
+                    else if (Bare((constant - ratio).Simplify()) != Number.Integer.Zero)
+                        return null;
+                }
+                return constant;
+            }
+
+            static bool SameMonomial((Entity Coefficient, Entity Exponent, List<(Entity Base, Entity Power)> Atoms) one,
+                (Entity Coefficient, Entity Exponent, List<(Entity Base, Entity Power)> Atoms) other)
+                => Bare((one.Exponent - other.Exponent).Simplify()) == Number.Integer.Zero
+                   && one.Atoms.Count == other.Atoms.Count
+                   && one.Atoms.All(atom => other.Atoms.Any(theirs => theirs.Base == atom.Base && Bare((theirs.Power - atom.Power).Simplify()) == Number.Integer.Zero));
+
+            static Entity Bare(Entity simplified) => simplified is Providedf(var inner, _) ? inner : simplified;
+
+            // Each term as a coefficient free of x, a power of x, and powers of other functions of
+            // x, each base's powers merged; null where a factor is a sum holding x.
+            static List<(Entity Coefficient, Entity Exponent, List<(Entity Base, Entity Power)> Atoms)>? Terms(IEnumerable<Entity> terms, Entity.Variable x)
+            {
+                var read = new List<(Entity, Entity, List<(Entity, Entity)>)>();
+                foreach (var term in terms)
+                {
+                    var (numerator, denominator) = Functions.SingleQuotient.Of(term is Providedf(var t, _) ? t : term);
+                    Entity exponent = Number.Integer.Zero;
+                    Entity coefficient = Number.Integer.One;
+                    var atoms = new List<(Entity Base, Entity Power)>();
+                    foreach (var (side, underneath) in new[] { (numerator, false), (denominator, true) })
+                        foreach (var factor in Mulf.LinearChildren(side))
+                        {
+                            if (!factor.ContainsNode(x))
+                            {
+                                coefficient = underneath ? coefficient / factor : coefficient * factor;
+                                continue;
+                            }
+                            var (@base, power) = factor is Powf(var b, var e) && !e.ContainsNode(x) ? (b, e) : (factor, (Entity)Number.Integer.One);
+                            if (underneath)
+                                power = -power;
+                            if (@base == x)
+                                exponent += power;
+                            else if (@base is Sumf or Minusf)
+                                return null;
+                            else
+                            {
+                                var at = atoms.FindIndex(atom => atom.Base == @base);
+                                if (at < 0)
+                                    atoms.Add((@base, power));
+                                else
+                                    atoms[at] = (@base, atoms[at].Power + power);
+                            }
+                        }
+                    // A term the derivative writes as 0 times something is no term.
+                    if (coefficient.InnerSimplified.Evaled is Number.Complex { IsZero: true })
+                        continue;
+                    read.Add((coefficient, exponent.InnerSimplified, atoms.Select(atom => (atom.Base, atom.Power.InnerSimplified)).ToList()));
+                }
+                return read;
+            }
+        }
+
+        /// <summary>
         /// An exponential of a polynomial beside the polynomial's derivative, with the rest a
         /// function of the polynomial: <c>G^P k P' f(P)</c> is <c>k G^u f(u)</c> under <c>u = P</c>.
         /// Rubi's 2.3, <c>e^(a + b x + c x^2) (b + 2 c x) (a + b x + c x^2)^(n/2)</c>.
