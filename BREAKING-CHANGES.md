@@ -231,6 +231,18 @@ It is written out again in the precision asked for now
 | `Rational.Create(128, 12167)`'s `EDecimal`, read at the default precision and then under 300 digits | 100 digits | 300 digits |
 | `sqrt(46) * 128/12167` evaluated under 300 digits, with that rational | relative error `4.7e-101` | correct to 300 digits |
 
+### A power of x times the logarithm of a polynomial plus a root is integrated by parts over the conjugate
+
+**Answers where there were none.** `x^3 ln(-1 + 4 x + 4 sqrt((x - 1) x))` was declined, and so were three more of Rubi's 3.5,
+with `x^(3/2)`, `x^(-3/2)` and `x^(-5/2)` beside the same logarithm. With `D = A^2 - B^2 Q`, the
+derivative of `ln(A + B sqrt(Q))` is `D'/(2 D) + (Q (A B' - A' B) + A B Q'/2)/(D sqrt(Q))` -- here `D = 8 x + 1` -- so by
+parts what is left is a rational function and one over the root
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^3*ln(-1+4*x+4*sqrt((x-1)*x))".ToEntity().Integrate("x")` | `integral(...)` | `x^4 ln(...)/4` minus a polynomial, `ln(8 x + 1)` and terms over `sqrt(x^2 - x)` |
+
 ### The last digits of an evaluated logarithm, exponential, real power or complex power
 
 **Silent, and in the hundredth digit.** `ln`, `log`, `e^x`, a real base to a real power and the
