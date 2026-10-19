@@ -55,6 +55,19 @@ numbers for every coefficient the solve is now done in exact rationals, to degre
 | `"1/((3-2*x+x^2)^(11/2)*(1+x+2*x^2)^5)".ToEntity().Integrate("x")` | `integral(...)` | 1,853 characters |
 | `"1/((3-2*x+x^2)^(21/2)*(1+x+2*x^2)^10)".ToEntity().Integrate("x")` | `integral(...)` | 3,475 characters |
 
+### An exponential of something of the reciprocal of a linear is integrated beside another linear
+
+**Answers where there were none.** `f^(c/(a + b x)) x^2` was declined, and so were 24 more of Rubi's 2.3:
+`F^(a + b/(c + d x))/(e + f x)^m`, `e^(e/(c + d x)^2) (a + b x)^m` and `F^(e + f (a + b x)/(c + d x))/(g + h x)^m`.
+Under `u = 1/(c + d x)` another linear `p + q x` is `((d p - q c) u + q)/d` times `c + d x`, so the question in `u`
+is an exponential beside a rational function, which the exponential integral and the moments answer. Only
+powers of `c + d x` itself were read before ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(k/(c+d*x))/(a+b*x)".ToEntity().Integrate("x")` | `integral(...)` | two `Ei`, of `k/(c + d x)` and of `k/(c + d x) - k b/(a d - b c)` |
+| `"f^(c/(a+b*x)^2)*x^4".ToEntity().Integrate("x")` | `integral(...)` | 1,262 characters, the error function and powers of `1/(a + b x)` |
+
 ### A polynomial over a symbolic quartic that is two quadratics in a hidden variable is split over them
 
 **Answers where there were none.** `1/(a + b x + c x^2 + b x^3 + a x^4)` was declined, and so were Rubi's 1.3.1

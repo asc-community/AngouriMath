@@ -21983,7 +21983,8 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         internal static Entity? SolveAGaussianInAReciprocal(Entity expr, Entity.Variable x)
         {
-            if (ReadAnExponentialInTheReciprocalOfALinear(expr, x) is not var (constant, @base, exponentInU, u, linear, slope, power)
+            // Beside another linear, the moments alone do not answer it: that is the next rule's.
+            if (ReadAnExponentialInTheReciprocalOfALinear(expr, x) is not (var constant, var @base, var exponentInU, var u, var linear, var slope, var power, null)
                 || !TreeAnalyzer.TryGetPolyQuadratic(exponentInU, u, out var square, out _, out _) || TreeAnalyzer.IsZero(square))
                 return null;
             var powerInU = -power - EInteger.FromInt32(2);
@@ -22013,7 +22014,7 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         internal static Entity? SolveAnExponentialInTheReciprocalOfALinear(Entity expr, Entity.Variable x, bool integrateByParts)
         {
-            if (ReadAnExponentialInTheReciprocalOfALinear(expr, x) is not var (constant, @base, exponentInU, u, linear, slope, power)
+            if (ReadAnExponentialInTheReciprocalOfALinear(expr, x) is not var (constant, @base, exponentInU, u, linear, slope, power, beside)
                 || !TreeAnalyzer.TryGetPolynomial(exponentInU, u, out var monomials)
                 || monomials.Keys.Any(k => k.Sign < 0 || k.CompareTo(EInteger.FromInt32(8)) > 0)
                 || !monomials.Keys.Any(k => k.Sign > 0))
@@ -22023,10 +22024,23 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             var exponential = MathS.Pow(@base, exponentInU);
             var inU = powerInU.IsZero ? exponential : MathS.Pow(u, Number.Integer.Create(powerInU)) * exponential;
+            // Another linear is a linear in u, and the rest one quotient, the way the rules read it.
+            var factor = -constant / slope;
+            if (beside is var (above, below, slopePower))
+            {
+                // -constant d^(slopePower - 1), one power of d.
+                var raised = slopePower - EInteger.One;
+                factor = raised.IsZero ? -constant
+                    : raised.Sign > 0 ? -constant * (raised.Equals(EInteger.One) ? slope : MathS.Pow(slope, Number.Integer.Create(raised)))
+                    : -constant / (raised.Equals(EInteger.FromInt32(-1)) ? slope : MathS.Pow(slope, Number.Integer.Create(-raised)));
+                var top = powerInU.Sign > 0 ? MathS.Pow(u, Number.Integer.Create(powerInU)) * above : above;
+                var bottom = powerInU.Sign < 0 ? MathS.Pow(u, Number.Integer.Create(-powerInU)) * below : below;
+                inU = bottom == Number.Integer.One ? top * exponential : top * exponential / bottom;
+            }
             if (Integration.ComputeAsAQuestionOfItsOwn(inU, u, integrateByParts) is not { } answerInU
                 || answerInU.Nodes.Any(node => node == MathS.NaN))
                 return null;
-            return (-constant / slope * answerInU.Substitute(u, 1 / linear)).InnerSimplified;
+            return (factor * answerInU.Substitute(u, 1 / linear)).InnerSimplified;
         }
 
         /// <summary>
@@ -22037,12 +22051,23 @@ namespace AngouriMath.Functions.Algebra
         /// <c>b/L^k</c> is <c>b u^k</c> -- rather than by substituting <c>x = (1/u - c)/d</c> and
         /// asking the simplifier to see that <c>1/(1/u)^2</c> is <c>u^2</c>.
         /// </summary>
-        private static (Entity Constant, Entity Base, Entity ExponentInU, Variable U, Entity Linear, Entity Slope, EInteger Power)?
+        /// <remarks>
+        /// A whole power of another linear <c>M = p + q x</c> is read too, as <c>M/L</c> written in
+        /// <c>u</c> times <c>L</c>: with <c>L = c + d x</c>, <c>M/L = ((d p - q c) u + q)/d</c>, a
+        /// linear in <c>u</c>, so <c>M^k</c> adds <c>k</c> to the power of <c>L</c> and
+        /// <c>((d p - q c) u + q)^k</c> to <c>Beside</c>, and <c>-k</c> to its power of <c>d</c>, kept
+        /// apart from the constant so that the caller writes one power of <c>d</c>, not <c>d/d</c>.
+        /// <c>Beside</c> is <see langword="null"/> when there is no such factor. A quotient <c>N/L^k</c> in the exponent with <c>N</c> linear is
+        /// <c>(N/L) u^(k - 1)</c> the same way. Rubi's 2.3 <c>f^(c/(a + b x)) x^m</c>,
+        /// <c>F^(a + b/(c + d x))/(e + f x)^m</c> and <c>F^(e + f (a + b x)/(c + d x))/(g + h x)^m</c>
+        /// were declined, for want of the other linear.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        private static (Entity Constant, Entity Base, Entity ExponentInU, Variable U, Entity Linear, Entity Slope, EInteger Power, (Entity Above, Entity Below, EInteger SlopePower)? Beside)?
             ReadAnExponentialInTheReciprocalOfALinear(Entity expr, Entity.Variable x)
         {
             Powf? exponential = null;
-            Entity? linear = null;
-            var power = EInteger.Zero;
+            var linears = new List<(Entity Linear, EInteger Power)>();
             Entity constant = Number.Integer.One;
             foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
             {
@@ -22056,30 +22081,59 @@ namespace AngouriMath.Functions.Algebra
                     exponential = (Powf)factor;
                     continue;
                 }
-                // The linear, or a whole power of it, above or below the bar.
+                // A linear, or a whole power of one, above or below the bar.
                 var (candidate, k) = factor is Powf(var b, Number.Integer n) && n.EInteger.CanFitInInt32() ? (b, n.EInteger) : (factor, EInteger.One);
-                if (linear is not null && linear != candidate
-                    || !TreeAnalyzer.TryGetPolyLinear(candidate, x, out var slopeOfIt, out _) || slopeOfIt is null || TreeAnalyzer.IsZero(slopeOfIt))
+                if (!TreeAnalyzer.TryGetPolyLinear(candidate, x, out var slopeOfIt, out _) || slopeOfIt is null || TreeAnalyzer.IsZero(slopeOfIt))
                     return null;
-                linear = candidate;
-                power = underneath ? power - k : power + k;
+                linears.Add((candidate, underneath ? -k : k));
             }
             if (exponential is null)
                 return null;
-            linear ??= ALinearBelowABar(exponential.Exponent, x);
-            if (linear is null || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out _) || slope is null || TreeAnalyzer.IsZero(slope))
+            // L is the linear the exponent divides by. Wherever the exponent could be written in u
+            // before other linears were read, it is the linear beside it as well.
+            var linear = ALinearBelowABar(exponential.Exponent, x);
+            if (linear is null || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out var intercept) || slope is null || TreeAnalyzer.IsZero(slope))
                 return null;
             var u = Variable.CreateUnique(expr, "u");
+            // M/L in u, for a linear M: ((d p - q c) u + q)/d's numerator, the d left to the caller.
+            Entity? OverTheLinearInU(Entity other)
+            {
+                if (!TreeAnalyzer.TryGetPolyLinear(other, x, out var q, out var p) || q is null || TreeAnalyzer.IsZero(q))
+                    return null;
+                return ((slope * p - q * intercept).InnerSimplified * u + q).InnerSimplified;
+            }
+            var power = EInteger.Zero;
+            var slopePower = EInteger.Zero;
+            Entity above = Number.Integer.One, below = Number.Integer.One;
+            var beside = false;
+            foreach (var (other, k) in linears)
+            {
+                power += k;
+                if (other == linear)
+                    continue;
+                if (k.Abs().CompareTo(EInteger.FromInt32(32)) > 0 || OverTheLinearInU(other) is not { } inU)
+                    return null;
+                beside = true;
+                var raised = k.Abs().Equals(EInteger.One) ? inU : MathS.Pow(inU, Number.Integer.Create(k.Abs()));
+                if (k.Sign > 0)
+                    above *= raised;
+                else
+                    below *= raised;
+                slopePower -= k;
+            }
             var exponentInU = exponential.Exponent.Replace(node => node switch
             {
-                Divf(var numerator, Powf(var below, Number.Integer k)) when below == linear => numerator * MathS.Pow(u, k),
-                Divf(var numerator, var below) when below == linear => numerator * u,
-                Powf(var below, Number.Integer { EInteger.Sign: < 0 } k) when below == linear => MathS.Pow(u, -k),
+                Divf(var numerator, Powf(var under, Number.Integer k)) when under == linear && !numerator.ContainsNode(x) => numerator * MathS.Pow(u, k),
+                Divf(var numerator, var under) when under == linear && !numerator.ContainsNode(x) => numerator * u,
+                Divf(var numerator, Powf(var under, Number.Integer k)) when under == linear && OverTheLinearInU(numerator) is { } inU
+                    => inU / slope * MathS.Pow(u, (k - 1).InnerSimplified),
+                Divf(var numerator, var under) when under == linear && OverTheLinearInU(numerator) is { } inU => inU / slope,
+                Powf(var under, Number.Integer { EInteger.Sign: < 0 } k) when under == linear => MathS.Pow(u, -k),
                 _ => node
             });
             if (exponentInU.ContainsNode(x))
                 return null;
-            return (constant, exponential.Base, exponentInU, u, linear, slope, power);
+            return (constant, exponential.Base, exponentInU, u, linear, slope, power, beside ? (above.InnerSimplified, below.InnerSimplified, slopePower) : null);
         }
 
         /// <summary>
