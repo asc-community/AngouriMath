@@ -910,6 +910,9 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 of Rubi's 4.1.4.1, 4.2.4.1 and 4.5.4.1. `f^m (alpha + beta f^2)` for `f` a sine, cosine, secant or cosecant of a linear
 is the derivative of `cos sin^(m + 1)`, `sin cos^(m + 1)`, `tan sec^m` or `cot csc^m` where its bracket is a multiple of
 that derivative's, and is now integrated so ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+The power is read as a factor of the integrand, so one under the bar is `f^(-m)`: `(m + (1 - m) sec^2)/sec^m` is
+the derivative of `tan sec^(-m)`. And `m` may be a number that is not whole, as in Rubi's 4.5.4.1
+`(3 + 3 sec(c + d x)^2)/sqrt(sec(c + d x))`.
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
@@ -917,6 +920,10 @@ that derivative's, and is now integrated so ([#718](https://github.com/asc-commu
 | `"sec(c+d*x)^m*(A-A*(1+m)*sec(c+d*x)^2/m)".ToEntity().Integrate("x")` | `integral(...)` | 54 characters |
 | `"sec(k+f*x)^m*(m-(1+m)*sec(k+f*x)^2)".ToEntity().Integrate("x")` | `integral(...)` | 54 characters |
 | `"sin(k+f*x)^m*(1+m-(2+m)*sin(k+f*x)^2)".ToEntity().Integrate("x")` | `integral(...)` | 71 characters |
+| `"(m+(1-m)*sec(c+d*x)^2)/sec(c+d*x)^m".ToEntity().Integrate("x")` | `integral(...)` | 56 characters |
+| `"(-(1-m)+(2-m)*cos(x)^2)/cos(x)^m".ToEntity().Integrate("x")` | `integral(...)` | 55 characters |
+| `"(3+3*sec(c+d*x)^2)/sec(c+d*x)^(1/2)".ToEntity().Integrate("x")` | `integral(...)` | 60 characters |
+| `"sqrt(sin(x))*(3/2-5/2*sin(x)^2)".ToEntity().Integrate("x")` | `integral(...)` | 27 characters |
 
 ### A power of a sine or hyperbolic sine over a binomial in a power of it is split over the binomial's roots
 
