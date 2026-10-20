@@ -8355,8 +8355,10 @@ namespace AngouriMath.Functions.Algebra
                 quadratics.Add((coefficient, a, b, c));
             }
             // Some exponent left a quadratic: with none, the product is the elementary
-            // exponential's, and the rules for that answer it without an imaginary unit.
-            if (!quadratics.Any(term => !TreeAnalyzer.IsZero(term.A)))
+            // exponential's, and the rules for that answer it without an imaginary unit -- except
+            // beside a negative power of x, below.
+            var aQuadratic = quadratics.Any(term => !TreeAnalyzer.IsZero(term.A));
+            if (!aQuadratic && trigonometrics > 0)
                 return null;
             // The polynomial and the power of x together: as the product written, for the moments
             // at a square's centre, which substitute into it as the integrand writes it, and as
@@ -8378,6 +8380,8 @@ namespace AngouriMath.Functions.Algebra
             if (powers is not null && powers.Keys.Any(power => power.Abs().CompareTo(EInteger.FromInt32(MostPowerOfAPolynomialBesideExponentials)) > 0))
                 return null;
             var aNegativePower = powers is not null && powers.Keys.Any(power => power.Sign < 0);
+            if (!aQuadratic && !aNegativePower)
+                return null;
             Entity total = Number.Integer.Zero;
             foreach (var (coefficient, a, b, c) in quadratics)
             {
@@ -8392,9 +8396,39 @@ namespace AngouriMath.Functions.Algebra
                     else
                         integral = IntegralPatterns.APolynomialTimesTheGaussian(written, MathS.e, a, b, c, x);
                 }
-                // A negative power beside an elementary exponential is the exponential integral.
+                // A negative power beside an elementary exponential is the exponential integral:
+                // for exponentials alone, each power of x against e^(b x) by parts down to Ei(b x).
+                // The other rules read one exponential, and a^x b^x/x is two of different bases,
+                // which no spelling of the integrand merges: (a b)^x is e^(x ln(a b)), and
+                // ln(a b) is not ln(a) + ln(b) for every a and b.
                 else if (aNegativePower)
-                    return null;
+                {
+                    if (aQuadratic || powers is null)
+                        return null;
+                    // A rate that cancels, `b - b` from e^(b x) e^(-b x), is a power of x alone, and is
+                    // decided as a value: written, it is not zero, and the exponential integral of it
+                    // divided by it.
+                    if (VanishesIdentically(b))
+                    {
+                        Entity powersIntegrated = Number.Integer.Zero;
+                        foreach (var monomial in powers)
+                            powersIntegrated += monomial.Value * (monomial.Key.Equals(EInteger.FromInt32(-1))
+                                ? MathS.Ln(x)
+                                : MathS.Pow(x, Number.Integer.Create(monomial.Key + 1)) / Number.Integer.Create(monomial.Key + 1));
+                        integral = MathS.Pow(MathS.e, c) * powersIntegrated;
+                        total += coefficient * integral;
+                        continue;
+                    }
+                    var exponential = MathS.Pow(MathS.e, b * x);
+                    Entity elementary = Number.Integer.Zero, ei = Number.Integer.Zero;
+                    foreach (var monomial in powers)
+                    {
+                        var (part, eiCoefficient) = APowerTimesAnExponential(monomial.Key.ToInt32Checked(), b, exponential, x);
+                        elementary += monomial.Value * part;
+                        ei += monomial.Value * eiCoefficient;
+                    }
+                    integral = MathS.Pow(MathS.e, c) * (elementary + ei * MathS.Ei(b * x));
+                }
                 else if (!TreeAnalyzer.IsZero(b))
                     integral = MathS.Pow(MathS.e, b * x + c) * APolynomialAgainstAnExponential(powers, b, x);
                 else
