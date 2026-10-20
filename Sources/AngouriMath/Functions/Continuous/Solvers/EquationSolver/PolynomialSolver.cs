@@ -262,15 +262,19 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         }
 
         /// <summary>Finds all terms of a polynomial</summary>
+        /// <param name="terms">The terms of the sum.</param>
+        /// <param name="subtree">The variable the polynomial is in.</param>
+        /// <param name="aPositiveVariable">Whether the caller reads the terms only where the
+        /// variable is positive: see <see cref="ParseMonomial{T, TPrimitive}"/>.</param>
         /// <returns><see langword="null"/> if polynomial is bad</returns>
-        internal static Dictionary<T, Entity>? GatherMonomialInformation<T, TPrimitive>(IEnumerable<Entity> terms, Variable subtree)
+        internal static Dictionary<T, Entity>? GatherMonomialInformation<T, TPrimitive>(IEnumerable<Entity> terms, Variable subtree, bool aPositiveVariable = false)
             where TPrimitive : TreeAnalyzer.IPrimitive<T>, new()
             where T : notnull
         {
             var monomialsByPower = new Dictionary<T, Entity>();
             // here we fill the dictionary with information about monomials' coefficiants
             foreach (var child in terms)
-                if (ParseMonomial<T, TPrimitive>(subtree, child) is var (free, q))
+                if (ParseMonomial<T, TPrimitive>(subtree, child, aPositiveVariable) is var (free, q))
                     monomialsByPower[q.Value] =
                         monomialsByPower.TryGetValue(q.Value, out var power) ? power + free : free;
                 else return null;
@@ -294,6 +298,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         }
 
 
+        /// <summary>Whether a factor is a number greater than zero, which a power of a product
+        /// that is not whole may take out of it.</summary>
+        private static bool IsAPositiveNumber(Entity factor) =>
+            !factor.Vars.Any() && factor.Evaled is Real { IsPositive: true };
+
         /// <summary>Whether a monomial's power, integer, rational or decimal, is one.</summary>
         private static bool IsOne<T>(T power) => power switch
         {
@@ -303,7 +312,25 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             _ => false,
         };
 
-        internal static (Entity FreeMono, TPrimitive Power)? ParseMonomial<T, TPrimitive>(Variable aVar, Entity expr)
+        /// <summary>
+        /// A term read as a coefficient free of <paramref name="aVar"/> times a power of it, or
+        /// <see langword="null"/> where it is not one.
+        /// </summary>
+        /// <remarks>
+        /// A power of a product that is not whole is the product of the powers only where the
+        /// factor taken out is positive: <c>(b x)^(5/2)</c> is <c>b^(5/2) x^(5/2)</c> for
+        /// <c>b &gt; 0</c> or <c>x &gt; 0</c>, and its negative at <c>b &lt; 0</c>, <c>x &lt; 0</c>,
+        /// where <c>b x</c> is positive and each of the two roots is imaginary. Read so, the long
+        /// division made <c>b^(5/2) x^(5/2) + b^(5/2) x^(3/2)</c> of <c>(b x)^(5/2) (x + 1)/x</c>, and
+        /// the integrator answered Rubi's <c>(b sec(x))^(5/2) tan(x)^3</c> wrongly wherever
+        /// <c>b sec(x) &gt; 0</c> with <c>b &lt; 0</c>; a negative number likewise, and
+        /// <c>sqrt(-x) (x + 1)/x</c> was simplified to <c>i (sqrt(x) + x^(-1/2))</c>, its negative
+        /// for every <c>x &lt; 0</c>. A positive number comes out, and any factor where
+        /// <paramref name="aPositiveVariable"/> says the variable is positive, as the limits at
+        /// <c>+oo</c> read it.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static (Entity FreeMono, TPrimitive Power)? ParseMonomial<T, TPrimitive>(Variable aVar, Entity expr, bool aPositiveVariable = false)
             where TPrimitive : TreeAnalyzer.IPrimitive<T>, new()
         {
             var power = new TPrimitive();
@@ -332,9 +359,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     // at u = -1, where the first is i and the second -i, and Simplify does not
                     // change a value off the real line either (#752).
                     // https://github.com/asc-community/AngouriMath/issues/1387
-                    else if (ParseMonomial<T, TPrimitive>(aVar, @base) is var (tmpFree, q))
+                    else if (ParseMonomial<T, TPrimitive>(aVar, @base, aPositiveVariable) is var (tmpFree, q))
                     {
                         if (value is not Integer && !IsOne(q.Value))
+                            return null;
+                        if (value is not Integer && !aPositiveVariable && !IsAPositiveNumber(tmpFree))
                             return null;
                         freeMono *= MathS.Pow(tmpFree, value);
                         power.AddMp(q.Value, value);

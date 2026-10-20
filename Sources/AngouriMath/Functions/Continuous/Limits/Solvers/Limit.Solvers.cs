@@ -25,7 +25,7 @@ namespace AngouriMath.Functions.Algebra
                 return null;
 
             var monomials = AnalyticalSolving.PolynomialSolver.GatherMonomialInformation
-                <EDecimal, TreeAnalyzer.PrimitiveDecimal>(children, x);
+                <EDecimal, TreeAnalyzer.PrimitiveDecimal>(children, x, aPositiveVariable: true);
             if (monomials is null) return null;
             var filteredDictionary = new Dictionary<EDecimal, Entity>();
             foreach (var monomial in monomials)

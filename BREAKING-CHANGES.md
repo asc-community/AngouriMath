@@ -816,6 +816,26 @@ answered too: an odd root is the real root
 | `"1/sqrt((a + b*x^2)^3)".ToEntity().Integrate("x")` | `integral(...)` | 100 characters |
 | `"1/sqrt(1 - coth(x)^2)".ToEntity().Integrate("x")` | `integral(...)` | 301 characters |
 
+### A half-odd power of a negative multiple keeps its sign through the long division
+
+**Silent: a wrong answer, and answers where there were none.** `sqrt(-x) (x + 1)/x` was integrated as
+`2i sqrt(x)^3/3 + 2i sqrt(x)` and simplified to `i (sqrt(x) + x^(-1/2))`, each the negative of the right value for
+every `x < 0`, where the integrand is real. The long division read `(c x)^r` as `c^r x^r` for any constant `c` and a
+power `r` that is not whole, which holds for `c > 0` and not for `c < 0`: there `c x > 0` and `c^r` and `x^r` are both
+imaginary. Such a power now comes apart over a positive number only. `(b x)^(5/2) (x^2 - 1)/x` and Rubi's 4.3.0
+`(b sec(x))^m tan(x)^3` and `cot(x)^3 (b csc(x))^m` at a half-odd `m` were declined, and are answered with `b` under
+the power, right for either sign of `b`
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(-x)*(x+1)/x".ToEntity().Integrate("x")` | `2i * (sqrt(x)) ^ 3 / 3 + 2i * sqrt(x) + C`, wrong for x < 0 | `(sqrt(-x) * x / (3/2) + sqrt(-x) / (1/2) provided not x = 0) + C` |
+| `"(-3*x)^(5/2)*(x+1)/x".ToEntity().Integrate("x")` | `((-3) ^ (5/2) * x ^ (7/2) / (7/2) + (-3) ^ (5/2) * x ^ (5/2) / (5/2) provided not x = 0) + C`, wrong for x < 0 | `(((-3) * x) ^ (5/2) * x / (7/2) + ((-3) * x) ^ (5/2) / (5/2) provided not x = 0) + C` |
+| `"sqrt(-x)*(x+1)/x".ToEntity().Simplify()` | `i * (sqrt(x) + x ^ (-1/2))`, wrong for x < 0 | `sqrt(-x) * (x + 1) / x` |
+| `"(b*x)^(5/2)*(x^2-1)/x".ToEntity().Integrate("x")` | `integral(...)` | 86 characters |
+| `"(b*sec(x))^(5/2)*tan(x)^3".ToEntity().Integrate("x")` | `integral(...)` | 96 characters |
+| `"cot(x)^3*(b*csc(x))^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 99 characters |
+
 ### A power of x past the twelfth beside a block is split off
 
 **Answers where there were none.** `(c + d x^3 + g x^6 + f x^9)/(x^14 (a + b x^3))` was declined, and so were
