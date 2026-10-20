@@ -695,6 +695,10 @@ namespace AngouriMath.Functions.Algebra
             // A power of x times an inverse tangent and the logarithm of its quadratic, by parts with the
             // two remainders that have no antiderivative apiece paired, before the rules that timed out.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfXTimesAnArctangentAndTheLogarithmOfItsQuadratic(expr, x)) is { }) return answer;
+            // A polynomial times 1, an inverse hyperbolic tangent or cotangent of c x, the logarithm of
+            // 1 - c^2 x^2 and their product, in closed form, before the rules that timed out on
+            // `x^3 (a + b artanh(c x))(d + e ln(1 - c^2 x^2))`.
+            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialTimesAnInverseHyperbolicTangentAndTheLogarithmOfItsQuadratic(expr, x)) is { }) return answer;
             // A rational function over the quadratic of an inverse tangent beside it, split, before the
             // rules that timed out on `x^4 atan(a x)/(c + a^2 c x^2)`.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOverTheQuadraticOfAnArctangentBesideIt(expr, x)) is { }) return answer;
