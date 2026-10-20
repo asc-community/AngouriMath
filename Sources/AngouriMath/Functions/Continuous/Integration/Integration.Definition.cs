@@ -877,6 +877,10 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveByTheDerivativeOfAQuadraticAsTheVariable(expr, x, integrateByParts)) is { }) return answer;
             // x^(n - 1) g(x^n) with a symbolic n is g(u)/n under u = x^n.
             if ((answer = IndefiniteIntegralSolver.SolveByAPowerOfTheVariableTimesAFunctionOfItsPower(expr, x, integrateByParts)) is { }) return answer;
+            // And x^(k n - 1) g(x^n) with a whole n >= 2, for a whole power of hyperbolic functions of
+            // a linear in x^n, which arrive as exponentials: `x sech(a + b x^2)^7` is
+            // `sech(a + b t)^7/2` under t = x^2, where the rules before this spent the budget.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfXTimesAHyperbolicFunctionOfAPowerUnderThatPower(expr, x, integrateByParts)) is { }) return answer;
             // A whole power of a product of a constant and the variable, as the product of
             // the powers, which is how the inverse hyperbolic secant and cosecant arrive.
             if ((answer = IndefiniteIntegralSolver.SolveByDistributingWholePowersOfProducts(expr, x, integrateByParts)) is { }) return answer;
