@@ -961,6 +961,24 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### A secant or cosecant power of a logarithm beside the power two below it is integrated as the derivative of a product
+
+**Answers where there were none.** `-(1 + b^2 n^2) sec(a + b ln(c x^n)) + 2 b^2 n^2 sec(a + b ln(c x^n))^3` was
+declined, and so were eight more of Rubi's 4.7.5, `sec(a + i ln(c x^n)/(n (p - 2)))^p` and the cosecant's twins among
+them. With `u = a + b ln(c x^n)`, `B = b n` and `k = m + 1`, the derivative of `x^k sec(u)^(p - 2) (B (p - 2) tan(u) - k)`
+is `x^m (D sec(u)^p - E sec(u)^(p - 2))`, where `D = B^2 (p - 1)(p - 2)` and `E = B^2 (p - 2)^2 + k^2`. So
+`x^m (alpha sec(u)^p + beta sec(u)^(p - 2))` is a multiple of that product wherever `beta D + alpha E = 0`, and a lone
+power is where `E` is zero; the cosecant's product is `-x^k csc(u)^(p - 2) (B (p - 2) cot(u) + k)`. Not for `k = 0`,
+where the logarithm's derivative is beside it and the substitution answers
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"-(1+b^2*n^2)*sec(a+b*ln(c*x^n))+2*b^2*n^2*sec(a+b*ln(c*x^n))^3".ToEntity().Integrate("x")` | `integral(...)` | 77 characters |
+| `"x^m*sec(a+2*ln(c*x^(1/2*sqrt(-(1+m)^2))))^3".ToEntity().Integrate("x")` | `integral(...)` | 189 characters |
+| `"sec(a+i*ln(c*x^n)/(n*(-2+p)))^p".ToEntity().Integrate("x")` | `integral(...)` | 138 characters |
+| `"csc(a+2*ln(c/x^(1/2*i)))^3".ToEntity().Integrate("x")` | `integral(...)` | 102 characters |
+
 ### A symbolic power of a sine, cosine, secant or cosecant is integrated where it is the derivative of a product
 
 **Answers where there were none.** `sec(c + d x)^m (m - (1 + m) sec(c + d x)^2)` was declined, and so were five more

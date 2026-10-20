@@ -920,6 +920,9 @@ namespace AngouriMath.Functions.Algebra
             // The same with an imaginary coefficient on the logarithm, where the closed form divides
             // by zero: in exponentials, powers of the variable.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingATrigonometricFunctionOfAnImaginaryLogarithmInExponentials(expr, x, integrateByParts)) is { }) return answer;
+            // A secant or cosecant power of a logarithm beside the power two below it, where the
+            // reduction closes: `sec(a + i ln(c x^n)/(n (p - 2)))^p` is the derivative of a product.
+            if ((answer = IndefiniteIntegralSolver.SolveSecantPowersOfALogarithmTwoApartAsTheDerivativeOfAProduct(expr, x)) is { }) return answer;
             // A logarithm of a quotient that cancels with the functions in it as
             // indeterminates, which is how an inverse hyperbolic function of a hyperbolic
             // one arrives: atanh(tanh(u)) is 1/2 ln(e^(2u)) once its quotient is cancelled.
