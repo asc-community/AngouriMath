@@ -158,15 +158,17 @@ namespace AngouriMath.Tests.Calculus
         /// <c>u = sqrt(t)</c> is <c>-2 u^2 (1 + 1/u^2)^(5/2)/sqrt(1 - u^4)</c>, whose power of a
         /// quotient is taken apart as <c>(1 + u^2)^(5/2)/|u|^5</c>. Where the cosine is negative the
         /// integrand is still real, a product of two imaginary factors, and the answer built for a
-        /// real <c>u</c> was not its antiderivative there. Rubi's 4.5.3.1.
+        /// real <c>u</c> was not its antiderivative there. Rubi's 4.5.3.1. The half-angle tangent
+        /// answers it on both sides now, with the cosine's sign in front
+        /// (<see cref="OnePlusASecantHalfPowerIntegralTest"/>); either way the answer is right where
+        /// the cosine is negative or says nothing there.
         /// </summary>
         [Fact]
-        public void TheSearchsEvenRootSaysWhereItHolds()
+        public void TheSearchsEvenRootIsRightOrSaysNothingBeyondIt()
         {
             var integrand = "(1 + sec(x))^(5/2)*sqrt(cos(x))".ToEntity();
             var integral = integrand.Integrate("x");
             Assert.DoesNotContain("integral(", integral.Stringize());
-            Assert.Contains("provided cos(x) >= 0", integral.Stringize());
             var derivative = integral.Substitute("C", 0).Differentiate("x");
             // Inside the condition the derivative is the integrand.
             foreach (var at in new[] { 0.3, 0.9, -0.7, 5.9 })
@@ -177,10 +179,12 @@ namespace AngouriMath.Tests.Calculus
                 Assert.True(Math.Abs((double)(got - want).RealPart) < 1e-9 * Math.Max(1, Math.Abs((double)want.RealPart)),
                     $"d/dx of the antiderivative is {got} at x = {at}, where the integrand is {want}");
             }
-            // Beyond it the integrand is real and the answer claims nothing.
+            // Beyond it the integrand is real, and the answer is right or claims nothing.
             var outside = integrand.Substitute("x", 2.8).EvalNumerical();
             Assert.True(Math.Abs((double)outside.ImaginaryPart) < 1e-12, $"the integrand at x = 2.8 is {outside}, not real");
-            Assert.True(derivative.Substitute("x", 2.8).Evaled.IsNaN, "the answer claims a derivative outside its condition");
+            var beyond = derivative.Substitute("x", 2.8).EvalNumerical();
+            Assert.True(beyond.IsNaN || Math.Abs((double)(beyond - outside).RealPart) + Math.Abs((double)(beyond - outside).ImaginaryPart)
+                < 1e-9 * Math.Max(1, Math.Abs((double)outside.RealPart)), $"d/dx of the antiderivative is {beyond} at x = 2.8, where the integrand is {outside}");
         }
 
         /// <summary>
@@ -190,17 +194,18 @@ namespace AngouriMath.Tests.Calculus
         /// product of roots below the bar was written with <c>sqrt(u^4) = u^2</c>, and the answer
         /// was negated wherever the cosine is negative. Rubi's 4.5.1.2. The same in <c>t</c>,
         /// <c>sqrt(t)/(sqrt(1/t + 1) sqrt(1 - t^2))</c>, is written over each linear once and
-        /// answered on both sides (<see cref="EachLinearWrittenOnceIntegralTest"/>).
+        /// answered on both sides (<see cref="EachLinearWrittenOnceIntegralTest"/>), and so is it in
+        /// the half-angle tangent now (<see cref="OnePlusASecantHalfPowerIntegralTest"/>): the
+        /// answer is right where the cosine is negative or says nothing there.
         /// https://github.com/asc-community/AngouriMath/issues/1581
         /// </summary>
         [Theory]
-        [InlineData("sqrt(cos(x))/sqrt(1 + sec(x))", "provided cos(x) >= 0", new[] { 0.3, 0.9, -0.7 }, 2.4)]
-        public void AnEvenRootTakenRealWithoutASignSaysWhereItHolds(string written, string condition, double[] inside, double outsideAt)
+        [InlineData("sqrt(cos(x))/sqrt(1 + sec(x))", new[] { 0.3, 0.9, -0.7 }, 2.4)]
+        public void AnEvenRootTakenRealWithoutASignIsRightOrSaysNothingBeyondIt(string written, double[] inside, double outsideAt)
         {
             var integrand = written.ToEntity();
             var integral = integrand.Integrate("x");
             Assert.DoesNotContain("integral(", integral.Stringize());
-            Assert.Contains(condition, integral.Stringize());
             var derivative = integral.Substitute("C", 0).Differentiate("x");
             foreach (var at in inside)
             {
@@ -210,10 +215,12 @@ namespace AngouriMath.Tests.Calculus
                 Assert.True(Math.Abs((double)(got - want).RealPart) < 1e-9 * Math.Max(1, Math.Abs((double)want.RealPart)),
                     $"d/dx of the antiderivative is {got} at x = {at}, where the integrand is {want}");
             }
-            // Beyond it the integrand is real and the answer claims nothing.
+            // Beyond it the integrand is real, and the answer is right or claims nothing.
             var outside = integrand.Substitute("x", outsideAt).EvalNumerical();
             Assert.True(Math.Abs((double)outside.ImaginaryPart) < 1e-12, $"the integrand at x = {outsideAt} is {outside}, not real");
-            Assert.True(derivative.Substitute("x", outsideAt).Evaled.IsNaN, "the answer claims a derivative outside its condition");
+            var beyond = derivative.Substitute("x", outsideAt).EvalNumerical();
+            Assert.True(beyond.IsNaN || Math.Abs((double)(beyond - outside).RealPart) + Math.Abs((double)(beyond - outside).ImaginaryPart)
+                < 1e-9 * Math.Max(1, Math.Abs((double)outside.RealPart)), $"d/dx of the antiderivative is {beyond} at x = {outsideAt}, where the integrand is {outside}");
         }
 
         /// <summary>
