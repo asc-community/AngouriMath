@@ -5364,7 +5364,8 @@ namespace AngouriMath.Functions.Algebra
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
-        internal static Entity? SolveByTheHalfAngleWhereOnePlusASineIsASquare(Entity expr, Entity.Variable x, bool integrateByParts)
+        internal static Entity? SolveByTheHalfAngleWhereOnePlusASineIsASquare(Entity expr, Entity.Variable x, bool integrateByParts,
+            bool collectTheLinears = false)
         {
             if (!Integration.AnsweringTheQuestionAsked)
                 return null;
@@ -5445,6 +5446,41 @@ namespace AngouriMath.Functions.Algebra
                     constant = MathS.Pow(a, exponent) * constant;
                 return constant * MathS.Pow(square, Number.Integer.Create(twoP));
             });
+            // `c + d sin(y)` as `(c - d) + 2d sin(u)^2`, collected, where asked: written
+            // `c + d (2 sin(u)^2 - 1)`, `sin(u)^5/(c + d (2 sin(u)^2 - 1))^2` ran past the budget.
+            if (collectTheLinears)
+            {
+                var (function, square) = sineKind ? (sine, MathS.Sqr(sinU)) : (cosine, MathS.Sqr(cosU));
+                rewritten = rewritten.Replace(node =>
+                {
+                    if (node is not Sumf || !node.ContainsNode(function))
+                        return node;
+                    Entity constant = Number.Integer.Zero, coefficient = Number.Integer.Zero;
+                    foreach (var term in Sumf.LinearChildren(node))
+                    {
+                        if (!term.ContainsNode(x))
+                        {
+                            constant += term;
+                            continue;
+                        }
+                        Entity factor = Number.Integer.One;
+                        var seen = false;
+                        foreach (var part in Mulf.LinearChildren(term))
+                            if (part == function && !seen)
+                                seen = true;
+                            else if (part.ContainsNode(x))
+                                return node;
+                            else
+                                factor *= part;
+                        if (!seen)
+                            return node;
+                        coefficient += factor;
+                    }
+                    var shifted = (constant - coefficient).InnerSimplified;
+                    var collected = (2 * coefficient).InnerSimplified * square;
+                    return VanishesIdentically(shifted) ? collected : shifted + collected;
+                });
+            }
             var inU = rewritten.Substitute(sine, sineInU).Substitute(cosine, cosineInU);
             // What is left of the variable is the variable itself: the angle is `rate x + offset`
             // and `u` is half of it (a quarter turn on for the sine), so `x` is
@@ -5466,6 +5502,82 @@ namespace AngouriMath.Functions.Algebra
             var back = sineKind ? argument / 2 + MathS.pi / 4 : argument / 2;
             var answer = (signs == Number.Integer.One ? result : signs * result).Substitute(u, back);
             return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
+        /// A half-odd power of <c>a ± a sin(y)</c> times whole or half-odd powers of other linears
+        /// in the same sine, <c>c + d sin(y)</c>, and nothing else of <c>x</c>: by
+        /// <see cref="SolveByTheHalfAngleWhereOnePlusASineIsASquare"/>, asked first. The cosine's
+        /// the same.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Rubi's <c>1/(sqrt(a + a sin(e + f x)) (c + d sin(e + f x))^2)</c>,
+        /// <c>1/((a + a sin(e + f x))^2 sqrt(c - c sin(e + f x)))</c> and their kin in 4.1.2.1
+        /// ran past the budget. The half angle answers each, its question in <c>u</c> taking
+        /// tens of milliseconds, but it was not reached: the polynomial term above it wrote the
+        /// reciprocal as a power, took the constant out of the root, and asked the substitution
+        /// search below that, whose simplification of what it found took the whole budget.
+        /// </para>
+        /// <para>
+        /// The answer is that rule's, so exact on the same terms. Read narrowly: a product of
+        /// powers of linears in one sine or one cosine, one of them half-odd and of
+        /// <c>a ± a sin(y)</c>, and at least two of them, since one alone is
+        /// <see cref="SolveAHalfPowerOfOnePlusASine"/>'s.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveAHalfOddPowerOfOnePlusMinusASineBesidePowersOfLinearsInIt(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            if (!TryReadAsQuotient(expr, out var above, out var below))
+                (above, below) = (expr, Number.Integer.One);
+            Entity? function = null;
+            var (factors, halfOdd) = (0, false);
+            foreach (var side in new[] { above, below })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (!factor.ContainsNode(x))
+                        continue;
+                    var (@base, exponent) = factor is Powf(var inner, Number.Rational power) ? (inner, power.ERational) : (factor, ERational.One);
+                    var isHalfOdd = exponent.Denominator.Equals(EInteger.FromInt32(2));
+                    if (!isHalfOdd && !exponent.Denominator.Equals(EInteger.One))
+                        return null;
+                    // c + d f(y), the one f throughout, and c there: a power of f itself is not this shape.
+                    Entity? found = null;
+                    var constant = false;
+                    foreach (var term in Sumf.LinearChildren(@base))
+                    {
+                        if (!term.ContainsNode(x))
+                        {
+                            constant = true;
+                            continue;
+                        }
+                        foreach (var part in Mulf.LinearChildren(term))
+                            if (part.ContainsNode(x))
+                            {
+                                if (found is not null || part is not (Sinf or Cosf))
+                                    return null;
+                                found = part;
+                            }
+                    }
+                    if (found is null || !constant || function is not null && found != function)
+                        return null;
+                    function = found;
+                    if (isHalfOdd)
+                    {
+                        if (ReadAsOnePlusMinusAFunction(@base, function is Sinf ? function : MathS.Sin(function.DirectChildren.First()),
+                                function is Cosf ? function : MathS.Cos(function.DirectChildren.First())) is null)
+                            return null;
+                        halfOdd = true;
+                    }
+                    factors++;
+                }
+            if (!halfOdd || factors < 2 || function is null
+                || !TreeAnalyzer.TryGetPolyLinear(function.DirectChildren.First(), x, out var rate, out _) || rate.ContainsNode(x))
+                return null;
+            return SolveByTheHalfAngleWhereOnePlusASineIsASquare(expr, x, integrateByParts, collectTheLinears: true);
         }
 
         /// <summary>
@@ -6154,8 +6266,12 @@ namespace AngouriMath.Functions.Algebra
         /// <remarks>
         /// Rubi's <c>cot(c + d x)/(a + b sec(c + d x))^(3/2)</c> was declined and
         /// <c>cot(c + d x)^3 sqrt(a + b sec(c + d x))</c> ran past thirty seconds, where in the
-        /// secant each is a rational function beside the root of a linear.
+        /// secant each is a rational function beside the root of a linear. A power free of
+        /// <c>x</c> is read whatever its exponent: Rubi's <c>(b sec(e + f x))^m tan(e + f x)^3</c>,
+        /// 4.3.0, was declined only because <c>m</c> was not a number, where in <c>u</c> it is
+        /// <c>(b u)^m (u^2 - 1)/u</c>.
         /// https://github.com/asc-community/AngouriMath/issues/718
+        /// https://github.com/asc-community/AngouriMath/issues/233
         /// </remarks>
         internal static Entity? SolveAnOddPowerOfTheTangentBesideAFunctionOfTheSecant(Entity expr, Entity.Variable x, bool integrateByParts)
         {
@@ -6174,10 +6290,24 @@ namespace AngouriMath.Functions.Algebra
             if (argument is null || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _)
                 || rate.ContainsNode(x) || TreeAnalyzer.IsZero(rate))
                 return null;
-            if (!expr.Nodes.All(node => !node.ContainsNode(x)
-                    || node is Variable or Sumf or Minusf or Mulf or Divf or Sinf or Cosf or Secantf or Cosecantf or Tanf or Cotanf
-                    || node is Powf(_, Number.Rational)))
-                return null;
+            // A symbolic power too, of a product of constants and secants or cosecants:
+            // `(b sec(y))^m` is `(b u)^m`. Of a sum it brings `(a + b u)^m/u`, not elementary.
+            var z = Variable.CreateUnique(expr, "z_secant");
+            bool IsAProductOfSecants(Entity @base)
+            {
+                var inZ = @base.Replace(node => node is Secantf(var a) && a == argument || node is Cosecantf(var b) && b == argument ? z : node);
+                return !inZ.ContainsNode(x) && inZ.Nodes.All(node => !node.ContainsNode(z) || node == z || node is Mulf or Divf or Powf(_, Number.Rational));
+            }
+            var symbolic = false;
+            foreach (var node in expr.Nodes)
+            {
+                if (!node.ContainsNode(x) || node is Variable or Sumf or Minusf or Mulf or Divf or Sinf or Cosf or Secantf or Cosecantf or Tanf or Cotanf
+                    || node is Powf(_, Number.Rational))
+                    continue;
+                if (node is not Powf(var @base, var exponent) || exponent.ContainsNode(x) || !IsAProductOfSecants(@base))
+                    return null;
+                symbolic = true;
+            }
             var t = Variable.CreateUnique(expr, "t_odd_tangent");
             var u = Variable.CreateUnique(expr, "u_secant");
             foreach (var ofTheSecant in new[] { true, false })
@@ -6192,6 +6322,9 @@ namespace AngouriMath.Functions.Algebra
                 var (rest, exponents) = GatheredOverTheBases(inT, new Entity[] { t });
                 var n = exponents[0];
                 if (rest.ContainsNode(t) || !n.IsInteger() || n.ToEInteger().IsEven || !n.ToEInteger().CanFitInInt32())
+                    continue;
+                // Beside a symbolic power a negative one leaves `u^m/(u (u^2 - 1)^k)`, hypergeometric.
+                if (symbolic && n.Sign < 0)
                     continue;
                 var inU = rest.Replace(node => node switch
                 {
@@ -27949,22 +28082,57 @@ namespace AngouriMath.Functions.Algebra
         /// The rules after it took the whole quotient through the half-angle and wrote 30 million
         /// characters for <c>(A + B cos(x) + C cos(x)^2)/(a + b cos(x))^4</c> in eighteen seconds, where
         /// <c>1/(a + b cos(x))^4</c> alone is 44 thousand. Rubi's 4.1.4 and 4.2.4
-        /// <c>(a + b cos)^m (A + B cos + C cos^2)</c> at <c>m = -4</c> timed out.
+        /// <c>(a + b cos)^m (A + B cos + C cos^2)</c> at <c>m = -4</c> timed out. An even whole power
+        /// of the other function above the bar is a power of <c>1 - f^2</c>, exactly, and read as
+        /// one: Rubi's 4.1.2.2 <c>cos(c + d x)^6 sin(c + d x)^3/(a + b sin(c + d x))^2</c> and its
+        /// kin timed out too, where in the sine each is the polynomial over the power.
         /// https://github.com/asc-community/AngouriMath/issues/718
+        /// https://github.com/asc-community/AngouriMath/issues/233
         /// </remarks>
         internal static Entity? SolveAPolynomialInASineOverAPowerOfABinomialInItInPowersOfTheBinomial(Entity expr, Entity.Variable x)
         {
             if (!Integration.AnsweringTheQuestionAsked)
                 return null;
             var functions = expr.Nodes.Where(node => node is Sinf or Cosf && node.ContainsNode(x)).Distinct().ToList();
-            if (functions.Count != 1)
+            if (functions.Count is not (1 or 2))
                 return null;
-            var function = functions[0];
+            var s = Variable.CreateUnique(expr, "s_pow");
+            Entity? function = null, inS = null;
+            foreach (var candidate in functions)
+            {
+                // The other of the two only to even whole powers above the bar, each a power of
+                // 1 - f^2: `cos(y)^4 sin(y)^3/(a + b sin(y))^2` is a polynomial in the sine over the power.
+                var written = candidate;
+                if (functions.Count == 2)
+                {
+                    var other = functions.Single(f => f != candidate);
+                    if (candidate is Sinf && other is not Cosf || candidate is Cosf && other is not Sinf
+                        || other.DirectChildren.First() != candidate.DirectChildren.First())
+                        return null;
+                    // And only beside the function itself above the bar: `cos(y)^4/(a + b sin(y))^8`, with
+                    // no sine above it, is answered by the rules after it in 40 thousand characters, and
+                    // was 106 thousand here, in 60% more time.
+                    var (top, _) = Functions.SingleQuotient.Of(expr);
+                    if (!top.ContainsNode(candidate))
+                        continue;
+                    written = expr.Replace(node => node is Powf(var @base, Number.Integer { EInteger: var power }) && @base == other
+                        && power.Sign > 0 && power.IsEven && power.CompareTo(EInteger.FromInt32(12)) <= 0
+                        ? MathS.Pow(1 - MathS.Sqr(candidate), Number.Integer.Create(power / 2))
+                        : node);
+                    if (written.ContainsNode(other))
+                        continue;
+                }
+                else
+                    written = expr;
+                function = candidate;
+                inS = written.Substitute(candidate, s);
+                break;
+            }
+            if (function is null || inS is null)
+                return null;
             var argument = function switch { Sinf(var y) => y, Cosf(var y) => y, _ => null! };
             if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out _) || Functions.PartialFractions.IsZeroAsAValue(slope))
                 return null;
-            var s = Variable.CreateUnique(expr, "s_pow");
-            var inS = expr.Substitute(function, s);
             if (inS.ContainsNode(x))
                 return null;
             var (above, below) = Functions.SingleQuotient.Of(inS);

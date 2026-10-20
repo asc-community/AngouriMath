@@ -350,6 +350,30 @@ cache is now keyed on the downcasting setting too
 |---|---|---|
 | `MathS.FromString("1/3").Evaled` under downcasting off, after the same parse with it on | `1/3` | `0.3333…` (one hundred digits) |
 
+### A symbolic power of the secant, a half-odd power of `a ± a sin` beside other linears, and an even power of the cosine over a sine's binomial are integrated
+
+**Answers where there were none.** `(b sec(g + f x))^m tan(g + f x)^3` and three more of Rubi's 4.3.0 were declined only
+because `m` was not a number: in `u = sec(y)` it is `(b u)^m (u^2 - 1)/u`, and the rule for an odd power of the tangent
+beside a function of the secant now reads a power free of x whatever its exponent.
+`1/(sqrt(a + a sin(y)) (c + d sin(y))^2)`, `1/((a + a sin(y))^2 sqrt(c - c sin(y)))` and fourteen more of 4.1.2.1 and
+4.1.3.1 are answered by the half angle at which `a + a sin(y)` is a square, which they never reached: the polynomial
+term wrote the reciprocal as a power and asked the substitution search, which spent the budget. A half-odd power of
+`a ± a sin(y)` beside at least one other linear in the same sine or cosine is asked it first now. And
+`cos(y)^4 sin(y)^3/(a + b sin(y))^2` and six more of 4.1.2.2 are read by the rule below, an even whole power of the
+cosine being a power of `1 - sin(y)^2` exactly, where a power of the sine stands above the bar beside it. That file's
+neighbours the unreleased master answered are respelled, some shorter and some longer ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(b*sec(g+f*x))^m*tan(g+f*x)^3".ToEntity().Integrate("x")` | `integral(...)` | 144 characters |
+| `"cot(g+f*x)^5*(b*csc(g+f*x))^m".ToEntity().Integrate("x")` | `integral(...)` | 221 characters |
+| `"1/(sqrt(a+a*sin(g+f*x))*(c+d*sin(g+f*x))^2)".ToEntity().Integrate("x")` | `integral(...)` | 2,679 characters |
+| `"1/((a+a*sin(g+f*x))^2*sqrt(c-c*sin(g+f*x)))".ToEntity().Integrate("x")` | `integral(...)` | 329 characters |
+| `"cos(c+d*x)^4*sin(c+d*x)^3/(a+b*sin(c+d*x))^2".ToEntity().Integrate("x")` | `integral(...)` | 4,174 characters |
+| `"cos(c+d*x)^6*sin(c+d*x)^3/(a+b*sin(c+d*x))^3".ToEntity().Integrate("x")` | `integral(...)` | 9,029 characters |
+| `"cos(c+d*x)^4*sin(c+d*x)^2/(a+b*sin(c+d*x))^2".ToEntity().Integrate("x")` | `integral(...)`; 7,068 characters, in 1.3 s, on the unreleased master | 3,677 characters, in 154 ms |
+| `"cos(c+d*x)^2*sin(c+d*x)^2/(a+b*sin(c+d*x))^3".ToEntity().Integrate("x")` | `integral(...)`; 4,621 characters, in 431 ms, on the unreleased master | 6,584 characters, in 570 ms |
+
 ### A polynomial in a sine over a power of a binomial in it is written in powers of the binomial
 
 **Answers where there were none.** `(A + B cos(c + d x) + C cos(c + d x)^2)/(a + b cos(c + d x))^4` ran out of time, and
