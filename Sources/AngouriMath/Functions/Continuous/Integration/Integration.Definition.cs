@@ -1396,6 +1396,11 @@ namespace AngouriMath.Functions.Algebra
             // answered as a polynomial times the next power of the base: a linear system in
             // the polynomial's coefficients, exact, and volunteered at any depth.
             if ((answer = IndefiniteIntegralSolver.SolveByAPolynomialTimesAPowerOfTheBase(expr, x)) is { }) return answer;
+            // And a polynomial times powers of polynomials, one at least not whole, as another
+            // polynomial times each power raised by one: Rubi's
+            // `(a g + e x - b g x^4)/(a + b x^4)^(3/2)` and `(d + f x^2)^p (...)`, which no rule for
+            // a root of a quadratic reads. After the substitutions, which answer their shapes first.
+            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialTimesPowersOfPolynomialsByRaisingThePowers(expr, x)) is { }) return answer;
             // And an exponential times a rational function of the sine and cosine, closed by
             // the same kind of ansatz in the half-angle tangent: `e^x (1 - sin(x))/(1 - cos(x))`
             // is `-e^x cot(x/2)`.

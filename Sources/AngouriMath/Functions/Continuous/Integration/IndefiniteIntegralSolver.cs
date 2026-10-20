@@ -15336,6 +15336,192 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A polynomial times powers of polynomials, <c>P R_1^(s_1) ... R_m^(s_m)</c> with an
+        /// exponent that is not a whole number -- a fraction or a symbol -- answered as
+        /// <c>Q R_1^(s_1 + 1) ... R_m^(s_m + 1)</c> for a polynomial <c>Q</c> where there is one:
+        /// with <c>R = R_1 ... R_m</c>, the derivative of that is the integrand's powers times
+        /// <c>Q' R + Q sum_i (s_i + 1) R_i' R/R_i</c>, and that equal to <c>P</c> is a linear
+        /// system in the coefficients of <c>Q</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Rubi's <c>(a g + e x - b g x^4)/(a + b x^4)^(3/2)</c> is
+        /// <c>(2 a g x + e x^2)/(2 a sqrt(a + b x^4))</c>; its
+        /// <c>(d + f x^2)^p (2 c d f + 2 b f^2 (3 + 2 p) x + 2 c f^2 (3 + 2 p) x^2)</c> is
+        /// <c>(b f (3 + 2 p)/(1 + p) + 2 c f x) (d + f x^2)^(p + 1)</c>; and
+        /// <c>x^2 (1 - a x)^(-1 - n (1 + n)/2) (1 + a x)^(-1 - (n - 1) n/2)</c> is a linear times both
+        /// powers raised. Each was declined: <see cref="SolveByAPolynomialTimesAPowerOfTheBase"/>
+        /// reads one base, holding a function of x, and solves for rational coefficients;
+        /// <see cref="SolveAsTheDerivativeOfAProductOfPowers"/> wants a constant for <c>Q</c>; and the
+        /// rules for the root of a quadratic read no quartic and no symbolic exponent.
+        /// </para>
+        /// <para>
+        /// <b>The degree of <c>Q</c>.</b> The leading coefficient of the bracket is that of <c>Q</c>
+        /// times <c>lc(R) (deg Q + sum_i (s_i + 1) deg R_i)</c>, so <c>deg Q</c> is
+        /// <c>deg P - deg R + 1</c>, or <c>sigma = -sum_i (s_i + 1) deg R_i</c> where that is a whole
+        /// number above it, at which the top equation leaves the top coefficient free: the quartic
+        /// above has <c>sigma = 2</c> against <c>1</c>.
+        /// </para>
+        /// <para>
+        /// <b>Where it holds.</b> Wherever no base is zero: <c>(z^w)' = w z^(w - 1) z'</c> and
+        /// <c>z^(w + 1) = z z^w</c> hold for the principal power at every <c>z</c> but zero, on the
+        /// negative real axis too. The system is solved with the symbols pinned first, which
+        /// declines one with no solution at once, and the answer is differentiated back at sampled
+        /// points. A whole exponent of -1 is a logarithm's, and a rational function, with no
+        /// exponent that is not whole, is the rational integrator's; both are declined. Asked late,
+        /// beside the base's rule, so that the substitutions and the rules for the roots of
+        /// quadratics answer what they read in their own forms first.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveAPolynomialTimesPowersOfPolynomialsByRaisingThePowers(Entity expr, Entity.Variable x)
+        {
+            // The exponent of each base, a factor with x in it that is no power counted as its
+            // base to the first.
+            Entity constant = Number.Integer.One;
+            var powers = new List<(Entity Base, Entity Exponent)>();
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                var (@base, exponent) = factor is Powf(var b, var e) && !e.ContainsNode(x) ? (b, e) : (factor, Number.Integer.One);
+                if (underneath)
+                    exponent = -exponent;
+                var index = powers.FindIndex(pair => pair.Base == @base);
+                if (index >= 0)
+                    powers[index] = (@base, powers[index].Exponent + exponent);
+                else if (powers.Count == MaximumBasesRaised + 4)
+                    return null;
+                else
+                    powers.Add((@base, exponent));
+            }
+
+            // A whole positive power is a factor of P; the rest are raised.
+            Entity polynomial = Number.Integer.One;
+            var raised = new List<(Entity Base, Entity Exponent, Dictionary<EInteger, Entity> Coefficients, int Degree)>();
+            foreach (var (@base, written) in powers)
+            {
+                var exponent = Functions.PartialFractions.Bare(written.InnerSimplified);
+                if (exponent.Evaled is Number.Integer whole && !exponent.Vars.Any())
+                {
+                    if (whole.EInteger.Sign > 0)
+                    {
+                        polynomial *= MathS.Pow(@base, whole);
+                        continue;
+                    }
+                    if (whole.EInteger.Sign == 0)
+                        continue;
+                    if (whole == Number.Integer.MinusOne)
+                        return null;
+                    exponent = whole;
+                }
+                if (ReadAPolynomial(@base) is not var (coefficients, degree) || degree == 0 || raised.Count == MaximumBasesRaised)
+                    return null;
+                raised.Add((@base, exponent, coefficients, degree));
+            }
+            var degreeOfR = raised.Sum(power => power.Degree);
+            if (!raised.Any(power => power.Exponent.Evaled is not Number.Integer || power.Exponent.Vars.Any())
+                || degreeOfR > MaximumDegreeRaised || ReadAPolynomial(polynomial) is not var (p, degreeOfP))
+                return null;
+
+            // R and the sum of (s_i + 1) R_i' R/R_i, the bracket being Q' R + Q times that.
+            var product = new Dictionary<EInteger, Entity> { [EInteger.Zero] = Number.Integer.One };
+            foreach (var power in raised)
+                product = PolynomialProduct(product, power.Coefficients);
+            var beside = new Dictionary<EInteger, Entity>();
+            Entity sigma = Number.Integer.Zero;
+            for (var i = 0; i < raised.Count; i++)
+            {
+                var raisedBy = (raised[i].Exponent + 1).InnerSimplified;
+                sigma -= raisedBy * raised[i].Degree;
+                var term = new Dictionary<EInteger, Entity>();
+                foreach (var pair in PolynomialDerivative(raised[i].Coefficients))
+                    term[pair.Key] = (raisedBy * pair.Value).InnerSimplified;
+                for (var j = 0; j < raised.Count; j++)
+                    if (j != i)
+                        term = PolynomialProduct(term, raised[j].Coefficients);
+                beside = PolynomialSum(beside, term);
+            }
+            var degreeOfQ = degreeOfP - degreeOfR + 1;
+            if (LowestOverTheSymbols(Functions.PartialFractions.Bare(sigma.InnerSimplified)) is var sigmaRead && !sigmaRead.Vars.Any()
+                && sigmaRead.Evaled is Number.Integer free && free.EInteger.CanFitInInt32() && free.EInteger.ToInt32Unchecked() > degreeOfQ)
+                degreeOfQ = free.EInteger.ToInt32Unchecked();
+            if (degreeOfQ < 0 || degreeOfQ > MaximumDegreeRaised)
+                return null;
+
+            // The bracket of each monomial of Q is a column, one row a power of x.
+            var columns = new List<Dictionary<EInteger, Entity>>();
+            for (var k = 0; k <= degreeOfQ; k++)
+            {
+                var monomial = new Dictionary<EInteger, Entity> { [EInteger.FromInt32(k)] = Number.Integer.One };
+                columns.Add(PolynomialSum(PolynomialProduct(PolynomialDerivative(monomial), product), PolynomialProduct(monomial, beside)));
+            }
+            var rows = System.Math.Max(degreeOfP, degreeOfQ + degreeOfR - 1) + 1;
+            var matrix = new Entity[rows][];
+            var rhs = new Entity[rows];
+            for (var row = 0; row < rows; row++)
+            {
+                var power = EInteger.FromInt32(row);
+                matrix[row] = new Entity[columns.Count];
+                for (var column = 0; column < columns.Count; column++)
+                    matrix[row][column] = columns[column].TryGetValue(power, out var entry) ? entry : Number.Integer.Zero;
+                rhs[row] = p.TryGetValue(power, out var wanted) ? wanted : Number.Integer.Zero;
+            }
+            if (!Functions.PartialFractions.TrySolveLinearWithSymbols(matrix, rhs, out var values))
+                return null;
+            Entity q = Number.Integer.Zero;
+            for (var k = 0; k <= degreeOfQ; k++)
+            {
+                var value = LowestOverTheSymbols(Functions.PartialFractions.Bare(values[k].InnerSimplified));
+                if (value.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                q += value * (k == 0 ? Number.Integer.One : k == 1 ? x : MathS.Pow(x, k));
+            }
+            if (q == Number.Integer.Zero || q.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            Entity answer = constant * q;
+            foreach (var power in raised)
+            {
+                var raisedTo = (power.Exponent + 1).InnerSimplified;
+                if (raisedTo.Evaled is not Number.Complex { IsZero: true })
+                    answer *= raisedTo == Number.Integer.One ? power.Base : MathS.Pow(power.Base, raisedTo);
+            }
+            answer = answer.InnerSimplified;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+
+            // The coefficients from x^0 up and the degree; null where it is not a polynomial in x
+            // or is of a degree past what is solved for.
+            (Dictionary<EInteger, Entity> Coefficients, int Degree)? ReadAPolynomial(Entity e)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(e, x, out var read))
+                    return null;
+                var coefficients = new Dictionary<EInteger, Entity>();
+                var degree = 0;
+                foreach (var pair in read)
+                {
+                    if (pair.Key.Sign < 0 || pair.Key.CompareTo(EInteger.FromInt32(2 * MaximumDegreeRaised)) > 0 || pair.Value.ContainsNode(x))
+                        return null;
+                    var simplified = pair.Value.InnerSimplified;
+                    if (simplified.Evaled is Number.Complex { IsZero: true })
+                        continue;
+                    coefficients[pair.Key] = simplified;
+                    degree = System.Math.Max(degree, pair.Key.ToInt32Unchecked());
+                }
+                return (coefficients, degree);
+            }
+        }
+
+        /// <summary>
+        /// The most bases <see cref="SolveAPolynomialTimesPowersOfPolynomialsByRaisingThePowers"/>
+        /// raises, and the largest degree of their product and of the polynomial it solves for.
+        /// </summary>
+        private const int MaximumBasesRaised = 4;
+        private const int MaximumDegreeRaised = 12;
+
+        /// <summary>
         /// An integrand <c>e^h R</c>, with <c>R</c> rational in <c>x</c> and <c>h</c> rational
         /// in <c>x</c> or absent, integrated by the ansatz <c>F = e^h N/D</c>: <c>D</c> read
         /// off the denominator of <c>R</c>, <c>N</c> a polynomial of unknown coefficients, and
@@ -35005,6 +35191,13 @@ namespace AngouriMath.Functions.Algebra
         /// <c>x^(4n)</c>, and the unit is each exponent left, divided by up to six.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </para>
+        /// <para>
+        /// A factor <c>(c x)^t</c> is read as <c>x^t</c>, with <c>(c x)^t x^(-t)</c> in front of the
+        /// answer: its derivative is zero wherever it is defined, so it is a constant on each
+        /// interval of the domain, for either sign of <c>c</c>. Read as it was written, Rubi's
+        /// <c>(c x)^(-1 - 2n/3)/(a + b x^n)</c> left an x outside every power of x and was declined.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
         /// </remarks>
         internal static Entity? SolveByAPowerOfXWithASymbolicExponent(Entity expr, Entity.Variable x, bool integrateByParts)
         {
@@ -35017,6 +35210,28 @@ namespace AngouriMath.Functions.Algebra
             if (expr.Nodes.Any(node => node.ContainsNode(x)
                     && node is not (Sumf or Minusf or Mulf or Divf or Variable) && !(node is Powf(_, var exponent) && !exponent.ContainsNode(x))))
                 return null;
+            // A factor that is a power of a multiple of x, `(c x)^t` with t not whole, is `x^t` times
+            // `(c x)^t x^(-t)`, whose derivative is zero wherever it is defined, since
+            // `t c (c x)^(t - 1)` is `t (c x)^t/x` for the principal power: that goes in front,
+            // constant on each interval of the domain, with no sign assumed for c. Rubi's
+            // `(c x)^(-1 - 2n/3)/(a + b x^n)` was declined, where `x^(-1 - 2n/3)/(a + b x^n)` is answered.
+            Entity inFront = Number.Integer.One;
+            Entity withPowersOfX = Number.Integer.One;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                var written = factor;
+                if (factor is Powf(var multiple, var t) && multiple != x && !t.ContainsNode(x) && t.Evaled is not Number.Integer
+                    && TreeAnalyzer.TryGetPolyLinear(multiple, x, out var slope, out var intercept)
+                    && intercept.Evaled is Number.Complex { IsZero: true } && !slope.ContainsNode(x))
+                {
+                    written = MathS.Pow(x, t);
+                    var ratio = MathS.Pow(multiple, t) * MathS.Pow(x, -t);
+                    inFront = underneath ? inFront / ratio : inFront * ratio;
+                }
+                withPowersOfX = underneath ? withPowersOfX / written : withPowersOfX * written;
+            }
+            if (inFront != Number.Integer.One)
+                expr = withPowersOfX;
             // Over one bar first, so that an x inside `(x (a + b x^n))^(-1)` is a factor to gather.
             var g = Patterns.GatherPowersOfOneBase(Functions.SingleQuotient.Combine(x * expr));
             var exponents = g.Nodes.OfType<Powf>().Where(power => power.Base == x && power.Exponent is not Number && !power.Exponent.ContainsNode(x))
@@ -35059,7 +35274,7 @@ namespace AngouriMath.Functions.Algebra
                         return null;
                     foreach (var (name, value) in named)
                         inTermsOfU = inTermsOfU.Substitute(name, value);
-                    var answer = (d / unit * inTermsOfU).Substitute(u, MathS.Pow(x, step)).InnerSimplified;
+                    var answer = (inFront * d / unit * inTermsOfU).Substitute(u, MathS.Pow(x, step)).InnerSimplified;
                     return answer.Nodes.Any(node => node is Number.Complex { IsNaN: true }) ? null : answer;
 
                     // Arithmetic and whole powers taken apart; a root of something with u in it keeps
