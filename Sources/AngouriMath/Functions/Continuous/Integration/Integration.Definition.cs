@@ -817,6 +817,10 @@ namespace AngouriMath.Functions.Algebra
             // And an exponential of a hyperbolic sine or cosine of a linear beside a function of it
             // over its derivative, under u = twice that sine or cosine, which arrive as exponentials.
             if ((answer = IndefiniteIntegralSolver.SolveAnExponentialOfAHyperbolicFunctionBesideItsDerivative(expr, x, integrateByParts)) is { }) return answer;
+            // A rational function of the tangent beside two roots of linears in it, or one beside a
+            // whole power of a + i a tan(z) below the bar, over the linears of 1 + tan^2: in the root
+            // of the linears' quotient 1 + tan^2 is a symbolic quartic, and a search past the budget.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOfTheTangentBesideRootsOfLinearsInIt(expr, x, integrateByParts)) is { }) return answer;
             // `A + i A tan(z)` is `A e^(i z)/cos(z)`, which beside a polynomial is a shape the
             // closed rules answer, where the imaginary unit in the coefficient is read by none.
             // The same identity beside a power of the secant, where the powers are not whole and add

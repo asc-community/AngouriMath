@@ -33506,6 +33506,174 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A rational function of <c>tan(z)</c> beside roots of linears in it, integrated in
+        /// <c>t = tan(z)</c> term by term over the partial fractions of its rational part, with the
+        /// <c>1 + t^2</c> that <c>dz = dt/(f (1 + t^2))</c> puts below the bar written as the linears
+        /// of its roots, <c>(1 + i t)(1 - i t)</c>: each term is the roots over one power of a linear,
+        /// which the rules for a root of a linear over a linear answer.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Rubi's 4.3.4.2 <c>(c + d tan(z))^(5/2) (A + B tan(z) + C tan(z)^2)/sqrt(a + b tan(z))</c> and
+        /// 4.3.2.1 <c>1/((a + i a tan(z))^3 (c + d tan(z))^(3/2))</c> ran past the budget, as their
+        /// neighbours with smaller powers did not: in <c>t</c>, under the root of the quotient of the two
+        /// linears or the root of the one, <c>1 + t^2</c> is a quartic with symbols in every coefficient.
+        /// Over its linears the same integrands are three terms, or a few more, of a second or less each.
+        /// </para>
+        /// <para>
+        /// Only two roots of linears with distinct roots beside a polynomial or a linear below the
+        /// bar, or one root below the bar beside a whole power of <c>a +- i a tan(z)</c> below it, which
+        /// shares a root with <c>1 + t^2</c>; neither root a root of <c>t</c> or of <c>1 +- i t</c>, which
+        /// the rules for a root of the tangent and for the imaginary sum read, and below the bar linears
+        /// only. Two roots alone, and a root above the bar beside the imaginary sum, the substitution in
+        /// the root answers in as few terms and as soon, and are left to it. The decomposition is exact,
+        /// its coefficients constants in the symbols, and the sum is checked by its derivative in
+        /// <c>t</c> before it is returned: each term's answer is its own rule's.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveARationalFunctionOfTheTangentBesideRootsOfLinearsInIt(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            Entity? argument = null;
+            foreach (var node in expr.Nodes)
+            {
+                if (!node.ContainsNode(x))
+                    continue;
+                if (node is Sinf or Cosf or Secantf or Cosecantf)
+                    return null;
+                if (node is not (Tanf or Cotanf))
+                    continue;
+                var inner = node.DirectChildren.First();
+                if (argument is null)
+                    argument = inner;
+                else if (argument != inner)
+                    return null;
+            }
+            if (argument is null || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _)
+                || rate.ContainsNode(x) || VanishesIdentically(rate))
+                return null;
+            var t = Variable.CreateUnique(expr, "t_tangent");
+            var inT = expr.Replace(node => node switch
+            {
+                Tanf(var y) when y == argument => t,
+                Cotanf(var y) when y == argument => 1 / t,
+                _ => node,
+            });
+            if (inT.ContainsNode(x))
+                return null;
+
+            // `A + c t` with `c = +-i A`, which vanishes at a root of `1 + t^2`.
+            static bool IsAnImaginarySum(Entity slope, Entity intercept)
+            {
+                var ratio = Functions.PartialFractions.Bare((slope / intercept).InnerSimplified);
+                if (ratio.Evaled is not Number.Complex)
+                    ratio = Functions.PartialFractions.Bare(ratio.Simplify());
+                return ratio.Evaled == MathS.i.Evaled || ratio.Evaled == (-MathS.i).Evaled;
+            }
+            // The integrand read as a constant, roots of linears, whole powers of polynomials above the
+            // bar and of linears below it.
+            Entity constant = Number.Integer.One;
+            var above = new List<Entity>();
+            var below = new List<Entity>();
+            var degreeBelow = 0;
+            var imaginarySumBelow = false;
+            var roots = new List<(Entity Linear, Entity Slope, Entity Intercept, Number.Rational Power)>();
+            bool Read(Entity node, EInteger times)
+            {
+                switch (node)
+                {
+                    case Mulf(var left, var right):
+                        return Read(left, times) && Read(right, times);
+                    case Divf(var dividend, var divisor):
+                        return Read(dividend, times) && Read(divisor, times.Negate());
+                    case Powf(var @base, Number.Integer whole) when @base.ContainsNode(t):
+                        return Read(@base, times.Multiply(whole.EInteger));
+                    case Powf(var @base, Number.Rational power) when @base.ContainsNode(t):
+                    {
+                        var exponent = power.ERational.Multiply(ERational.FromEInteger(times));
+                        if (exponent.Denominator.Equals(EInteger.One))
+                            return Read(@base, exponent.Numerator);
+                        if (!TreeAnalyzer.TryGetPolyLinear(@base, t, out var slope, out var intercept)
+                            || slope.ContainsNode(t) || intercept.ContainsNode(t)
+                            || VanishesIdentically(slope) || VanishesIdentically(intercept) || IsAnImaginarySum(slope, intercept))
+                            return false;
+                        roots.Add((@base, slope, intercept, Number.Rational.Create(exponent)));
+                        return true;
+                    }
+                    case var free when !free.ContainsNode(t):
+                        constant *= MathS.Pow(free, Number.Integer.Create(times));
+                        return true;
+                    default:
+                        if (!TreeAnalyzer.TryGetPolynomial(node, t, out var monomials)
+                            || monomials.Values.Any(coefficient => coefficient.ContainsNode(t)) || monomials.Keys.Any(degree => degree.Sign < 0)
+                            || !times.CanFitInInt32())
+                            return false;
+                        if (times.Sign > 0)
+                        {
+                            above.Add(times.Equals(EInteger.One) ? node : MathS.Pow(node, Number.Integer.Create(times)));
+                            return true;
+                        }
+                        if (!TreeAnalyzer.TryGetPolyLinear(node, t, out var linearSlope, out var linearIntercept)
+                            || linearSlope.ContainsNode(t) || linearIntercept.ContainsNode(t) || VanishesIdentically(linearSlope))
+                            return false;
+                        var multiplicity = times.Negate();
+                        // `(A + i A t)^k` is `A^k (1 + i t)^k`, a whole power: with the constant out
+                        // in front the split is over numbers, and its terms' answers a few lines each,
+                        // where with `A` in the linear they came to ten times the length.
+                        if (!VanishesIdentically(linearIntercept) && IsAnImaginarySum(linearSlope, linearIntercept))
+                        {
+                            imaginarySumBelow = true;
+                            constant /= MathS.Pow(linearIntercept, Number.Integer.Create(multiplicity));
+                            node = (1 + Functions.PartialFractions.Bare((linearSlope / linearIntercept).Simplify()) * t).InnerSimplified;
+                        }
+                        below.Add(multiplicity.Equals(EInteger.One) ? node : MathS.Pow(node, Number.Integer.Create(multiplicity)));
+                        degreeBelow += multiplicity.ToInt32Checked();
+                        return true;
+                }
+            }
+            if (!Read(inT, EInteger.One) || degreeBelow > 12)
+                return null;
+            // Two roots beside a polynomial or a linear below, or one root below the bar beside a power
+            // of the imaginary sum below it: two roots alone over `1 + t^2`, and a root above the bar,
+            // the root's substitution answers as soon, and in the same few terms.
+            if (roots.Count == 2
+                ? above.Count == 0 && below.Count == 0
+                  || VanishesIdentically(roots[0].Slope * roots[1].Intercept - roots[1].Slope * roots[0].Intercept)
+                : roots.Count != 1 || !imaginarySumBelow || roots[0].Power.ERational.Sign > 0)
+                return null;
+
+            // Divided by `1 + t^2` and the linears as written, and the proper rest split over the
+            // linears with `1 + t^2` written as its own two.
+            static Entity Product(IEnumerable<Entity> factors) =>
+                factors.Aggregate((Entity?)null, (all, factor) => all is null ? factor : all * factor) ?? Number.Integer.One;
+            var numerator = Product(above);
+            var written = Product(below.Append(1 + MathS.Sqr(t)));
+            var overTheLinears = Product(below.Append(1 + MathS.i * t).Append(1 - MathS.i * t));
+            if (OverEachLinear(numerator, written, overTheLinears, degreeBelow + 2, t) is not { } terms)
+                return null;
+            var ofTheRoots = Product(roots.Select(root => MathS.Pow(root.Linear, root.Power)));
+            Entity total = Number.Integer.Zero;
+            foreach (var term in terms)
+            {
+                if (term.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                if (Integration.ComputeAsAQuestionOfItsOwn((term * ofTheRoots).InnerSimplified, t, integrateByParts) is not { } integrated
+                    || integrated.Nodes.Any(node => node == MathS.NaN))
+                    return null;
+                total += integrated;
+            }
+            // Checked by its derivative, and where the intervals cannot tell -- the arctangent of a
+            // complex argument that the answer to `(c + d t)^(5/2)/((a + b t)^(5/2) (1 + i t))` holds,
+            // right to ninety digits at every point -- beside two roots refused only where it
+            // differs at a point where the integrand, then real, is.
+            var integrandInT = numerator / written * ofTheRoots;
+            if (!Functions.PartialFractions.DerivativeHoldsAtSampledPoints(total, integrandInT, t)
+                && (roots.Count == 1 || Functions.PartialFractions.DerivativeDiffersWhereReal(total, integrandInT, t)))
+                return null;
+            return (constant / rate * total).Substitute(t, MathS.Tan(argument));
+        }
+
+        /// <summary>
         /// A rational function of <c>tan(z)</c> beside a power of <c>S = a + c tan(z)</c> with
         /// <c>c = ±i a</c>, below the bar or not whole, integrated in <c>S</c>: <c>tan(z)</c> is
         /// <c>(S - a)/c</c>, and since <c>c^2 = -a^2</c>, <c>dS/dz = c sec(z)^2 = S (S - 2a)/c</c>, so
