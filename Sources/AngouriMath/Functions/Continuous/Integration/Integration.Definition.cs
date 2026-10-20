@@ -793,6 +793,8 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveAFunctionOfTheHyperbolicTangent(expr, x, integrateByParts)) is { }) return answer;
             // A power of a quotient of linears over a half-odd power of their product, by Liouville's ansatz.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfAQuotientOfLinearsOverAHalfOddPowerOfTheirProduct(expr, x)) is { }) return answer;
+            // A quotient by a radical sum whose conjugate product is a constant, over the conjugate.
+            if ((answer = IndefiniteIntegralSolver.SolveByTheConjugateOfARadicalSumBelowTheBar(expr, x, integrateByParts)) is { }) return answer;
             // A power of an exponential with a positive base is the exponential of the product,
             // exactly, and only that spelling is one the exponential rules read.
             if ((answer = IndefiniteIntegralSolver.SolveByFlatteningAPowerOfAnExponential(expr, x, integrateByParts)) is { }) return answer;

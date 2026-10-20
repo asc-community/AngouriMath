@@ -2155,6 +2155,21 @@ secant too now, and the integrand is `sgn(cos(x)) (1 + u^2)^(3/2)/(a + b u)^2` i
 | `"sec(x)^7/(a + b*tan(x))^3".ToEntity().Integrate("x")` | `integral(...)` | 1,253 characters |
 | `"sec(x)/(a + b*cot(x))".ToEntity().Integrate("x")` | `integral(...)` | 571 characters |
 
+### A quotient by a radical sum with a constant conjugate product is written over the conjugate
+
+**Answers where there were none.** `x^4/e^asech(a x)` was declined, and so were the powers of `x` below it, Rubi's
+7.5.2. `e^asech(a x)` arrives as `1/(a x) + sqrt(1/(a x)^2 - 1)`, whose product with its conjugate is 1, so the
+quotient is `x^m (1/(a x) - sqrt(1/(a x)^2 - 1))`, a sum with no quotient left. `(A + B sqrt(R))(A - B sqrt(R)) =
+A^2 - B^2 R` holds on every branch, so the rewrite holds wherever the quotient is defined. Only for a constant
+product, and only for the question asked: by parts against `asech` or `acsch` asks a quotient by the same sum, which
+the rules below answer as written ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^4/e^asech(a*x)".ToEntity().Integrate("x")` | `integral(...)` | 284 characters |
+| `"x/e^asech(a*x)".ToEntity().Integrate("x")` | `integral(...)` | 268 characters |
+| `"1/(e^asech(a*x)*x)".ToEntity().Integrate("x")` | `integral(...)` | 366 characters |
+
 ### A sum with the root of a quadratic below the bar is cleared by its conjugate
 
 **Answers where there were none.** `1/(a c + b c x^2 + d sqrt(a + b x^2))` was declined: Euler's substitution

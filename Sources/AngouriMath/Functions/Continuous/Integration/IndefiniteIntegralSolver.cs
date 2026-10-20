@@ -1222,6 +1222,74 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A quotient by <c>A + B sqrt(R)</c> whose conjugate product <c>A^2 - B^2 R</c> is a constant
+        /// <c>c</c>, written over the conjugate: <c>N/(A + B sqrt(R)) = N (A - B sqrt(R))/c</c>, a sum
+        /// of terms without the quotient. <c>e^asech(a x)</c> arrives as
+        /// <c>1/(a x) + sqrt(1/(a x)^2 - 1)</c>, whose conjugate product is 1, so <c>x^m/e^asech(a x)</c>
+        /// is <c>x^m (1/(a x) - sqrt(1/(a x)^2 - 1))</c>. Rubi's 7.5.2.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// The search took the quotient as written, a root below the bar beside a pole, and ran past
+        /// the budget. The rewrite is the identity <c>(A + B sqrt(R))(A - B sqrt(R)) = A^2 - B^2 R</c>,
+        /// with <c>sqrt(R)^2 = R</c> on every branch, so it holds wherever the quotient is defined.
+        /// Only for a constant product: otherwise the quotient by it is the harder question.
+        /// </remarks>
+        internal static Entity? SolveByTheConjugateOfARadicalSumBelowTheBar(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // Only the question asked: by parts against asech or acsch asks a quotient by the same sum,
+            // which the routes below answer as written and not as the sum over the conjugate.
+            if (!Integration.AnsweringTheQuestionAsked || expr is not Divf)
+                return null;
+            var factors = FactorsOfTheIntegrand(expr);
+            for (var chosen = 0; chosen < factors.Count; chosen++)
+            {
+                var (factor, underneath) = factors[chosen];
+                if (!underneath || factor is not (Sumf or Minusf) || !factor.ContainsNode(x))
+                    continue;
+                // A + B sqrt(R), the root's terms gathered.
+                Entity a = Number.Integer.Zero, b = Number.Integer.Zero;
+                Entity? radicand = null;
+                var readable = true;
+                foreach (var term in Sumf.LinearChildren(factor))
+                {
+                    Entity? root = null;
+                    Entity rest = Number.Integer.One;
+                    foreach (var part in Mulf.LinearChildren(term))
+                    {
+                        if (root is null && part is Powf(var q, Number.Rational half) && half == Number.Rational.Create(1, 2) && q.ContainsNode(x))
+                            root = q;
+                        else
+                            rest *= part;
+                    }
+                    if (root is null)
+                        a += term;
+                    else if (radicand is null || radicand == root)
+                    {
+                        radicand = root;
+                        b += rest;
+                    }
+                    else
+                        readable = false;
+                }
+                if (!readable || radicand is null || a == Number.Integer.Zero || b.ContainsNode(x) && b.Nodes.Any(node => node is Powf(_, Number.Rational { ERational.Denominator: var den }) && !den.Equals(EInteger.One)))
+                    continue;
+                var product = a * a - b * b * radicand;
+                // A constant: the same at a point and identically so.
+                var atAPoint = Functions.PartialFractions.Bare(product.Substitute(x, Number.Rational.Create(37, 23)).Simplify());
+                if (atAPoint.ContainsNode(x) || VanishesIdentically(atAPoint) || !VanishesIdentically(product - atAPoint))
+                    continue;
+                Entity rest2 = Number.Integer.One;
+                for (var other = 0; other < factors.Count; other++)
+                    if (other != chosen)
+                        rest2 = factors[other].Underneath ? rest2 / factors[other].Factor : rest2 * factors[other].Factor;
+                var rewritten = rest2 * (a - b * MathS.Sqrt(radicand)) / atAPoint;
+                return Integration.ComputeAsAQuestionOfItsOwn(rewritten, x, integrateByParts);
+            }
+            return null;
+        }
+
+        /// <summary>
         /// A quotient by the square of a base, by parts against the base's reciprocal, where the
         /// base's derivative makes the rest exact: <c>N/(M v^2)</c> is <c>g v'/v^2</c> with
         /// <c>g = N/(M v')</c>, and <c>v'/v^2</c> is the derivative of <c>-1/v</c>, so the integral
