@@ -916,7 +916,8 @@ namespace AngouriMath.Functions.Algebra
         /// https://github.com/asc-community/AngouriMath/issues/233
         /// </summary>
         /// <remarks>
-        /// Only where <c>R</c> is not a rational function: those the exponential substitution answers.
+        /// Only where <c>R</c> is not a rational function: those the exponential substitution answers,
+        /// and so a power of <c>a + a coth(L)</c> or <c>a - a coth(L)</c> alone, a binomial in <c>W</c>.
         /// Every exponential has to be a whole power of <c>W</c> inside one of the two quotients;
         /// one anywhere else, an odd power of <c>e^L</c> from a <c>sinh</c> or <c>cosh</c> among
         /// them, and the rule declines. <c>d/dx F(tanh(L)) = b (1 - tanh(L)^2) F'(tanh(L))</c>
@@ -963,6 +964,12 @@ namespace AngouriMath.Functions.Algebra
             // A rational function of u is the exponential substitution's.
             if (IsARationalFunction(inU, u))
                 return null;
+            // So is a power of a + a coth(L) or a - a coth(L) alone, (2 a W/(W - 1))^p or
+            // (-2 a/(W - 1))^p, a binomial differential in W written in a few terms. In u the 1 +- u of
+            // the Jacobian cancels into its base and leaves a root over three linears: (1 + coth(x))^(7/2)
+            // was 14,533 characters and 1.3 GB where the substitution writes 287 in 0.13.
+            if (APowerOfAQuotientOfLinearsVanishingAtPlusOrMinusOne(inU, u))
+                return null;
             // Free of x and small, simplified: `2 b/2` is otherwise left as written.
             var slopeOfL = Functions.PartialFractions.Bare((twiceSlope / 2).Simplify());
             var question = inU / (slopeOfL * (1 - MathS.Sqr(u)));
@@ -973,6 +980,20 @@ namespace AngouriMath.Functions.Algebra
             var intercept0 = Functions.PartialFractions.Bare((twiceIntercept / 2).Simplify());
             var linear = intercept0.Evaled is Number.Complex { IsZero: true } ? slopeOfL * x : intercept0 + slopeOfL * x;
             return answer.Substitute(u, MathS.Hyperbolic.Tanh(linear));
+
+            // c times (p u + q)^k/(r u + s)^k for a k not whole, p = +-q and r, q not zero: nothing else holds u.
+            static bool APowerOfAQuotientOfLinearsVanishingAtPlusOrMinusOne(Entity inU, Variable u)
+            {
+                var (top, bottom) = inU is Divf(var above, var below) ? (above, below) : (inU, (Entity)Number.Integer.One);
+                var holdingU = Mulf.LinearChildren(top).Concat(Mulf.LinearChildren(bottom)).Where(factor => factor.ContainsNode(u)).ToList();
+                if (holdingU.Count != 1 || holdingU[0] is not Powf(var @base, Number.Rational power) || power is Number.Integer)
+                    return false;
+                var (numerator, denominator) = Functions.SingleQuotient.Of(@base);
+                return TreeAnalyzer.TryGetPolyLinear(numerator, u, out var p, out var q)
+                    && TreeAnalyzer.TryGetPolyLinear(denominator, u, out var r, out _)
+                    && !VanishesIdentically(p) && !VanishesIdentically(q) && !VanishesIdentically(r)
+                    && (VanishesIdentically(p - q) || VanishesIdentically(p + q));
+            }
 
             // (W - 1)/(W + 1) is the tangent, true, and (W + 1)/(W - 1) the cotangent, false.
             static bool? AQuotientInW(Entity top, Entity bottom, Variable w)
