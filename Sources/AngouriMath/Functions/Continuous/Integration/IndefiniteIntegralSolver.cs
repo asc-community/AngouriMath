@@ -1125,7 +1125,11 @@ namespace AngouriMath.Functions.Algebra
         /// <c>e^L</c>, which the exponential substitution answers in real terms; with it true, only those,
         /// after that substitution has declined them. Asked only of the question asked, and last: the
         /// question in <c>s</c> is not cheap to decline, and asked early it took time from the rules
-        /// that answer <c>x/cosh(x)^(7/2) + 3/5 x sqrt(cosh(x))</c> and the like.
+        /// that answer <c>x/cosh(x)^(7/2) + 3/5 x sqrt(cosh(x))</c> and the like. Nor in the first pass
+        /// where the exponential substitution wants a sum over roots and the question in <c>s</c>, a
+        /// rational function of <c>cos(s)</c> or <c>sin(s)</c> alone, wants one too, by a factor below
+        /// the bar of degree above two: the second pass answers it in <c>e^L</c>, and the question in
+        /// <c>s</c> took seconds to decline, five gigabytes for <c>1/(1 + sinh(x)^3)</c> against 0.2.
         /// </remarks>
         internal static Entity? SolveAHyperbolicIntegrandAsATrigonometricOne(Entity expr, Entity.Variable x, bool integrateByParts, bool rationalToo)
         {
@@ -1190,6 +1194,10 @@ namespace AngouriMath.Functions.Algebra
             });
             if (!sawASineOrCosine || inS.ContainsNode(w))
                 return null;
+            // Wanting a sum over roots in e^L and, by the denominator, in s too: the second pass's.
+            if (rationalToo && Integration.ASumOverRootsWouldAnswer && !Integration.SumsOverRootsAllowed
+                && AFactorAboveAQuadraticInS(inS, s))
+                return null;
             var question = MathS.i / slopeOfL * inS;
             if (Integration.ComputeAsAQuestionOfItsOwn(question, s, integrateByParts) is not { } inTermsOfS
                 || inTermsOfS.Nodes.Any(node => node is Integralf || node == MathS.NaN))
@@ -1208,6 +1216,53 @@ namespace AngouriMath.Functions.Algebra
                 _ => node
             }).Substitute(s, -MathS.i * linear).InnerSimplified;
             return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+
+            // Whether inS, rational in cos(s) alone or sin(s) alone, has a denominator of degree three or
+            // more that t = tan(s/2) or t = tan(s) leaves with an irreducible factor of degree above two,
+            // which the rational rules write only as a sum over roots. The cosine, and the square of the
+            // sine, are quotients of linears in t^2 there, so a factor over the rationals keeps its
+            // degree: 1 + cos(s)^8 keeps 1 + v^4, and 1 - sin(s)^8 splits. A sine to odd powers is
+            // 2t/(1 + t^2), not a function of t^2, and the cubics and quintics in it all declined.
+            static bool AFactorAboveAQuadraticInS(Entity inS, Variable s)
+            {
+                foreach (var circular in new Entity[] { MathS.Cos(s), MathS.Sin(s) })
+                {
+                    var y = Variable.CreateUnique(inS, "y_osb");
+                    var inY = inS.Replace(node => node == circular ? y : node);
+                    if (inY.ContainsNode(s) || !inY.ContainsNode(y) || !IsARationalFunction(inY, y))
+                        continue;
+                    if (!TreeAnalyzer.TryGetPolynomial(Functions.SingleQuotient.Of(inY).Denominator, y, out var read))
+                        return false;
+                    var terms = read.Where(term => term.Value.Evaled is not Number.Complex { IsZero: true }).ToList();
+                    if (terms.Any(term => term.Key.Sign < 0) || !terms.Any(term => term.Key.CompareTo(EInteger.FromInt32(3)) >= 0))
+                        return false;
+                    if (terms.Any(term => !term.Key.IsEven))
+                        return circular is Sinf || AFactorAboveAQuadratic(terms, halved: false);
+                    return AFactorAboveAQuadratic(terms, halved: true);
+                }
+                return false;
+
+                // Over the rationals; false where a coefficient is not rational, as nothing is known then.
+                static bool AFactorAboveAQuadratic(List<KeyValuePair<EInteger, Entity>> terms, bool halved)
+                {
+                    var rationals = new Dictionary<int, ERational>();
+                    var denominator = EInteger.One;
+                    foreach (var term in terms)
+                    {
+                        var (power, coefficient) = (term.Key, term.Value);
+                        if (coefficient.Evaled is not Number.Rational rational || !power.CanFitInInt32() || power.ToInt32Checked() > 2 * IntegerPolynomial.MaxDegree)
+                            return false;
+                        rationals[halved ? power.ToInt32Checked() / 2 : power.ToInt32Checked()] = rational.ERational;
+                        denominator = denominator * rational.ERational.Denominator / denominator.Gcd(rational.ERational.Denominator);
+                    }
+                    var whole = new EInteger[rationals.Keys.Max() + 1];
+                    for (var k = 0; k < whole.Length; k++)
+                        whole[k] = rationals.TryGetValue(k, out var c) ? c.Numerator * (denominator / c.Denominator) : EInteger.Zero;
+                    return IntegerPolynomial.Create(whole) is { Degree: > 2 and <= IntegerPolynomial.MaxDegree } polynomial
+                        && Functions.PolynomialFactorization.FactorPrimitive(polynomial.PrimitivePart()) is { } parts
+                        && parts.Any(part => part.Factor.Degree > 2);
+                }
+            }
 
             // +1 for W^2 + 1 and -1 for W^2 - 1, as polynomials in W; null for anything else.
             static int? Squared(Entity polynomial, Variable w)
