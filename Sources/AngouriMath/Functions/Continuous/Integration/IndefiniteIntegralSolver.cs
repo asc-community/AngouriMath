@@ -7129,6 +7129,122 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A linear over a linear beside the reciprocal of the square root of a cubic <c>C</c>,
+        /// <c>(x + A - 2 r)/((x - A) sqrt(C))</c>, where <c>C</c> vanishes at <c>r</c>, midway between
+        /// the pole and the zero, and <c>C + m (x - r)^2</c> is <c>lambda (x - r) (x - A)^2</c> for a
+        /// constant <c>m</c>, <c>lambda</c> the leading coefficient: its integral is
+        /// <c>-(2/sqrt(m)) atan(sqrt(m) (x - r)/sqrt(C))</c>. Welz's
+        /// <c>(a + x)/((x - a) sqrt(a^2 x - (1 + a^2) x^2 + x^3))</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// With <c>z = (x - r)/sqrt(C)</c>, <c>1 + m z^2</c> is <c>(C + m (x - r)^2)/C</c>, which is
+        /// <c>lambda (x - r) (x - A)^2/C</c>, and <c>2 C - (x - r) C'</c> is
+        /// <c>-lambda (x - r) (x - A) (x + A - 2 r)</c>: so
+        /// <c>d/dx atan(sqrt(m) z) = -sqrt(m) (x + A - 2 r)/(2 (x - A) sqrt(C))</c>. That uses only
+        /// <c>sqrt(C)^2 = C</c>, so it holds on either branch of the root and of <c>sqrt(m)</c>, and
+        /// the arctangent's argument is <c>i</c> or <c>-i</c> only where <c>C</c> or <c>x - A</c>
+        /// vanishes. Where <c>m</c> is negative the same is <c>atanh(sqrt(-m) z)/sqrt(-m)</c>. A
+        /// linear <c>P</c> in <c>atan(sqrt(m) P/sqrt(C))</c> gives a linear over a linear in one
+        /// other way, where <c>C + m P^2</c> is <c>lambda (x - A)^3</c>, which is not read here.
+        /// </para>
+        /// <para>
+        /// Rubi's answer to Welz's <c>(x - a - sqrt(1 + a^2))/((x - a + sqrt(1 + a^2)) sqrt((x - a) (1 + x^2)))</c>
+        /// is this, and to the one in the summary this with the root split as <c>sqrt(x) sqrt(C/x)</c>
+        /// and the factor <c>sqrt(x) sqrt(C/x)/sqrt(C)</c> beside it. With numbers for the
+        /// coefficients the root is split so, <c>x</c> taken out of it, or the ansatz over Padé
+        /// approximants answers; with symbols neither did, and the search past them ran out of time
+        /// on Welz's at <c>r = a^2/(2 a - 1)</c>. So with a symbol in the integrand only, the
+        /// conditions decided by value, and the answer differentiated back at sampled points.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveAPseudoEllipticQuotientOverTheRootOfACubicWithARootMidway(Entity expr, Entity.Variable x)
+        {
+            if (!expr.Vars.Any(symbol => symbol != x) || !HasASquareRootOf(expr, x))
+                return null;
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            Entity? radicand = null;
+            Entity below = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+                if (factor is Powf(var @base, Number.Rational half) && half.ERational.Equals(ERational.Create(1, 2)) && @base.ContainsNode(x))
+                {
+                    if (radicand is not null)
+                        return null;
+                    radicand = @base;
+                }
+                else
+                    below *= factor;
+            if (radicand is null || CoefficientsOfDegree(radicand, 3) is not { } cubic
+                || CoefficientsOfDegree(numerator, 1) is not { } above || CoefficientsOfDegree(below, 1) is not { } under)
+                return null;
+            // Over one bar first: the simplification leaves `a^2/(2 a - 1) - a^2/(-1 + 2 a)` as two terms.
+            static bool Zero(Entity constant) => VanishesIdentically(LowestOverTheSymbols(constant));
+            var pole = LowestOverTheSymbols(-under[0] / under[1]);
+            var zero = LowestOverTheSymbols(-above[0] / above[1]);
+            if (Zero(pole - zero))
+                return null;
+            var r = LowestOverTheSymbols((pole + zero) / 2);
+            var (c0, c1, c2, c3) = (cubic[0], cubic[1], cubic[2], cubic[3]);
+            if (!Zero(((c3 * r + c2) * r + c1) * r + c0))
+                return null;
+            // C/(c3 (x - r)) = x^2 + q1 x + q0, and that plus s (x - r) is (x - A)^2.
+            var q1 = c2 / c3 + r;
+            var q0 = c1 / c3 + r * q1;
+            var s = -2 * pole - q1;
+            if (Zero(s) || !Zero(q0 - s * r - pole * pole))
+                return null;
+            var m = LowestOverTheSymbols(c3 * s);
+            var z = (x - r) / MathS.Sqrt(radicand);
+            // atan(w z)/w for w^2 = m, which is even in w: a square of a linear in the symbol is
+            // taken as that linear, so that (1 - a)^2 gives a real form for every a.
+            Entity closed = ALinearWhoseSquareIs(m) is { } w ? MathS.Arctan(w * z) / w
+                : ALinearWhoseSquareIs(LowestOverTheSymbols(-m)) is { } v ? MathS.Hyperbolic.Artanh(v * z) / v
+                : BySign(m, MathS.Arctan(MathS.Sqrt(m) * z) / MathS.Sqrt(m),
+                    MathS.Hyperbolic.Artanh(MathS.Sqrt(LowestOverTheSymbols(-m)) * z) / MathS.Sqrt(LowestOverTheSymbols(-m)));
+            var answer = (-2 * LowestOverTheSymbols(above[1] / under[1]) * closed).InnerSimplified;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+
+            // The coefficients of a polynomial in x of the degree, each free of x.
+            Entity[]? CoefficientsOfDegree(Entity polynomial, int degree)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, x, out var read))
+                    return null;
+                var coefficients = Enumerable.Repeat<Entity>(Number.Integer.Zero, degree + 1).ToArray();
+                foreach (var pair in read)
+                {
+                    if (!pair.Key.CanFitInInt32() || pair.Key.Sign < 0 || pair.Key.ToInt32Unchecked() > degree || pair.Value.ContainsNode(x))
+                        return null;
+                    coefficients[pair.Key.ToInt32Unchecked()] = pair.Value;
+                }
+                return VanishesIdentically(coefficients[degree]) ? null : coefficients;
+            }
+        }
+
+        /// <summary>Whether a half-odd power of something with <paramref name="x"/> in it is in <paramref name="expr"/>.</summary>
+        private static bool HasASquareRootOf(Entity expr, Entity.Variable x)
+            => expr.Nodes.Any(node => node is Powf(var @base, Number.Rational { ERational.Denominator: var two })
+                && two.Equals(EInteger.FromInt32(2)) && @base.ContainsNode(x));
+
+        /// <summary>
+        /// <c>w</c> with <c>w^2 = m</c> where <c>m</c> is the square of a linear in its one symbol,
+        /// <c>1 - 2 a + a^2</c> as <c>a - 1</c>, with a positive leading coefficient; null otherwise.
+        /// </summary>
+        private static Entity? ALinearWhoseSquareIs(Entity m)
+        {
+            var symbols = m.Vars.ToList();
+            if (symbols.Count != 1 || !TreeAnalyzer.TryGetPolynomial(m, symbols[0], out var read)
+                || read.Keys.Any(power => power.Sign < 0 || power.CompareTo(EInteger.FromInt32(2)) > 0)
+                || !read.TryGetValue(EInteger.FromInt32(2), out var leading) || leading.Evaled is not Number.Real { IsPositive: true })
+                return null;
+            var middle = read.TryGetValue(EInteger.One, out var linear) ? linear : Number.Integer.Zero;
+            var constant = read.TryGetValue(EInteger.Zero, out var free) ? free : Number.Integer.Zero;
+            if (!VanishesIdentically(middle * middle - 4 * leading * constant))
+                return null;
+            return (MathS.Sqrt(leading) * (symbols[0] + middle / (2 * leading))).InnerSimplified;
+        }
+
+        /// <summary>
         /// <c>x/((a + b x^3) sqrt(c + d x^3))</c> at the three ratios where its integral is elementary,
         /// Rubi's 1.1.3.4: <c>4 b c = a d</c>, <c>8 b c + a d = 0</c> and
         /// <c>a^2 d^2 - 20 a b c d - 8 b^2 c^2 = 0</c>, in closed form.
@@ -7530,6 +7646,80 @@ namespace AngouriMath.Functions.Algebra
         /// </summary>
         internal static Entity? SolveABinomialDifferentialWithSymbols(Entity expr, Entity.Variable x)
             => SolveABinomialDifferential(expr, x, withSymbols: true);
+
+        /// <summary>
+        /// A linear over the quadratic factor of a difference of cubes, beside the cube root of a
+        /// binomial in <c>x^3</c>, <c>(x + s)/((x^2 + s x + s^2) y)</c> with <c>y = (a + b x^3)^(1/3)</c>:
+        /// for <c>c</c> a cube root of <c>a + b s^3</c>, its integral is
+        /// <c>ln((c - y)/(c x/s - y))/(2 c) + (atan((1 + 2 c x/(s y))/sqrt(3)) + atan((1 + 2 y/c)/sqrt(3)))/(sqrt(3) c)</c>.
+        /// Welz's <c>(1 + x)/((1 + x + x^2) (a + b x^3)^(1/3))</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Multiplied above and below by <c>s - x</c> it is <c>(s^2 - x^2)/((s^3 - x^3) y)</c>: the
+        /// first term is <c>dt/(s^3 - (a + b s^3) t^3)</c> under <c>t = x/y</c>, the second a function
+        /// of <c>x^3</c> beside its derivative, and the sum of their integrals is Rubi's, at
+        /// <c>s = 1</c>, and the form above at any <c>s</c> under <c>x = s u</c>. Both logarithms
+        /// of Rubi's vanish at <c>x = s</c>, where the integrand has no pole, and written apart they
+        /// jump there by an imaginary constant; their quotient tends to <c>-b s^3/a</c> and does
+        /// not. The identity uses no more about <c>c</c> than <c>c^3 = a + b s^3</c>, and holds for
+        /// every cube root; the principal one is <c>y</c> at <c>x = s</c>, so that the two
+        /// logarithms vanish together there whatever the sign of <c>a + b s^3</c>. With the real
+        /// root at <c>a + b s^3 &lt; 0</c>, <c>1 + 2 y/c</c> is <c>sqrt(3) i</c> at <c>x = s</c>, an
+        /// arctangent's singularity, and the answer jumped there; with the principal one it was
+        /// continuous on either side of the binomial's real zero, at thirty digits, at every sign
+        /// of <c>a</c>, <c>b</c> and <c>a + b s^3</c> tried. The linear has to be <c>x + s</c>: any other leaves
+        /// <c>x/((s^3 - x^3) y)</c>, which is not elementary -- Rubi's answer to Welz's
+        /// <c>(2 + x)/((1 + x + x^2) (2 + x^3)^(1/3))</c> has an Appell function in it.
+        /// </para>
+        /// <para>
+        /// With numbers in the binomial the ansatz over logarithms of <c>L - y</c> answers most of
+        /// these, and is asked first; with symbols in it, as Welz's, it and every rule declined
+        /// them. The answer is differentiated back at sampled points.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveALinearOverTheQuadraticFactorOfADifferenceOfCubesBesideACubeRoot(Entity expr, Entity.Variable x)
+        {
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            Entity? binomial = null;
+            Entity below = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+                if (factor is Powf(var @base, Number.Rational third) && third.ERational.Equals(ERational.Create(1, 3)) && @base.ContainsNode(x))
+                {
+                    if (binomial is not null)
+                        return null;
+                    binomial = @base;
+                }
+                else
+                    below *= factor;
+            if (binomial is null || !TreeAnalyzer.TryGetPolynomial(binomial, x, out var cubic) || cubic.Count != 2
+                || !cubic.TryGetValue(EInteger.Zero, out var a) || !cubic.TryGetValue(EInteger.FromInt32(3), out var b)
+                || a.ContainsNode(x) || b.ContainsNode(x)
+                || !TreeAnalyzer.TryGetPolyLinear(numerator, x, out var n1, out var n0) || n1.ContainsNode(x) || n0.ContainsNode(x)
+                || !TreeAnalyzer.TryGetPolyQuadratic(below, x, out var q2, out var q1, out var q0)
+                || q2.ContainsNode(x) || q1.ContainsNode(x) || q0.ContainsNode(x))
+                return null;
+            static bool Zero(Entity constant) => VanishesIdentically(LowestOverTheSymbols(constant));
+            if (Zero(n1) || Zero(q2) || Zero(a) || Zero(b))
+                return null;
+            // q2 (x^2 + s x + s^2) below, and n1 (x + s) above.
+            var s = LowestOverTheSymbols(q1 / q2);
+            if (Zero(s) || !Zero(q0 / q2 - s * s) || !Zero(n0 / n1 - s))
+                return null;
+            var k = LowestOverTheSymbols(a + b * MathS.Pow(s, 3));
+            if (Zero(k))
+                return null;
+            // The principal root, which is y at x = s.
+            var cubeRoot = Number.Rational.Create(1, 3);
+            var c = MathS.Pow(k, cubeRoot);
+            var y = MathS.Pow(binomial, cubeRoot);
+            var sqrtOfThree = MathS.Sqrt(3);
+            var answer = (LowestOverTheSymbols(n1 / q2)
+                * (MathS.Ln((c - y) / (c * x / s - y)) / (2 * c)
+                   + (MathS.Arctan((1 + 2 * c * x / (s * y)) / sqrtOfThree) + MathS.Arctan((1 + 2 * y / c) / sqrtOfThree)) / (sqrtOfThree * c))).InnerSimplified;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
 
         private static Entity? SolveABinomialDifferential(Entity expr, Entity.Variable x, bool withSymbols)
         {
@@ -20834,6 +21024,87 @@ namespace AngouriMath.Functions.Algebra
             if (answer.Nodes.Any(node => node is Number.Complex { IsNaN: true }))
                 return null;
             return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
+
+        /// <summary>
+        /// The root of a trinomial in the square over a binomial in the fourth power,
+        /// <c>sqrt(a + b x^2 + c x^4)/(d + e x^4)</c>, where <c>c d + a e = 0</c> and <c>a c &lt; 0</c>:
+        /// with <c>w = sqrt(b^2 - 4 a c)</c>, <c>k = sqrt(2 (w + b))</c> and <c>l = sqrt(2 (w - b))</c>,
+        /// its integral is
+        /// <c>(a/d) (atanh(x (b + 2 c x^2 + w)/(k R))/k - atan(x (b + 2 c x^2 - w)/(l R))/l)</c>,
+        /// <c>R</c> the root. Welz's <c>sqrt(1 - x^4)/(1 + x^4)</c> and <c>sqrt(1 + p x^2 - x^4)/(1 + x^4)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The binomial is <c>(d/a) (a - c x^4)</c>, and <c>u = x/R</c> has
+        /// <c>u' = (a - c x^4)/R^3</c>, so the integrand is <c>(a/d) du/(1 - 2 b u^2 + w^2 u^4)</c>, a
+        /// rational function of <c>u</c> -- Rubi's 1.2.2.6. Where <c>a c</c> is negative, <c>w</c> is
+        /// real and greater than <c>|b|</c>, and <c>k</c> and <c>l</c> are real; the two terms are
+        /// Rubi's, written for any <c>a</c>. <c>k^2 R^2 - x^2 (b + 2 c x^2 + w)^2</c> is
+        /// <c>2 (a - c x^4) (b + 2 c x^2 + w)</c> and <c>l^2 R^2 + x^2 (b + 2 c x^2 - w)^2</c> is
+        /// <c>-2 (a - c x^4) (b + 2 c x^2 - w)</c>, so the inverse hyperbolic tangent's argument is
+        /// 1 or -1, and the arctangent's i or -i, only at a zero of the binomial, none of them real,
+        /// or of the trinomial: the answer has no jump between two zeros of the trinomial. Each term
+        /// uses no more about the root than <c>R^2 = a + b x^2 + c x^4</c>, and so holds where the
+        /// trinomial is negative as well. Where <c>a c</c> is positive the substitution that writes
+        /// the even integrand in <c>x - 1/x</c> already answers it, and is left to:
+        /// <c>sqrt(1 + x^4)/(1 - x^4)</c>. Declined before, since <c>x/R</c> is no substitution any
+        /// rule tries. The answer is differentiated back at sampled points.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveTheRootOfATrinomialInTheSquareOverABinomialInTheFourthPower(Entity expr, Entity.Variable x)
+        {
+            if (!HasASquareRootOf(expr, x))
+                return null;
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            Entity? radicand = null;
+            Entity multiple = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(numerator))
+                if (factor is Powf(var @base, Number.Rational half) && half.ERational.Equals(ERational.Create(1, 2)) && @base.ContainsNode(x))
+                {
+                    if (radicand is not null)
+                        return null;
+                    radicand = @base;
+                }
+                else if (factor.ContainsNode(x))
+                    return null;
+                else
+                    multiple *= factor;
+            static bool Zero(Entity constant) => VanishesIdentically(LowestOverTheSymbols(constant));
+            if (radicand is null || EvenCoefficients(radicand, 3) is not { } trinomial || EvenCoefficients(denominator, 3) is not { } binomial
+                || !Zero(binomial[1]))
+                return null;
+            var (a, b, c) = (trinomial[0], trinomial[1], trinomial[2]);
+            var (d, e) = (binomial[0], binomial[2]);
+            if (Zero(a) || Zero(d) || !Zero(c * d + a * e) || SignOfANumberTimesEvenPowers(LowestOverTheSymbols(a * c)) is not < 0)
+                return null;
+            var w = MathS.Sqrt(LowestOverTheSymbols(b * b - 4 * a * c));
+            var k = MathS.Sqrt(2 * (w + b));
+            var l = MathS.Sqrt(2 * (w - b));
+            var root = MathS.Sqrt(radicand);
+            var square = MathS.Pow(x, Number.Integer.Create(2));
+            var answer = (LowestOverTheSymbols(multiple * a / d)
+                * (MathS.Hyperbolic.Artanh(x * (b + 2 * c * square + w) / (k * root)) / k
+                   - MathS.Arctan(x * (b + 2 * c * square - w) / (l * root)) / l)).InnerSimplified;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+
+            // The coefficients of x^0, x^2, ... x^(2 count - 2) of a polynomial in x^2, each free of
+            // x; the first and the last not zero.
+            Entity[]? EvenCoefficients(Entity polynomial, int count)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, x, out var read))
+                    return null;
+                var coefficients = Enumerable.Repeat<Entity>(Number.Integer.Zero, count).ToArray();
+                foreach (var pair in read)
+                {
+                    if (!pair.Key.CanFitInInt32() || pair.Key.Sign < 0 || !pair.Key.IsEven
+                        || pair.Key.ToInt32Unchecked() > 2 * count - 2 || pair.Value.ContainsNode(x))
+                        return null;
+                    coefficients[pair.Key.ToInt32Unchecked() / 2] = pair.Value;
+                }
+                return VanishesIdentically(coefficients[0]) || VanishesIdentically(coefficients[count - 1]) ? null : coefficients;
+            }
         }
 
         /// <summary>

@@ -3004,6 +3004,31 @@ leading coefficient once expanded, and declined: it is read expanded and bare no
 | `"sin(x)/(a+b*sin(x))^3".Integrate("x")`, Rubi's 4.1.2.1 row 242 | `integral(...)` | the antiderivative |
 | `"4*x*(1+x^2)/(a*x^2+2*b*x+a)^3".Integrate("x")` | `integral(...)` | the antiderivative |
 
+### Three pseudo-elliptic shapes from Welz's problems are integrated in closed form
+
+**Answers where there were none.** Seven of Welz's problems were declined. Each is now answered by a closed form for
+its shape, differentiated back at sampled points
+([#233](https://github.com/asc-community/AngouriMath/issues/233)):
+- `(x + A - 2 r)/((x - A) sqrt(C))`, for a cubic `C` that vanishes at `r`, midway between the pole and that zero, and
+  for which `C + m (x - r)^2` is `lambda (x - r)(x - A)^2` with `m` a constant and `lambda` the leading coefficient.
+  The integral is `-(2/sqrt(m)) atan(sqrt(m) (x - r)/sqrt(C))`, which uses only `sqrt(C)^2 = C` and so holds on either
+  branch. With a symbol in the integrand only: with numbers the other rules answer.
+- `sqrt(a + b x^2 + c x^4)/(d + e x^4)` where `c d + a e = 0` and `a c < 0`. Under `u = x/R`, `R` the root, it is
+  `(a/d) du/(1 - 2 b u^2 + w^2 u^4)` with `w = sqrt(b^2 - 4 a c)`, an inverse hyperbolic tangent and an arctangent of
+  `x (b + 2 c x^2 ± w)/R`, whose arguments reach `±1` and `±i` only where the binomial or the trinomial vanishes.
+- `(x + s)/((x^2 + s x + s^2) (a + b x^3)^(1/3))`. Multiplied above and below by `s - x` it is
+  `(s^2 - x^2)/((s^3 - x^3) y)`, `y` the cube root: a rational function of `t = x/y` beside `dt`, and a function of
+  `x^3` beside its derivative. The answer is a logarithm of a quotient, continuous at `x = s`, and two arctangents.
+  Only over `x + s`: any other linear leaves a part that is not elementary.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a + x)/((-a + x)*sqrt(a^2*x - (1 + a^2)*x^2 + x^3))".ToEntity().Integrate("x")` | `integral(...)` | 94 characters |
+| `"(-a + x - sqrt(1 + a^2))/((-a + x + sqrt(1 + a^2))*sqrt((-a + x)*(1 + x^2)))".ToEntity().Integrate("x")` | `integral(...)` | 529 characters |
+| `"sqrt(1 - x^4)/(1 + x^4)".ToEntity().Integrate("x")` | `integral(...)` | 198 characters |
+| `"sqrt(1 + p*x^2 - x^4)/(1 + x^4)".ToEntity().Integrate("x")` | `integral(...)` | 490 characters |
+| `"(1 + x)/((1 + x + x^2)*(a + b*x^3)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 323 characters |
+
 ### A linear over a linear beside the root of a cubic binomial is integrated where that is elementary
 
 **Answers where there were none.** `(1 + x + sqrt(3))/((1 + x - sqrt(3)) sqrt(1 + x^3))` and the rest
