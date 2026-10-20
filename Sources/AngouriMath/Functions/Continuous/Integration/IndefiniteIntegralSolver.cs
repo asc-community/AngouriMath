@@ -1003,6 +1003,109 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>x^j T^alpha/Q^(K + 1/2)</c>, a power of a quotient of linears <c>T = (p + q x)/(r + s x)</c>
+        /// over a half-odd power of a multiple of their product, <c>Q = kappa (p + q x)(r + s x)</c>,
+        /// closed by Liouville's ansatz <c>F = T^alpha P(x) Q^(1/2 - K)</c>. With <c>D = q r - p s</c>,
+        /// <c>T'/T = D/((p + q x)(r + s x))</c>, so <c>F' = T^alpha Q^(-K - 1/2) (alpha kappa D P + Q P' - (K - 1/2) Q' P)</c>,
+        /// and asking the bracket to be <c>x^j</c> is, with <c>Q = A x^2 + B x + C</c>, the three-term
+        /// system <c>A (m - 2K) p_(m-1) + (alpha kappa D + B (m - K + 1/2)) p_m + C (m + 1) p_(m+1) = [m = j]</c>,
+        /// solved from <c>p_0</c> up, the last equation fixing <c>p_0</c> and the one past it checked.
+        /// <c>e^(n acoth(a x))</c> arrives folded as <c>((a x + 1)/(a x - 1))^(n/2)</c>: Rubi's 7.4.2
+        /// <c>e^(n acoth(a x))/(c - a^2 c x^2)^(3/2)</c> is <c>e^(n acoth(a x)) (a x - n)/(a c (1 - n^2) sqrt(c - a^2 c x^2))</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// The principal powers are differentiated as such wherever <c>T</c> and <c>Q</c> are not 0,
+        /// on a cut as off it, so the answer holds where the integrand is defined. Where the check
+        /// past the last equation fails, the antiderivative is not of this shape -- a hypergeometric
+        /// one -- and the rule declines. Only for a power of <c>T</c> that is not whole, and
+        /// <c>Q</c> without a root at 0, which the system divides by.
+        /// </remarks>
+        internal static Entity? SolveAPowerOfAQuotientOfLinearsOverAHalfOddPowerOfTheirProduct(Entity expr, Entity.Variable x)
+        {
+            Powf? power = null;
+            Entity constant = Number.Integer.One;
+            var j = 0;
+            Entity? quadratic = null;
+            ERational? quadraticPower = null;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (!underneath && power is null && factor is Powf(Divf(var above, var below), var alpha)
+                    && !alpha.ContainsNode(x) && alpha.Evaled is not Number.Integer && above.ContainsNode(x) && below.ContainsNode(x))
+                {
+                    power = (Powf)factor;
+                    continue;
+                }
+                if (!underneath && APowerOfTheVariable(factor, x) is { } k && k > 0)
+                {
+                    j += k;
+                    continue;
+                }
+                if (quadratic is null && factor is Powf(var q, Number.Rational r) && r.ERational.Denominator.Equals(EInteger.FromInt32(2)))
+                {
+                    quadratic = q;
+                    quadraticPower = underneath ? r.ERational.Negate() : r.ERational;
+                    continue;
+                }
+                return null;
+            }
+            if (power is null || quadratic is null || quadraticPower is null || j > 12 || power.Base is not Divf(var top, var bottom)
+                || !TreeAnalyzer.TryGetPolyLinear(top, x, out var qs, out var ps) || TreeAnalyzer.IsZero(qs)
+                || !TreeAnalyzer.TryGetPolyLinear(bottom, x, out var ss, out var rs) || TreeAnalyzer.IsZero(ss)
+                || !TreeAnalyzer.TryGetPolyQuadratic(quadratic, x, out var a2, out var b2, out var c2) || TreeAnalyzer.IsZero(a2))
+                return null;
+            // Q a multiple of the linears' product, and its power -(K + 1/2).
+            var kappa = Functions.PartialFractions.Bare((a2 / (qs * ss)).Simplify());
+            if (!VanishesIdentically(b2 - kappa * (ps * ss + qs * rs)) || !VanishesIdentically(c2 - kappa * ps * rs) || VanishesIdentically(c2))
+                return null;
+            var half = quadraticPower.Negate().Subtract(ERational.FromInt32(1).Divide(ERational.FromInt32(2))).ToLowestTerms();
+            if (!half.Denominator.Equals(EInteger.One) || !half.Numerator.CanFitInInt32() || half.Numerator.Abs().CompareTo(EInteger.FromInt32(12)) > 0)
+                return null;
+            var bigK = half.Numerator.ToInt32Checked();
+            var d = System.Math.Max(2 * bigK - 1, j - 1);
+            if (d < 0 || d > 12)
+                return null;
+            var determinant = qs * rs - ps * ss;
+            var alphaKappaD = (power.Exponent * kappa * determinant).InnerSimplified;
+            Entity Beta(int m) => alphaKappaD + b2 * (Number.Integer.Create(m - bigK) + Number.Rational.Create(1, 2));
+            Entity Rhs(int m) => m == j ? Number.Integer.One : Number.Integer.Zero;
+            // p_m = u_m + v_m lambda, lambda = p_0.
+            var u = new Entity[d + 2];
+            var v = new Entity[d + 2];
+            (u[0], v[0]) = (Number.Integer.Zero, Number.Integer.One);
+            Entity Lower(Entity[] w, int m) => m - 1 < 0 ? Number.Integer.Zero : a2 * (m - 2 * bigK) * w[m - 1];
+            for (var m = 0; m < d; m++)
+            {
+                var divisor = c2 * (m + 1);
+                u[m + 1] = Functions.PartialFractions.Bare(((Rhs(m) - Lower(u, m) - Beta(m) * u[m]) / divisor).Simplify());
+                v[m + 1] = Functions.PartialFractions.Bare(((Number.Integer.Zero - Lower(v, m) - Beta(m) * v[m]) / divisor).Simplify());
+            }
+            // The degree-d equation, with p_(d+1) = 0, fixes lambda.
+            var constantPart = (Lower(u, d) + Beta(d) * u[d]).InnerSimplified;
+            var lambdaPart = (Lower(v, d) + Beta(d) * v[d]).InnerSimplified;
+            if (VanishesIdentically(lambdaPart))
+                return null;
+            var lambda = Functions.PartialFractions.Bare(((Rhs(d) - constantPart) / lambdaPart).Simplify());
+            var coefficients = Enumerable.Range(0, d + 1).Select(m => Functions.PartialFractions.Bare((u[m] + v[m] * lambda).Simplify())).ToArray();
+            // The one past it: A (d + 1 - 2K) p_d = [d + 1 = j].
+            if (!VanishesIdentically(a2 * (d + 1 - 2 * bigK) * coefficients[d] - Rhs(d + 1)))
+                return null;
+            Entity polynomial = Number.Integer.Zero;
+            for (var m = 0; m <= d; m++)
+                if (!VanishesIdentically(coefficients[m]))
+                    polynomial += coefficients[m] * (m == 0 ? Number.Integer.One : m == 1 ? x : MathS.Pow(x, m));
+            if (polynomial == Number.Integer.Zero)
+                return null;
+            var raised = Number.Rational.Create(1 - 2 * bigK, 2);
+            return constant * power * polynomial * MathS.Pow(quadratic, raised);
+        }
+
+        /// <summary>
         /// A quotient by the square of a base, by parts against the base's reciprocal, where the
         /// base's derivative makes the rest exact: <c>N/(M v^2)</c> is <c>g v'/v^2</c> with
         /// <c>g = N/(M v')</c>, and <c>v'/v^2</c> is the derivative of <c>-1/v</c>, so the integral
