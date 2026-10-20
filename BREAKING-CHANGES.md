@@ -5926,6 +5926,27 @@ exponential over the derivative of its sine or cosine is now asked as a rational
 | `"exp(n*sinh(a + b*x))*sinh(2*(a + b*x))".ToEntity().Integrate("x")` | `integral(...)` | elementary in `sinh(a + b x)` and its exponential |
 | `"exp(n*cosh(1/2*(a + b*x)))*sinh(a + b*x)".ToEntity().Integrate("x")` | `integral(...)` | the same in `cosh((a + b x)/2)` |
 
+### A power of x times a hyperbolic function of a power of x is integrated under that power
+
+**Answers where there were none.** `x sech(a + b x^2)^7`, `x/(a + b sech(c + d x^2))^2` and their cosecant twins, Rubi's
+6.5.2 and 6.6.2, `sinh(a + b x^2)^3/x^3` and its cosine, 6.1.3 and 6.2.3, and `x^5 cosh(a + b x^3)^7 sinh(a + b x^3)`,
+6.7.1, were declined. The library writes the hyperbolic functions as exponentials, and the rules before this one spent
+the budget on a power of a quotient of exponentials of `a + b x^2`. With `x^m` beside a rational function of hyperbolic
+functions of `c + d x^n`, `n` at least 2 and dividing `m + 1`, the integrand is now asked in `t = x^n`, where
+`x^m dx` is `t^(k - 1) dt/n` for `k = (m + 1)/n`, exactly wherever it is defined since the powers are whole. Only with
+a whole power past the first of a sum or a quotient of the exponentials among them: `x/(a + b sech(c + d x^2))` and
+`x^3 sinh(a + b x^2)` are answered as written, in fewer characters
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x*sech(a + b*x^2)^7".ToEntity().Integrate("x")` | `integral(...)` | 494 characters |
+| `"x/(a + b*sech(c + d*x^2))^2".ToEntity().Integrate("x")` | `integral(...)` | 2,193 characters |
+| `"sinh(a + b*x^2)^3/x^3".ToEntity().Integrate("x")` | `integral(...)` | 480 characters |
+| `"x^5*cosh(a + b*x^3)^7*sinh(a + b*x^3)".ToEntity().Integrate("x")` | `integral(...)` | 2,824 characters |
+| `"x*(a + b*sech(c + d*x^2))^2".ToEntity().Integrate("x")` | `integral(...)`; 205 characters, in 8.9 s, on the unreleased master | 185 characters, in 45 ms |
+| `"x/(cosh(a + b*x^2)^2 + 1)".ToEntity().Integrate("x")` | `integral(...)`; 145 characters, in 8.3 s, on the unreleased master | 231 characters, in 76 ms |
+
 ### A hyperbolic function of a logarithm is integrated, the exponent folded structurally
 
 `tanh(ln(x))` was left as written. The library spells `tanh(y)` with `e^(2y)`, so a hyperbolic

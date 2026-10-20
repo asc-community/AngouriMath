@@ -27950,6 +27950,109 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of x times a rational function of hyperbolic functions of a linear in a whole
+        /// power of x, <c>x^m F(sinh(c + d x^n), cosh(c + d x^n))</c> with <c>n &gt;= 2</c> dividing
+        /// <c>m + 1</c>, under <c>t = x^n</c>: <c>x^m dx</c> is <c>t^(k - 1) dt/n</c> for
+        /// <c>k = (m + 1)/n</c>, and the question in <c>t</c> is the same function of a linear in
+        /// <c>t</c> beside a whole power of <c>t</c>.
+        /// </summary>
+        /// <remarks>
+        /// The library writes the hyperbolic functions as exponentials, so <c>x sech(a + b x^2)^7</c>
+        /// arrives as x beside a seventh power of a quotient of exponentials of <c>a + b x^2</c>, and
+        /// the rules before this one spent the budget on it: Rubi's 6.5.2 and 6.6.2
+        /// <c>x sech(a + b x^2)^7</c>, <c>x/(a + b sech(c + d x^2))^2</c> and the two with the
+        /// cosecant, 6.1.3 and 6.2.3 <c>sinh(a + b x^2)^3/x^3</c> and its cosine, and 6.7.1
+        /// <c>x^5 cosh(a + b x^3)^7 sinh(a + b x^3)</c>, each of which in <c>t</c> is answered in
+        /// under a second. Exact wherever the integrand is defined, since the powers are whole:
+        /// <c>x^m</c> is <c>x^(n - 1) (x^n)^(k - 1)</c> at every <c>x</c> but 0. Exponentials of a
+        /// linear in <c>x^n</c> and whole powers of them only, with a whole power past the first of
+        /// a sum or a quotient of them among them: <c>x/(a + b sech(c + d x^2))</c> and
+        /// <c>x^3 sinh(a + b x^2)</c> are answered as written, in fewer characters than in
+        /// <c>t</c>, and are left to that. After the rules that answer a polynomial beside
+        /// exponentials of a quadratic as written, which it leaves as they were; a symbolic
+        /// <c>n</c> is <see cref="SolveByAPowerOfTheVariableTimesAFunctionOfItsPower"/>'s.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static Entity? SolveAPowerOfXTimesAHyperbolicFunctionOfAPowerUnderThatPower(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var m = 0;
+            Entity constant = Number.Integer.One;
+            Entity? above = null, below = null;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                    constant = underneath ? constant / factor : constant * factor;
+                else if (factor == x)
+                    m += underneath ? -1 : 1;
+                else if (factor is Powf(var b0, Number.Integer { EInteger: var p0 }) && b0 == x && p0.CanFitInInt32())
+                    m += underneath ? -p0.ToInt32Unchecked() : p0.ToInt32Unchecked();
+                else if (underneath)
+                    below = below is null ? factor : below * factor;
+                else
+                    above = above is null ? factor : above * factor;
+            }
+            if (above is null && below is null)
+                return null;
+            var rest = below is null ? above! : (above ?? Number.Integer.One) / below;
+            // The one whole power of x the rest is written in.
+            var powers = rest.Nodes.Where(node => node is Powf(var b1, Number.Integer) && b1 == x).Distinct().ToList();
+            if (powers.Count != 1 || powers[0] is not Powf(_, Number.Integer { EInteger: var power }) || !power.CanFitInInt32())
+                return null;
+            var n = power.ToInt32Unchecked();
+            if (n < 2 || n > 12 || (m + 1) % n != 0)
+                return null;
+            var t = Variable.CreateUnique(expr, "t_hyp");
+            var inT = rest.Substitute(powers[0], t);
+            if (inT.ContainsNode(x))
+                return null;
+            // Exponentials of a linear in t with a constant base, and whole powers, sums,
+            // products and quotients of them: nothing else of t. With a whole power past the
+            // first of a sum of them, or of a quotient: a hyperbolic function to the first power
+            // is answered in x as written, by the rules before this one, and in fewer characters.
+            var anExponential = false;
+            var aWholePower = false;
+            foreach (var node in inT.Nodes)
+            {
+                if (!node.ContainsNode(t))
+                    continue;
+                switch (node)
+                {
+                    case Variable or Sumf or Minusf or Mulf or Divf:
+                        continue;
+                    case Powf(var sum, Number.Integer { EInteger: var whole }):
+                        aWholePower |= sum is Sumf or Minusf or Mulf or Divf && whole.Abs().CompareTo(EInteger.One) > 0;
+                        continue;
+                    case Powf(var @base, var exponent) when !@base.ContainsNode(t)
+                        && TreeAnalyzer.TryGetPolyLinear(exponent, t, out var slope, out _) && !slope.ContainsNode(t)
+                        && !Functions.PartialFractions.IsZeroAsAValue(slope):
+                        anExponential = true;
+                        continue;
+                    default:
+                        return null;
+                }
+            }
+            if (!anExponential || !aWholePower)
+                return null;
+            // A bare t outside every exponential is a power of x that n does not reach.
+            if (inT.Replace(node => node is Powf(var b2, var e2) && !b2.ContainsNode(t) && e2.ContainsNode(t) ? Number.Integer.One : node).ContainsNode(t))
+                return null;
+            var k = (m + 1) / n;
+            var question = k switch
+            {
+                1 => inT,
+                > 1 => MathS.Pow(t, Number.Integer.Create(k - 1)) * inT,
+                _ => inT / MathS.Pow(t, Number.Integer.Create(1 - k)),
+            };
+            if (Integration.ComputeAsAQuestionOfItsOwn(question, t, integrateByParts) is not { } integrated
+                || integrated.Nodes.Any(node => node is Integralf))
+                return null;
+            var answer = (constant / Number.Integer.Create(n) * integrated.Substitute(t, powers[0])).InnerSimplified;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
         /// A product of whole powers of a sine and a cosine of one linear times something else in x
         /// that is no polynomial, <c>sin(u)^3 cos(u)^6/(a + b u)</c>, linearised: the product is a sum
         /// of <c>cos(k u)</c> and <c>sin(k u)</c> by the product-to-sum formulas, and each term beside
