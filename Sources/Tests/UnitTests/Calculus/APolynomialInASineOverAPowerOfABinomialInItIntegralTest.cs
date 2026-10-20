@@ -55,5 +55,22 @@ namespace AngouriMath.Tests.Calculus
             DifferentiatesBack(integrand, ("a", 1.3), ("b", 0.7), ("c", 0.7), ("d", 1.07), ("p", 0.43), ("q", -0.45), ("r", 0.22));
             DifferentiatesBack(integrand, ("a", 2), ("b", -1.5), ("c", -0.3), ("d", 0.6), ("p", -1), ("q", 2), ("r", 0.5));
         }
+
+        /// <summary>
+        /// An even power of the other function is a power of <c>1 - f^2</c>, so the numerator is a
+        /// polynomial in the one: Rubi's 4.1.2.2 <c>cos(c + d x)^6 sin(c + d x)^3/(a + b sin(c + d x))^2</c>
+        /// and its kin, which timed out.
+        /// </summary>
+        [Theory]
+        [InlineData("cos(c+d*x)^4*sin(c+d*x)^3/(a+b*sin(c+d*x))^2")]
+        [InlineData("cos(c+d*x)^4*sin(c+d*x)^3/(a+b*sin(c+d*x))^3")]
+        [InlineData("cos(c+d*x)^6*sin(c+d*x)^2/(a+b*sin(c+d*x))^2")]
+        [InlineData("cos(c+d*x)^6*sin(c+d*x)^3/(a+b*sin(c+d*x))^3")]
+        [InlineData("sin(c+d*x)^2*cos(c+d*x)^2/(a+b*cos(c+d*x))^2")]
+        public void WithAnEvenPowerOfTheOther(string integrand)
+        {
+            DifferentiatesBack(integrand, ("a", 1.3), ("b", 0.7), ("c", 0.7), ("d", 1.07));
+            DifferentiatesBack(integrand, ("a", 2), ("b", -1.5), ("c", -0.3), ("d", 0.6));
+        }
     }
 }
