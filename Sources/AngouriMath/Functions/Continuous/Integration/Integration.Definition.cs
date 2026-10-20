@@ -707,6 +707,10 @@ namespace AngouriMath.Functions.Algebra
             // A rational function times the logarithm of a nested product of powers of linears, by parts,
             // its logarithm's derivative read off as written: `ln(e (f (a + b x)^p (c + d x)^q)^r)`.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionTimesALogarithmOfPowersOfLinears(expr, x, integrateByParts)) is { }) return answer;
+            // x^m (d + e x^2)^p (a + b F(c x)) with m + 2p + 3 = 0 and F an inverse trigonometric function, by
+            // parts against v = x^(m + 1) (d + e x^2)^(p + 1)/(d (m + 1)), before by parts against the
+            // integrator's piecewise v timed out on `x^3 (a + b asin(c x))/(d + e x^2)^3`.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfXOverAPowerOfAQuadraticTimesAnInverseTrigonometricFunctionByParts(expr, x, integrateByParts)) is { }) return answer;
             // A function of an inverse of something not linear times its derivative up to a factor
             // constant though written with x: `atan(c x/sqrt(a - c^2 x^2))^2/sqrt(d - c^2 d x^2/a)`. Early,
             // since it fires only where that factor holds x, and the rules before it spent 28 seconds on
