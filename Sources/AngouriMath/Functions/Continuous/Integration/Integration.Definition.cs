@@ -664,6 +664,9 @@ namespace AngouriMath.Functions.Algebra
             // A sum free of the variable that comes to a number multiplied out, as that number,
             // before anything reads a coefficient or an exponent in it: `2 + 2 a - 2 (1 + a)`.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingConstantSumsToTheirNumbers(expr, x, integrateByParts)) is { }) return answer;
+            // And a squared sine beside the squared cosine of its argument, the one they add up to:
+            // `e^(cos(x)^2 + sin(x)^2)` was declined, written with an x its value does not hold.
+            if ((answer = IndefiniteIntegralSolver.SolveByFoldingAPythagoreanPair(expr, x, integrateByParts)) is { }) return answer;
             // An arctangent over a power of d (1 +- i c x), under x = tan(u)/c, where 1 + i tan(u) is
             // e^(i u)/cos(u): the rules below ran out of time on `(a + b atan(c x))^2/(d + i c d x)^2`.
             if ((answer = IndefiniteIntegralSolver.SolveAnArctangentOverAPowerOfOnePlusICXUnderTheTangent(expr, x, integrateByParts)) is { }) return answer;
@@ -980,8 +983,10 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveASumOfPowersOfAnInverseOrErrorFunctionByPartsDownThePowers(expr, x, integrateByParts)) is { }) return answer;
             // A product of powers times a sum that is the derivative of the product with some
             // of the powers raised by one -- `e^x x^2 ln(x)^2 (3 + (3 + x) ln(x))` -- read off
-            // the sum, for symbolic exponents too. Before the split, which loses it.
-            if ((answer = IndefiniteIntegralSolver.SolveAsTheDerivativeOfAProductOfPowers(expr, x)) is { }) return answer;
+            // the sum, for symbolic exponents too. Before the split, which loses it. A sine, cosine or
+            // exponential in the bracket may be raised from nothing, and what is left beside the
+            // derivative may be a constant times it alone, asked: `sinh(Q)/x^2 - b cosh(Q)/x`.
+            if ((answer = IndefiniteIntegralSolver.SolveAsTheDerivativeOfAProductOfPowers(expr, x, integrateByParts)) is { }) return answer;
             // And a power of a binomial in x^n beside a power of x, with a symbol in the exponents,
             // where Chebyshev's third case is a whole number at most 0: by Rubi's reduction, which
             // the rule above does not read for a power on its own or past the first step.
@@ -1028,6 +1033,9 @@ namespace AngouriMath.Functions.Algebra
             // search past the budget for want of the radical algebra the substitution would
             // have needed.
             if ((answer = IndefiniteIntegralSolver.SolveALogarithmicDerivativeOfARadicalSum(expr, x)) is { }) return answer;
+            // A negative exponential in a term of a sum below the bar, multiplied out above and below:
+            // `(cos(x) + sin(x))/(e^(-x) + sin(x))` is the logarithmic derivative of `1 + e^x sin(x)`.
+            if ((answer = IndefiniteIntegralSolver.SolveByClearingANegativeExponentialBelowTheBar(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveLogarithmic(expr, x, integrateByParts)) is { }) return answer;
             // Two or more square roots of polynomials written as one, before the substitution
             // looks for the one subtree it replaces: `x/(sqrt(1 + x^2) sqrt(1 - x^2))` is
