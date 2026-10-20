@@ -904,6 +904,105 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A function of the hyperbolic tangent of a linear, under <c>u = tanh(a + b x)</c>: the parser
+        /// writes <c>tanh(L)</c> as <c>(W - 1)/(W + 1)</c> and <c>coth(L)</c> as <c>(W + 1)/(W - 1)</c>
+        /// with <c>W = e^(2 L)</c>, so an integrand built from those alone is <c>R(u)</c>, and
+        /// <c>dx = du/(b (1 - u^2))</c>. <c>tanh(x)/sqrt(a + b tanh(x)^2 + c tanh(x)^4)</c> is
+        /// <c>u/((1 - u^2) sqrt(a + b u^2 + c u^4))</c>, and <c>sin(tanh(x))</c> is
+        /// <c>sin(u)/(1 - u^2)</c>, onto the sine and cosine integrals. The trigonometric
+        /// counterparts are answered under <c>u = tan(x)</c>, which the substitution reads in the
+        /// tangent as a node; the hyperbolic functions arrive as exponentials, and nothing read them
+        /// as a tangent. Rubi's 6.3 and 6.4.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// Only where <c>R</c> is not a rational function: those the exponential substitution answers.
+        /// Every exponential has to be a whole power of <c>W</c> inside one of the two quotients;
+        /// one anywhere else, an odd power of <c>e^L</c> from a <c>sinh</c> or <c>cosh</c> among
+        /// them, and the rule declines. <c>d/dx F(tanh(L)) = b (1 - tanh(L)^2) F'(tanh(L))</c>
+        /// wherever <c>F</c> is differentiable, so the answer written back holds where the integrand
+        /// is defined.
+        /// </remarks>
+        internal static Entity? SolveAFunctionOfTheHyperbolicTangent(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // W from the first tangent or cotangent the parser wrote: (e^E -+ 1)/(e^E +- 1).
+            Entity? exponent = null;
+            foreach (var node in expr.Nodes)
+                if (node is Divf(var top, var bottom) && ATangentsExponent(top, bottom) is { } found)
+                {
+                    exponent = found.Exponent;
+                    break;
+                }
+            if (exponent is null || !TreeAnalyzer.TryGetPolyLinear(exponent, x, out var twiceSlope, out var twiceIntercept) || TreeAnalyzer.IsZero(twiceSlope))
+                return null;
+            var u = Variable.CreateUnique(expr, "u_tanh");
+            var w = Variable.CreateUnique(expr, "w_tanh");
+            // Every exponential of x a whole power of W, or decline.
+            var declined = false;
+            var inW = expr.Replace(node =>
+            {
+                if (node is not Powf(var @base, var e) || @base != MathS.e || !e.ContainsNode(x))
+                    return node;
+                if (!TreeAnalyzer.TryGetPolyLinear(e, x, out var slope, out var intercept)
+                    || Functions.PartialFractions.Bare((slope / twiceSlope).Simplify()).Evaled is not Number.Integer k
+                    || !k.EInteger.CanFitInInt32() || !VanishesIdentically(intercept - k * twiceIntercept))
+                {
+                    declined = true;
+                    return node;
+                }
+                return k == Number.Integer.One ? w : MathS.Pow(w, k);
+            });
+            if (declined)
+                return null;
+            // The two quotients as u and 1/u; W anywhere else declines.
+            var inU = inW.Replace(node => node is Divf(var top, var bottom) && AQuotientInW(top, bottom, w) is { } tangent
+                ? (tangent ? u : 1 / u)
+                : node);
+            if (inU.ContainsNode(w) || inU.ContainsNode(x))
+                return null;
+            // A rational function of u is the exponential substitution's.
+            if (IsARationalFunction(inU, u))
+                return null;
+            // Free of x and small, simplified: `2 b/2` is otherwise left as written.
+            var slopeOfL = Functions.PartialFractions.Bare((twiceSlope / 2).Simplify());
+            var question = inU / (slopeOfL * (1 - MathS.Sqr(u)));
+            if (Integration.ComputeAsAQuestionOfItsOwn(question, u, integrateByParts) is not { } answer
+                || answer.Nodes.Any(node => node is Integralf || node == MathS.NaN))
+                return null;
+            // a + b x from its coefficients: (2 (a + b x))/2 is left as written by the simplification.
+            var intercept0 = Functions.PartialFractions.Bare((twiceIntercept / 2).Simplify());
+            var linear = intercept0.Evaled is Number.Complex { IsZero: true } ? slopeOfL * x : intercept0 + slopeOfL * x;
+            return answer.Substitute(u, MathS.Hyperbolic.Tanh(linear));
+
+            // (W - 1)/(W + 1) is the tangent, true, and (W + 1)/(W - 1) the cotangent, false.
+            static bool? AQuotientInW(Entity top, Entity bottom, Variable w)
+            {
+                if (!TreeAnalyzer.TryGetPolyLinear(top, w, out var a1, out var b1) || !TreeAnalyzer.TryGetPolyLinear(bottom, w, out var a2, out var b2)
+                    || a1 != Number.Integer.One || a2 != Number.Integer.One)
+                    return null;
+                if (b1 == Number.Integer.MinusOne && b2 == Number.Integer.One)
+                    return true;
+                if (b1 == Number.Integer.One && b2 == Number.Integer.MinusOne)
+                    return false;
+                return null;
+            }
+
+            static (Entity Exponent, bool Tangent)? ATangentsExponent(Entity top, Entity bottom)
+            {
+                // e^E - 1 over e^E + 1, as the parser writes them, or the other way up.
+                (Entity, int)? Read(Entity side) => side switch
+                {
+                    Minusf(Powf(var e0, var power), Number.Integer one) when e0 == MathS.e && one == Number.Integer.One => (power, -1),
+                    Sumf(Powf(var e0, var power), Number.Integer one) when e0 == MathS.e && one == Number.Integer.One => (power, 1),
+                    _ => null
+                };
+                if (Read(top) is not var (p1, s1) || Read(bottom) is not var (p2, s2) || p1 != p2 || s1 == s2)
+                    return null;
+                return (p1, s1 < 0);
+            }
+        }
+
+        /// <summary>
         /// A quotient by the square of a base, by parts against the base's reciprocal, where the
         /// base's derivative makes the rest exact: <c>N/(M v^2)</c> is <c>g v'/v^2</c> with
         /// <c>g = N/(M v')</c>, and <c>v'/v^2</c> is the derivative of <c>-1/v</c>, so the integral
