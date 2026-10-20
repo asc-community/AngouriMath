@@ -178,16 +178,63 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
-        /// Three roots leave one of <c>1 - t^2</c> in the answer in t, which is not shown to hold
-        /// beyond <c>t^2 < 1</c>, and the answer says so.
+        /// Three roots leave one of <c>1 - t^2</c> in the answer in t, which is kept beyond
+        /// <c>t^2 < 1</c> where it differentiates back there. An odd number of roots makes the
+        /// integrand real on one side of the cosine's sign change at most, the negative one for a
+        /// negative product of the constants, and there the answer holds as written or with the
+        /// cosine's sign in front. It said <c>provided cos(x) >= 0</c>, and
+        /// <c>sqrt(-1 - sec(x)) sqrt(sec(x)) sqrt(cos(x))</c>, real only where the cosine is
+        /// negative, had no value anywhere it is real.
         /// </summary>
-        [Fact]
-        public void ThreeRootsSayWhereTheyHold()
+        [Theory]
+        [InlineData("sqrt(cos(x))*sqrt(sec(x))*sqrt(1 + sec(x))", 3)]
+        [InlineData("(1 + sec(x))^(3/2)*sqrt(2*sec(x))*sqrt(3*cos(x))", 3)]
+        [InlineData("sqrt(-1 - sec(x))*sqrt(sec(x))*sqrt(cos(x))", 6)]
+        [InlineData("sqrt(1 - sec(x))*sqrt(sec(x))*sqrt(cos(x))", 6)]
+        [InlineData("sqrt(sin(x))*sqrt(csc(x))*sqrt(1 + csc(x))", 4)]
+        [InlineData("sqrt(-1 - csc(x))*sqrt(csc(x))*sqrt(sin(x))", 5)]
+        public void ThreeRootsHoldWhereTheIntegrandIsReal(string integrand, int compare)
         {
-            const string integrand = "sqrt(cos(x))*sqrt(sec(x))*sqrt(1 + sec(x))";
-            Assert.Contains("provided cos(x) >= 0", integrand.ToEntity().Integrate("x").Stringize());
-            DifferentiatesBackPinned(integrand, new[] { 0.3, 0.7, 1.1, 1.4 });
+            Assert.DoesNotContain("provided", integrand.ToEntity().Integrate("x").Stringize());
+            HoldsWhereverTheIntegrandIsReal(integrand, BothSides, compare, Pins);
         }
+
+        /// <summary>
+        /// Three roots whose product of constants is of unknown sign: the integrand is real where
+        /// the cosine is negative for a negative product, and the answer holds there, and where it
+        /// is positive for a positive one; the answer says <c>provided a < 0 or cos(x) >= 0</c>, or
+        /// <c>-a < 0</c> for <c>a - a sec(x)</c>, the integrand complex beyond it. Each at both
+        /// signs of the constant, and the cosecant's through the complement.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(a + a*sec(x))*sqrt(sec(x))*sqrt(cos(x))", 1.7, 3)]
+        [InlineData("sqrt(a + a*sec(x))*sqrt(sec(x))*sqrt(cos(x))", -1.7, 6)]
+        [InlineData("sqrt(a + a*sec(x))*sec(x)^(3/2)*sqrt(cos(x))*(A + B*sec(x))", 1.7, 3)]
+        [InlineData("sqrt(a + a*sec(x))*sec(x)^(3/2)*sqrt(cos(x))*(A + B*sec(x))", -1.7, 6)]
+        [InlineData("sqrt(a - a*sec(x))*sqrt(sec(x))*sqrt(cos(x))*cos(x)", 1.7, 6)]
+        [InlineData("sqrt(a - a*sec(x))*sqrt(sec(x))*sqrt(cos(x))*cos(x)", -1.7, 3)]
+        [InlineData("sqrt(a + a*csc(x))*sqrt(csc(x))*sqrt(sin(x))", 1.7, 4)]
+        [InlineData("sqrt(a + a*csc(x))*sqrt(csc(x))*sqrt(sin(x))", -1.7, 5)]
+        public void ThreeRootsOfAConstantOfUnknownSignHoldWhereTheIntegrandIsReal(string integrand, double a, int compare)
+        {
+            Assert.Contains(" < 0 or ", integrand.ToEntity().Integrate("x").Stringize());
+            HoldsWhereverTheIntegrandIsReal(integrand, BothSides, compare, new[] { ("a", a), ("A", 0.6), ("B", 1.3) });
+        }
+
+        /// <summary>
+        /// The same at <c>y = 0.9 + 1.3 x</c>, where the points fall four where the cosine is
+        /// positive and five where it is negative, and with three binomials, of which the
+        /// integrand is real where the cosine is negative for <c>a c k > 0</c> and where it is
+        /// positive for <c>a c k < 0</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(a + a*sec(c + d*x))*sqrt(sec(c + d*x))*sqrt(cos(c + d*x))", 1.7, 0.9, 4)]
+        [InlineData("sqrt(a + a*sec(c + d*x))*sqrt(sec(c + d*x))*sqrt(cos(c + d*x))", -1.7, 0.9, 5)]
+        [InlineData("sqrt(a + a*sec(x))*sqrt(c + c*sec(x))*sqrt(k - k*sec(x))", 1.7, 0.9, 6)]
+        [InlineData("sqrt(a + a*sec(x))*sqrt(c + c*sec(x))*sqrt(k - k*sec(x))", -1.7, 0.9, 3)]
+        public void ThreeRootsOfSymbolsHoldWhereTheIntegrandIsReal(string integrand, double a, double c, int compare)
+            => HoldsWhereverTheIntegrandIsReal(integrand, BothSides, compare,
+                new[] { ("a", a), ("c", c), ("d", 1.3), ("k", 1.3) });
 
         /// <summary>The cosecant's, through the complement: <c>csc(y) = sec(pi/2 - y)</c>.</summary>
         [Theory]

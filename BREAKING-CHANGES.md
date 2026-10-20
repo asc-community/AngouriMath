@@ -4236,8 +4236,8 @@ where `cos(y)` is positive; beyond it each turns its sign by its constant's. Two
 integrand real on both sides at once, for a positive product of their constants, and then the turns
 are as many as the roots of the cosine: an answer through two holds where the cosine is negative too,
 with `sgn(cos(y))` in front for an odd number of roots of the cosine, and says
-`provided a > 0 or cos(y) >= 0` where the product's sign is not known. Three say
-`provided cos(y) >= 0` ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+`provided a > 0 or cos(y) >= 0` where the product's sign is not known. Three are in the entry
+after this one ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
@@ -4248,6 +4248,26 @@ with `sgn(cos(y))` in front for an odd number of roots of the cosine, and says
 | `"sqrt(1 + csc(x))".ToEntity().Integrate("x")` | `integral(...)` | an arctangent in `tan(pi/4 - x/2)` |
 | `"cos(x)^(3/2)/sqrt(1 + sec(x))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm and a power in `tan(x/2)`, times `sgn(cos(x))` |
 | `"cos(c+d*x)^(3/2)*(A+C*sec(c+d*x)^2)/sqrt(a+a*sec(c+d*x))".ToEntity().Integrate("x")` | `integral(...)` | the same, times `sgn(cos(c + d x))`, `provided a > 0 or cos(c + d x) >= 0` |
+
+### An odd number of roots of `a ± a sec` and the secant or cosine holds where the cosine is negative
+
+**Answers where there were none.** Three half-odd powers, as in
+`sqrt(a + a sec(x)) sqrt(sec(x)) sqrt(cos(x))`, leave a root of `1 - tan(x/2)^2` in the answer, and
+the answer said `provided cos(x) >= 0`. An odd number of roots makes the integrand real on one side
+of the cosine's sign change at most, and on the negative one just where the product of the roots'
+constants is negative, so `sqrt(-1 - sec(x)) sqrt(sec(x)) sqrt(cos(x))` had no value anywhere it is
+real. There each root turns its sign by its constant's, as two do, and the turns are as many as the
+roots of the cosine. The answer is kept beyond the condition where the antiderivative in the
+half-angle tangent differentiates back there, and says `provided a < 0 or cos(y) >= 0` where the
+product's sign is not known. The cosecant's the same way through the complement
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(-1 - sec(x))*sqrt(sec(x))*sqrt(cos(x))".ToEntity().Integrate("x")` | `integral(...)` | an arctangent in `tan(x/2)`, times `sgn(cos(x))` |
+| `"sqrt(1 - sec(x))*sqrt(sec(x))*sqrt(cos(x))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm in `tan(x/2)`, times `sgn(cos(x)) sgn(tan(x/2))` |
+| `"sqrt(a + a*sec(x))*sqrt(sec(x))*sqrt(cos(x))".ToEntity().Integrate("x")` | `integral(...)` | an arctangent in `tan(x/2)`, times `sgn(cos(x))`, `provided a < 0 or cos(x) >= 0` |
+| `"sqrt(a + a*csc(x))*sqrt(csc(x))*sqrt(sin(x))".ToEntity().Integrate("x")` | `integral(...)` | an arctangent in `tan(pi/4 - x/2)`, times `sgn(sin(x))`, `provided a < 0 or sin(x) >= 0` |
 
 ### An even power of the secant or the cosecant under a root is written in the tangent
 
