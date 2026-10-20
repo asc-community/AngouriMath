@@ -3826,6 +3826,26 @@ simplified as before
 | `"sec(x)^2/(a + b*cos(x))^4".ToEntity().Integrate("x")` | `integral(...)` | the same |
 | `"sec(c + d*x)^2/(a + b*cos(c + d*x))^4".ToEntity().Integrate("x")` | `integral(...)` | the same in `tan((c + d x)/2)` |
 
+### A polynomial times powers of polynomials is integrated by raising each power by one
+
+**Answers where there were none.** `(a g + e x - b g x^4)/(a + b x^4)^(3/2)`,
+`(d + f x^2)^p (2 c d f + 2 b f^2 (3 + 2 p) x + 2 c f^2 (3 + 2 p) x^2)` and
+`x^2 (1 - a x)^(-1 - n (1 + n)/2) (1 + a x)^(-1 - (n - 1) n/2)`, Rubi's 1.1 and 1.2, were declined. A polynomial `P`
+times `R_1^(s_1) ... R_m^(s_m)`, an exponent among them not a whole number, is now `Q R_1^(s_1 + 1) ... R_m^(s_m + 1)`
+for a polynomial `Q` where there is one: that derivative equal to the integrand is a linear system in the
+coefficients of `Q`, solved with the symbols pinned first, and the answer is differentiated back at sampled points.
+It holds wherever no base is zero. And a factor `(c x)^t` is read as `x^t` with `(c x)^t x^(-t)` in front, constant
+on each interval for either sign of `c`, so `(c x)^(-1 - 2n/3)/(a + b x^n)` is answered too
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a*g + k*x - b*g*x^4)/(a + b*x^4)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | `(g x + k x^2/(2 a))/sqrt(a + b x^4)`, 60 characters |
+| `"(d + f*x^2)^p*(2*c*d*f + 2*b*f^2*(3 + 2*p)*x + 2*c*f^2*(3 + 2*p)*x^2)".ToEntity().Integrate("x")` | `integral(...)` | `(b f (3 + 2 p)/(p + 1) + 2 c f x) (d + f x^2)^(p + 1)`, 87 characters |
+| `"(3*a + b*x^2)^2/(a - b*x^2)^(7/3)".ToEntity().Integrate("x")` | `integral(...)` | `(9 a x - 3 b x^3) (a - b x^2)^(-4/3)`, 59 characters |
+| `"x^2*(1 - a*x)^(-1 - 1/2*n*(1 + n))*(1 + a*x)^(-1 - 1/2*(-1 + n)*n)".ToEntity().Integrate("x")` | `integral(...)` | a linear times both powers raised, 167 characters |
+| `"(c*x)^(-1 - 2/3*n)/(a + b*x^n)".ToEntity().Integrate("x")` | `integral(...)` | 581 characters |
+
 ### A polynomial times an odd half power of a quadratic with compound coefficients is answered shortly
 
 **Answers where there were none, and short ones where the unreleased master's were not.**
