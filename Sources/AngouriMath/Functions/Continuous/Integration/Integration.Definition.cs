@@ -732,6 +732,13 @@ namespace AngouriMath.Functions.Algebra
             // A linear and a quadratic to one power as one binomial, `(1 + x) (1 - x + x^2)` as
             // `1 + x^3`, which the rules for a power of a binomial answer.
             if ((answer = IndefiniteIntegralSolver.SolveALinearAndAQuadraticToOnePowerAsOneBinomial(expr, x, integrateByParts)) is { }) return answer;
+            // Cube roots of two linears beside a whole power of a third, under the quotient of the
+            // roots with the coefficients named, before the polynomial term takes it a level down to
+            // the substitution there, whose rational function ran past the budget.
+            if ((answer = IndefiniteIntegralSolver.SolveCubeRootsOfTwoLinearsBesideAWholePowerOfAThird(expr, x, integrateByParts)) is { }) return answer;
+            // And a root of a linear over a third power or higher of `b x + c x^2`, under the root,
+            // the quadratic kept as its two linears: the substitution there multiplies it out.
+            if ((answer = IndefiniteIntegralSolver.SolveAnOddHalfPowerOfALinearOverAPowerOfAQuadraticWithARootAtZero(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByWritingEachLinearOnce(expr, x, integrateByParts)) is { }) return answer;
             // The same with a symbol for an exponent, where the product is one power that is not
             // whole beside whole ones: `e^atanh(a x) x^m sqrt(1 - a^2 x^2)` is `K x^m (a x + 1)`, and ran
