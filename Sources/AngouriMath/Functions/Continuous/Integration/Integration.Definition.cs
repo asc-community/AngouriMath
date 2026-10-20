@@ -1373,6 +1373,8 @@ namespace AngouriMath.Functions.Algebra
             // The exponential substitution beside the other rewrites. It is also what integrates
             // the hyperbolic functions, which are not nodes here but quotients of exponentials.
             if ((answer = IndefiniteIntegralSolver.SolveByExponentialSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // And a rational one, where the exponential substitution has declined it.
+            if ((answer = IndefiniteIntegralSolver.SolveAHyperbolicIntegrandAsATrigonometricOne(expr, x, integrateByParts, rationalToo: true)) is { }) return answer;
             // A quotient by an exponential is the product with its reciprocal, and only that
             // spelling reaches integration by parts. After the substitution above rather than
             // before it, since a quotient that is rational in e^(k x) is that rule's to answer
@@ -1438,6 +1440,9 @@ namespace AngouriMath.Functions.Algebra
             // `sgn(sin(x)) sin(x)` with the sign taken out first.
             if ((answer = IndefiniteIntegralSolver.SolveByTakingASignOut(expr, x, integrateByParts)) is { }) return answer;
             if (integrateByParts && (answer = IndefiniteIntegralSolver.SolveIntegratingByParts(expr, x)) is { }) return answer;
+            // A hyperbolic integrand that is not rational in its exponential, asked as a trigonometric
+            // one: last, since the question in s can take long where a rule above answers in x at once.
+            if ((answer = IndefiniteIntegralSolver.SolveAHyperbolicIntegrandAsATrigonometricOne(expr, x, integrateByParts, rationalToo: false)) is { }) return answer;
             return null;
         }
         /// <summary>
