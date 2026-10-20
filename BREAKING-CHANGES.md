@@ -4292,6 +4292,21 @@ Both columns measured on a build, `v2.5.0` against this change.
 | `"x^2/x^2"` | `1 provided not x ^ 2 = 0` | `1 provided not x = 0` |
 | `"(x^2 - 1)/(x^2 + 2x + 1) + 1/(x + 1)"` | `x / (x + 1) provided not x ^ 2 + 2 * x + 1 = 0` | `x / (x + 1)` |
 
+### A coefficient past the doubles is not taken for zero
+
+**Answers where there were none.** `(b x^(-4) + b x^(-6) + b x^(-8))/sqrt(1/c^2 + x^2)` was declined. Since the interval
+evaluation of [#1019](https://github.com/asc-community/AngouriMath/issues/1019) it was answered on the unreleased
+master with two of its three terms missing, wrong at every point. Its coefficients run to `c^294`, past `1.3e154` at
+the symbols a coefficient is pinned to when it is read in lowest terms. The check that two values agree took their
+sizes squared, which is infinite there, and so was the tolerance relative to them. Every two values that large agreed,
+and each of those coefficients was taken for zero. The sizes are taken without squaring now, and a size past the
+doubles is left to the decimals.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(b*x^(-4) + b*x^(-6) + b*x^(-8))*(1/c^2 + x^2)^(-1/2)".ToEntity().Integrate("x")` | `integral(...)` | 1,445 characters |
+| `"(b*x^12 + b*x^10 + b*x^8)*(1/c^2 + x^2)^(-1/2)/x^16".ToEntity().Integrate("x")` | `integral(...)` | 1,254 characters |
+
 ### A partial-fraction coefficient with symbols in it is in lowest terms, its rational content included
 
 **Improvement, not silent.** The decomposition over written factors with symbols among their

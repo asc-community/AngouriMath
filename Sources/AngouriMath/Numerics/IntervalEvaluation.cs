@@ -168,7 +168,21 @@ namespace AngouriMath.Numerics
 
         internal bool IsFinite => Re.IsFinite && Im.IsFinite;
         internal bool IsReal => Im.Low == 0 && Im.High == 0;
-        internal double Magnitude => Math.Sqrt(Re.Magnitude * Re.Magnitude + Im.Magnitude * Im.Magnitude);
+        internal double Magnitude => Hypotenuse(Re.Magnitude, Im.Magnitude);
+
+        /// <summary>
+        /// <c>sqrt(a^2 + b^2)</c> for <paramref name="a"/> and <paramref name="b"/> at least zero,
+        /// scaled by the larger so that it does not overflow: squared, anything past about
+        /// <c>1.3e154</c> is infinite.
+        /// </summary>
+        internal static double Hypotenuse(double a, double b)
+        {
+            var (large, small) = a >= b ? (a, b) : (b, a);
+            if (large == 0 || !Interval.IsFiniteDouble(large))
+                return large;
+            var ratio = small / large;
+            return large * Math.Sqrt(1 + ratio * ratio);
+        }
 
         public static ComplexInterval operator +(ComplexInterval a, ComplexInterval b) => new(a.Re + b.Re, a.Im + b.Im);
         public static ComplexInterval operator -(ComplexInterval a, ComplexInterval b) => new(a.Re - b.Re, a.Im - b.Im);
@@ -308,15 +322,26 @@ namespace AngouriMath.Numerics
         /// of one, where both are smaller): true where the whole of their difference is within
         /// it, false where the whole of it is beyond, null where the intervals cannot tell.
         /// </summary>
+        /// <remarks>
+        /// The sizes are taken without squaring. Squared, a size past about <c>1.3e154</c> was
+        /// infinite, and so was the tolerance relative to it, and any two values that large agreed:
+        /// a coefficient of <c>c^294</c> read at <c>c = 3.71</c> was taken for zero, which dropped
+        /// two of the three terms of <c>(b x^(-4) + b x^(-6) + b x^(-8))/sqrt(1/c^2 + x^2)</c>'s
+        /// antiderivative, and an answer that large at a sampled point was passed whatever it was.
+        /// A size past the doubles is left to the decimals.
+        /// https://github.com/asc-community/AngouriMath/issues/1019
+        /// </remarks>
         internal static bool? Agree(ComplexInterval left, ComplexInterval right, double relativeTolerance)
         {
             var difference = left - right;
             var scale = Math.Max(1.0, Math.Max(left.Magnitude, right.Magnitude));
+            if (!Interval.IsFiniteDouble(scale))
+                return null;
             var allowed = relativeTolerance * scale;
-            var largest = Math.Sqrt(difference.Re.Magnitude * difference.Re.Magnitude + difference.Im.Magnitude * difference.Im.Magnitude);
+            var largest = Interval.Wider(ComplexInterval.Hypotenuse(difference.Re.Magnitude, difference.Im.Magnitude), 1);
             if (largest <= allowed)
                 return true;
-            var smallest = Math.Sqrt(difference.Re.Mignitude * difference.Re.Mignitude + difference.Im.Mignitude * difference.Im.Mignitude);
+            var smallest = Interval.Wider(ComplexInterval.Hypotenuse(difference.Re.Mignitude, difference.Im.Mignitude), -1);
             if (smallest > allowed)
                 return false;
             return null;
