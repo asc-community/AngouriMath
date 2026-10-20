@@ -733,6 +733,10 @@ namespace AngouriMath.Functions.Algebra
             // `1 + x^3`, which the rules for a power of a binomial answer.
             if ((answer = IndefiniteIntegralSolver.SolveALinearAndAQuadraticToOnePowerAsOneBinomial(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByWritingEachLinearOnce(expr, x, integrateByParts)) is { }) return answer;
+            // The same with a symbol for an exponent, where the product is one power that is not
+            // whole beside whole ones: `e^atanh(a x) x^m sqrt(1 - a^2 x^2)` is `K x^m (a x + 1)`, and ran
+            // out of time behind it.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingEachLinearOnceUnderASymbolicPower(expr, x, integrateByParts)) is { }) return answer;
             // A rational function with numbers for coefficients over a denominator past the twelfth
             // degree, by Hermite's reduction before anything searches: nothing below answered one.
             if ((answer = IndefiniteIntegralSolver.SolveAHighDegreeRationalFunctionByHermite(expr, x)) is { }) return answer;
