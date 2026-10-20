@@ -31898,6 +31898,26 @@ namespace AngouriMath.Functions.Algebra
         /// rows this way; `(d + i c d x)^(5/2) sqrt(f - i c f x) (a + b arsinh(c x))` ran past
         /// seventy seconds where the same thing over `1 + c^2 x^2` takes two thirds of one.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Both factors above the bar, `q` is the smaller power, so that the whole power left is
+        /// above the bar too: `(d + i c d x)^(3/2) (f - i c f x)^(5/2)` is `K^3 (f - i c f x) M^(3/2)`,
+        /// a polynomial beside the root. Paired the other way it was `K^5 M^(5/2)/(d + i c d x)`,
+        /// which ran past the budget, as did the same with `(a + b arsinh(c x))^2`; the polynomial
+        /// takes half a second.
+        /// </para>
+        /// <para>
+        /// The first factor above the bar and the second below it under a power of `-3/2` or
+        /// less, the whole power `L1^n` is written out as a sum of monomials, each over the root:
+        /// `sqrt(f - i c f x)/(d + i c d x)^(3/2)` is `K^(-3) (f - i c f x)^2/M^(3/2)`, and as that
+        /// product the rules for a power of a quadratic do not read it -- ten of Rubi's 7.1.4
+        /// rows, from `(f - i c f x)^2` to `(f - i c f x)^5` over `M^(3/2)` and `M^(5/2)`, ran past
+        /// the budget -- while each `x^k (a + b arsinh(c x))/M^(3/2)` is answered in a tenth of a
+        /// second. Over `sqrt(M)` the product is answered as it is, and is left so; and both
+        /// factors below the bar are left as they are paired.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
         private static bool TryWriteAPairOfLinearsOverARadicand(Entity expr, Entity.Variable x, List<Entity> references,
             Entity.Variable multiple, out Entity rewritten, out Entity? root)
         {
@@ -31928,6 +31948,11 @@ namespace AngouriMath.Functions.Algebra
                     var twice = (2 * half).Evaled;
                     if (half is not Number.Integer && twice is not Number.Integer)
                         continue;
+                    // Both above the bar, the smaller power is the one paired, so that the whole
+                    // power left over is above it too. See the remarks.
+                    var whole = (Number.Integer)(p - q).Evaled;
+                    if (half is not Number.Integer && !half.IsNegative && whole.IsNegative)
+                        continue;
                     var product = (first * second).Expand();
                     foreach (var candidate in references)
                     {
@@ -31943,6 +31968,14 @@ namespace AngouriMath.Functions.Algebra
                         {
                             together = MathS.Pow(multiple, twice) * MathS.Pow(candidate, half);
                             root = MathS.Sqrt(first) * MathS.Sqrt(second) / MathS.Sqrt(candidate);
+                        }
+                        // The first factor above the bar and the root of the radicand 3/2 or more
+                        // below it: a sum of monomials over that root. See the remarks.
+                        if (half is not Number.Integer && half < Number.Rational.Create(-1, 1) && p.Evaled is Number.Real { IsPositive: true }
+                            && AsMonomialsOverARoot(first, whole, x, factors.Where((_, k) => k != i && k != j), candidate, (Number.Rational)(-half)) is { } monomials)
+                        {
+                            rewritten = MathS.Pow(multiple, twice) * monomials;
+                            return true;
                         }
                         Entity result = MathS.Pow(first, (p - q).InnerSimplified) * together;
                         for (var k = 0; k < factors.Count; k++)
@@ -31961,6 +31994,44 @@ namespace AngouriMath.Functions.Algebra
                     Powf(var @base, var exponent) => (@base, exponent),
                     _ => (factor, Number.Integer.One),
                 };
+
+            // `L^n g/M^r` as `sum_k a_k x^k g/M^r`, each term spelled as a quotient, which is how
+            // the rules for a power of a quadratic read it; null where L^n is no polynomial.
+            static Entity? AsMonomialsOverARoot(Entity linear, Number.Integer power, Entity.Variable x,
+                IEnumerable<(Entity Base, Entity Exponent)> rest, Entity radicand, Number.Rational rootPower)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(MathS.Pow(linear, power), x, out var terms)
+                    || terms.Keys.Any(key => key.Sign < 0) || terms.Values.Any(coefficient => coefficient.ContainsNode(x)))
+                    return null;
+                // The other factors, a negative power of one below the bar with the radicand's root.
+                Entity? beside = null;
+                Entity under = MathS.Pow(radicand, rootPower);
+                foreach (var (@base, exponent) in rest)
+                {
+                    if (exponent.Evaled is Number.Real { IsNegative: true } negative)
+                    {
+                        var positive = (-negative).Evaled;
+                        under = under * (positive == Number.Integer.One ? @base : MathS.Pow(@base, positive));
+                        continue;
+                    }
+                    var factor = exponent == Number.Integer.One ? @base : MathS.Pow(@base, exponent);
+                    beside = beside is null ? factor : beside * factor;
+                }
+                Entity? sum = null;
+                foreach (var pair in terms.OrderBy(term => term.Key))
+                {
+                    var degree = pair.Key;
+                    var written = pair.Value.InnerSimplified;
+                    if (VanishesIdentically(written))
+                        continue;
+                    Entity term = degree.IsZero ? written : written * (degree.Equals(EInteger.One) ? x : MathS.Pow(x, Number.Integer.Create(degree)));
+                    if (beside is not null)
+                        term = term * beside;
+                    term = term / under;
+                    sum = sum is null ? term : sum + term;
+                }
+                return sum;
+            }
         }
 
         /// <summary>Set while <see cref="SolveByWritingEachLinearOnce"/> asks its product.</summary>

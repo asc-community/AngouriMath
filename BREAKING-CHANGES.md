@@ -6216,6 +6216,24 @@ with `K = sqrt(L1) sqrt(L2)/sqrt(M)` in front of the answer, constant wherever i
 
 Rubi's 7.1.4 and 7.1.5, all 376 problems that count: 308 to 345, no row lost, 56 timeouts to 27.
 
+### Half-odd powers of the two linears whose product is the radicand `arsinh` holds are paired to leave a polynomial
+
+**Answers where there were none.** `(a + b arsinh(c x)) sqrt(f - i c f x)/(d + i c d x)^(3/2)`,
+`(d + i c d x)^(3/2) (f - i c f x)^(5/2) (a + b arsinh(c x))` and ten more of Rubi's 7.1.4 were declined. With both
+linears above the bar the smaller power is now the one paired into the radicand `M = 1 + c^2 x^2`, so that the whole
+power left is above the bar too: `(d + i c d x)^(3/2) (f - i c f x)^(5/2)` is `K^3 (f - i c f x) M^(3/2)`, a polynomial
+beside the root. With the second below the bar under a power of `-3/2` or less, the whole power of the first is
+written out as monomials, each over the root, and each `x^k (a + b arsinh(c x))/M^(3/2)` is answered alone. Over
+`sqrt(M)`, and with both linears below the bar, the pairing is as before
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a+b*asinh(c*x))*sqrt(f-i*c*f*x)/(d+i*c*d*x)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 1,001 characters |
+| `"(f-i*c*f*x)^(5/2)*(a+b*asinh(c*x))/(d+i*c*d*x)^(5/2)".ToEntity().Integrate("x")` | `integral(...)` | 7,148 characters |
+| `"(d+i*c*d*x)^(3/2)*(f-i*c*f*x)^(5/2)*(a+b*asinh(c*x))".ToEntity().Integrate("x")` | `integral(...)` | 3,624 characters |
+| `"(d+i*c*d*x)^(3/2)*(f-i*c*f*x)^(5/2)*(a+b*asinh(c*x))^2".ToEntity().Integrate("x")` | `integral(...)` | 7,625 characters |
+
 ### The radicand an inverse sine or cosine holds is read as one
 
 `(d + c d x)^(1/2) (f - c f x)^(3/2) (a + b arcsin(c x))` ran out of time. `arcsin(u)` holds a
