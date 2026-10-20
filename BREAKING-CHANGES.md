@@ -4904,6 +4904,23 @@ now, and a closed interval at one point meets the other in that point or in noth
 |---|---|---|
 | `"(3; 1) /\ [0; 5]".ToEntity().InnerSimplified` | `[0; 5]` — wrong | `{ }` |
 
+### Exponentials of linears in two bases over a power of x are integrated to the exponential integral
+
+**Answers where there were none.** `a^x b^x/x`, `a^x b^x/x^2` and `a^x b^x/x^3`, Rubi's 2.3, were declined, and so was
+`sinh(f x)^2/x`. The rules for an exponential over a power of x read one exponential, and no spelling of the integrand
+merges two: `(a b)^x` is `e^(x ln(a b))`, and `ln(a b)` is not `ln(a) + ln(b)` for every `a` and `b`. A product of
+exponentials of linears beside a negative power of x is now taken as one, `e^(r x)` with `r = ln(a) + ln(b)`, by parts
+down to `Ei(r x)`. Where the rates cancel, as `e^(f x) e^(-f x)` does in `sinh(f x)^2`, the term is the power of x
+alone, decided as a value rather than read off the written `f - f`. An exponent with a quadratic in it, or a sine
+beside the exponentials, is declined as before ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"a^x*b^x/x".ToEntity().Integrate("x")` | `integral(...)` | `Ei((ln(a) + ln(b)) x)`, 27 characters |
+| `"a^x*b^x/x^3".ToEntity().Integrate("x")` | `integral(...)` | `e^(r x)` over `x^2` and over `x`, and `Ei(r x)`, 214 characters |
+| `"a^(c+d*x)*b^(f+g*x)/x".ToEntity().Integrate("x")` | `integral(...)` | `e^(c ln(a) + f ln(b)) Ei((d ln(a) + g ln(b)) x)`, 65 characters |
+| `"sinh(f*x)^2/x".ToEntity().Integrate("x")` | `integral(...)` | `Ei(2 f x)/4 - ln(x)/2 + Ei(-2 f x)/4`, 63 characters |
+
 ### A power of an exponential over a polynomial is integrated to the exponential integral
 
 **Answers where there were none.** `(F^(g (e + f x)))^n` with a symbol for `F` or `n` was read by no rule
