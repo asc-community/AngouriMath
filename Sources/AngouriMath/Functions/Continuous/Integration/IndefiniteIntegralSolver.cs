@@ -32211,6 +32211,145 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of the variable times a secant or cosecant power of a logarithm, beside the
+        /// power two below it, where the pair is the derivative of one product. With
+        /// <c>u = a + b ln(c x^n)</c>, so that <c>u' = B/x</c> for <c>B = b n</c>, and <c>k = m + 1</c>,
+        /// <c>d/dx [x^k sec(u)^(p - 2) (B (p - 2) tan(u) - k)] = x^m (D sec(u)^p - E sec(u)^(p - 2))</c>
+        /// with <c>D = B^2 (p - 1)(p - 2)</c> and <c>E = B^2 (p - 2)^2 + k^2</c>, so
+        /// <c>x^m (alpha sec(u)^p + beta sec(u)^(p - 2))</c> integrates to <c>alpha/D</c> times the
+        /// product wherever <c>beta D + alpha E = 0</c>. The cosecant's product is
+        /// <c>-x^k csc(u)^(p - 2) (B (p - 2) cot(u) + k)</c>, with the same <c>D</c> and <c>E</c>.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's reduction for <c>x^m sec(a + b ln(c x^n))^p</c> lowers <c>p</c> by two and leaves
+        /// <c>E/D</c> times the lower power, which alone is a hypergeometric function; where
+        /// <c>E</c> is zero -- <c>b^2 n^2 (p - 2)^2 + (m + 1)^2 = 0</c> -- or the lower power is the
+        /// integrand's other term, the product is the whole answer. Declined before: the
+        /// exponentials are written for a numerical imaginary <c>b</c> only, and
+        /// <c>sec(a + i ln(c x^n)/(n (p - 2)))^p</c>, <c>x^m sec(a + 2 ln(c x^(sqrt(-(1 + m)^2)/2)))^3</c>
+        /// and <c>-(1 + b^2 n^2) sec(u) + 2 b^2 n^2 sec(u)^3</c> were unanswered or ran out of time.
+        /// The derivative uses only <c>z^(p - 2) z^2 = z^p</c>, <c>x^m x = x^k</c> and
+        /// <c>ln(c x^n)' = n/x</c>, which hold for principal powers wherever the base is not zero,
+        /// so the answer holds wherever the integrand is defined. Not for <c>k = 0</c>, where the
+        /// logarithm's own derivative is beside it and the substitution answers. Rubi's 4.7.5.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static Entity? SolveSecantPowersOfALogarithmTwoApartAsTheDerivativeOfAProduct(Entity expr, Entity.Variable x)
+        {
+            static Entity? ArgumentOf(Entity node) => node switch { Secantf(var y) => y, Cosecantf(var y) => y, _ => null };
+            if (!expr.Nodes.Any(node => ArgumentOf(node) is { } y && y.Nodes.Any(inner => inner is Logf && inner.ContainsNode(x))))
+                return null;
+            Entity? argument = null;
+            var isSecant = false;
+            var monomials = Read(expr);
+            if (monomials is null || monomials.Count == 0 || argument is null)
+                return null;
+            // Gathered by their powers, and those whose coefficients cancel dropped.
+            var gathered = new List<(Entity Coefficient, Entity OfX, Entity OfF)>();
+            foreach (var (coefficient, ofX, ofF) in monomials)
+            {
+                var index = gathered.FindIndex(g => VanishesIdentically(g.OfX - ofX) && VanishesIdentically(g.OfF - ofF));
+                if (index < 0)
+                    gathered.Add((coefficient, ofX.InnerSimplified, ofF.InnerSimplified));
+                else
+                    gathered[index] = (gathered[index].Coefficient + coefficient, gathered[index].OfX, gathered[index].OfF);
+            }
+            gathered.RemoveAll(g => VanishesIdentically(g.Coefficient));
+            if (gathered.Count is 0 or > 2 || gathered.Count == 2 && !VanishesIdentically(gathered[0].OfX - gathered[1].OfX))
+                return null;
+            var (alpha, m, p) = gathered[0];
+            Entity beta = Number.Integer.Zero;
+            if (gathered.Count == 2)
+            {
+                var (otherCoefficient, _, otherPower) = gathered[1];
+                if (VanishesIdentically(otherPower - p + 2))
+                    beta = otherCoefficient;
+                else if (VanishesIdentically(p - otherPower + 2))
+                    (alpha, beta, p) = (otherCoefficient, alpha, otherPower);
+                else
+                    return null;
+            }
+            // `x u'`, the constant `B`.
+            var rate = Functions.PartialFractions.Bare((argument.Differentiate(x) * x).InnerSimplified.Simplify());
+            var k = (m + 1).InnerSimplified;
+            if (rate.ContainsNode(x) || VanishesIdentically(rate) || VanishesIdentically(k))
+                return null;
+            var d = (rate * rate * (p - 1) * (p - 2)).InnerSimplified;
+            var e = (rate * rate * (p - 2) * (p - 2) + k * k).InnerSimplified;
+            if (VanishesIdentically(d) || !VanishesIdentically(beta * d + alpha * e))
+                return null;
+            var lowered = (p - 2).InnerSimplified;
+            // Folded, as `2 b^2 n^2/((b n)^2 2)` and `i/(p - 2) (p - 2)` are not by the simplification
+            // the answer gets.
+            var scale = Functions.PartialFractions.Bare((alpha / d).Simplify());
+            var slope = Functions.PartialFractions.Bare((rate * lowered).Simplify());
+            var product = isSecant
+                ? MathS.Pow(x, k) * MathS.Pow(MathS.Sec(argument), lowered) * (slope * MathS.Tan(argument) - k)
+                : -MathS.Pow(x, k) * MathS.Pow(MathS.Cosec(argument), lowered) * (slope * MathS.Cotan(argument) + k);
+            return (scale * product).InnerSimplified;
+
+            // The integrand as monomials `coefficient x^m f(u)^p`, one `f` of one `u` throughout.
+            List<(Entity Coefficient, Entity OfX, Entity OfF)>? Read(Entity node)
+            {
+                if (!node.ContainsNode(x))
+                    return new() { (node, Number.Integer.Zero, Number.Integer.Zero) };
+                if (node == x)
+                    return new() { (Number.Integer.One, Number.Integer.One, Number.Integer.Zero) };
+                switch (node)
+                {
+                    case Powf(var @base, var exponent) when @base == x && !exponent.ContainsNode(x):
+                        return new() { (Number.Integer.One, exponent, Number.Integer.Zero) };
+                    case Secantf or Cosecantf:
+                        return Takes(node) ? new() { (Number.Integer.One, Number.Integer.Zero, Number.Integer.One) } : null;
+                    case Powf(var function, var exponent) when function is Secantf or Cosecantf && !exponent.ContainsNode(x):
+                        return Takes(function) ? new() { (Number.Integer.One, Number.Integer.Zero, exponent) } : null;
+                    case Mulf(var left, var right):
+                        return Product(Read(left), Read(right));
+                    case Divf(var numerator, var denominator):
+                        if (Read(denominator) is not { Count: 1 } below)
+                            return null;
+                        var (c, ofX, ofF) = below[0];
+                        return Product(Read(numerator), new() { (Number.Integer.One / c, -ofX, -ofF) });
+                    case Sumf(var augend, var addend):
+                        return Sum(Read(augend), Read(addend), Number.Integer.One);
+                    case Minusf(var minuend, var subtrahend):
+                        return Sum(Read(minuend), Read(subtrahend), Number.Integer.MinusOne);
+                    default:
+                        return null;
+                }
+            }
+
+            bool Takes(Entity function)
+            {
+                var (inner, secant) = (ArgumentOf(function)!, function is Secantf);
+                if (argument is null)
+                    (argument, isSecant) = (inner, secant);
+                return argument == inner && isSecant == secant;
+            }
+
+            static List<(Entity, Entity, Entity)>? Product(List<(Entity Coefficient, Entity OfX, Entity OfF)>? left, List<(Entity Coefficient, Entity OfX, Entity OfF)>? right)
+            {
+                if (left is null || right is null || left.Count * right.Count > 8)
+                    return null;
+                var product = new List<(Entity, Entity, Entity)>();
+                foreach (var l in left)
+                    foreach (var r in right)
+                        product.Add((l.Coefficient * r.Coefficient, l.OfX + r.OfX, l.OfF + r.OfF));
+                return product;
+            }
+
+            static List<(Entity, Entity, Entity)>? Sum(List<(Entity Coefficient, Entity OfX, Entity OfF)>? left, List<(Entity Coefficient, Entity OfX, Entity OfF)>? right, Entity sign)
+            {
+                if (left is null || right is null || left.Count + right.Count > 8)
+                    return null;
+                var sum = new List<(Entity, Entity, Entity)>(left);
+                foreach (var r in right)
+                    sum.Add((sign * r.Coefficient, r.OfX, r.OfF));
+                return sum;
+            }
+        }
+
+        /// <summary>
         /// A sum as the constant written in every one of its terms times the sum without it:
         /// <c>a - a sin(x)^2</c> is <c>a (1 - sin(x)^2)</c>, and <c>a + a sin(x)</c> is
         /// <c>a (1 + sin(x))</c>. A factor counts only where every term writes it, compared as
