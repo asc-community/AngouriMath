@@ -31310,8 +31310,8 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
-        /// <c>f^m (alpha + beta f^2)</c> for a symbolic <c>m</c> and <c>f</c> a sine, cosine, secant or
-        /// cosecant of a linear <c>u</c>, where it is the derivative of a product: with <c>u' = 1</c>,
+        /// <c>f^m (alpha + beta f^2)</c> for a symbolic <c>m</c>, or a number that is not whole, and <c>f</c> a
+        /// sine, cosine, secant or cosecant of a linear <c>u</c>, where it is the derivative of a product: with <c>u' = 1</c>,
         /// <c>(cos sin^(m + 1))' = sin^m ((m + 1) - (m + 2) sin^2)</c>,
         /// <c>(sin cos^(m + 1))' = cos^m ((m + 2) cos^2 - (m + 1))</c>,
         /// <c>(tan sec^m)' = sec^m ((m + 1) sec^2 - m)</c> and <c>(cot csc^m)' = -csc^m ((m + 1) csc^2 - m)</c>.
@@ -31321,23 +31321,39 @@ namespace AngouriMath.Functions.Algebra
         /// square terms, <c>alpha + beta f^2</c>, which matches <c>p0 + p2 f^2</c> above where
         /// <c>beta p0 = alpha p2</c>; the answer is <c>(alpha/p0) G/u'</c>. Rubi's 4.1.4.1, 4.2.4.1 and 4.5.4.1
         /// <c>sec(c + d x)^m (m - (1 + m) sec(c + d x)^2)</c> and the like were declined.
+        /// The power is one of the integrand's factors, and one under the bar is <c>f^(-m)</c>: only then is the
+        /// integrand <c>f^m</c> times the rest, and a power in one term of a sum, as in
+        /// <c>-m sec^m + (1 + m) sec^2</c>, is not a factor of it.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveASymbolicPowerOfATrigonometricFunctionAsTheDerivativeOfAProduct(Entity expr, Entity.Variable x)
         {
             if (!Integration.AnsweringTheQuestionAsked)
                 return null;
-            // The power with a symbol in its exponent, of a sine, cosine, secant or cosecant of a linear.
-            var power = expr.Nodes.OfType<Powf>().FirstOrDefault(node => node.Exponent.Vars.Any() && !node.Exponent.ContainsNode(x)
-                && node.Base is Sinf or Cosf or Secantf or Cosecantf);
-            if (power is not Powf(var function, var m))
+            // The power with a symbol in its exponent, of a sine, cosine, secant or cosecant of a linear,
+            // as a factor of the integrand.
+            var factors = FactorsOfTheIntegrand(expr);
+            var at = factors.FindIndex(pair => pair.Factor is Powf(Sinf or Cosf or Secantf or Cosecantf, var exponent)
+                && (exponent.Vars.Any() && !exponent.ContainsNode(x)
+                    // Or a number that is not whole: the derivatives hold for any m on the principal branch,
+                    // and a whole one is left to the rules for whole powers.
+                    || exponent is Number.Rational and not Number.Integer));
+            if (at < 0 || factors[at].Factor is not Powf(var function, var written))
                 return null;
+            var m = factors[at].Underneath ? (-written).InnerSimplified : written;
             var argument = function switch { Sinf(var y) => y, Cosf(var y) => y, Secantf(var y) => y, Cosecantf(var y) => y, _ => null };
             if (argument is null || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out _) || Functions.PartialFractions.IsZeroAsAValue(slope))
                 return null;
             var s = Variable.CreateUnique(expr, "s_trig");
-            // The power taken off by writing 1 for it: `s^m (...)/s^m` is not cancelled by the simplification.
-            var inS = expr.Substitute(power, Number.Integer.One).Substitute(function, s).InnerSimplified;
+            // The rest of the factors, without the power: `s^m (...)/s^m` is not cancelled by the simplification.
+            Entity above = Number.Integer.One, below = Number.Integer.One;
+            for (var i = 0; i < factors.Count; i++)
+                if (i != at)
+                {
+                    if (factors[i].Underneath) below *= factors[i].Factor;
+                    else above *= factors[i].Factor;
+                }
+            var inS = (above / below).Substitute(function, s).InnerSimplified;
             if (inS.ContainsNode(x) || !TreeAnalyzer.TryGetPolynomial(inS.Expand(), s, out var read)
                 || read.Keys.Any(key => !key.IsZero && !key.Equals(EInteger.FromInt32(2))))
                 return null;

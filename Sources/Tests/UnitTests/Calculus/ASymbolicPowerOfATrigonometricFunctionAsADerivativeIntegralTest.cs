@@ -24,7 +24,11 @@ namespace AngouriMath.Tests.Calculus
         {
             var integral = integrand.ToEntity().Integrate("x");
             Assert.DoesNotContain("integral(", integral.Stringize());
+            DifferentiatesBack(integrand, integral, pins);
+        }
 
+        private static void DifferentiatesBack(string integrand, Entity integral, params (string, double)[] pins)
+        {
             var pinned = integral.Substitute("C", 0);
             Entity original = integrand.ToEntity();
             foreach (var (name, value) in pins)
@@ -52,10 +56,44 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("sin(c+d*x)^m*(1+m-(2+m)*sin(c+d*x)^2)")]
         [InlineData("cos(x)^m*(-(1+m)+(2+m)*cos(x)^2)")]
         [InlineData("csc(x)^m*(m-(1+m)*csc(x)^2)")]
+        // Under the bar the power is f^(-m): (tan sec^(-m))' and (sin cos^(1 - m))'.
+        [InlineData("(m+(1-m)*sec(c+d*x)^2)/sec(c+d*x)^m")]
+        [InlineData("(-(1-m)+(2-m)*cos(x)^2)/cos(x)^m")]
         public void IsAnsweredAndDifferentiatesBack(string integrand)
         {
             DifferentiatesBack(integrand, ("A", 0.6), ("q", 1.25), ("c", 0.3), ("d", 0.75), ("m", 2.5));
             DifferentiatesBack(integrand, ("A", -0.75), ("q", 0.4), ("c", -1), ("d", -0.5), ("m", 1.0 / 3));
+        }
+
+        // A power that is not whole: Rubi's 4.5.4.1 (3 + 3 sec(c + d x)^2)/sqrt(sec(c + d x)), and the
+        // same derivatives at m = 1/2, 1/3 and 3/2.
+        [Theory]
+        [InlineData("(3+3*sec(c+d*x)^2)/sec(c+d*x)^(1/2)")]
+        [InlineData("sqrt(sin(x))*(3/2-5/2*sin(x)^2)")]
+        [InlineData("sin(c+d*x)^(1/3)*(4/3-7/3*sin(c+d*x)^2)")]
+        [InlineData("cos(x)^(3/2)*(-5/2+7/2*cos(x)^2)")]
+        [InlineData("csc(x)^(1/2)*(1/2-3/2*csc(x)^2)")]
+        public void IsAnsweredForAPowerThatIsNotWhole(string integrand)
+        {
+            DifferentiatesBack(integrand, ("c", 0.3), ("d", 0.75));
+            DifferentiatesBack(integrand, ("c", -1), ("d", -0.5));
+        }
+
+        // The power is not a factor of the whole integrand, or is one under the bar, where the bracket is
+        // not the derivative's: none of these is the derivative of a single product.
+        [Theory]
+        [InlineData("(-m+(1+m)*sec(x)^2)/sec(x)^m")]
+        [InlineData("-m*sec(x)^m+(1+m)*sec(x)^2")]
+        [InlineData("sin(x)^m*(1+m)-(2+m)*sin(x)^2")]
+        [InlineData("(1+m-(2+m)*sin(x)^2)/sin(x)^m")]
+        [InlineData("(-m+(1+m)*csc(x)^2)/csc(x)^m")]
+        public void IsNotAnsweredWronglyWhereThePowerIsNotThatFactor(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            if (integral.Stringize().Contains("integral("))
+                return;
+            DifferentiatesBack(integrand, integral, ("m", 2.5));
+            DifferentiatesBack(integrand, integral, ("m", 1.0 / 3));
         }
 
         [Fact]
