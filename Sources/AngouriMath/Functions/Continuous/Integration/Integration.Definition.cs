@@ -1045,7 +1045,8 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfACosineAndASinePlusTheirAmplitude(expr, x)) is { }) return answer;
             // And symbolic powers of `a ± a sin(y)` beside a power of `g cos(y)`, by u = sin(y), where
             // `(1 + u)(1 - u)` is the cosine's square: the half angle wants numeric powers, and the
-            // substitution search spent the budget on these.
+            // substitution search spent the budget on these. Numeric ones too beside a fractional
+            // power of `g cos(y)`, which the half angle does not read.
             if ((answer = IndefiniteIntegralSolver.SolveSymbolicPowersOfOnePlusMinusASineThroughTheSine(expr, x, integrateByParts)) is { }) return answer;
             // And a half-odd power of a +- a sec(y), which is that square over cos(y): by the half-angle
             // tangent, in which the whole is rational beside one root.

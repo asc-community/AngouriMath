@@ -3708,6 +3708,27 @@ Rubi's 1.1.4.2, `(c x)^m (a x^j + b x^n)^p` ([#718](https://github.com/asc-commu
 | `"x/sqrt(a*x + b*x^4)".Integrate("x")` | left unevaluated | `K` times `2 ln(2 b x^(3/2) + 2 sqrt(b) sqrt(a + b x^3))/(3 sqrt(b))` for `b > 0`, an arcsine for `b < 0`; real where `x < -(a/b)^(1/3)` as well, where `K` is `-1` |
 | `"x^(3/2*(n - 1))/(a*x^(n - 1) + b*x^n + c*x^(n + 1))^(3/2)".Integrate("x")` | left unevaluated | `K (2 b + 4 c x)/((4 a c - b^2) sqrt(a + b x + c x^2))`; `K` is 1 for a positive `x`, and a sign for a negative one, `-1` for `n = 2.3` |
 
+### Half-odd powers of `a ± a sin` beside a fractional power of the cosine are integrated through the sine
+
+**Answers where there were none.** `(e cos(c + d x))^(5/2) (a + a sin(c + d x))^(3/2)`,
+`sqrt(e cos(c + d x))/sqrt(a + a sin(c + d x))` and the 22 others of Rubi's 4.1.1.2 with a half-odd power of each were
+declined. Under `u = sin(y)` they are `(1 + u)^A (1 - u)^B` with `A` and `B` quarter-odd, which by Chebyshev's theorem
+is elementary only where `A + B` is whole. The rule below now takes numeric powers where `A`, `B` or `A + B` is whole
+and the rest is a polynomial in `u`, also one level below the question, and declines
+`(a + a sin(y)) sqrt(e cos(y))`, which is elliptic, before asking anything. Three of the file the unreleased master
+answered in six to eleven seconds, under a condition, now come through it in a twentieth of a second and without one,
+and `sqrt(e sin(c + d x))/sqrt(a - a cos(c + d x))`, which it answered by the half angle only for positive `a` and `e`, is
+answered for either sign ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(k*cos(c + d*x))^(5/2)*(a + a*sin(c + d*x))^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 1,156 characters |
+| `"sqrt(k*cos(c + d*x))/sqrt(a + a*sin(c + d*x))".ToEntity().Integrate("x")` | `integral(...)` | 859 characters |
+| `"(a + a*sin(c + d*x))^(5/2)/(k*cos(c + d*x))^(13/2)".ToEntity().Integrate("x")` | `integral(...)` | 468 characters |
+| `"(k*cos(c + d*x))^(9/2)/(a + a*sin(c + d*x))^(5/2)".ToEntity().Integrate("x")` | `integral(...)` | 1,073 characters |
+| `"(a + a*sin(c + d*x))^(3/2)/(k*cos(c + d*x))^(9/2)".ToEntity().Integrate("x")` | `integral(...)`; 456 characters under a condition, in 10.6 s, on the unreleased master | 403 characters, in 61 ms |
+| `"sqrt(k*sin(c + d*x))/sqrt(a - a*cos(c + d*x))".ToEntity().Integrate("x")` | `integral(...)`; on the unreleased master, an answer only where `a > 0` and `k > 0` | 825 characters, for either sign |
+
 ### Symbolic powers of `a ± a sin` beside a power of the cosine are integrated through the sine
 
 **Answers where there were none.** `(a + a sin(h + f x))^m sqrt(c - c sin(h + f x))` and its kin,
