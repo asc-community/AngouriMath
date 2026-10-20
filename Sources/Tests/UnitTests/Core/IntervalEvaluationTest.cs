@@ -160,6 +160,22 @@ namespace AngouriMath.Tests.Core
             Assert.False(PreciseEvaluation.Agree(PreciseEvaluation.Of(nearby, 40)!.Value, PreciseEvaluation.Of(sine, 40)!.Value, 1e-9));
         }
 
+        /// <summary>
+        /// A size past about <c>1.3e154</c> squared to an infinity, and so did the tolerance relative
+        /// to it: two values that large agreed whatever they were, and a coefficient that large was
+        /// taken for zero. Neither is decided now, and an exact difference between them is seen.
+        /// </summary>
+        [Theory]
+        [InlineData("2 * 10^167", "0")]
+        [InlineData("2 * 10^167", "3 * 10^167")]
+        [InlineData("2 * 10^167 * i", "0")]
+        public void ASizePastTheDoublesDoesNotAgree(string left, string right)
+            => Assert.NotEqual(true, IntervalEvaluation.Agree(IntervalEvaluation.Of(left.ToEntity())!.Value, IntervalEvaluation.Of(right.ToEntity())!.Value, 1e-30));
+
+        [Fact]
+        public void TheSizeOfALargeComplexValueIsFinite()
+            => Assert.InRange(IntervalEvaluation.Of("3 * 10^160 + 4 * 10^160 * i".ToEntity())!.Value.Magnitude, 4.99e160, 5.01e160);
+
         [Theory]
         [InlineData("sqrt(2)")]
         [InlineData("e^2 - pi")]
