@@ -154,6 +154,21 @@ integrand is then `x^(2n + 1) (c + d x)^n (2 c + 3 d x)`, the derivative of `x^(
 | `"x^(2*n)*(c+d*x)^n*(2*c*x+3*d*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 61 characters |
 | `"x^(n-1)*(c+d*x^2)^n*(c*x+3*d*x^3)".ToEntity().Integrate("x")` | `integral(...)` | 65 characters |
 
+### A power of a quotient of linears over a half-odd power of their product is integrated
+
+**Answers where there were none.** `e^(n acoth(a x))/(c - a^2 c x^2)^(3/2)` was declined, and so were its `^(5/2)` to
+`^(9/2)` and the same beside `x`, `x^2` and `x^3`, Rubi's 7.4.2. The parser folds `e^(n acoth(a x))` into
+`((a x + 1)/(a x - 1))^(n/2)`, a power `T^alpha` of a quotient of linears, and over a half-odd power of a multiple `Q` of
+their product the antiderivative is `T^alpha P(x) Q^(1/2 - K)` for a polynomial `P` whose coefficients a three-term
+recurrence gives; where the recurrence leaves an equation it cannot meet, the antiderivative is not of that shape and
+it is still declined ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(n*acoth(a*x))/(c-a^2*c*x^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 140 characters |
+| `"e^(n*acoth(a*x))*x/(c-a^2*c*x^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 155 characters |
+| `"e^(n*acoth(a*x))*x^3/(c-a^2*c*x^2)^(5/2)".ToEntity().Integrate("x")` | `integral(...)` | 397 characters |
+
 ### A power of a quotient of linears beside whole powers of them is integrated under the quotient
 
 **Answers where there were none.** `e^(n acoth(a x))/(c - a^2 c x^2)^2` was declined, and so were its `^3` and `^4`, Rubi's

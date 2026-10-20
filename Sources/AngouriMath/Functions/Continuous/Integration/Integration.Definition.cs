@@ -791,6 +791,8 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveByPartsAgainstALogarithmOfARadicalSum(expr, x)) is { }) return answer;
             // A function of tanh(L) or coth(L) alone that is not rational in it, under u = tanh(L).
             if ((answer = IndefiniteIntegralSolver.SolveAFunctionOfTheHyperbolicTangent(expr, x, integrateByParts)) is { }) return answer;
+            // A power of a quotient of linears over a half-odd power of their product, by Liouville's ansatz.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfAQuotientOfLinearsOverAHalfOddPowerOfTheirProduct(expr, x)) is { }) return answer;
             // A power of an exponential with a positive base is the exponential of the product,
             // exactly, and only that spelling is one the exponential rules read.
             if ((answer = IndefiniteIntegralSolver.SolveByFlatteningAPowerOfAnExponential(expr, x, integrateByParts)) is { }) return answer;
