@@ -16320,8 +16320,15 @@ namespace AngouriMath.Functions.Algebra
             }
             if (terms.Count < 2)
                 return null;
-            var bases = terms[0].Powers.Keys.ToList();
-            if (bases.Count == 0 || terms.Any(term => term.Powers.Count != bases.Count || bases.Any(@base => !term.Powers.ContainsKey(@base))))
+            // The bases in every term; a function in some of them only -- a sine or cosine, an
+            // exponential or a sum of them -- stays in the bracket, where the rule raises it from
+            // nothing: `x^4/(b sqrt(R)) + x^2 cos(a + b x)/sqrt(R) + 4 x sqrt(R)/(3 b)`, for
+            // `R = x^3 + 3 sin(a + b x)`, is `x/sqrt(R)` times a bracket with the cosine in it.
+            var bases = terms[0].Powers.Keys.Where(@base => terms.All(term => term.Powers.ContainsKey(@base))).ToList();
+            if (bases.Count == 0)
+                return null;
+            var functionsInSomeTerms = terms.Any(term => term.Powers.Count != bases.Count);
+            if (functionsInSomeTerms && terms.Any(term => term.Powers.Any(pair => !bases.Contains(pair.Key) && (pair.Value != Number.Integer.One || !IsAFunctionToRaise(pair.Key, x)))))
                 return null;
             // For each base the least of its exponents, against which every other is more by a
             // whole number or by a sum of symbols with no sign in front: `x^(m - 1)` beside
@@ -16348,7 +16355,7 @@ namespace AngouriMath.Functions.Algebra
                     return null;
                 least[@base] = lowest;
             }
-            if (least.Values.All(exponent => exponent is Number.Integer))
+            if (!functionsInSomeTerms && least.Values.All(exponent => exponent is Number.Integer))
                 return null;
             Entity bracket = Number.Integer.Zero;
             foreach (var (constant, powers) in terms)
@@ -16357,6 +16364,9 @@ namespace AngouriMath.Functions.Algebra
                 foreach (var @base in bases)
                     if (Difference(powers[@base], least[@base]) is var raised && raised != Number.Integer.Zero)
                         rest = rest * (raised == Number.Integer.One ? @base : MathS.Pow(@base, raised));
+                foreach (var function in powers.Keys)
+                    if (!bases.Contains(function))
+                        rest = rest * function;
                 bracket = bracket == Number.Integer.Zero ? rest : bracket + rest;
             }
             Entity common = Number.Integer.One;
@@ -16554,9 +16564,24 @@ namespace AngouriMath.Functions.Algebra
         /// then a constant times its own raised product's derivative -- and x may be raised from
         /// nothing, a power of it the integrand does not have.
         /// </para>
+        /// <para>
+        /// A function inside the bracket -- a sine, a cosine, an exponential or a sum of them, as
+        /// <c>sinh</c> is written -- may be raised from nothing too, one at a time: Rubi's 4.7.6
+        /// <c>F^(c (a + b x)) (f x)^m (e x cos(d + e x) + (m + b c x ln F) sin(d + e x))/x</c> is
+        /// <c>(F^(c (a + b x)) (f x)^m sin(d + e x))'</c>, and a sum whose terms have such a function
+        /// in some of them only has the powers common to all taken out and the function left in the
+        /// bracket. A power whose base and exponent both hold x is kept as the exponentials are,
+        /// with the derivative of its exponent times its base's logarithm, and the candidate may then
+        /// be the powers as they are: <c>cosh(x)^x (ln(cosh(x)) + x tanh(x))</c>. And where the
+        /// brackets are not proportional, the integrand may be a constant times the derivative and a
+        /// constant times the function alone, whose integral is asked:
+        /// <c>sinh(Q)/x^2 - b cosh(Q)/x</c> is <c>(-sinh(Q)/x)' + 2 c cosh(Q)</c> for
+        /// <c>Q = a + b x + c x^2</c>, where splitting the sum spent the budget declining both terms.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
-        internal static Entity? SolveAsTheDerivativeOfAProductOfPowers(Entity expr, Entity.Variable x)
+        internal static Entity? SolveAsTheDerivativeOfAProductOfPowers(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
                 return null;
@@ -16566,13 +16591,13 @@ namespace AngouriMath.Functions.Algebra
             // the derivative of `x^m (a + b x^n)^p`. As a sum it was split, and neither term is
             // elementary.
             if (expr is Sumf or Minusf)
-                return WithTheCommonPowersOut(expr, x) is { } factored ? SolveAsTheDerivativeOfAProductOfPowers(factored, x) : null;
+                return WithTheCommonPowersOut(expr, x) is { } factored ? SolveAsTheDerivativeOfAProductOfPowers(factored, x, integrateByParts) : null;
             // A bracket that is a polynomial with a power of x in every term has that power taken out, to
             // join the powers it multiplies: `x^(2n) (c + d x)^n (2 c x + 3 d x^2)` is
             // `x^(2n + 1) (c + d x)^n (2 c + 3 d x)`, the derivative of `x^(2n + 2) (c + d x)^(n + 1)/(n + 1)`,
             // and with the x in the bracket nothing raised x by enough.
             if (WithAPowerOfXOutOfTheBracket(expr, x) is { } outOfTheBracket)
-                return SolveAsTheDerivativeOfAProductOfPowers(outOfTheBracket, x);
+                return SolveAsTheDerivativeOfAProductOfPowers(outOfTheBracket, x, integrateByParts);
             Entity constant = Number.Integer.One;
             Entity? bracket = null;
             var raisable = new List<(Entity Base, Entity Exponent)>();
@@ -16617,9 +16642,27 @@ namespace AngouriMath.Functions.Algebra
                     kept = underneath ? kept / factor : kept * factor;
                     continue;
                 }
+                // A power with x in its base and its exponent is the exponential of the exponent
+                // times the base's logarithm, kept as the exponentials are, with that derivative:
+                // `cosh(x)^x (ln(cosh(x)) + x tanh(x))` is `(cosh(x)^x)'`, and raised it was squared.
+                if (factor is Powf(var variableBase, var variableExponent) && variableBase.ContainsNode(x) && variableExponent.ContainsNode(x))
+                {
+                    var derivative = Functions.PartialFractions.Bare((variableExponent * MathS.Ln(variableBase)).Differentiate(x).InnerSimplified);
+                    logarithmicDerivativesKept.Add(underneath ? -derivative : derivative);
+                    kept = underneath ? kept / factor : kept * factor;
+                    continue;
+                }
                 raisable.Add((factor, underneath ? Number.Integer.MinusOne : Number.Integer.One));
             }
-            if (raisable.Count == 0 || raisable.Count > 4)
+            // A function inside the bracket, raised from nothing: the bracket of `(K sin(u))'` is
+            // `K'/K sin(u) + u' cos(u)`, so Rubi's
+            // `F^(c (a + b x)) (f x)^m (e x cos(d + e x) + (m + b c x ln F) sin(d + e x))/x` is
+            // `(F^(c (a + b x)) (f x)^m sin(d + e x))'`, and the sine was in no power to raise.
+            // At the question asked only: one below, where by parts and the substitutions ask it
+            // of every bracket they write, the candidates were a second of a decline.
+            var kernels = bracket is null || !Integration.AnsweringTheQuestionAsked ? new List<Entity>() : KernelsOfTheBracket(bracket, raisable, x);
+            var variablePowerKept = logarithmicDerivativesKept.Any(derivative => derivative.ContainsNode(x));
+            if (raisable.Count > 4 || raisable.Count == 0 && kernels.Count == 0 && !variablePowerKept)
                 return null;
             // Where a power is not a whole one -- a root, or a symbolic exponent -- two more
             // candidates, each a shape nothing else reads. With no sum beside two or more powers,
@@ -16639,8 +16682,29 @@ namespace AngouriMath.Functions.Algebra
             }
             if (bracket is null)
                 return null;
-            for (var subset = 1; subset < 1 << raisable.Count; subset++)
+            // The functions last, one at a time: two raised together is a product nothing writes.
+            var firstKernel = raisable.Count;
+            raisable.AddRange(kernels.Select(kernel => (kernel, (Entity)Number.Integer.Zero)));
+            var besideAFunction = new List<(Entity BracketOfTheDerivative, Entity Candidate)>();
+            // With a power of a variable base kept, the candidate may be the integrand's powers as
+            // they are, nothing raised.
+            for (var subset = variablePowerKept ? 0 : 1; subset < 1 << raisable.Count; subset++)
             {
+                var kernelsRaised = 0;
+                var powersRaised = 0;
+                for (var i = 0; i < raisable.Count; i++)
+                    if ((subset & (1 << i)) != 0)
+                    {
+                        if (i >= firstKernel)
+                            kernelsRaised++;
+                        else
+                            powersRaised++;
+                    }
+                // A function raised beside one power at most: the derivative of the function brings
+                // its partner in, times the other raised bases, and that is the coefficient of the
+                // partner in the bracket, a power of x or of one base in every shape read.
+                if (kernelsRaised > 1 || kernelsRaised == 1 && powersRaised > 1)
+                    continue;
                 Entity candidate = kept;
                 Entity productOfRaisedBases = Number.Integer.One;
                 for (var i = 0; i < raisable.Count; i++)
@@ -16678,11 +16742,18 @@ namespace AngouriMath.Functions.Algebra
                             theOtherRaisedBases *= raisable[j].Base;
                     bracketOfTheDerivative += newExponent * @base.Differentiate(x) * theOtherRaisedBases;
                 }
-                if (candidate == kept)
+                if (subset != 0 && candidate == kept || !candidate.ContainsNode(x))
                     continue;
                 bracketOfTheDerivative = Functions.PartialFractions.Bare(bracketOfTheDerivative.InnerSimplified);
                 if (!AreProportionalAtSampledPoints(bracket, bracketOfTheDerivative, x))
+                {
+                    // Kept for after the exact candidates, which give the one product where
+                    // there is one: `F^(c (a + b x)) (e cos(d + e x) + b c ln(F) sin(d + e x))`
+                    // with the cosine raised leaves a sine, and is `(F^(c (a + b x)) sin(d + e x))'`.
+                    if (kernelsRaised == 1)
+                        besideAFunction.Add((bracketOfTheDerivative, candidate));
                     continue;
+                }
                 // The constant is the quotient of one monomial's coefficients, the two
                 // brackets read as polynomials in x and in the transcendental atoms holding
                 // it -- `ln(d x)` -- each an indeterminate; or, where they do not read so,
@@ -16693,6 +16764,11 @@ namespace AngouriMath.Functions.Algebra
                     if (k is Providedf(var inner, _))
                         k = inner;
                 }
+                // With no symbol but x in the brackets, a quotient the simplifier cannot reduce --
+                // `ln(cosh(x)) + x tanh(x)` over the same in exponentials -- is the number it takes
+                // at a point, where that is a small rational.
+                if (k.ContainsNode(x) && ASmallRationalRatioAtAPoint(bracket, bracketOfTheDerivative, x) is { } ratio)
+                    k = ratio;
                 k = Functions.PartialFractions.Bare((constant * k).InnerSimplified);
                 if (k.ContainsNode(x) || k.Nodes.Any(node => node == MathS.NaN))
                     continue;
@@ -16703,9 +16779,177 @@ namespace AngouriMath.Functions.Algebra
                 if (holds)
                     return answer;
             }
+            foreach (var (bracketOfTheDerivative, candidate) in besideAFunction)
+                if (TheDerivativeBesideAFunctionOfTheBracket(expr, x, integrateByParts, constant, kept, raisable.Take(firstKernel).ToList(), bracket, bracketOfTheDerivative, candidate) is { } answer)
+                    return answer;
             return null;
         }
 
+        /// <summary>
+        /// The quotient of <paramref name="left"/> by <paramref name="right"/> at a point, as a
+        /// rational of denominator at most twelve within 1e-12 of it, where neither holds a symbol
+        /// but <paramref name="x"/>; null otherwise. The caller checks it at sampled points.
+        /// </summary>
+        private static Entity? ASmallRationalRatioAtAPoint(Entity left, Entity right, Entity.Variable x)
+        {
+            if (left.Vars.Concat(right.Vars).Any(symbol => symbol != x))
+                return null;
+            using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+            foreach (var at in new[] { "0.29", "1.43" })
+            {
+                var point = Number.Real.Create(EDecimal.FromString(at));
+                if (left.Substitute(x, point).Evaled is not Number.Complex l || right.Substitute(x, point).Evaled is not Number.Complex r
+                    || l.IsNaN || r.IsNaN || r.Abs().EDecimal.CompareTo(EDecimal.FromString("1e-30")) < 0)
+                    continue;
+                var ratio = l / r;
+                if (ratio.ImaginaryPart.EDecimal.Abs().CompareTo(EDecimal.FromString("1e-12")) > 0)
+                    return null;
+                var value = ratio.RealPart.EDecimal.ToDouble();
+                for (var denominator = 1; denominator <= 12; denominator++)
+                {
+                    var numerator = System.Math.Round(value * denominator);
+                    if (System.Math.Abs(value - numerator / denominator) <= 1e-12 * System.Math.Max(1, System.Math.Abs(value)))
+                        return Number.Rational.Create(EInteger.FromInt64((long)numerator), EInteger.FromInt32(denominator));
+                }
+                return null;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// The functions of <paramref name="x"/> the terms of <paramref name="bracket"/> are
+        /// products of, for <see cref="SolveAsTheDerivativeOfAProductOfPowers"/> to raise from
+        /// nothing: a sine, a cosine, or a sum of exponentials, sines and cosines -- `e^u - e^(-u)`,
+        /// which is how `2 sinh(u)` is written -- that is not among the powers already; none where
+        /// there are more than four, or where no term has x beside its functions.
+        /// </summary>
+        private static List<Entity> KernelsOfTheBracket(Entity bracket, List<(Entity Base, Entity Exponent)> raisable, Entity.Variable x)
+        {
+            var kernels = new List<Entity>();
+            var aCoefficientHoldsX = false;
+            foreach (var term in Sumf.LinearChildren(bracket))
+            {
+                var functions = 0;
+                var other = false;
+                foreach (var (factor, underneath) in FactorsOfTheIntegrand(term))
+                {
+                    if (!underneath && IsAFunctionToRaise(factor, x))
+                    {
+                        functions++;
+                        if (!kernels.Contains(factor) && !raisable.Any(pair => pair.Base == factor))
+                            kernels.Add(factor);
+                    }
+                    else if (factor.ContainsNode(x))
+                        other = true;
+                }
+                aCoefficientHoldsX |= functions > 0 && other;
+            }
+            // A bracket of the functions with constant coefficients only is a sum the rules for the
+            // functions answer, or the angle sum of one -- `sin(d) cos(k x) + cos(d) sin(k x)`, which
+            // the search writes of every sine and asks of again, a second of candidates to decline.
+            return aCoefficientHoldsX && kernels.Count <= 4 ? kernels : new List<Entity>();
+        }
+
+        /// <summary>
+        /// Whether <paramref name="factor"/> is a sine or cosine of something with
+        /// <paramref name="x"/> in it, an exponential of it, or a sum of those times constants.
+        /// </summary>
+        private static bool IsAFunctionToRaise(Entity factor, Entity.Variable x)
+        {
+            if (!factor.ContainsNode(x))
+                return false;
+            if (factor is Sinf or Cosf || factor is Powf(var @base, var exponent) && !@base.ContainsNode(x) && exponent.ContainsNode(x))
+                return true;
+            return factor is Sumf or Minusf && Sumf.LinearChildren(factor).All(term =>
+                term.ContainsNode(x) && FactorsOfTheIntegrand(term).All(pair => !pair.Factor.ContainsNode(x)
+                    || !pair.Underneath && (pair.Factor is Sinf or Cosf || pair.Factor is Powf(var b, var e) && !b.ContainsNode(x) && e.ContainsNode(x))));
+        }
+
+        /// <summary>
+        /// For <see cref="SolveAsTheDerivativeOfAProductOfPowers"/>, where the brackets are not
+        /// proportional: the integrand as a constant times the candidate's derivative and what is
+        /// left, where that is the functions alone, asked as a question of its own.
+        /// <c>sinh(Q)/x^2 - b cosh(Q)/x</c>, for <c>Q = a + b x + c x^2</c>, is
+        /// <c>(-sinh(Q)/x)' + 2 c cosh(Q)</c>, the error functions'.
+        /// </summary>
+        /// <remarks>
+        /// The brackets are read as polynomials in x and in the functions in them, the constant is
+        /// tried off each monomial the two share, and what is left must keep no power of x: the
+        /// powers beside the bracket are x's alone and each monomial left has the degree that
+        /// cancels it. Linearity split Rubi's 6.1.4 and 6.2.4 into two terms, neither elementary,
+        /// and spent the budget declining them. At the question asked only, not re-entered, and
+        /// checked at sampled points before it is given.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        private static Entity? TheDerivativeBesideAFunctionOfTheBracket(Entity expr, Entity.Variable x, bool integrateByParts,
+            Entity constant, Entity kept, List<(Entity Base, Entity Exponent)> powers, Entity bracket, Entity bracketOfTheDerivative, Entity candidate)
+        {
+            if (!Integration.AnsweringTheQuestionAsked || derivativeBesideAFunction)
+                return null;
+            Entity besideTheBracket = Number.Integer.Zero;
+            foreach (var (@base, exponent) in powers)
+            {
+                if (exponent.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                if (@base != x)
+                    return null;
+                besideTheBracket = exponent;
+            }
+            if (!TryReadInAtoms(bracket, bracketOfTheDerivative, x, out var leftRead, out var rightRead, out var atoms)
+                || atoms.Any(pair => !IsAFunctionToRaise(pair.Atom, x)))
+                return null;
+            var comparer = new IntArrayComparer();
+            var tried = new List<Entity>();
+            foreach (var pair in rightRead)
+            {
+                if (pair.Value.Evaled is Number.Complex { IsZero: true } || !leftRead.TryGetValue(pair.Key, out var above))
+                    continue;
+                var k = Functions.PartialFractions.Bare((above / pair.Value).Simplify());
+                if (k.ContainsNode(x) || k.Nodes.Any(node => node == MathS.NaN) || tried.Contains(k))
+                    continue;
+                tried.Add(k);
+                var left = new List<Entity>();
+                var keepsAPower = false;
+                foreach (var key in leftRead.Keys.Concat(rightRead.Keys).Distinct(comparer))
+                {
+                    var coefficient = (leftRead.TryGetValue(key, out var l) ? l : Number.Integer.Zero)
+                        - k * (rightRead.TryGetValue(key, out var r) ? r : Number.Integer.Zero);
+                    if (VanishesIdentically(coefficient))
+                        continue;
+                    if ((besideTheBracket + key[0]).InnerSimplified.Evaled is not Number.Complex { IsZero: true })
+                    {
+                        keepsAPower = true;
+                        break;
+                    }
+                    Entity term = coefficient;
+                    for (var j = 1; j < key.Length; j++)
+                        if (key[j] != 0)
+                            term *= key[j] == 1 ? atoms[j - 1].Atom : MathS.Pow(atoms[j - 1].Atom, key[j]);
+                    left.Add(term);
+                }
+                if (keepsAPower || left.Count == 0 || left.Count >= leftRead.Count)
+                    continue;
+                var rest = (constant * kept * left.Aggregate((a, b) => a + b)).InnerSimplified;
+                Entity? integral;
+                derivativeBesideAFunction = true;
+                try
+                {
+                    integral = Integration.ComputeAsAQuestionOfItsOwn(rest, x, integrateByParts);
+                }
+                finally
+                {
+                    derivativeBesideAFunction = false;
+                }
+                if (integral is null || integral.Nodes.Any(node => node is Integralf || node == MathS.NaN))
+                    return null;
+                var answer = Functions.PartialFractions.Bare((Functions.PartialFractions.Bare((constant * k * candidate).InnerSimplified) + integral).InnerSimplified);
+                return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+            }
+            return null;
+        }
+
+        /// <summary>Set while <see cref="TheDerivativeBesideAFunctionOfTheBracket"/> asks its question.</summary>
+        [System.ThreadStatic] private static bool derivativeBesideAFunction;
 
         /// <summary>
         /// A binomial differential <c>x^m (a + b x^n)^p</c> with a symbol in its exponents, in
@@ -16955,25 +17199,7 @@ namespace AngouriMath.Functions.Algebra
         private static bool TryReadTheRatioOfBrackets(Entity left, Entity right, Entity.Variable x, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity? k)
         {
             k = null;
-            var atoms = new List<(Entity Atom, Entity.Variable Symbol)>();
-            Entity everything = left + right;
-            Entity InAtoms(Entity entry) => entry.Replace(node =>
-            {
-                if (!node.ContainsNode(x) || node == x || node is Sumf or Minusf or Mulf or Divf || node is Powf(_, Number.Integer { EInteger.Sign: >= 0 }))
-                    return node;
-                foreach (var (atom, symbol) in atoms)
-                    if (atom == node)
-                        return symbol;
-                var fresh = Variable.CreateUnique(everything, "t_atom");
-                atoms.Add((node, fresh));
-                everything += fresh;
-                return fresh;
-            });
-            var leftInAtoms = InAtoms(left);
-            var rightInAtoms = InAtoms(right);
-            var variables = new List<Entity.Variable> { x };
-            variables.AddRange(atoms.Select(pair => pair.Symbol));
-            if (!TryReadInAll(leftInAtoms, variables, out var leftRead) || !TryReadInAll(rightInAtoms, variables, out var rightRead))
+            if (!TryReadInAtoms(left, right, x, out var leftRead, out var rightRead, out _))
                 return false;
             // A monomial whose coefficient on the right is a number first, so that the
             // constant is the left coefficient over it and not a quotient of symbols to be
@@ -16989,6 +17215,38 @@ namespace AngouriMath.Functions.Algebra
                     return true;
                 }
             return false;
+        }
+
+        /// <summary>
+        /// <paramref name="left"/> and <paramref name="right"/> read as polynomials in
+        /// <paramref name="x"/> and in every atom holding it -- a logarithm, an exponential --
+        /// as an indeterminate, keyed by the powers of x and then of the atoms in order; false
+        /// where either does not read so.
+        /// </summary>
+        private static bool TryReadInAtoms(Entity left, Entity right, Entity.Variable x,
+            out Dictionary<int[], Entity> leftRead, out Dictionary<int[], Entity> rightRead, out List<(Entity Atom, Entity.Variable Symbol)> atoms)
+        {
+            var found = new List<(Entity Atom, Entity.Variable Symbol)>();
+            atoms = found;
+            Entity everything = left + right;
+            Entity InAtoms(Entity entry) => entry.Replace(node =>
+            {
+                if (!node.ContainsNode(x) || node == x || node is Sumf or Minusf or Mulf or Divf || node is Powf(_, Number.Integer { EInteger.Sign: >= 0 }))
+                    return node;
+                foreach (var (atom, symbol) in found)
+                    if (atom == node)
+                        return symbol;
+                var fresh = Variable.CreateUnique(everything, "t_atom");
+                found.Add((node, fresh));
+                everything += fresh;
+                return fresh;
+            });
+            var leftInAtoms = InAtoms(left);
+            var rightInAtoms = InAtoms(right);
+            var variables = new List<Entity.Variable> { x };
+            variables.AddRange(found.Select(pair => pair.Symbol));
+            rightRead = new Dictionary<int[], Entity>();
+            return TryReadInAll(leftInAtoms, variables, out leftRead) && TryReadInAll(rightInAtoms, variables, out rightRead);
         }
 
         /// <summary>
@@ -32458,6 +32716,139 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A quotient whose denominator is a sum with a negative exponential in a term, multiplied
+        /// above and below by the positive one: Rubi's <c>(cos(x) + sin(x))/(e^(-x) + sin(x))</c> is
+        /// <c>e^x (cos(x) + sin(x))/(1 + e^x sin(x))</c>, the logarithmic derivative of
+        /// <c>1 + e^x sin(x)</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// Written with <c>e^(-x)</c> the numerator is the denominator's derivative plus the
+        /// denominator, and nothing reads that sum: it was declined. Only where the denominator
+        /// holds a function of x besides exponentials, since a rational function of exponentials
+        /// is the exponential substitution's; at the question asked, not re-entered, and checked at
+        /// sampled points.
+        /// </remarks>
+        internal static Entity? SolveByClearingANegativeExponentialBelowTheBar(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked || clearingANegativeExponential)
+                return null;
+            // As written: the single quotient takes `1/e^x` up, and that is the rewriting this is.
+            Entity above = Number.Integer.One;
+            Entity? below = null;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!underneath)
+                    above *= factor;
+                else if (below is null && factor is Sumf or Minusf)
+                    below = factor;
+                else
+                    return null;
+            }
+            if (below is null || !above.ContainsNode(x))
+                return null;
+            Entity? @base = null, power = null;
+            var anotherFunction = false;
+            var terms = Sumf.LinearChildren(below).ToList();
+            foreach (var term in terms)
+                foreach (var (factor, underneath) in FactorsOfTheIntegrand(term))
+                {
+                    if (!factor.ContainsNode(x))
+                        continue;
+                    if (factor is not Powf(var b, var exponent) || b.ContainsNode(x) || !exponent.ContainsNode(x))
+                    {
+                        anotherFunction = true;
+                        continue;
+                    }
+                    if (@base is null && underneath != exponent is Mulf(Number.Real { IsNegative: true }, _))
+                        (@base, power) = (b, underneath ? exponent : (-exponent).InnerSimplified);
+                }
+            if (@base is null || power is null || !anotherFunction)
+                return null;
+            // Each term times base^power, its own power of the base joined to that one.
+            Entity Times(Entity term)
+            {
+                Entity rest = Number.Integer.One;
+                Entity exponentOfTheBase = power;
+                foreach (var (factor, underneath) in FactorsOfTheIntegrand(term))
+                {
+                    if (factor is Powf(var b, var exponent) && b == @base && exponent.ContainsNode(x))
+                        exponentOfTheBase = underneath ? exponentOfTheBase - exponent : exponentOfTheBase + exponent;
+                    else
+                        rest = underneath ? rest / factor : rest * factor;
+                }
+                // Simplified, not inner-simplified, which leaves `x - x` as written.
+                exponentOfTheBase = Functions.PartialFractions.Bare(exponentOfTheBase.Simplify());
+                return exponentOfTheBase.Evaled is Number.Complex { IsZero: true } ? rest : rest * MathS.Pow(@base, exponentOfTheBase);
+            }
+            var cleared = terms.Select(Times).Aggregate((left, right) => left + right);
+            var rewritten = (Times(above) / cleared).InnerSimplified;
+            if (rewritten == expr || rewritten == expr.InnerSimplified)
+                return null;
+            Entity? answer;
+            clearingANegativeExponential = true;
+            try
+            {
+                answer = Integration.ComputeAsTheSameQuestion(rewritten, x, integrateByParts);
+            }
+            finally
+            {
+                clearingANegativeExponential = false;
+            }
+            return answer is not null && Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
+
+        /// <summary>Set while <see cref="SolveByClearingANegativeExponentialBelowTheBar"/> asks its question.</summary>
+        [System.ThreadStatic] private static bool clearingANegativeExponential;
+
+        /// <summary>
+        /// A squared sine and a squared cosine of one argument in a sum, written as the one they
+        /// add up to: Rubi's <c>e^(cos(x)^2 + sin(x)^2)</c> is <c>e x</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// Nothing simplifies the integrand, and no rule reads an exponent whose value is a
+        /// constant while it is written with x: it was declined. The simplifier's
+        /// <see cref="AngouriMath.Core.Transformations.RewriteRules.PythagoreanIdentity"/>, at the question asked, where a sum holds
+        /// both squares of one argument with the same coefficient.
+        /// </remarks>
+        internal static Entity? SolveByFoldingAPythagoreanPair(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked || !expr.Nodes.Any(node => node is Sumf or Minusf && node.ContainsNode(x) && HoldsAPythagoreanPair(node)))
+                return null;
+            var folded = AngouriMath.Core.Transformations.RewriteRuleSetExtensions.Rewrite(expr, AngouriMath.Core.Transformations.RewriteRules.PythagoreanIdentity).InnerSimplified;
+            if (folded == expr || folded == expr.InnerSimplified)
+                return null;
+            return Integration.ComputeAsTheSameQuestion(folded, x, integrateByParts);
+
+            static bool HoldsAPythagoreanPair(Entity sum)
+            {
+                var squares = new List<(Entity Coefficient, Entity Argument, bool Sine)>();
+                foreach (var term in Sumf.LinearChildren(sum))
+                {
+                    Entity coefficient = Number.Integer.One;
+                    (Entity Argument, bool Sine)? square = null;
+                    foreach (var (factor, underneath) in FactorsOfTheIntegrand(term))
+                    {
+                        if (!underneath && square is null && factor is Powf(Sinf(var s), Number.Integer { EInteger: var two }) && two.Equals(EInteger.FromInt32(2)))
+                            square = (s, true);
+                        else if (!underneath && square is null && factor is Powf(Cosf(var c), Number.Integer { EInteger: var twice }) && twice.Equals(EInteger.FromInt32(2)))
+                            square = (c, false);
+                        else
+                            coefficient = underneath ? coefficient / factor : coefficient * factor;
+                    }
+                    if (square is { } found)
+                    {
+                        if (squares.Any(other => other.Sine != found.Sine && other.Argument == found.Argument && VanishesIdentically(other.Coefficient - coefficient)))
+                            return true;
+                        squares.Add((coefficient, found.Argument, found.Sine));
+                    }
+                }
+                return false;
+            }
+        }
+
+        /// <summary>
         /// A whole power of <c>a + b u</c>, where <c>u</c> is the inverse sine or cosine of
         /// <c>w = c + d x^2</c> with <c>c^2 = 1</c>, the inverse hyperbolic cosine of one, or the
         /// inverse hyperbolic sine of one with <c>c^2 = -1</c>, by the recurrence
@@ -37277,6 +37668,66 @@ namespace AngouriMath.Functions.Algebra
                 || node is Tanf(var argument) && argument == u
                 || node is Cotanf(var cotangentArgument) && cotangentArgument == u);
 
+        /// <summary>
+        /// <paramref name="expr"/> over <paramref name="derivative"/>, a polynomial in
+        /// <paramref name="x"/> of two terms or more, where a factor of it above the bar -- or the
+        /// sum of the polynomial parts of its terms, where every term has the same rest -- is a
+        /// constant multiple of the derivative: the constant times the rest. Null otherwise.
+        /// </summary>
+        private static Entity? WithAFactorProportionalToTheDerivative(Entity expr, Entity derivative, Entity.Variable x)
+        {
+            // Small ones only, and read once a factor is offered.
+            if (derivative is not (Sumf or Minusf) || derivative.Complexity > 40)
+                return null;
+            Dictionary<EInteger, Entity>? wanted = null;
+            Entity? Ratio(Entity polynomial)
+            {
+                if (wanted is null && (!TreeAnalyzer.TryGetPolynomial(derivative, x, out wanted) || wanted.Count < 2))
+                {
+                    wanted = new Dictionary<EInteger, Entity>();
+                    return null;
+                }
+                if (wanted.Count < 2 || !polynomial.ContainsNode(x) || polynomial.Complexity > 40 || !TreeAnalyzer.TryGetPolynomial(polynomial, x, out var read)
+                    || read.Count != wanted.Count || !read.Keys.All(wanted.ContainsKey))
+                    return null;
+                var leading = wanted.Keys.Max()!;
+                var ratio = Functions.PartialFractions.Bare((read[leading] / wanted[leading]).Simplify());
+                return !ratio.ContainsNode(x) && wanted.All(pair => VanishesIdentically(read[pair.Key] - ratio * pair.Value)) ? ratio : null;
+            }
+            // The terms of a sum with one rest each, their polynomial parts added.
+            if (expr is Sumf or Minusf)
+            {
+                Entity? common = null;
+                Entity polynomialParts = Number.Integer.Zero;
+                foreach (var term in Sumf.LinearChildren(expr))
+                {
+                    Entity polynomialPart = Number.Integer.One, rest = Number.Integer.One;
+                    foreach (var (factor, underneath) in FactorsOfTheIntegrand(term))
+                        if (!factor.ContainsNode(x) || !underneath && TreeAnalyzer.TryGetPolynomial(factor, x, out var monomials) && monomials.Keys.All(key => key.Sign >= 0))
+                            polynomialPart = underneath ? polynomialPart / factor : polynomialPart * factor;
+                        else
+                            rest = underneath ? rest / factor : rest * factor;
+                    if (!rest.ContainsNode(x) || common is not null && rest != common)
+                        return null;
+                    common = rest;
+                    polynomialParts += polynomialPart;
+                }
+                return common is not null && Ratio(polynomialParts) is { } k ? k * common : null;
+            }
+            Entity others = Number.Integer.One;
+            Entity? constant = null;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (constant is null && !underneath && factor is Sumf or Minusf && Ratio(factor) is { } k)
+                {
+                    constant = k;
+                    continue;
+                }
+                others = underneath ? others / factor : others * factor;
+            }
+            return constant is null ? null : constant * others;
+        }
+
         /// <summary>Whether a linear renaming is being asked as the same question on this thread.</summary>
         [System.ThreadStatic] private static bool renamingLinearly;
 
@@ -37466,6 +37917,14 @@ namespace AngouriMath.Functions.Algebra
                             integrandInU = SimplifiedWithoutTheImaginaryUnit(cancelled, expr);
                         }
                     }
+                    // A polynomial factor that is a constant multiple of du/dx and not written as
+                    // it, divided out exactly: `(b/(2 c) + x) tan(a + b x + c x^2)` over `b + 2 c x`
+                    // is `tan(u)/(2 c)`, which the simplification of the quotient did not find
+                    // beside a tangent or a square, and Rubi's `b tan(Q)/(2 c) + x tan(Q)` was declined.
+                    // https://github.com/asc-community/AngouriMath/issues/233
+                    if (integrandInU.ContainsNode(x) && WithAFactorProportionalToTheDerivative(source, duDx, x) is { } divided
+                        && InTermsOf(divided, u, uSub, x) is var dividedInU && !dividedInU.ContainsNode(x))
+                        integrandInU = SimplifiedWithoutTheImaginaryUnit(dividedInU, expr);
                     // Powers of one base on the two sides of the bar: `e^(c - b^2 x^2)` over the
                     // `e^(-b^2 x^2)` of du/dx is `e^c`, which the one-level simplification leaves as
                     // written, and `e^(c - b^2 x^2) erf(b x)` was refused under `u = erf(b x)` for

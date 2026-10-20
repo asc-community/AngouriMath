@@ -2566,6 +2566,38 @@ is written so, after the substitutions, and the factor goes in front of the answ
 | `"(1/(1 - x^2))^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | `sgn(1 - x^2) x/sqrt(1 - x^2)` |
 | `"(c/(a + b*x^2))^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | `(c/(a + b x^2))^(3/2) (a + b x^2)^(3/2) x/(a sqrt(a + b x^2))` |
 
+### A derivative of a product is read with a sine, a cosine or an exponential raised from nothing in it
+
+**Answers where there were none.** Thirteen of Rubi's 4.7.6, 4.7.7, 6.1.4, 6.2.4 and 6.7.1 were declined, each an
+exact derivative, or one beside an integral that is answered, written out
+([#233](https://github.com/asc-community/AngouriMath/issues/233)):
+- The derivative of a product of powers may raise a sine, a cosine or an exponential from nothing, one at a time:
+  `F^(c (a + b x)) (f x)^m (e x cos(d + e x) + (m + b c x ln F) sin(d + e x))/x` is
+  `(F^(c (a + b x)) (f x)^m sin(d + e x))'`. A power with x in its base and in its exponent is read with its exponent's
+  derivative times its base's logarithm, so `cosh(x)^x (ln(cosh(x)) + x tanh(x))` is `(cosh(x)^x)'`.
+- Where the brackets are not proportional, the integrand may be a constant times that derivative and a constant times
+  the functions alone: `sinh(Q)/x^2 - b cosh(Q)/x` is `(-sinh(Q)/x)' + 2 c cosh(Q)` for `Q = a + b x + c x^2`, and the
+  second term is answered in error functions.
+- A denominator with a negative exponential in it is multiplied above and below by the positive one:
+  `(cos(x) + sin(x))/(e^(-x) + sin(x))` is the logarithmic derivative of `1 + e^x sin(x)`.
+- `cos(u)^2 + sin(u)^2` in a sum is written as `1`, so `e^(cos(x)^2 + sin(x)^2)` is `e`.
+- A polynomial factor that is a constant multiple of a substitution's `du/dx` is divided out:
+  `(x + b/(2 c)) tan(a + b x + c x^2)` is `-ln(cos(a + b x + c x^2))/(2 c)`.
+
+Two more of 4.7.6, `F^(c (a + b x)) (e x cos(d + e x) + (b c x ln F - 1) sin(d + e x))/x^2` and its `x^3` twin, were
+declined by 2.5.0 and answered by the unreleased master in exponential integrals, 1,209 and 2,331 characters; they are
+the product `F^(c (a + b x)) sin(d + e x)/x` and its twin now, 50 and 53.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"g^(c*(a+b*x))*(f*x)^m*(k*x*cos(d+k*x)+(m+b*c*x*ln(g))*sin(d+k*x))/x".ToEntity().Integrate("x")` | `integral(...)` | 78 characters |
+| `"-b*cosh(a+b*x+c*x^2)/x+sinh(a+b*x+c*x^2)/x^2".ToEntity().Integrate("x")` | `integral(...)` | 294 characters |
+| `"cosh(x)^x*(ln(cosh(x))+x*tanh(x))".ToEntity().Integrate("x")` | `integral(...)` | `((e^x + e^(-x))/2)^x` |
+| `"(cos(x)+sin(x))/(1/e^x+sin(x))".ToEntity().Integrate("x")` | `integral(...)` | `ln(1 + sin(x) e^x)` |
+| `"e^(cos(x)^2+sin(x)^2)".ToEntity().Integrate("x")` | `integral(...)` | `e x` |
+| `"1/2*b*tan(a+b*x+c*x^2)/c+x*tan(a+b*x+c*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 45 characters |
+| `"g^(c*(a+b*x))*(k*x*cos(d+k*x)+(-1+b*c*x*ln(g))*sin(d+k*x))/x^2".ToEntity().Integrate("x")` | `integral(...)` | 50 characters, where the unreleased master gave 1,209 |
+
 ### A sum that is the derivative of a product of powers is read as one
 
 **Answers where there were none.** `m x^(m - 1) (a + b x^n)^p + b n p x^(m + n - 1) (a + b x^n)^(p - 1)` is
