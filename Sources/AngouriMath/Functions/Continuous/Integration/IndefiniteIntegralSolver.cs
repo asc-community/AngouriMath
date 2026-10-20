@@ -28925,6 +28925,216 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A polynomial in x times a linear combination of <c>1</c>, <c>T</c>, <c>B</c> and <c>T B</c>,
+        /// <c>T = artanh(c x)</c> or <c>arcoth(c x)</c> and <c>B = ln(K (1 - c^2 x^2))</c>, in closed form.
+        /// With <c>y = c x</c>, <c>T' = 1/(1 - y^2)</c> and <c>B' = -2 y/(1 - y^2)</c>, the integral of
+        /// <c>y^j T B</c> is <c>p0 T B + p1 T + p2 B + q1 T^2 + q2 B^2 + r</c>, where
+        /// <c>p0 = (y^(j + 1) - [j odd])/(j + 1)</c>, <c>q1 = p0(1)</c>, <c>q2 = p0(1)/4</c>, and
+        /// <c>p1</c>, <c>p2</c> and <c>r</c> are the integrals of <c>(2 y p0 - 2 q1)/(1 - y^2)</c>,
+        /// <c>(4 y q2 - p0)/(1 - y^2)</c> and <c>(2 y p2 - p1)/(1 - y^2)</c>, polynomials.
+        /// </summary>
+        /// <remarks>
+        /// Matching the coefficients of <c>T B</c>, <c>T</c>, <c>B</c> and <c>1</c> asks that the three
+        /// numerators vanish at <c>y = 1</c> and <c>y = -1</c>: the constant of <c>p0</c> makes the first
+        /// two do, and the constants of <c>p1</c> and <c>p2</c> the third. Only the derivatives of
+        /// <c>T</c> and <c>B</c> are read, which are rational and the same on every branch, so the
+        /// answer holds for either inverse function and every <c>K</c>, in the generic case
+        /// <c>c != 0</c>. The coefficients are rational in y, and <c>y^k</c> is <c>c^k x^k</c>.
+        /// The rules after it ran out of time on Rubi's 7.3.4 and 7.4.1
+        /// <c>x^m (a + b artanh(c x))(d + e ln(1 - c^2 x^2))</c> and the arcoth twins.
+        /// Read only where <c>T B</c> is there: without it the rules after it answer.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static Entity? SolveAPolynomialTimesAnInverseHyperbolicTangentAndTheLogarithmOfItsQuadratic(Entity expr, Entity.Variable x)
+        {
+            var logarithms = expr.Nodes.Where(node => node is Logf(var @base, var of) && @base == MathS.e && of.ContainsNode(x)).Distinct().ToList();
+            if (logarithms.Count != 2)
+                return null;
+            // ln(N/D), N a multiple of 1 + c x and D one of 1 - c x, is 2 T: artanh(c x) and
+            // arcoth(c x) arrive so. The other is B.
+            Entity? inverse = null, square = null, c = null;
+            foreach (var logarithm in logarithms)
+            {
+                var (above, below) = Functions.SingleQuotient.Of(((Logf)logarithm).Antilogarithm);
+                if (!below.ContainsNode(x))
+                {
+                    if (square is not null)
+                        return null;
+                    square = logarithm;
+                    continue;
+                }
+                if (inverse is not null
+                    || !TreeAnalyzer.TryGetPolyLinear(above, x, out var n1, out var n0)
+                    || !TreeAnalyzer.TryGetPolyLinear(below, x, out var d1, out var d0)
+                    || Functions.PartialFractions.IsZeroAsAValue(n0) || Functions.PartialFractions.IsZeroAsAValue(d0)
+                    || Functions.PartialFractions.IsZeroAsAValue(n1))
+                    return null;
+                // A numeric c is left to the rules after it, which answer it for an even power of x:
+                // `atanh(2 x) ln(1 - 4 x^2)` was.
+                var slope = (n1 / n0).InnerSimplified;
+                if (!slope.Vars.Any() || !Functions.PartialFractions.IsZeroAsAValue((d1 / d0 + slope).InnerSimplified))
+                    return null;
+                (inverse, c) = (logarithm, slope);
+            }
+            if (inverse is null || square is null || c is null
+                || !TreeAnalyzer.TryGetPolyQuadratic(((Logf)square).Antilogarithm, x, out var g2, out var g1, out var g0)
+                || Functions.PartialFractions.IsZeroAsAValue(g0) || !Functions.PartialFractions.IsZeroAsAValue(g1)
+                || !Functions.PartialFractions.IsZeroAsAValue((g2 / g0 + MathS.Sqr(c)).InnerSimplified))
+                return null;
+            // The polynomials beside 1, T, B and T B, kind = [T] + 2 [B].
+            var t = Variable.CreateUnique(expr, "t_ahl");
+            var s = Variable.CreateUnique(expr, "s_ahl");
+            var written = expr.Substitute(inverse, 2 * t).Substitute(square, s);
+            const int mostDegree = 20;
+            var beside = new Entity?[4, mostDegree + 1];
+            static int? Small(EInteger power, int most) => power.Sign >= 0 && power.CanFitInInt32() && power.ToInt32Unchecked() <= most ? power.ToInt32Unchecked() : null;
+            if (!TreeAnalyzer.TryGetPolynomial(written, t, out var inT))
+                return null;
+            foreach (var byT in inT)
+            {
+                if (Small(byT.Key, 1) is not { } i || !TreeAnalyzer.TryGetPolynomial(byT.Value, s, out var inS))
+                    return null;
+                foreach (var byS in inS)
+                {
+                    if (Small(byS.Key, 1) is not { } j || !TreeAnalyzer.TryGetPolynomial(byS.Value, x, out var inX))
+                        return null;
+                    foreach (var byX in inX)
+                    {
+                        var coefficient = byX.Value;
+                        if (Small(byX.Key, mostDegree) is not { } k || coefficient.ContainsNode(x) || coefficient.ContainsNode(t) || coefficient.ContainsNode(s))
+                            return null;
+                        var kind = i + 2 * j;
+                        beside[kind, k] = beside[kind, k] is { } before ? before + coefficient : coefficient;
+                    }
+                }
+            }
+            for (var k = 0; k <= mostDegree; k++)
+                for (var kind = 0; kind < 4; kind++)
+                    if (beside[kind, k] is { } coefficient && Functions.PartialFractions.IsZeroAsAValue(coefficient))
+                        beside[kind, k] = null;
+            if (!Enumerable.Range(0, mostDegree + 1).Any(k => beside[3, k] is not null))
+                return null;
+            // y^k/c^(j + 1) of the integral of y^j, as c^(k - j - 1) x^k.
+            Entity TimesAPowerOfC(Entity factor, int exponent) => exponent switch
+            {
+                0 => factor,
+                1 => factor * c,
+                > 1 => factor * MathS.Pow(c, Number.Integer.Create(exponent)),
+                -1 => factor / c,
+                _ => factor / MathS.Pow(c, Number.Integer.Create(-exponent))
+            };
+            var collected = new Entity?[6, mostDegree + 2];
+            for (var kind = 0; kind < 4; kind++)
+                for (var j = 0; j <= mostDegree; j++)
+                {
+                    if (beside[kind, j] is not { } coefficient)
+                        continue;
+                    if (IntegralOfAPowerBesideAnInverseHyperbolicTangentAndItsLogarithm(j, kind) is not { } integral)
+                        return null;
+                    for (var atom = 0; atom < 6; atom++)
+                        for (var k = 0; k < integral[atom].Length; k++)
+                        {
+                            if (integral[atom][k].IsZero)
+                                continue;
+                            if (k > mostDegree + 1)
+                                return null;
+                            var term = TimesAPowerOfC(Number.Rational.Create(integral[atom][k]) * coefficient, k - j - 1);
+                            collected[atom, k] = collected[atom, k] is { } before ? before + term : term;
+                        }
+                }
+            var inverseFunction = inverse / 2;
+            Entity[] atoms = { inverseFunction * square, inverseFunction, square, MathS.Sqr(inverseFunction), MathS.Sqr(square), Number.Integer.One };
+            Entity answer = Number.Integer.Zero;
+            for (var atom = 0; atom < 6; atom++)
+            {
+                Entity polynomial = Number.Integer.Zero;
+                for (var k = 0; k <= mostDegree + 1; k++)
+                    if (collected[atom, k] is { } coefficient && coefficient.InnerSimplified is var folded
+                        && !Functions.PartialFractions.IsZeroAsAValue(folded))
+                        polynomial += folded * (k == 0 ? Number.Integer.One : k == 1 ? x : MathS.Pow(x, Number.Integer.Create(k)));
+                if (polynomial != Number.Integer.Zero)
+                    answer += polynomial * atoms[atom];
+            }
+            answer = answer.InnerSimplified;
+            if (answer.Nodes.Any(node => node == MathS.NaN) || !Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x))
+                return null;
+            return answer;
+        }
+
+        /// <summary>
+        /// The integral of <c>y^j</c> times <c>1</c>, <c>T</c>, <c>B</c> or <c>T B</c> for
+        /// <paramref name="kind"/> 0 to 3, where <c>T' = 1/(1 - y^2)</c> and <c>B' = -2 y/(1 - y^2)</c>,
+        /// as the rational polynomials in y beside <c>T B</c>, <c>T</c>, <c>B</c>, <c>T^2</c>,
+        /// <c>B^2</c> and <c>1</c>, the two squares' constants; null where a division by
+        /// <c>1 - y^2</c> leaves a remainder, which the constants are chosen to prevent.
+        /// </summary>
+        private static ERational[][]? IntegralOfAPowerBesideAnInverseHyperbolicTangentAndItsLogarithm(int j, int kind)
+        {
+            static ERational[] Monomial(int degree, ERational coefficient)
+            {
+                var p = Enumerable.Repeat(ERational.Zero, degree + 1).ToArray();
+                p[degree] = coefficient;
+                return p;
+            }
+            static ERational[] Plus(ERational[] p, ERational[] q)
+            {
+                var sum = Enumerable.Repeat(ERational.Zero, System.Math.Max(p.Length, q.Length)).ToArray();
+                for (var k = 0; k < p.Length; k++)
+                    sum[k] = sum[k].Add(p[k]);
+                for (var k = 0; k < q.Length; k++)
+                    sum[k] = sum[k].Add(q[k]);
+                return sum;
+            }
+            static ERational[] Times(ERational factor, ERational[] p) => p.Select(a => a.Multiply(factor)).ToArray();
+            static ERational[] TimesY(ERational[] p) => new[] { ERational.Zero }.Concat(p).ToArray();
+            static ERational At(ERational[] p, ERational y)
+            {
+                var value = ERational.Zero;
+                for (var k = p.Length - 1; k >= 0; k--)
+                    value = value.Multiply(y).Add(p[k]);
+                return value;
+            }
+            static ERational[] Integral(ERational[] p) =>
+                new[] { ERational.Zero }.Concat(p.Select((a, k) => a.Divide(ERational.FromInt32(k + 1)))).ToArray();
+            // n/(1 - y^2), q_k = n_k + q_(k - 2), and null unless (1 - y^2) q is n.
+            static ERational[]? OverOneMinusTheSquare(ERational[] n)
+            {
+                var q = Enumerable.Repeat(ERational.Zero, System.Math.Max(n.Length - 2, 0)).ToArray();
+                for (var k = 0; k < q.Length; k++)
+                    q[k] = n[k].Add(k >= 2 ? q[k - 2] : ERational.Zero);
+                var back = Plus(q, Times(ERational.FromInt32(-1), TimesY(TimesY(q))));
+                for (var k = 0; k < System.Math.Max(back.Length, n.Length); k++)
+                    if ((k < back.Length ? back[k] : ERational.Zero).CompareTo(k < n.Length ? n[k] : ERational.Zero) != 0)
+                        return null;
+                return q;
+            }
+            var one = ERational.One;
+            var minusOne = ERational.FromInt32(-1);
+            var two = ERational.FromInt32(2);
+            var four = ERational.FromInt32(4);
+            var rise = Monomial(j + 1, one.Divide(ERational.FromInt32(j + 1)));
+            var zero = new[] { ERational.Zero };
+            // p0(1) = -p0(-1): for an odd j, y^(j + 1) is even, and p0 is (y^(j + 1) - 1)/(j + 1).
+            var p0 = kind != 3 ? zero : j % 2 == 1 ? Plus(rise, Monomial(0, minusOne.Divide(ERational.FromInt32(j + 1)))) : rise;
+            var q1 = At(p0, one);
+            var q2 = q1.Divide(four);
+            if (OverOneMinusTheSquare(Plus(Times(two, TimesY(p0)), Monomial(0, q1.Multiply(two).Negate()))) is not { } p1Prime
+                || OverOneMinusTheSquare(Plus(Monomial(1, q2.Multiply(four)), Times(minusOne, p0))) is not { } p2Prime)
+                return null;
+            var p1 = Plus(kind == 1 ? rise : zero, Integral(p1Prime));
+            var p2 = Plus(kind == 2 ? rise : zero, Integral(p2Prime));
+            // The constants that make 2 y p2 - p1 vanish at 1 and at -1.
+            var c1 = At(p2, one).Subtract(At(p2, minusOne)).Subtract(At(p1, one).Add(At(p1, minusOne)).Divide(two));
+            var c2 = At(p1, one).Subtract(At(p1, minusOne)).Subtract(At(p2, one).Multiply(two)).Subtract(At(p2, minusOne).Multiply(two)).Divide(four);
+            p1 = Plus(p1, Monomial(0, c1));
+            p2 = Plus(p2, Monomial(0, c2));
+            if (OverOneMinusTheSquare(Plus(Times(two, TimesY(p2)), Times(minusOne, p1))) is not { } rPrime)
+                return null;
+            var r = Plus(kind == 0 ? rise : zero, Integral(rPrime));
+            return new[] { p0, p1, p2, new[] { q1 }, new[] { q2 }, r };
+        }
+
+        /// <summary>
         /// A function of an inverse function of a linear <c>L = c + d x</c> times powers of multiples of
         /// <c>L</c>, <c>(c e + d e x)^3 (a + b arsinh(c + d x))^2</c>, under <c>u = L</c>: each power of
         /// <c>k L</c> is <c>(k u)^m</c>, the inverse function's argument is <c>u</c>, and the integral is

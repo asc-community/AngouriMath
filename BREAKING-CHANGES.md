@@ -497,6 +497,24 @@ and 7.3.2. `x^m F(x^n)^p`, with `F` a sum holding an inverse tangent, inverse hy
 | `"(a+b*atanh(c*x^(3/2)))^2/x^4".ToEntity().Integrate("x")` | `integral(...)` | 330 characters |
 | `"(a+b*ln(c*(d+k/x^(2/3))^n))^2/x^5".ToEntity().Integrate("x")` | `integral(...)` | 2,034 characters |
 
+### A polynomial times an artanh or arcoth and the logarithm of its quadratic is integrated in closed form
+
+**Answers where there were none.** `x^4 (a + b atanh(c x)) (d + e ln(1 - c^2 x^2))` was declined, and so were the
+other powers of x up to `x^5` and their arcoth twins, eleven of Rubi's 7.3.4 and 7.4.1. With `y = c x`, `T` the
+inverse function and `B = ln(1 - y^2)`, the derivatives `T' = 1/(1 - y^2)` and `B' = -2 y/(1 - y^2)` are rational, and
+the integral of `y^j T B` is `p0 T B + p1 T + p2 B + q1 T^2 + q2 B^2 + r` for polynomials `p0`, `p1`, `p2` and `r` and
+constants `q1` and `q2`, the constants chosen so that each division by `1 - y^2` is exact. Only the two derivatives
+are read, so the answer holds for the artanh and the arcoth alike and for any constant factor inside the logarithm.
+Only where the product `T B` is in the integrand; without it the rules after this one answer
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a+b*atanh(c*x))*(d+k*ln(1-c^2*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 354 characters |
+| `"x^4*(a+b*atanh(c*x))*(d+k*ln(1-c^2*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 721 characters |
+| `"x^5*(a+b*acoth(c*x))*(d+k*ln(1-c^2*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 717 characters |
+| `"(a+b*acoth(c*x))*(d+k*ln(1-c^2*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 354 characters |
+
 ### A power of x times an inverse tangent and the logarithm of its quadratic is integrated by parts
 
 **Answers where there were none.** `x^4 (a + b atan(c x)) (d + e ln(1 + c^2 x^2))` ran out of time, and so did three more
