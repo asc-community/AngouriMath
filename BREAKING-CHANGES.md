@@ -4025,6 +4025,28 @@ in both quadratics, the cube's coefficients grow past what the reduction takes, 
 | `"(7 + 13*x)/((5 + x + 2*x^2)^3*sqrt(2 + x + 3*x^2))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative |
 | `"sqrt(a + a*sec(x))/(c + d*sec(x))^2".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `tan(x/2)` |
 
+### Cube roots of two linears beside a power of a third, and an odd half power of a linear over a power of `x (b + c x)`, are integrated
+
+**Answers where there were none.** `(a + b x)^(1/3) (c + d x)^(2/3)/(e + f x)^2` and its kin, Rubi's 1.1.1.3, and
+`(A + B x) sqrt(d + e x)/(b x + c x^2)^3` and its kin, 1.2.1.3, were declined. The first are rational in
+`t = (a + b x)^(1/3)/(c + d x)^(1/3)` wherever the two powers add to a whole number, and exactly so for every complex
+`x`; the substitution that reaches it left `k (b - d t^3) + f (c t^3 - a)` where a binomial in `t^3` stands, and the
+rational rules ran out of time on it. It is now written as that binomial from the coefficients, each compound
+coefficient named by a symbol of its own and written back into the answer, where the denominator in `t` is not
+squarefree, as for a third linear below the bar at a power of `-2` or less. The second is rational in
+`t = sqrt(d + e x)` with the quadratic kept as `x (b + c x)`, which the substitution that reaches it, late in the
+chain, multiplied out; it is asked so now, named the same way, for the root above the bar and a third power or
+higher. Each declines where its linears share a root, decided as a value
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a + b*x)^(1/3)*(c + d*x)^(2/3)/(k + f*x)^2".ToEntity().Integrate("x")` | `integral(...)` | 2,243 characters |
+| `"1/((a + b*x)^(1/3)*(c + d*x)^(2/3)*(k + f*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 2,242 characters |
+| `"(a + b*x)^(4/3)/((c + d*x)^(4/3)*(k + f*x)^2)".ToEntity().Integrate("x")` | `integral(...)` | 1,327 characters |
+| `"(d + k*x)^(1/2)/(b*x + c*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 10,875 characters |
+| `"(A + B*x)*(d + k*x)^(1/2)/(b*x + c*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 14,763 characters |
+
 ### Powers of two linears whose exponents sum to a whole number below `-2` are integrated
 
 **Answers where there were none.** `(a + b x)^m (c + d x)^(-3 - m)`, `x^(n - 4)/(a + b x)^n` and

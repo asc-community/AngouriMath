@@ -13560,6 +13560,279 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Cube roots of two linears whose powers add up to a whole number, beside a whole power
+        /// of a third linear, <c>(a + b x)^(p/3) (c + d x)^(r/3) (g + h x)^n</c> with <c>p + r</c>
+        /// a multiple of 3, as the rational function the quotient of the two roots makes of it,
+        /// <c>t = (a + b x)^(1/3)/(c + d x)^(1/3)</c>, with its compound coefficients named.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// With <c>D = a d - b c</c>, <c>W = b - d t^3</c> and <c>s = (p + r)/3</c>: <c>x</c> is
+        /// <c>(c t^3 - a)/W</c>, <c>c + d x = -D/W</c>, <c>g + h x = N/W</c> for
+        /// <c>N = (b g - a h) + (c h - d g) t^3</c>, and <c>dx = -3 D t^2 dt/W^2</c>; and the two
+        /// roots are <c>t^p (c + d x)^s</c>. So the integrand is
+        /// <c>3 (-D)^(s + 1) t^(p + 2) N^n / W^(s + n + 2)</c>, rational in <c>t</c>, and exactly so:
+        /// a whole power of the quotient of the principal roots is the quotient of their powers
+        /// for every complex <c>x</c>, as <see cref="SolveByAQuotientOfTwoLinearRadicals"/> says.
+        /// </para>
+        /// <para>
+        /// That rule makes the same substitution and declined these, past the budget: its
+        /// rational function is written as the substitution leaves it, with
+        /// <c>k (b - d t^3) + f (c t^3 - a)</c> where <c>N</c> is, and the rational rules ran out
+        /// of time on <c>t^3/((b k - a f + (c f - d k) t^3) (b - d t^3)^2)</c> where
+        /// <c>t^3/((p + q t^3) (b - d t^3)^2)</c> is answered in a quarter of a second. Here
+        /// <c>N</c> and <c>W</c> are written as binomials in <c>t^3</c> from the coefficients, and a
+        /// coefficient that is a compound of the symbols is named by a symbol of its own and
+        /// written back into the answer. Naming loses no relation the decomposition needs:
+        /// <c>W</c> and <c>N</c> have the resultant <c>h D</c>, zero only where the third linear
+        /// is constant or the two under the roots are one, and those, and a third linear that is
+        /// a multiple of one of the two, are declined, each decided as a value.
+        /// </para>
+        /// <para>
+        /// Only cube roots, and only a third linear below the bar where the denominator in
+        /// <c>t</c> is not squarefree, <c>n &lt;= -2</c> or <c>W^2</c> beside <c>N</c>: Rubi's
+        /// <c>(a + b x)^m (c + d x)^n (e + f x)^p</c> rows with <c>m</c>, <c>n</c> thirds. Of the
+        /// rest, the third linear above the bar or below it once beside <c>W</c> at most once, the
+        /// substitution rule answers most, and they are left to it as they are.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveCubeRootsOfTwoLinearsBesideAWholePowerOfAThird(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            Entity constant = Number.Integer.One;
+            var powers = new List<(Entity Base, ERational Exponent)>();
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                var (@base, exponent) = factor switch
+                {
+                    Powf(var powerBase, Number.Rational power) => (powerBase, power.ERational),
+                    Powf => (factor, (ERational?)null),
+                    _ => (factor, ERational.One),
+                };
+                if (exponent is null)
+                    return null;
+                if (underneath)
+                    exponent = exponent.Negate();
+                var index = powers.FindIndex(pair => pair.Base == @base);
+                if (index >= 0)
+                    powers[index] = (@base, powers[index].Exponent.Add(exponent));
+                else
+                    powers.Add((@base, exponent));
+            }
+            powers.RemoveAll(pair => pair.Exponent.IsZero);
+            var roots = powers.Where(pair => !pair.Exponent.IsInteger()).ToList();
+            var whole = powers.Where(pair => pair.Exponent.IsInteger()).ToList();
+            if (roots.Count != 2 || whole.Count != 1)
+                return null;
+            var three = ERational.FromInt32(3);
+            var thirds = roots.Select(pair => pair.Exponent.Multiply(three)).ToList();
+            if (thirds.Any(third => !third.IsInteger()))
+                return null;
+            var read = new[] { thirds[0].ToEInteger(), thirds[1].ToEInteger(), whole[0].Exponent.ToEInteger() };
+            if (read.Any(power => !power.CanFitInInt32()))
+                return null;
+            var (p, r, n) = (read[0].ToInt32Checked(), read[1].ToInt32Checked(), read[2].ToInt32Checked());
+            if ((p + r) % 3 != 0 || System.Math.Abs(p) > MaximumCubeRootNumerator || System.Math.Abs(r) > MaximumCubeRootNumerator
+                || System.Math.Abs(n) > MaximumThirdLinearPower)
+                return null;
+            var s = (p + r) / 3;
+            // Only the third linear below the bar with a repeated factor below it, N^2 or W^2 beside
+            // N: there the substitution rule ran out of time. Above, or once below beside W at most
+            // once, it answers most of them, and the question is left to it.
+            if (n >= 0 || n == -1 && s + n + 2 < 2)
+                return null;
+            var (first, second, third) = (roots[0].Base, roots[1].Base, whole[0].Base);
+            if (!TreeAnalyzer.TryGetPolyLinear(first, x, out var b, out var a)
+                || !TreeAnalyzer.TryGetPolyLinear(second, x, out var d, out var c)
+                || !TreeAnalyzer.TryGetPolyLinear(third, x, out var h, out var g)
+                || VanishesIdentically(b) || VanishesIdentically(d) || VanishesIdentically(h))
+                return null;
+            var determinant = a * d - b * c;
+            var (free, slope) = (b * g - a * h, c * h - d * g);
+            if (VanishesIdentically(determinant) || VanishesIdentically(free) || VanishesIdentically(slope))
+                return null;
+
+            var t = Variable.CreateUnique(expr, "t_cube");
+            var named = new List<(Variable Name, Entity Value)>();
+            Entity Named(Entity value)
+            {
+                if (value is Number or Variable || value is Mulf(Number, Variable) || value is Powf(Variable, Number))
+                    return value;
+                var name = Variable.CreateUnique(expr + t + named.Aggregate((Entity)Number.Integer.Zero, (sum, pair) => sum + pair.Name), "k_named");
+                named.Add((name, value));
+                return name;
+            }
+            var cube = MathS.Pow(t, 3);
+            var w = Named(Reduced(b)) + Named(Reduced(-d)) * cube;
+            var nOfT = Named(Reduced(free)) + Named(Reduced(slope)) * cube;
+            // With nothing to name the rational function is the substitution rule's, which answers it.
+            if (named.Count == 0)
+                return null;
+            // One quotient, the powers whole on both sides, as the rational rules read it.
+            Entity above = Number.Integer.One, below = Number.Integer.One;
+            foreach (var (factor, power) in new[] { ((Entity)t, p + 2), (w, -(s + n + 2)), (nOfT, n) })
+            {
+                if (power > 0)
+                    above *= power == 1 ? factor : MathS.Pow(factor, power);
+                else if (power < 0)
+                    below *= power == -1 ? factor : MathS.Pow(factor, -power);
+            }
+            var inT = (above / below).InnerSimplified;
+            if (Integration.ComputeAsAQuestionOfItsOwn(inT, t, integrateByParts) is not { } answer
+                || answer.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            foreach (var (name, value) in named)
+                answer = answer.Substitute(name, value);
+            var root = Number.Rational.Create(1, 3);
+            return Reduced(3 * constant * MathS.Pow(-determinant, s + 1)) * answer.Substitute(t, MathS.Pow(first, root) / MathS.Pow(second, root));
+
+            static Entity Reduced(Entity constant)
+                => constant.Vars.Any() ? Functions.PartialFractions.InLowestTermsOverTheSymbols(constant) : constant.InnerSimplified;
+        }
+
+        /// <summary>
+        /// The largest numerator of a third <see cref="SolveCubeRootsOfTwoLinearsBesideAWholePowerOfAThird"/> takes.
+        /// </summary>
+        private const int MaximumCubeRootNumerator = 12;
+
+        /// <summary>
+        /// The largest power of the third linear <see cref="SolveCubeRootsOfTwoLinearsBesideAWholePowerOfAThird"/> takes.
+        /// </summary>
+        private const int MaximumThirdLinearPower = 8;
+
+        /// <summary>
+        /// A polynomial times an odd half power of a linear over a whole power of a quadratic with
+        /// a root at zero, <c>P(x) (d + e x)^(j/2)/(b x + c x^2)^m</c> with <c>j</c> odd and
+        /// positive and <c>m &gt;= 3</c>, under <c>t = sqrt(d + e x)</c> with the quadratic written
+        /// as its two linears, <c>x (b + c x)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// With <c>x = (t^2 - d)/e</c>, <c>b + c x = (c t^2 + r)/e</c> for <c>r = b e - c d</c>, and
+        /// <c>dx = 2 t dt/e</c>, the integrand is
+        /// <c>2 e^(2m - 1) P((t^2 - d)/e) t^(j + 1)/((t^2 - d)^m (c t^2 + r)^m)</c>, and exactly so:
+        /// <c>t^j</c> is <c>(d + e x)^(j/2)</c> for the principal root and every complex <c>x</c>.
+        /// The two factors below the bar have the resultant <c>b e</c>, and a compound coefficient
+        /// is named by a symbol of its own and written back into the answer, as in
+        /// <see cref="SolveCubeRootsOfTwoLinearsBesideAWholePowerOfAThird"/>.
+        /// </para>
+        /// <para>
+        /// Rubi's <c>(A + B x) (d + e x)^(j/2)/(b x + c x^2)^3</c> ran past the budget: the rational
+        /// function in <c>t</c> is answered in a second, and the substitution that reaches it is
+        /// late in the chain and multiplies the quadratic out. Only the root above the bar and a
+        /// third power or higher, with a symbol to name: the root below the bar, the second power,
+        /// and numbers for coefficients are answered as they are, and left to that. Declined where
+        /// <c>d</c> or <c>r</c> is zero as a value, the linear then sharing a root with the quadratic.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveAnOddHalfPowerOfALinearOverAPowerOfAQuadraticWithARootAtZero(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            Entity constant = Number.Integer.One;
+            Entity polynomial = Number.Integer.One;
+            (Entity Base, ERational Exponent)? root = null;
+            (Entity Base, int Power)? quadratic = null;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                    constant = underneath ? constant / factor : constant * factor;
+                else if (factor is Powf(var radicand, Number.Rational power) && power is not Number.Integer)
+                {
+                    if (root is not null || underneath)
+                        return null;
+                    root = (radicand, power.ERational);
+                }
+                else if (underneath)
+                {
+                    if (quadratic is not null || factor is not Powf(var @base, Number.Integer { EInteger: var m }) || !m.CanFitInInt32())
+                        return null;
+                    quadratic = (@base, m.ToInt32Checked());
+                }
+                else
+                    polynomial *= factor;
+            }
+            if (root is not var (linear, half) || quadratic is not var (q, n) || half.Sign <= 0
+                || half.Multiply(ERational.FromInt32(2)) is not { } twice || !twice.IsInteger() || !twice.ToEInteger().CanFitInInt32()
+                || n < 3 || n > MaximumQuadraticPowerUnderARoot)
+                return null;
+            var j = twice.ToEInteger().ToInt32Checked();
+            if (j > MaximumHalfPowerOfTheLinear
+                || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var e, out var d)
+                || !TreeAnalyzer.TryGetPolyQuadratic(q, x, out var c, out var b, out var free)
+                || !TreeAnalyzer.TryGetPolynomial(polynomial, x, out var read)
+                || read.Any(pair => pair.Key.Sign < 0 || pair.Value.ContainsNode(x)))
+                return null;
+            var degree = read.Keys.Max()!.ToInt32Checked();
+            var r = b * e - c * d;
+            if (degree > MaximumQuadraticPowerUnderARoot || !VanishesIdentically(free) || VanishesIdentically(b) || VanishesIdentically(c)
+                || VanishesIdentically(e) || VanishesIdentically(d) || VanishesIdentically(r))
+                return null;
+
+            var t = Variable.CreateUnique(expr, "t_root");
+            var named = new List<(Variable Name, Entity Value)>();
+            Entity Named(Entity value)
+            {
+                if (value is Number or Variable || value is Mulf(Number, Variable) || value is Powf(Variable, Number))
+                    return value;
+                var name = Variable.CreateUnique(expr + t + named.Aggregate((Entity)Number.Integer.Zero, (sum, pair) => sum + pair.Name), "k_named");
+                named.Add((name, value));
+                return name;
+            }
+            // P((t^2 - d)/e) e^degree as a polynomial in t^2: the coefficient of t^(2l) is the sum
+            // over i of p_i e^(degree - i) binomial(i, l) (-d)^(i - l).
+            Entity above = Number.Integer.Zero;
+            for (var l = 0; l <= degree; l++)
+            {
+                Entity coefficient = Number.Integer.Zero;
+                foreach (var (i, p) in read.Select(pair => (pair.Key.ToInt32Checked(), pair.Value)).Where(pair => pair.Item1 >= l))
+                    coefficient += p * MathS.Pow(e, degree - i) * Binomial(i, l) * MathS.Pow(-d, i - l);
+                // t^0 is written as nothing: InnerSimplified makes it 1 provided t is not 0.
+                if (!VanishesIdentically(coefficient))
+                    above += l == 0 ? Named(Reduced(coefficient)) : Named(Reduced(coefficient)) * MathS.Pow(t, 2 * l);
+            }
+            var square = MathS.Sqr(t);
+            var below = MathS.Pow(square + Named(Reduced(-d)), n) * MathS.Pow(Named(Reduced(c)) * square + Named(Reduced(r)), n);
+            // With nothing to name the coefficients are numbers, and the rules after this answer them.
+            if (named.Count == 0)
+                return null;
+            var inT = (MathS.Pow(t, j + 1) * above / below).InnerSimplified;
+            if (Integration.ComputeAsAQuestionOfItsOwn(inT, t, integrateByParts) is not { } answer
+                || answer.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            foreach (var (name, value) in named)
+                answer = answer.Substitute(name, value);
+            return Reduced(2 * constant * MathS.Pow(e, 2 * n - 1 - degree)) * answer.Substitute(t, MathS.Sqrt(linear));
+
+            static Entity Reduced(Entity constant)
+                => constant.Vars.Any() ? Functions.PartialFractions.InLowestTermsOverTheSymbols(constant) : constant.InnerSimplified;
+
+            static Entity Binomial(int i, int l)
+            {
+                var value = EInteger.One;
+                for (var k = 0; k < l; k++)
+                    value = value.Multiply(i - k).Divide(k + 1);
+                return Number.Integer.Create(value);
+            }
+        }
+
+        /// <summary>
+        /// The largest power of the quadratic, and degree of the polynomial,
+        /// <see cref="SolveAnOddHalfPowerOfALinearOverAPowerOfAQuadraticWithARootAtZero"/> takes.
+        /// </summary>
+        private const int MaximumQuadraticPowerUnderARoot = 8;
+
+        /// <summary>
+        /// The largest odd <c>j</c> of <c>(d + e x)^(j/2)</c>
+        /// <see cref="SolveAnOddHalfPowerOfALinearOverAPowerOfAQuadraticWithARootAtZero"/> takes.
+        /// </summary>
+        private const int MaximumHalfPowerOfTheLinear = 15;
+
+        /// <summary>
         /// A polynomial over a power of a linear beside the square roots of two others,
         /// <c>P(x) (a + b x)^(m/2) (c + d x)^(n/2) / (g + h x)^k</c> with <c>m</c> and <c>n</c>
         /// odd and neither below <c>-1</c>, and <c>k &gt;= 0</c>, by undetermined coefficients:
