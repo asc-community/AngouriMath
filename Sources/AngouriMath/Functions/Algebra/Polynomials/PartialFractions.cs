@@ -2030,9 +2030,10 @@ namespace AngouriMath.Functions
         /// <c>f</c> is shown real-valued, which a symbol that might be complex prevents and a
         /// number does not: an answer with <c>sgn(tanh(c + d x))</c> in it, right, was
         /// unevaluable differentiated with <c>c</c> and <c>d</c> in it and threw out of the
-        /// integrator.
+        /// integrator. The points may be the caller's, as <see cref="HoldsAtSampledPoints"/>
+        /// takes them.
         /// </summary>
-        internal static bool DerivativeHoldsAtSampledPoints(Entity antiderivative, Entity integrand, Variable x)
+        internal static bool DerivativeHoldsAtSampledPoints(Entity antiderivative, Entity integrand, Variable x, string[]? points = null)
         {
             // Off the downcasting for the simplification of the pinned answer, which folds its
             // numbers: downcast, a pinned 1.37 is 137/100 and every constant of the answer is
@@ -2040,7 +2041,7 @@ namespace AngouriMath.Functions
             // where in decimals it is 3 ms. The comparison itself reads no setting.
             using var _ = MathS.Settings.DowncastingEnabled.Set(false);
             var (pinnedAntiderivative, pinnedIntegrand) = Pinned(antiderivative, integrand, x);
-            return HoldsAtSampledPoints(Bare(pinnedAntiderivative).Differentiate(x), pinnedIntegrand, x);
+            return HoldsAtSampledPoints(Bare(pinnedAntiderivative).Differentiate(x), pinnedIntegrand, x, points);
         }
 
         /// <summary>

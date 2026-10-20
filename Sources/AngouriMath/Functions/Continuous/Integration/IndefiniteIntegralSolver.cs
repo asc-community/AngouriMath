@@ -5687,7 +5687,11 @@ namespace AngouriMath.Functions.Algebra
         /// cosine is negative too, and there each written apart may have turned its sign: the answer
         /// said <c>provided cos(y) >= 0</c>, half of the integrand's domain, for every one of 165
         /// rows of Rubi's 4.5.4.2. Which turn is known from the constants, and the answer carries
-        /// the cosine's sign where they leave an odd number turned.
+        /// the cosine's sign where they leave an odd number turned. Three, as in
+        /// <c>sqrt(a + a sec(y)) sqrt(sec(y)) sqrt(cos(y))</c>, leave a root of <c>1 - t^2</c> in
+        /// the answer in t, which said <c>provided cos(y) >= 0</c> where for a negative a the
+        /// integrand is real only beyond it; the answer in t is kept beyond where it differentiates
+        /// back there.
         /// https://github.com/asc-community/AngouriMath/issues/233
         /// </para>
         /// </remarks>
@@ -5841,19 +5845,24 @@ namespace AngouriMath.Functions.Algebra
             // differing by e^(2 i pi p) = -1: where cos(y) < 0 a root of a ± a sec(y) or d sec(y)
             // turns its sign if its constant is positive, and one of d cos(y) if its constant is
             // negative. One root alone turns only where the integrand is complex, which is nothing
-            // to be wrong about. For an even number the turns multiply to (-1)^n s, for n roots of
-            // the cosine and s the sign of the product of the constants, and the integrand is real,
-            // on both sides at once, just where s is positive: `sqrt(sec(x)) sqrt(1 + sec(x))` holds
-            // as written where the cosine is negative, and `cos(x)^(3/2)/sqrt(1 + sec(x))` with the
-            // cosine's sign in front. The root of 1 - t^2 has cancelled then, so that the answer in
-            // t holds beyond t^2 < 1 too; for an odd number above one it has not, and the answer
-            // says where it holds, as it does where the product's sign is not known.
+            // to be wrong about. A root is imaginary there just where its constant is positive, so
+            // for N roots, n of them of the cosine, and s the sign of the product of the constants,
+            // the turns multiply to (-1)^(N + n) s, and the integrand is real there just where
+            // (-1)^N s is positive, and then the turns are (-1)^n: `sqrt(sec(x)) sqrt(1 + sec(x))`
+            // holds as written where the cosine is negative, and `cos(x)^(3/2)/sqrt(1 + sec(x))` with
+            // the cosine's sign in front. For an even N the root of 1 - t^2 has cancelled, so that
+            // the answer in t holds beyond t^2 < 1 too. For an odd one it has not, and the answer in
+            // t is kept beyond only where it differentiates back there. It said
+            // `provided cos(y) >= 0`, and `sqrt(a + a sec(x)) sqrt(sec(x)) sqrt(cos(x))` is real, for
+            // a negative a, only beyond that.
             if (roots < 2)
                 return answer;
             var withinTheHalfTurn = answer.Provided(companion >= Number.Integer.Zero);
-            if (!exponents[0].Numerator.Remainder(exponents[0].Denominator).IsZero)
+            var odd = roots % 2 == 1;
+            if (odd == exponents[0].Numerator.Remainder(exponents[0].Denominator).IsZero
+                || odd && !Functions.PartialFractions.DerivativeHoldsAtSampledPoints(result, integrand, t, BeyondTheHalfTurn))
                 return withinTheHalfTurn;
-            var turns = rootsOfTheCompanion % 2 == 1;
+            var turns = (roots + rootsOfTheCompanion) % 2 == 1;
             switch (constants.Evaled)
             {
                 case Number.Real { IsFinite: true } product when !product.IsZero:
@@ -5863,10 +5872,19 @@ namespace AngouriMath.Functions.Algebra
                 case Number:
                     return withinTheHalfTurn;
                 default:
-                    return (turns ? MathS.Signum(companion) * answer : answer)
-                        .Provided(constants > Number.Integer.Zero | companion >= Number.Integer.Zero);
+                    // Where s is not known, the answer for the s that makes the integrand real.
+                    var real = odd ? constants < Number.Integer.Zero : constants > Number.Integer.Zero;
+                    return (rootsOfTheCompanion % 2 == 1 ? MathS.Signum(companion) * answer : answer)
+                        .Provided(real | companion >= Number.Integer.Zero);
             }
         }
+
+        /// <summary>
+        /// Values of the half-angle tangent past one on either side, where the cosine is negative,
+        /// or for the cosecant the sine.
+        /// </summary>
+        [ConstantField]
+        private static readonly string[] BeyondTheHalfTurn = { "1.19", "1.43", "3.17", "7.3", "-1.61", "-2.9", "-6.1" };
 
         /// <summary>
         /// A half-odd power of <c>a ± a sec(y)</c> beside one of <c>c + d sec(y)</c>, integrated in
