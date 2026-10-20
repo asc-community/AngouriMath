@@ -5469,8 +5469,8 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
-        /// Powers of <c>a ± a sin(y)</c> with a symbolic exponent, beside a power of
-        /// <c>g cos(y)</c> and anything else in the sine alone, under <c>u = sin(y)</c>:
+        /// Powers of <c>a ± a sin(y)</c> with a symbolic exponent, or beside a fractional power of
+        /// <c>g cos(y)</c>, and anything else in the sine alone, under <c>u = sin(y)</c>:
         /// <c>(1 + sin(y))(1 - sin(y))</c> is <c>cos(y)^2</c>, so each factor is a power of
         /// <c>1 + u</c> or of <c>1 - u</c> up to a factor constant on each interval where it is
         /// defined, and <c>dy = du/cos(y)</c> is one more pair of half powers. The cosine's the
@@ -5495,12 +5495,24 @@ namespace AngouriMath.Functions.Algebra
         /// <c>(a (1 + u))^m</c> is not <c>a^m (1 + u)^m</c> for every <c>a</c>, and the quotient
         /// of the two is constant on each interval either way. At the question asked only, and
         /// only where an exponent is symbolic: numeric half powers are the half angle's.
+        /// </para>
+        /// <para>
+        /// But for a fractional power of the cosine, which the half angle does not read: Rubi's
+        /// <c>(e cos(c + d x))^p (a + a sin(c + d x))^m</c> with half-odd <c>p</c> and <c>m</c>
+        /// were past the budget, the substitution search spending it on the two radicals. In
+        /// <c>u</c> they are <c>(1 + u)^A (1 - u)^B</c> with <c>A</c> and <c>B</c> quarter-odd, which
+        /// by Chebyshev's theorem is elementary only where <c>A + B = m + p - 1</c> is whole, and
+        /// with every power a number the rule asks only where <c>A</c>, <c>B</c> or <c>A + B</c> is
+        /// whole and the rest is a polynomial in <c>u</c>: <c>(a + a sin(y)) sqrt(e cos(y))</c>, which
+        /// is elliptic, is declined before anything is asked. Numeric powers are read one level
+        /// below the question too, where the polynomial term hands <c>1/(A B)</c> on as
+        /// <c>(A B)^(-1)</c>, and a whole power of a product is read as the powers of its factors.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </para>
         /// </remarks>
         internal static Entity? SolveSymbolicPowersOfOnePlusMinusASineThroughTheSine(Entity expr, Entity.Variable x, bool integrateByParts)
         {
-            if (!Integration.AnsweringTheQuestionAsked)
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
                 return null;
             Entity? argument = null;
             foreach (var node in expr.Nodes)
@@ -5519,8 +5531,12 @@ namespace AngouriMath.Functions.Algebra
             var cosine = MathS.Cos(argument);
             // Each factor as a base and an exponent, a power of a power read as one power: the
             // quotient of the two spellings is constant on each interval, and K carries it.
+            // A whole power of a product is the product of the powers: `1/(A B)` is handed on as
+            // `(A B)^(-1)` by the polynomial term.
             var factors = new List<(Entity Factor, Entity Base, Entity Exponent)>();
-            foreach (var factor in Mulf.LinearChildren(expr))
+            foreach (var factor in Mulf.LinearChildren(expr).SelectMany(factor => factor is Powf(var product, Number.Integer power) && product is Mulf or Divf
+                         ? Mulf.LinearChildren(product).Select(part => (Entity)MathS.Pow(part, power))
+                         : new[] { factor }))
             {
                 Entity @base = factor, exponent = Number.Integer.One;
                 while (@base is Powf(var inner, var power))
@@ -5580,12 +5596,22 @@ namespace AngouriMath.Functions.Algebra
                     return null;
                 rest *= inU;
             }
-            if (!symbolic)
+            // Symbolic powers at the question asked only. Numeric powers are the half angle's, but
+            // for a fractional power of the complement, which it does not read; and those one level
+            // down too, where the polynomial term hands on `1/(A B)` as `(A B)^(-1)`.
+            if (symbolic ? !Integration.AnsweringTheQuestionAsked
+                    : !(ofTheComplement.InnerSimplified is Number.Rational complementPower && !IsWhole(complementPower.ERational)))
                 return null;
             // dy = du/complement takes one more half power of each.
             var half = Number.Rational.Create(1, 2);
             var a = (plus + ofTheComplement * half - half).Simplify();
             var b = (minus + ofTheComplement * half - half).Simplify();
+            // With every power a number, only where Chebyshev's theorem says the question in u is
+            // elementary, and beside a polynomial in u: otherwise it is a search past the budget.
+            if (!symbolic && !(a is Number.Rational ra && b is Number.Rational rb
+                    && (IsWhole(ra.ERational) || IsWhole(rb.ERational) || IsWhole(ra.ERational.Add(rb.ERational)))
+                    && IsAPolynomialInU(rest.InnerSimplified)))
+                return null;
             // A zero exponent leaves its factor out: `(1 - u)^0` is one provided `u` is not one, and
             // the condition would stand between the question and the rules that answer it.
             Entity PowerOf(Entity @base, Entity exponent) => exponent == Number.Integer.Zero ? Number.Integer.One : MathS.Pow(@base, exponent);
@@ -5619,6 +5645,14 @@ namespace AngouriMath.Functions.Algebra
                 }
                 return found;
             }
+
+            static bool IsWhole(ERational value) => value.IsInteger();
+
+            // Free of u, or a polynomial in it with coefficients free of it.
+            bool IsAPolynomialInU(Entity part)
+                => !part.ContainsNode(u)
+                   || TreeAnalyzer.TryGetPolynomial(part, u, out var terms)
+                      && terms.Keys.All(power => power.Sign >= 0) && terms.Values.All(coefficient => !coefficient.ContainsNode(u));
         }
 
         /// <summary>
