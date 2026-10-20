@@ -4763,6 +4763,26 @@ and this is the same answer reached through the even root
 |---|---|---|
 | `"sqrt(x)/(sqrt(1/x + 1)*sqrt(1 - x^2))".Integrate("x")` | `integral(...)` | an antiderivative in `sqrt(x)`, `provided x >= 0` |
 
+### A product of powers of quotients of linears with a symbolic exponent is written over each linear once
+
+**Answers where there were none.** `e^atanh(a x) x^m sqrt(c - a^2 c x^2)`, `e^(2 p atanh(a x)) (c - a^2 c x^2)^p` and
+seventeen more of Rubi's 7.3.6 and 7.4.2 were declined. The first is `sqrt((1 + a x)/(1 - a x)) x^m sqrt(c - a^2 c x^2)`,
+in which the root `1/a` stands in both bases with exponents `-1/2` and `1/2`, and the second is
+`K (a x + 1)^(2 p)`; the rule below reads rational exponents only. Each exponent of a linear is now the sum, symbols
+and all, of those it has in the bases, and `K`, the integrand over that product, has a logarithmic derivative of zero
+on every branch, so it stands in front of the answer. Only where the product comes to one power that is not whole, of
+x or of a linear, beside whole powers of the other linears above the bar: the antiderivative is then a sum of powers
+of it on every interval between the roots, and is checked at sampled points. Two powers that are not whole are left
+to the rules that answer them as a power of the quotient
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^atanh(a*x)*x^m*sqrt(1-a^2*x^2)".ToEntity().Integrate("x")` | `integral(...)` | `K (x^(m + 1)/(m + 1) + a x^(m + 2)/(m + 2))`, 151 characters |
+| `"e^atanh(a*x)*x^m*(c-a^2*c*x^2)^(5/2)".ToEntity().Integrate("x")` | `integral(...)` | 619 characters |
+| `"e^(2*p*atanh(a*x))*(c-a^2*c*x^2)^p".ToEntity().Integrate("x")` | `integral(...)` | `K (a x + 1)^(2 p + 1)/(a (2 p + 1))`, 153 characters |
+| `"e^(n*acoth(a*x))*(c-a*c*x)^(2+1/2*n)".ToEntity().Integrate("x")` | `integral(...)` | 585 characters |
+
 ### A product of powers of quotients of linears is written over each linear once
 
 **Improvement, not silent.** `e^atanh(a x) sqrt(c - c/(a x))` is

@@ -33014,30 +33014,278 @@ namespace AngouriMath.Functions.Algebra
                     }
                 }
             }
+        }
 
-            // The square root of a quotient of monomials in the symbols with a positive square
-            // rational coefficient and even powers -- `1/a^2` is `(1/a)^2` -- and null otherwise.
-            static Entity? AMonomialSquareRoot(Entity constant)
+        /// <summary>
+        /// The square root of a quotient of monomials in the symbols with a positive square
+        /// rational coefficient and even powers -- <c>1/a^2</c> is <c>(1/a)^2</c> -- and null otherwise.
+        /// </summary>
+        private static Entity? AMonomialSquareRoot(Entity constant)
+        {
+            var (above, below) = Functions.SingleQuotient.Of(Functions.PartialFractions.InLowestTermsOverTheSymbols(constant));
+            return RootOf(above) is { } top && RootOf(below) is { } bottom ? top / bottom : null;
+
+            static Entity? RootOf(Entity monomial)
             {
-                var (above, below) = Functions.SingleQuotient.Of(Functions.PartialFractions.InLowestTermsOverTheSymbols(constant));
-                return RootOf(above) is { } top && RootOf(below) is { } bottom ? top / bottom : null;
+                Entity root = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(monomial))
+                    switch (factor)
+                    {
+                        case Number.Integer { EInteger: var whole } when whole.Sign > 0 && whole.Sqrt() is var floor && floor.Multiply(floor).Equals(whole):
+                            root *= Number.Integer.Create(floor);
+                            break;
+                        case Powf(Variable symbol, Number.Integer { EInteger: var power }) when power.Sign > 0 && power.IsEven:
+                            root *= MathS.Pow(symbol, Number.Integer.Create(power.Divide(EInteger.FromInt32(2))));
+                            break;
+                        default:
+                            return null;
+                    }
+                return root;
+            }
+        }
 
-                static Entity? RootOf(Entity monomial)
+        /// <summary>Set while <see cref="SolveByWritingEachLinearOnceUnderASymbolicPower"/> asks its product.</summary>
+        [System.ThreadStatic] private static bool writingEachLinearOnceUnderASymbolicPower;
+
+        /// <summary>
+        /// A product of powers of quotients of polynomials in <paramref name="x"/>, a symbolic
+        /// exponent among them, where one root stands in two of the bases, written over each
+        /// linear once: <c>K (x - r_1)^(e_1) ... (x - r_k)^(e_k)</c>, with <c>e_i</c> the sum of the
+        /// exponents <c>r_i</c> has in the bases, symbols and all. <c>K</c> is the integrand over
+        /// that product, and its logarithmic derivative is zero -- that of <c>q^s</c> is
+        /// <c>s q'/q</c> for any constant <c>s</c> and on every branch, and of <c>e^(s ln(q))</c>
+        /// the same -- so it is constant wherever it is defined and stands in front of the answer,
+        /// the way Rubi writes <c>sqrt(c - a^2 c x^2)/sqrt(1 - a^2 x^2)</c> in front of its.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>e^atanh(a x) x^m sqrt(c - a^2 c x^2)</c> is <c>sqrt((1 + a x)/(1 - a x)) x^m sqrt(c - a^2 c x^2)</c>:
+        /// the root <c>1/a</c> stands in both bases with exponents <c>-1/2</c> and <c>1/2</c>, and
+        /// <c>-1/a</c> with <c>1/2</c> twice, so the integrand is <c>K x^m (a x + 1)</c>; and
+        /// <c>e^(2 p atanh(a x)) (c - a^2 c x^2)^p</c> is <c>K (a x + 1)^(2 p)</c>. Each is a sum of
+        /// powers to the rules, answered in milliseconds. <see cref="SolveByWritingEachLinearOnce"/>
+        /// reads rational exponents only, and declined both: the first ran out of time behind it
+        /// and the second was left unevaluated. Rubi's 7.3.6 and 7.4.2.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// <para>
+        /// Only where it helps: a root stands in two sums to powers that are not positive whole
+        /// numbers and keeps a power once they are added, and the product is one power that is not
+        /// whole, of x or of a linear, beside whole powers of the other linears above the bar. Its
+        /// antiderivative is then a sum of powers of that one, which holds on every interval
+        /// between the roots whatever the exponent, and <c>K</c> is constant on each. Two powers
+        /// that are not whole -- <c>e^(n atanh(a x))/(c - a^2 c x^2)</c> is
+        /// <c>K (a x + 1)^(n/2 - 1) (a x - 1)^(-n/2 - 1)</c> -- are left to the rules behind this one,
+        /// which answer them as a power of the quotient, and one beside a whole power below the bar
+        /// is hypergeometric. Rational exponents alone are the other rule's. The answer is checked
+        /// at sampled points before it is given.
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveByWritingEachLinearOnceUnderASymbolicPower(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // Not while answering its own product, and only at the question asked, as the rule for
+            // rational exponents; and only where a power has a symbol for its exponent, or an
+            // exponential a symbol beside its logarithm, looked for before anything is read.
+            if (writingEachLinearOnceUnderASymbolicPower || !Integration.AnsweringTheQuestionAsked
+                || !expr.Nodes.Any(node => node is Powf(var @base, var exponent)
+                                           && (@base.ContainsNode(x) && !exponent.ContainsNode(x) && exponent.Vars.Any()
+                                               || @base == MathS.e && exponent.ContainsNode(x)
+                                                  && exponent.Replace(inner => inner is Logf ? Number.Integer.One : inner).Vars.Any(symbol => symbol != x))))
+                return null;
+            // Each root with the sum of its exponents and the sums it stands in to a power that is
+            // not a positive whole number; and of each base whether it is a sum. Only a root in two
+            // such is what writing each linear once is for: x in `x^m` and in `(a x)^2` is one power
+            // of x to the rules already, and `(a + b x)^m (a^2 - b^2 x^2)^2` a power of a linear
+            // times a polynomial, each answered as written.
+            var roots = new List<(Entity Root, Entity Exponent, HashSet<int> Apart)>();
+            var bases = new List<bool>();
+            var symbolic = false;
+            if (!Read(expr, Number.Integer.One) || !symbolic || !roots.Any(root => root.Apart.Count >= 2))
+                return null;
+            // Each linear with the root's denominator for its leading coefficient, `a x + 1` for the
+            // root `-1/a`, to the sum of its exponents simplified: `-p + p` is a zero power, and
+            // `-n/2 + 2 + n/2` a whole one, only so.
+            var linears = new List<(Entity Linear, Entity Exponent)>();
+            var notWhole = 0;
+            var stillShared = false;
+            foreach (var (root, exponent, apart) in roots)
+            {
+                var total = exponent is Number ? exponent : exponent.Simplify();
+                if (total.Evaled is Number.Integer whole)
+                    total = whole;
+                else if (Functions.PartialFractions.IsZeroAsAValue(total))
+                    continue;
+                if (total == Number.Integer.Zero)
+                    continue;
+                if (total is not Number.Integer)
+                    notWhole++;
+                stillShared |= apart.Count >= 2;
+                var (above, below) = Functions.SingleQuotient.Of(root);
+                var linear = root == Number.Integer.Zero ? x
+                    : (above is Number.Real { IsNegative: true } negative ? below * x + (-negative).InnerSimplified : below * x - above).InnerSimplified;
+                linears.Add((linear, total));
+            }
+            // And only where a root shared so is left with a power: where every one of them is gone,
+            // `(a + b x)^n/(-a - b x)^n` and `e^(2 p atanh(a x)) (c - a c x)^p`, the rules behind
+            // answer the integrand as it is written, shorter.
+            if (!stillShared || notWhole > 1 || notWhole == 1 && linears.Any(written => written.Exponent is Number.Integer { IsNegative: true }))
+                return null;
+            // As a quotient, the negative whole powers below the bar, which is how the rules read it.
+            var pieces = linears.Select(written => written.Exponent is Number.Integer { IsNegative: true } negative
+                ? (Factor: negative == Number.Integer.MinusOne ? written.Linear : MathS.Pow(written.Linear, -negative), Below: true)
+                : (Factor: written.Exponent == Number.Integer.One ? written.Linear : MathS.Pow(written.Linear, written.Exponent), Below: false)).ToList();
+            var product = Quotient(pieces).InnerSimplified;
+            // K, the integrand over the product, with a factor written in both taken out of both:
+            // `x^m` over `x^m` has no value at 0, where the integrand has one.
+            var unchanged = Factors(expr, false).ToList();
+            var constant = new List<(Entity Factor, bool Below)>();
+            foreach (var (factor, below) in pieces)
+            {
+                var same = unchanged.FindIndex(written => written.Below == below && written.Factor == factor);
+                if (same >= 0)
+                    unchanged.RemoveAt(same);
+                else
+                    constant.Add((factor, !below));
+            }
+            constant.AddRange(unchanged);
+            Entity? integrated;
+            writingEachLinearOnceUnderASymbolicPower = true;
+            try
+            {
+                integrated = Integration.ComputeAsAQuestionOfItsOwn(product, x, integrateByParts);
+            }
+            finally
+            {
+                writingEachLinearOnceUnderASymbolicPower = false;
+            }
+            if (integrated is null || integrated.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            var answer = Quotient(constant) * integrated;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+
+            static IEnumerable<(Entity Factor, bool Below)> Factors(Entity e, bool below) => e switch
+            {
+                Mulf(var left, var right) => Factors(left, below).Concat(Factors(right, below)),
+                Divf(var left, var right) => Factors(left, below).Concat(Factors(right, !below)),
+                _ => new[] { (e, below) },
+            };
+
+            static Entity Quotient(List<(Entity Factor, bool Below)> factors)
+            {
+                Entity above = Number.Integer.One, below = Number.Integer.One;
+                foreach (var (factor, under) in factors)
+                    if (under)
+                        below = below == Number.Integer.One ? factor : below * factor;
+                    else
+                        above = above == Number.Integer.One ? factor : above * factor;
+                return below == Number.Integer.One ? above : above / below;
+            }
+
+            // `factor` to the power `times`, read into the table through products, quotients and
+            // powers of them, the power of a product taken as the product of the powers and the
+            // exponential of a multiple of a logarithm as the power it is: `e^((n/2) ln(q))` is
+            // `q^(n/2)`, which is how the inverse hyperbolic functions under an exponential arrive.
+            // False where a factor of x is anything else.
+            bool Read(Entity factor, Entity times)
+            {
+                if (!factor.ContainsNode(x))
+                    return true;
+                switch (factor)
                 {
-                    Entity root = Number.Integer.One;
-                    foreach (var factor in Mulf.LinearChildren(monomial))
-                        switch (factor)
+                    case Mulf:
+                        return Mulf.LinearChildren(factor).All(child => Read(child, times));
+                    case Divf(var above, var below):
+                        return Read(above, times) && Read(below, Times(times, Number.Integer.MinusOne));
+                    case Powf(var e, var exponent) when e == MathS.e && AMultipleOfALogarithm(exponent) is var (multiple, argument):
+                        return Read(argument, Times(times, multiple));
+                    case Powf(var @base, var exponent) when !exponent.ContainsNode(x):
+                        return Read(@base, Times(times, exponent));
+                    case Variable or Sumf or Minusf:
+                        var index = bases.Count;
+                        bases.Add(factor is not Variable);
+                        var (top, bottom) = Functions.SingleQuotient.Of(AsOneQuotient(factor));
+                        return WithItsRoots(top, times, index) && WithItsRoots(bottom, Times(times, Number.Integer.MinusOne), index);
+                    default:
+                        return false;
+                }
+            }
+
+            // A product of exponents, exactly where both are rational, and noted as symbolic otherwise.
+            Entity Times(Entity left, Entity right)
+            {
+                if (left is Number.Rational leftRational && right is Number.Rational rightRational)
+                    return (Number.Rational)(leftRational * rightRational);
+                symbolic = true;
+                return (left * right).InnerSimplified;
+            }
+
+            // `c ln(q)` as `(c, q)` for a constant `c` and a natural logarithm of something of x, and
+            // null otherwise.
+            (Entity Multiple, Entity Argument)? AMultipleOfALogarithm(Entity exponent)
+            {
+                Entity multiple = Number.Integer.One;
+                Entity? argument = null;
+                foreach (var factor in Mulf.LinearChildren(exponent))
+                    if (factor is Logf(var logarithmBase, var antilogarithm) && logarithmBase == MathS.e && antilogarithm.ContainsNode(x) && argument is null)
+                        argument = antilogarithm;
+                    else if (factor.ContainsNode(x))
+                        return null;
+                    else
+                        multiple = Times(multiple, factor);
+                return argument is null ? null : (multiple, argument);
+            }
+
+            // The roots of a polynomial in x, each its multiplicity times `exponent` into the table:
+            // a power of x, a linear, and a quadratic with no linear term whose roots are a monomial
+            // and its negative. False for anything else.
+            bool WithItsRoots(Entity polynomial, Entity exponent, int @base)
+            {
+                if (!polynomial.ContainsNode(x))
+                    return true;
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, x, out var read) || read.Count == 0
+                    || read.Values.Any(coefficient => coefficient.ContainsNode(x)))
+                    return false;
+                var lowest = read.Keys.Min()!;
+                var highest = read.Keys.Max()!;
+                if (lowest.Sign < 0)
+                    return false;
+                Entity CoefficientOf(EInteger power) => read.TryGetValue(power, out var coefficient) ? coefficient : Number.Integer.Zero;
+                if (Functions.PartialFractions.IsZeroAsAValue(CoefficientOf(highest)) || Functions.PartialFractions.IsZeroAsAValue(CoefficientOf(lowest)))
+                    return false;
+                if (lowest.Sign > 0)
+                    Add(Number.Integer.Zero, Times(exponent, Number.Integer.Create(lowest)));
+                var degree = highest.Subtract(lowest);
+                if (degree.IsZero)
+                    return true;
+                if (degree.Equals(EInteger.One))
+                {
+                    Add(Functions.PartialFractions.InLowestTermsOverTheSymbols(-CoefficientOf(lowest) / CoefficientOf(highest)), exponent);
+                    return true;
+                }
+                if (degree.Equals(EInteger.FromInt32(2))
+                    && Functions.PartialFractions.IsZeroAsAValue(CoefficientOf(lowest.Add(EInteger.One)))
+                    && AMonomialSquareRoot(-CoefficientOf(lowest) / CoefficientOf(highest)) is { } root)
+                {
+                    Add(root, exponent);
+                    Add(Functions.PartialFractions.InLowestTermsOverTheSymbols(-root), exponent);
+                    return true;
+                }
+                return false;
+
+                void Add(Entity root, Entity times)
+                {
+                    var apart = bases[@base] && times is not Number.Integer { IsPositive: true };
+                    for (var i = 0; i < roots.Count; i++)
+                        if (roots[i].Root == root || Functions.PartialFractions.IsZeroAsAValue(roots[i].Root - root))
                         {
-                            case Number.Integer { EInteger: var whole } when whole.Sign > 0 && whole.Sqrt() is var floor && floor.Multiply(floor).Equals(whole):
-                                root *= Number.Integer.Create(floor);
-                                break;
-                            case Powf(Variable symbol, Number.Integer { EInteger: var power }) when power.Sign > 0 && power.IsEven:
-                                root *= MathS.Pow(symbol, Number.Integer.Create(power.Divide(EInteger.FromInt32(2))));
-                                break;
-                            default:
-                                return null;
+                            if (apart)
+                                roots[i].Apart.Add(@base);
+                            var sum = roots[i].Exponent is Number.Rational left && times is Number.Rational right
+                                ? (Entity)(Number.Rational)(left + right) : (roots[i].Exponent + times).InnerSimplified;
+                            roots[i] = (roots[i].Root, sum, roots[i].Apart);
+                            return;
                         }
-                    return root;
+                    roots.Add((root, times, apart ? new HashSet<int> { @base } : new HashSet<int>()));
                 }
             }
         }
