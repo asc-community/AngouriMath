@@ -932,6 +932,11 @@ namespace AngouriMath.Functions.Algebra
             // recurrence that raises the whole power to -1: closed, where the substitution for the
             // root makes a rational function over a power of a symbolic quadratic.
             if ((answer = IndefiniteIntegralSolver.SolveANegativePowerOfALinearBesideAPowerOfAnotherByTheRecurrence(expr, x, integrateByParts)) is { }) return answer;
+            // A sum of powers of one inverse trigonometric or error function beside cofactors free
+            // of it, by parts down the powers from the top: `x^3/((1 + a^2 x^2) atan(a x)^3) -
+            // 3 x^2/(2 a atan(a x)^2)` is the derivative of one product, and neither term is
+            // elementary on its own. Before the split, which loses it.
+            if ((answer = IndefiniteIntegralSolver.SolveASumOfPowersOfAnInverseOrErrorFunctionByPartsDownThePowers(expr, x, integrateByParts)) is { }) return answer;
             // A product of powers times a sum that is the derivative of the product with some
             // of the powers raised by one -- `e^x x^2 ln(x)^2 (3 + (3 + x) ln(x))` -- read off
             // the sum, for symbolic exponents too. Before the split, which loses it.

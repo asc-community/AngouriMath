@@ -6394,6 +6394,29 @@ no integrand without one changes: Rubi's independent suites and a sample of its 
 | `"e^(b*x)*Ei(b*x)/x".Integrate("x")` | `Ei * e ^ (b * x) + C`, with `Ei` a variable | `Ei(b * x) ^ 2 / 2 + C` |
 | `"Si(b*x)*sin(b*x)/x".Integrate("x")` | `Si * -cos(b * x) + C`, with `Si` a variable | `Si(b * x) ^ 2 / 2 + C` |
 
+### A sum of powers of an inverse trigonometric or error function is integrated by parts down the powers
+
+**Answers where there were none.** `x^3/((1 + a^2 x^2) atan(a x)^3) - 3 x^2/(2 a atan(a x)^2)`,
+`x asin(x)^(3/2)/(1 - x^2)^2 - 3 x/(8 (1 - x^2) sqrt(asin(x)))` and `erf(b x) e^(-b^2 x^2) (1/x^3 + b^2/x)` with its
+`erfc` and `erfi` twins, Rubi's 5.1.4, 5.3.4 and 8.1, were declined: no term is elementary alone, and the split and
+the parts each read one term at a time. A sum of terms each a power of one function `K`, whose derivative is free of
+it, times a cofactor free of it is now integrated by parts from the top power,
+`integral A K^p = F K^p - integral p F K^(p - 1) K'` with `F` the antiderivative of `A`, and the last integral joins
+the terms a power below. Where every power cancels so, the
+parts are the answer, `(-x^3/(2 a atan(a x)^2))'` for the first; where what is left is free of `K` it is asked. The
+powers a whole number apart and at most five apart, a cancelling group decided at sampled points, and the answer
+differentiated back. Three sums of the same kind the unreleased master answered come back shorter
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^3/((1+a^2*x^2)*arctan(a*x)^3)-3/2*x^2/(a*arctan(a*x)^2)".ToEntity().Integrate("x")` | `integral(...)` | `-x^3/(2 a arctan(a x)^2)`, 51 characters |
+| `"x*arcsin(x)^(3/2)/(1-x^2)^2-3/8*x/((1-x^2)*sqrt(arcsin(x)))".ToEntity().Integrate("x")` | `integral(...)` | 99 characters |
+| `"erf(b*x)/(e^(b^2*x^2)*x^3)+b^2*erf(b*x)/(e^(b^2*x^2)*x)".ToEntity().Integrate("x")` | `UnrecognizedFunctionParseException`: there is no function `erf` | 219 characters |
+| `"erfi(b*x)/(e^(b^2*x^2)*x^3)+b^2*erfi(b*x)/(e^(b^2*x^2)*x)".ToEntity().Integrate("x")` | `integral(...)`, reading `erfi` as a symbol | 131 characters |
+| `"erf(x)^2+4*x*erf(x)*e^(-x^2)/sqrt(pi)".ToEntity().Integrate("x")` | `UnrecognizedFunctionParseException`; 352 characters on the unreleased master | `x erf(x)^2`, 18 characters |
+| `"2*x/arccos(x)+x^2/(sqrt(1-x^2)*arccos(x)^2)".ToEntity().Integrate("x")` | `integral(...)`; 121 characters on the unreleased master | `x^2/arccos(x)`, 33 characters |
+
 ### A square of a special function, and one beside a power of `x` and its elementary derivative, are integrated by parts
 
 `x Si(b x) sin(b x)` was left unevaluated where `Si(b x) sin(b x)` was not: by parts it is
