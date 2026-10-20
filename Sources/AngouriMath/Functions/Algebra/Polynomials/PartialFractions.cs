@@ -2058,6 +2058,32 @@ namespace AngouriMath.Functions
         }
 
         /// <summary>
+        /// Whether <paramref name="antiderivative"/> has no value at any of the points
+        /// <see cref="HoldsAtSampledPoints"/> takes by default where <paramref name="integrand"/> has
+        /// one, with the symbols pinned as it pins them: a conditional answer whose every condition
+        /// fails wherever the integrand is defined, which says nothing about it. A value that cannot
+        /// be told is taken as one.
+        /// </summary>
+        internal static bool SaysNothingWhereTheIntegrandIsDefined(Entity antiderivative, Entity integrand, Variable x)
+        {
+            // Under the settings the answer is returned in: its subtrees free of the point are shared
+            // with the evaluated copy, and evaluated with the downcasting off they kept a `1/1` the
+            // answer then printed.
+            var (pinnedAntiderivative, pinnedIntegrand) = Pinned(antiderivative, integrand, x);
+            var defined = 0;
+            foreach (var at in DefaultSamplePoints)
+            {
+                var point = Real.Create(EDecimal.FromString(at));
+                if (pinnedIntegrand.Substitute(x, point).Evaled is not Complex value || value.IsNaN)
+                    continue;
+                defined++;
+                if (pinnedAntiderivative.Substitute(x, point).Evaled is not Complex { IsNaN: true })
+                    return false;
+            }
+            return defined > 0;
+        }
+
+        /// <summary>
         /// The two with every symbol but <paramref name="x"/> pinned to a fixed value:
         /// distinct values, off the integers, so that no two factors coincide by accident and
         /// a sign or a root in a coefficient stays generic.

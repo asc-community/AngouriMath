@@ -922,7 +922,8 @@ namespace AngouriMath.Functions.Algebra
         /// one anywhere else, an odd power of <c>e^L</c> from a <c>sinh</c> or <c>cosh</c> among
         /// them, and the rule declines. <c>d/dx F(tanh(L)) = b (1 - tanh(L)^2) F'(tanh(L))</c>
         /// wherever <c>F</c> is differentiable, so the answer written back holds where the integrand
-        /// is defined.
+        /// is defined -- and says nothing where the conditions of <c>F</c> fail for every <c>u</c> in
+        /// <c>(-1, 1)</c>, which is the rule's to decline.
         /// </remarks>
         internal static Entity? SolveAFunctionOfTheHyperbolicTangent(Entity expr, Entity.Variable x, bool integrateByParts)
         {
@@ -979,7 +980,11 @@ namespace AngouriMath.Functions.Algebra
             // a + b x from its coefficients: (2 (a + b x))/2 is left as written by the simplification.
             var intercept0 = Functions.PartialFractions.Bare((twiceIntercept / 2).Simplify());
             var linear = intercept0.Evaled is Number.Complex { IsZero: true } ? slopeOfL * x : intercept0 + slopeOfL * x;
-            return answer.Substitute(u, MathS.Hyperbolic.Tanh(linear));
+            var inX = answer.Substitute(u, MathS.Hyperbolic.Tanh(linear));
+            // The rules in u answer on the real domain of the question in u, and tanh(L) takes only
+            // the values in (-1, 1): sqrt(1 - coth(x)^2), which is i |csch(x)|, is real in u only for
+            // |u| > 1, and came back as two arms for u <= -1 and u >= 1, true nowhere on the real line.
+            return Functions.PartialFractions.SaysNothingWhereTheIntegrandIsDefined(inX, expr, x) ? null : inX;
 
             // c times (p u + q)^k/(r u + s)^k for a k not whole, p = +-q and r, q not zero: nothing else holds u.
             static bool APowerOfAQuotientOfLinearsVanishingAtPlusOrMinusOne(Entity inU, Variable u)
