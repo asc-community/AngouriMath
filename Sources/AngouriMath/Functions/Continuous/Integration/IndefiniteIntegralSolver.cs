@@ -1106,6 +1106,122 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A hyperbolic integrand asked as a trigonometric one, by Osborn's rule: with <c>L = i s</c>,
+        /// <c>cosh(L) = cos(s)</c>, <c>sinh(L) = i sin(s)</c>, <c>tanh(L) = i tan(s)</c> and
+        /// <c>coth(L) = -i cot(s)</c>, and <c>dx = i ds/b</c> for <c>L = a + b x</c>. The parser writes
+        /// the hyperbolic functions as exponentials -- <c>cosh(L)</c> is <c>(e^L + e^(-L))/2</c> -- so
+        /// the trigonometric rules never read them: <c>(b cosh(x) + c sinh(x) + sqrt(b^2 - c^2))^(1/2)</c>
+        /// timed out where <c>(b cos(x) + c sin(x) + sqrt(b^2 + c^2))^(1/2)</c> is answered at once, and
+        /// as <c>(b cos(s) + i c sin(s) + sqrt(b^2 - c^2))^(1/2)</c> it is the same question. The answer
+        /// in <c>s</c> is written back with <c>s = -i L</c> and checked against the integrand at
+        /// sampled points: a trigonometric answer derived for a real <c>s</c> can take a different
+        /// branch on the imaginary axis, and then the rule declines. Rubi's 6.7.1.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// Only where a sine or cosine is among the quotients, every exponential of x is a whole power
+        /// of one <c>e^L</c> inside one of them, and x stands nowhere else. With
+        /// <paramref name="rationalToo"/> false, only where the integrand is not a rational function of
+        /// <c>e^L</c>, which the exponential substitution answers in real terms; with it true, only those,
+        /// after that substitution has declined them. Asked only of the question asked, and last: the
+        /// question in <c>s</c> is not cheap to decline, and asked early it took time from the rules
+        /// that answer <c>x/cosh(x)^(7/2) + 3/5 x sqrt(cosh(x))</c> and the like.
+        /// </remarks>
+        internal static Entity? SolveAHyperbolicIntegrandAsATrigonometricOne(Entity expr, Entity.Variable x, bool integrateByParts, bool rationalToo)
+        {
+            // Only the question asked: a question in s is not cheap to decline, and below the top every
+            // sub-question a route gives up on would ask it.
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            // The exponents of x, each linear, as rational multiples of the first one's.
+            var exponents = expr.Nodes.Where(node => node is Powf(var e0, var p0) && e0 == MathS.e && p0.ContainsNode(x)).Select(node => ((Powf)node).Exponent).Distinct().ToList();
+            if (exponents.Count == 0 || !TreeAnalyzer.TryGetPolyLinear(exponents[0], x, out var firstSlope, out var firstIntercept) || TreeAnalyzer.IsZero(firstSlope))
+                return null;
+            var ratios = new List<ERational>();
+            foreach (var exponent in exponents)
+            {
+                if (!TreeAnalyzer.TryGetPolyLinear(exponent, x, out var slope, out var intercept)
+                    || Functions.PartialFractions.Bare((slope / firstSlope).Simplify()).Evaled is not Number.Rational ratio
+                    || !VanishesIdentically(intercept - ratio * firstIntercept))
+                    return null;
+                ratios.Add(ratio.ERational);
+            }
+            // L the largest exponent every one is a whole multiple of: the first times g/d, with d the
+            // denominators' least common multiple and g the numerators' greatest common divisor over it.
+            var denominator = ratios.Aggregate(EInteger.One, (lcm, r) => lcm * r.Denominator / lcm.Gcd(r.Denominator));
+            var wholes = ratios.Select(r => r.Numerator * (denominator / r.Denominator)).ToList();
+            var divisor = wholes.Aggregate(EInteger.Zero, (gcd, n) => gcd.Gcd(n.Abs()));
+            if (divisor.IsZero)
+                return null;
+            var unit = Number.Rational.Create(divisor, denominator);
+            var slopeOfL = Functions.PartialFractions.Bare((firstSlope * unit).Simplify());
+            var interceptOfL = Functions.PartialFractions.Bare((firstIntercept * unit).Simplify());
+            var w = Variable.CreateUnique(expr, "w_osb");
+            var s = Variable.CreateUnique(expr, "s_osb");
+            var multiples = exponents.Zip(wholes, (exponent, n) => (exponent, k: n / divisor)).ToDictionary(pair => pair.exponent, pair => pair.k);
+            if (multiples.Values.Any(k => !k.CanFitInInt32() || k.Abs().CompareTo(EInteger.FromInt32(16)) > 0))
+                return null;
+            var inW = expr.Replace(node => node is Powf(var e0, var p0) && e0 == MathS.e && multiples.TryGetValue(p0, out var k)
+                ? (k.Equals(EInteger.One) ? w : MathS.Pow(w, Number.Integer.Create(k)))
+                : node);
+            // Only exponentials of x: beside x itself the question in s is a polynomial in s times
+            // trigonometric functions, slow to decline, where the rules in x answer at once.
+            if (inW.ContainsNode(x))
+                return null;
+            // A rational function of e^L is the exponential substitution's, and asked here only after it
+            // has declined one; the rest before.
+            if (rationalToo != IsARationalFunction(inW, w))
+                return null;
+            var sawASineOrCosine = false;
+            var inS = inW.Replace(node =>
+            {
+                if (node is not Divf(var top, var bottom) || !top.ContainsNode(w))
+                    return node;
+                // (W +- 1/W)/2: W times the top is W^2 +- 1.
+                if (bottom == Number.Integer.Create(2) && Squared(top * w, w) is { } sign)
+                {
+                    sawASineOrCosine = true;
+                    return sign > 0 ? MathS.Cos(s) : MathS.i * MathS.Sin(s);
+                }
+                // (W^2 - 1)/(W^2 + 1) and its reciprocal.
+                if (Squared(top, w) is { } above && Squared(bottom, w) is { } below && above != below)
+                    return above < 0 ? MathS.i * MathS.Tan(s) : -MathS.i * MathS.Cotan(s);
+                return node;
+            });
+            if (!sawASineOrCosine || inS.ContainsNode(w))
+                return null;
+            var question = MathS.i / slopeOfL * inS;
+            if (Integration.ComputeAsAQuestionOfItsOwn(question, s, integrateByParts) is not { } inTermsOfS
+                || inTermsOfS.Nodes.Any(node => node is Integralf || node == MathS.NaN))
+                return null;
+            var linear = interceptOfL.Evaled is Number.Complex { IsZero: true } ? slopeOfL * x : interceptOfL + slopeOfL * x;
+            // Back in L: cos(-i L) is cosh(L), sin(-i L) is -i sinh(L), tan(-i L) is -i tanh(L) and
+            // cot(-i L) is i coth(L); s anywhere else is -i L.
+            var answer = inTermsOfS.Replace(node => node switch
+            {
+                Cosf(var arg) when arg == s => MathS.Hyperbolic.Cosh(linear),
+                Sinf(var arg) when arg == s => -MathS.i * MathS.Hyperbolic.Sinh(linear),
+                Tanf(var arg) when arg == s => -MathS.i * MathS.Hyperbolic.Tanh(linear),
+                Cotanf(var arg) when arg == s => MathS.i * MathS.Hyperbolic.Cotanh(linear),
+                Secantf(var arg) when arg == s => MathS.Hyperbolic.Sech(linear),
+                Cosecantf(var arg) when arg == s => MathS.i * MathS.Hyperbolic.Cosech(linear),
+                _ => node
+            }).Substitute(s, -MathS.i * linear).InnerSimplified;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+
+            // +1 for W^2 + 1 and -1 for W^2 - 1, as polynomials in W; null for anything else.
+            static int? Squared(Entity polynomial, Variable w)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, w, out var read) || read.Count != 2
+                    || !read.TryGetValue(EInteger.FromInt32(2), out var leading) || !read.TryGetValue(EInteger.Zero, out var constant)
+                    || leading.InnerSimplified != Number.Integer.One)
+                    return null;
+                var c = constant.InnerSimplified;
+                return c == Number.Integer.One ? 1 : c == Number.Integer.MinusOne ? -1 : null;
+            }
+        }
+
+        /// <summary>
         /// A quotient by the square of a base, by parts against the base's reciprocal, where the
         /// base's derivative makes the rest exact: <c>N/(M v^2)</c> is <c>g v'/v^2</c> with
         /// <c>g = N/(M v')</c>, and <c>v'/v^2</c> is the derivative of <c>-1/v</c>, so the integral

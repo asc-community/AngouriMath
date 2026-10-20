@@ -627,6 +627,24 @@ roots, `1 - x^2`, is taken as its two ([#718](https://github.com/asc-community/A
 | `"1/((1 - x^2)*(a + b*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,600 characters |
 | `"1/(x*(1 - x^2)*(a + b*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,637 characters |
 
+### A hyperbolic integrand is asked as a trigonometric one
+
+**Answers where there were none.** The parser writes the hyperbolic functions as exponentials, so the trigonometric
+rules never read them: `(b cosh(x) + c sinh(x) + sqrt(b^2 - c^2))^(1/2)` was declined where
+`(b cos(x) + c sin(x) + sqrt(b^2 + c^2))^(1/2)` is answered at once. With `L = i s` (Osborn's rule) `cosh(L)` is
+`cos(s)`, `sinh(L)` is `i sin(s)` and `dx = i ds/b`, and the question in `s` is one the trigonometric rules answer; the
+answer is written back with `s = -i L` and checked against the integrand at sampled points, so that a branch taken for
+a real `s` that differs on the imaginary axis is declined. Only where every exponential of x is a whole power of one
+`e^L` and x stands nowhere else, asked of the question asked and after every rule in x
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(b*cosh(x)+c*sinh(x)+sqrt(b^2-c^2))^(1/2)".ToEntity().Integrate("x")` | `integral(...)` | 185 characters |
+| `"1/(a+b*sinh(x)+c*sinh(x)^2)".ToEntity().Integrate("x")` | `integral(...)` | 576 characters |
+| `"coth(c+d*x)/sqrt(a+b*sech(c+d*x))".ToEntity().Integrate("x")` | `integral(...)` | 725 characters |
+| `"(cosh(x)*coth(x))^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 272 characters |
+
 ### A hyperbolic cosecant beside a power of a binomial in the sine is read through its exponentials
 
 **Answers where there were none.** `csch(c + d x) (a + b sinh(c + d x)^4)^2` ran past fifteen minutes. `csch(y)` arrives
