@@ -5361,6 +5361,14 @@ namespace AngouriMath.Functions.Algebra
         /// chain in t.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </para>
+        /// <para>
+        /// Two roots, as in <c>cos(y)^(3/2)/sqrt(a + a sec(y))</c>, are real together where the
+        /// cosine is negative too, and there each written apart may have turned its sign: the answer
+        /// said <c>provided cos(y) >= 0</c>, half of the integrand's domain, for every one of 165
+        /// rows of Rubi's 4.5.4.2. Which turn is known from the constants, and the answer carries
+        /// the cosine's sign where they leave an odd number turned.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
         /// </remarks>
         internal static Entity? SolveByTheHalfAngleTangentBesideAHalfOddPowerOfOnePlusASecant(Entity expr, Entity.Variable x, bool integrateByParts)
         {
@@ -5408,6 +5416,9 @@ namespace AngouriMath.Functions.Algebra
             var found = false;
             var declined = false;
             var roots = 0;
+            var rootsOfTheCompanion = 0;
+            // The product of the roots' constants: the sign of each radicand where t^2 < 1.
+            Entity constants = Number.Integer.One;
             // Each half-odd power, assembled in t: of a (1 ± sec(y)), or of d sec(y) or d cos(y);
             // for the cosecant, of a (1 ± csc(y)), d csc(y) or d sin(y).
             var rewritten = expr.Replace(node =>
@@ -5423,6 +5434,7 @@ namespace AngouriMath.Functions.Algebra
                 if (ReadAsOnePlusMinusAFunction(radicand, secant, cosecant) is (var a, var plus, var isSecant) && isSecant == secantKind)
                 {
                     found = true;
+                    constants = plus ? constants * a : constants * -a;
                     if (plus)
                         return MathS.Pow(2 * a, exponent) * MathS.Pow(oneMinus, (-exponent).InnerSimplified);
                     // (-2a t^2/(1 - t^2))^p is (-2a)^p |t|^(2p) (1 - t^2)^(-p), and 2p is odd.
@@ -5449,6 +5461,9 @@ namespace AngouriMath.Functions.Algebra
                     declined = true;
                     return node;
                 }
+                if (function == companion)
+                    rootsOfTheCompanion++;
+                constants = constants * coefficient;
                 var (above, below) = function == primary ? (onePlus, oneMinus) : (oneMinus, onePlus);
                 return MathS.Pow(coefficient, exponent) * MathS.Pow(above, exponent) * MathS.Pow(below, (-exponent).InnerSimplified);
             });
@@ -5500,12 +5515,36 @@ namespace AngouriMath.Functions.Algebra
             if (answer.Nodes.Any(node => node == MathS.NaN))
                 return null;
             // Each root written apart is exact inside t^2 < 1, where 1 - t^2 is positive, for any
-            // sign of the constants. Outside it a root whose radicand is negative there is
-            // imaginary, and one alone leaves the integrand complex, where the answer is nothing
-            // to be wrong about; but two can make it real again -- `(1 + sec(x))^(5/2) sqrt(cos(x))`
-            // is real where the cosine is negative -- and there each written apart may have
-            // turned its sign where the other did not. The answer says where it holds.
-            return roots < 2 ? answer : answer.Provided((secantKind ? MathS.Cos(argument) : MathS.Sin(argument)) >= Number.Integer.Zero);
+            // sign of the constants. Outside it `(P/(1 - t^2))^p` is `P^p (1 - t^2)^(-p)` but for a
+            // positive P, and `(P (1 - t^2))^p` is `P^p (1 - t^2)^p` but for a negative one, the two
+            // differing by e^(2 i pi p) = -1: where cos(y) < 0 a root of a ± a sec(y) or d sec(y)
+            // turns its sign if its constant is positive, and one of d cos(y) if its constant is
+            // negative. One root alone turns only where the integrand is complex, which is nothing
+            // to be wrong about. For an even number the turns multiply to (-1)^n s, for n roots of
+            // the cosine and s the sign of the product of the constants, and the integrand is real,
+            // on both sides at once, just where s is positive: `sqrt(sec(x)) sqrt(1 + sec(x))` holds
+            // as written where the cosine is negative, and `cos(x)^(3/2)/sqrt(1 + sec(x))` with the
+            // cosine's sign in front. The root of 1 - t^2 has cancelled then, so that the answer in
+            // t holds beyond t^2 < 1 too; for an odd number above one it has not, and the answer
+            // says where it holds, as it does where the product's sign is not known.
+            if (roots < 2)
+                return answer;
+            var withinTheHalfTurn = answer.Provided(companion >= Number.Integer.Zero);
+            if (!exponents[0].Numerator.Remainder(exponents[0].Denominator).IsZero)
+                return withinTheHalfTurn;
+            var turns = rootsOfTheCompanion % 2 == 1;
+            switch (constants.Evaled)
+            {
+                case Number.Real { IsFinite: true } product when !product.IsZero:
+                    if (product < 0)
+                        turns = !turns;
+                    return turns ? MathS.Signum(companion) * answer : answer;
+                case Number:
+                    return withinTheHalfTurn;
+                default:
+                    return (turns ? MathS.Signum(companion) * answer : answer)
+                        .Provided(constants > Number.Integer.Zero | companion >= Number.Integer.Zero);
+            }
         }
 
         /// <summary>

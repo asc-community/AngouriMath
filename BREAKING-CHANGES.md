@@ -4163,9 +4163,12 @@ cosine the whole is a rational function of `t` beside one root, of `1 - t^2` or 
 Two roots, which a half-odd power of the secant beside a whole one of `1 ± sec` makes, are
 elliptic and still declined. The cosecant's the same way through the complement, and a root of
 `1 - sec(y)` carries `sgn(tan(y/2))`, constant between its zeros. Each root written apart is exact
-where `cos(y)` is positive; beyond it two roots can make the integrand real while each has turned
-its sign on its own, so an answer through two says `provided cos(y) >= 0`
-([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+where `cos(y)` is positive; beyond it each turns its sign by its constant's. Two roots make the
+integrand real on both sides at once, for a positive product of their constants, and then the turns
+are as many as the roots of the cosine: an answer through two holds where the cosine is negative too,
+with `sgn(cos(y))` in front for an odd number of roots of the cosine, and says
+`provided a > 0 or cos(y) >= 0` where the product's sign is not known. Three say
+`provided cos(y) >= 0` ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
@@ -4174,6 +4177,8 @@ its sign on its own, so an answer through two says `provided cos(y) >= 0`
 | `"1/(sec(x)^(3/2)*sqrt(1 + sec(x)))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative through a root of `1 + tan(x/2)^2` |
 | `"sqrt(a - a*sec(x))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm in `tan(x/2)`, times `sgn(tan(x/2))` |
 | `"sqrt(1 + csc(x))".ToEntity().Integrate("x")` | `integral(...)` | an arctangent in `tan(pi/4 - x/2)` |
+| `"cos(x)^(3/2)/sqrt(1 + sec(x))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm and a power in `tan(x/2)`, times `sgn(cos(x))` |
+| `"cos(c+d*x)^(3/2)*(A+C*sec(c+d*x)^2)/sqrt(a+a*sec(c+d*x))".ToEntity().Integrate("x")` | `integral(...)` | the same, times `sgn(cos(c + d x))`, `provided a > 0 or cos(c + d x) >= 0` |
 
 ### An even power of the secant or the cosecant under a root is written in the tangent
 
