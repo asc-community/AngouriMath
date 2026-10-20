@@ -443,6 +443,97 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of <c>x</c> times the logarithm of <c>A + B sqrt(Q)</c>, for polynomials <c>A</c>,
+        /// <c>B</c> and <c>Q</c>, by parts, with the logarithm's derivative written over the conjugate:
+        /// with <c>D = A^2 - B^2 Q</c>, it is
+        /// <c>D'/(2 D) + (Q (A B' - A' B) + A B Q'/2)/(D sqrt(Q))</c>, a rational function and one over
+        /// the root, which the rules for those answer. Rubi's 3.5,
+        /// <c>x^3 ln(-1 + 4 x + 4 sqrt((x - 1) x))</c>, where <c>D = 8 x + 1</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// The search differentiates the logarithm as written, a quotient with the root in both
+        /// parts, and ran past the budget on what was left. Only for a <c>D</c> that is not a
+        /// constant: for one that is, <c>ln(x + sqrt(x^2 + 1))</c> and the other inverse hyperbolic
+        /// functions, the derivative is the root's alone, and the rules for those answer them.
+        /// The derivative is an identity of the algebra, <c>sqrt(Q)^2 = Q</c>, with no branch in it.
+        /// </remarks>
+        internal static Entity? SolveByPartsAgainstALogarithmOfARadicalSum(Entity expr, Entity.Variable x)
+        {
+            Entity constant = Number.Integer.One;
+            Logf? logarithm = null;
+            Entity power = Number.Integer.Zero;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (!underneath && logarithm is null && factor is Logf ln && ln.Base == MathS.e)
+                {
+                    logarithm = ln;
+                    continue;
+                }
+                Entity? k = factor == x ? Number.Integer.One : factor is Powf(var raisedX, Number.Rational r) && raisedX == x ? r : null;
+                if (k is null)
+                    return null;
+                power = underneath ? power - k : power + k;
+            }
+            if (logarithm is null || logarithm.Antilogarithm is not (Sumf or Minusf) || power.InnerSimplified.Evaled is not Number.Rational m
+                || m == Number.Integer.MinusOne)
+                return null;
+            // The argument as A + B sqrt(Q), term by term.
+            Entity a = Number.Integer.Zero, b = Number.Integer.Zero;
+            Entity? radicand = null;
+            foreach (var term in Sumf.LinearChildren(logarithm.Antilogarithm))
+            {
+                Entity? root = null;
+                Entity rest = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(term))
+                {
+                    if (root is null && factor is Powf(var q, Number.Rational half) && half == Number.Rational.Create(1, 2) && q.ContainsNode(x))
+                        root = q;
+                    else
+                        rest *= factor;
+                }
+                if (root is null)
+                {
+                    a += term;
+                    continue;
+                }
+                if (radicand is not null && radicand != root)
+                    return null;
+                radicand = root;
+                b += rest;
+            }
+            if (radicand is null
+                || !TreeAnalyzer.TryGetPolynomial(a, x, out var aRead) || aRead.Keys.Any(k => k.Sign < 0)
+                || !TreeAnalyzer.TryGetPolynomial(b, x, out var bRead) || bRead.Keys.Any(k => k.Sign < 0)
+                || !TreeAnalyzer.TryGetPolynomial(radicand, x, out var qRead) || qRead.Keys.Any(k => k.Sign < 0) || qRead.Keys.All(k => k.IsZero))
+                return null;
+            // D = A^2 - B^2 Q, and the numerator over the root, as polynomials.
+            Entity Written(Entity polynomial) => TreeAnalyzer.TryGetPolynomial(polynomial, x, out var read)
+                ? read.Where(monomial => monomial.Value.InnerSimplified.Evaled is not Number.Complex { IsZero: true })
+                      .Aggregate((Entity)Number.Integer.Zero, (sum, monomial) => sum + monomial.Value.InnerSimplified * (monomial.Key.IsZero ? Number.Integer.One : monomial.Key.Equals(EInteger.One) ? x : MathS.Pow(x, Number.Integer.Create(monomial.Key))))
+                : polynomial;
+            var d = Written(a * a - b * b * radicand);
+            if (!TreeAnalyzer.TryGetPolynomial(d, x, out var dRead) || dRead.Keys.All(k => k.IsZero) || d == Number.Integer.Zero)
+                return null;
+            var (da, db, dq) = (a.Differentiate(x), b.Differentiate(x), radicand.Differentiate(x));
+            var overTheRoot = Written(radicand * (a * db - da * b) + a * b * dq / 2);
+            var raised = (m + 1).InnerSimplified;
+            Entity xRaised = raised == Number.Integer.One ? x : MathS.Pow(x, raised);
+            var rational = xRaised * Written(d.Differentiate(x)) / (2 * d);
+            var radical = xRaised * overTheRoot / (d * MathS.Sqrt(radicand));
+            if (Integration.ComputeAsAQuestionOfItsOwn(rational, x, integrateByParts: true) is not { } first
+                || Integration.ComputeAsAQuestionOfItsOwn(radical, x, integrateByParts: true) is not { } second
+                || first.Nodes.Concat(second.Nodes).Any(node => node is Integralf || node == MathS.NaN))
+                return null;
+            return (constant * (xRaised * logarithm - first - second) / raised).InnerSimplified;
+        }
+
+        /// <summary>
         /// An integrand that is a constant multiple of <c>D'/D</c> for a sum <c>D</c> below the
         /// bar holding a root, decided at sampled points and answered as that multiple of
         /// <c>ln(D)</c>.

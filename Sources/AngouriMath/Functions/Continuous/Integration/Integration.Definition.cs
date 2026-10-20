@@ -787,6 +787,8 @@ namespace AngouriMath.Functions.Algebra
             // A power of a quotient of linears beside whole powers of them, which is how e^(n acoth(a x))
             // over a power of c - a^2 c x^2 arrives folded, under t = the quotient.
             if ((answer = IndefiniteIntegralSolver.SolveByTheMoebiusSubstitutionOfAQuotientOfLinears(expr, x)) is { }) return answer;
+            // And a power of x times the logarithm of A + B sqrt(Q), by parts, its derivative over the conjugate.
+            if ((answer = IndefiniteIntegralSolver.SolveByPartsAgainstALogarithmOfARadicalSum(expr, x)) is { }) return answer;
             // A power of an exponential with a positive base is the exponential of the product,
             // exactly, and only that spelling is one the exponential rules read.
             if ((answer = IndefiniteIntegralSolver.SolveByFlatteningAPowerOfAnExponential(expr, x, integrateByParts)) is { }) return answer;
