@@ -32358,6 +32358,134 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>x^m (d + e x^2)^p (a + b F(c x))</c>, <c>F</c> an inverse trigonometric function and
+        /// <c>m + 2p + 3 = 0</c>, by parts against the antiderivative of <c>x^m (d + e x^2)^p</c> that is
+        /// one term, <c>v = x^(m + 1) (d + e x^2)^(p + 1)/(d (m + 1))</c>:
+        /// <c>integral = v (a + b F(c x)) - b integral v F(c x)'</c>, and <c>F(c x)'</c> is algebraic.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>v' = x^m (d + e x^2)^p ((m + 1)(d + e x^2) + 2 (p + 1) e x^2)/(d (m + 1))</c>, and the bracket
+        /// is <c>(m + 1) d + (m + 2p + 3) e x^2</c>, which is <c>(m + 1) d</c> for every <c>e</c>: an
+        /// identity of rational functions, so the parts are exact wherever the integrand is defined, on
+        /// any branch of <c>F</c>. It is Rubi's choice of <c>v</c>, and the one that vanishes at
+        /// <c>x = 0</c>.
+        /// </para>
+        /// <para>
+        /// The integrator's own antiderivative of <c>x^3/(d + e x^2)^3</c> is a piecewise on <c>e = 0</c>,
+        /// and by parts against it spent the budget on every arm: Rubi's 5.1.4, 5.3.4, 5.5.1 and 5.6.1
+        /// <c>x^3 (a + b F(c x))/(d + e x^2)^3</c>, for <c>F</c> the inverse sine, tangent, secant and
+        /// cosecant, ran out of time, where the remainder against this <c>v</c> is answered in under a
+        /// second.
+        /// </para>
+        /// <para>
+        /// Narrow on purpose. <c>p</c> whole and at most <c>-3</c>, so that <c>v</c> is rational and
+        /// <c>m = -2p - 3</c> at least 3: <c>m = 1</c>, <c>x/(d + e x^2)^2</c>, is answered by parts as it
+        /// was, and a half-odd <c>p</c> is answered as it was beside the inverse sine and tangent and is
+        /// elliptic beside the secant. And not for <c>e = +-c^2 d</c>, the quadratic a multiple of
+        /// <c>F</c>'s own radicand, which the substitution under <c>F</c> answers.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveAPowerOfXOverAPowerOfAQuadraticTimesAnInverseTrigonometricFunctionByParts(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked || integratingAPowerOverAQuadraticBesideAnInverse)
+                return null;
+            // The one inverse trigonometric function, of c x.
+            Entity? function = null;
+            foreach (var node in expr.Nodes)
+                if ((node is Arcsinf or Arccosf or Arctanf or Arccotanf or Arcsecantf or Arccosecantf) && node.ContainsNode(x))
+                {
+                    if (function is not null && function != node)
+                        return null;
+                    function = node;
+                }
+            var argument = function switch
+            {
+                Arcsinf(var u) => u, Arccosf(var u) => u, Arctanf(var u) => u,
+                Arccotanf(var u) => u, Arcsecantf(var u) => u, Arccosecantf(var u) => u,
+                _ => null
+            };
+            if (function is null || argument is null || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out var offset)
+                || rate.ContainsNode(x) || !Functions.PartialFractions.IsZeroAsAValue(offset) || Functions.PartialFractions.IsZeroAsAValue(rate))
+                return null;
+            // Above the bar one factor linear in it, a + b F, and the rest; below, nothing with it.
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            if (denominator.ContainsNode(function))
+                return null;
+            Entity? linear = null;
+            Entity rest = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(numerator))
+            {
+                if (!factor.ContainsNode(function))
+                    rest *= factor;
+                else if (linear is null)
+                    linear = factor;
+                else
+                    return null;
+            }
+            var t = Variable.CreateUnique(expr, "t_inv");
+            if (linear is null || !TreeAnalyzer.TryGetPolyLinear(linear.Substitute(function, t), t, out var slope, out var intercept)
+                || slope.ContainsNode(x) || intercept.ContainsNode(x) || Functions.PartialFractions.IsZeroAsAValue(slope))
+                return null;
+            // The rest over the denominator as K x^m Q^p, Q = d + e x^2.
+            Entity constant = Number.Integer.One;
+            Entity? quadratic = null;
+            var m = 0;
+            var p = 0;
+            foreach (var (side, sign) in new[] { (rest, 1), (denominator, -1) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (!factor.ContainsNode(x))
+                    {
+                        constant = sign > 0 ? constant * factor : constant / factor;
+                        continue;
+                    }
+                    var (@base, power) = factor is Powf(var b0, Number.Integer { EInteger: var e0 }) && e0.CanFitInInt32()
+                        ? (b0, e0.ToInt32Unchecked()) : (factor, 1);
+                    if (@base == x)
+                        m += sign * power;
+                    else if (quadratic is null || quadratic == @base)
+                    {
+                        quadratic = @base;
+                        p += sign * power;
+                    }
+                    else
+                        return null;
+                }
+            if (quadratic is null || p > -3 || m != -2 * p - 3
+                || !TreeAnalyzer.TryGetPolynomial(quadratic, x, out var read)
+                || read.Keys.Any(key => !key.IsZero && !key.Equals(EInteger.FromInt32(2)))
+                || !read.TryGetValue(EInteger.Zero, out var d) || !read.TryGetValue(EInteger.FromInt32(2), out var e)
+                || d.ContainsNode(x) || e.ContainsNode(x)
+                || Functions.PartialFractions.IsZeroAsAValue(d) || Functions.PartialFractions.IsZeroAsAValue(e)
+                || Functions.PartialFractions.IsZeroAsAValue((e - rate * rate * d).Expand())
+                || Functions.PartialFractions.IsZeroAsAValue((e + rate * rate * d).Expand()))
+                return null;
+            var v = constant * MathS.Pow(x, Number.Integer.Create(m + 1)) * MathS.Pow(quadratic, Number.Integer.Create(p + 1))
+                / (d * (m + 1));
+            // The remainder holds no inverse function, so it is not this integrand again; the flag is for
+            // whatever its own search writes.
+            var remainder = (slope * v * function.Differentiate(x)).InnerSimplified;
+            Entity? integral;
+            integratingAPowerOverAQuadraticBesideAnInverse = true;
+            try
+            {
+                integral = Integration.ComputeAsAQuestionOfItsOwn(remainder, x, integrateByParts);
+            }
+            finally
+            {
+                integratingAPowerOverAQuadraticBesideAnInverse = false;
+            }
+            if (integral is null)
+                return null;
+            var answer = v * linear - integral;
+            return Functions.PartialFractions.DerivativeDiffersWhereReal(answer, expr, x) ? null : answer;
+        }
+
+        [System.ThreadStatic] private static bool integratingAPowerOverAQuadraticBesideAnInverse;
+
+        /// <summary>
         /// <c>x^m (a + b atan(c x))^p</c> over a power of <c>d (1 +- i c x)</c>, under <c>x = tan(u)/c</c>, where
         /// <c>1 + i tan(u)</c> is <c>e^(i u)/cos(u)</c>: the integrand in <c>u</c> is
         /// <c>(a + b u)^p (tan(u)/c)^m d^(-k) e^(-+i k u) cos(u)^k/(c cos(u)^2)</c>, a polynomial in <c>u</c> times

@@ -6637,6 +6637,25 @@ leaves are read as quotients of the sine and the cosine
 | `"1/(a+b*asin(c*x))".Integrate("x")` | `integral(1 / (a + b * arcsin(c * x)), x)` | `Si` and `Ci` of `(a + b arcsin(c x))/b` |
 | `"x/((c+a^2*c*x^2)^2*atan(a*x))".Integrate("x")` | `integral(x / ((c + a ^ 2 * c * x ^ 2) ^ 2 * arctan(a * x)), x)` | `1/2 * Si(2 * arctan(a * x)) / (a ^ 2 * c ^ 2) + C` |
 
+### A power of x over a power of a quadratic times an inverse trigonometric function is integrated by parts against one term
+
+**Answers where there were none.** `x^3 (a + b F(c x))/(d + e x^2)^3` for `F` the inverse sine, tangent, secant and
+cosecant, Rubi's 5.1.4, 5.3.4, 5.5.1 and 5.6.1, was declined. By parts against the integrator's own antiderivative of
+`x^3/(d + e x^2)^3`, a piecewise on `e = 0`, spent the budget on every arm. Where `m + 2p + 3 = 0`,
+`x^m (d + e x^2)^p` has the one-term antiderivative `v = x^(m + 1) (d + e x^2)^(p + 1)/(d (m + 1))`, Rubi's, which
+vanishes at 0, and the integral is now `v (a + b F(c x)) - b integral v F(c x)'` with `F(c x)'` algebraic.
+`v' = x^m (d + e x^2)^p` is an identity of rational functions, so the parts hold wherever the integrand is defined,
+on any branch of `F`. Only
+for a whole `p` of `-3` or less, and not where `d + e x^2` is a multiple of the radicand `F` holds, which the
+substitution under `F` answers ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^3*(a + b*arcsin(c*x))/(d + k*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 6,013 characters |
+| `"x^3*(a + b*arctan(c*x))/(d + k*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 4,066 characters |
+| `"x^3*(a + b*arcsec(c*x))/(d + k*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 1,772 characters |
+| `"x^5*(a + b*arctan(c*x))/(d + k*x^2)^4".ToEntity().Integrate("x")` | `integral(...)` | 6,176 characters |
+
 ### The arcsecant beside a root of `x^2 - 1` is integrated right below `-1` too
 
 **Answers where there were none.** Under `x = sec(u)`, the substitution that undoes the arcsecant,
