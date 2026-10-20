@@ -3189,6 +3189,25 @@ were read as numbers only. In `w = e^(i z)` the integral is a power of `w` besid
 | `"(k*sec(c + d*x))^(-4 - n)*(a + i*a*tan(c + d*x))^n".ToEntity().Integrate("x")` | `integral(...)` | the integrand times powers of `e^(i (c + d x))` from `n - 4` to `n + 4`, each over its exponent |
 | `"(a + i*a*tan(c + d*x))^n/(k*sec(c + d*x))^n".ToEntity().Integrate("x")` | `integral(...)` | the integrand over `i d n` |
 
+### A rational function of the tangent beside roots of linears in it is integrated over the linears of `1 + tan^2`
+
+**Answers where there were none.** `(c + d tan(z))^(5/2) (A + B tan(z) + C tan(z)^2)/sqrt(a + b tan(z))` and six more of
+Rubi's 4.3.4.2, and `1/((a + i a tan(z))^3 (c + d tan(z))^(3/2))` and two more of 4.3.2.1, were declined. In
+`t = tan(z)`, under the root of the quotient of the two linears or the root of the one, the `1 + t^2` that `dz` puts
+below the bar is a quartic with symbols in every coefficient. It is now written as its linears `(1 + i t)(1 - i t)` and
+the rational part split over them, so that each term is the roots over one power of a linear, which the rules for a
+root of a linear over a linear answer; the sum is checked by its derivative in `t`. Only two roots of linears with
+distinct roots, beside a polynomial or a linear below the bar, or one root below the bar beside a whole power of
+`a ± i a tan(z)`. Their neighbours that the unreleased master answered come through it as well, shorter and sooner
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(c + d*tan(g + h*x))^(5/2)*(A + B*tan(g + h*x) + C*tan(g + h*x)^2)/sqrt(a + b*tan(g + h*x))".ToEntity().Integrate("x")` | `integral(...)` | 4,315 characters |
+| `"(A + B*tan(g + h*x) + C*tan(g + h*x)^2)/((a + b*tan(g + h*x))^(3/2)*(c + d*tan(g + h*x))^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | 11,405 characters |
+| `"1/((a + i*a*tan(g + h*x))^3*(c + d*tan(g + h*x))^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | 6,498 characters |
+| `"(c + d*tan(g + h*x))^(5/2)*(A + B*tan(g + h*x) + C*tan(g + h*x)^2)/(a + b*tan(g + h*x))^(5/2)".ToEntity().Integrate("x")` | `integral(...)`; 41,892 characters, in 10 s, on the unreleased master | 29,265 characters, in 1.4 s |
+
 ### A rational function of the tangent beside a power of `a + i a tan` is integrated in that sum
 
 **Answers where there were none.** `(A + B tan(c + d x))/sqrt(a + i a tan(c + d x))` and the rest of
