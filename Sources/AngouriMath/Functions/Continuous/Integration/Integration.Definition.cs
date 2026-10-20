@@ -775,6 +775,9 @@ namespace AngouriMath.Functions.Algebra
             // in x^2, before anything reads the trinomial whole: asked of it, the routes below ran
             // past a minute on Rubi's 1.2.2.4 `sqrt(d + e x^2)/(x^2 (a + b x^2 + c x^4))`.
             if ((answer = IndefiniteIntegralSolver.SolveATrinomialInTheSquareBesideTheRootOfAQuadratic(expr, x)) is { }) return answer;
+            // And the root of such a trinomial over a binomial in x^4 matched to it, c d + a e = 0, at
+            // a c < 0, under u = x/sqrt(a + b x^2 + c x^4): Welz's `sqrt(1 - x^4)/(1 + x^4)`.
+            if ((answer = IndefiniteIntegralSolver.SolveTheRootOfATrinomialInTheSquareOverABinomialInTheFourthPower(expr, x)) is { }) return answer;
             // A linear under a power inside a sum, written as the variable: `x^3/(a + b (c + d x)^3)`.
             // Before the polynomial term, which takes the leading coefficient out of a power of
             // the sum and writes what is left out in powers of x, where the linear is gone; and
@@ -893,6 +896,11 @@ namespace AngouriMath.Functions.Algebra
             // And any power of a square in any power of x, as the power of its root times a factor
             // constant where the root is not zero: `x^2 (a^2 + 2 a b x^3 + b^2 x^6)^p`.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAPowerOfASquareAsAPowerOfItsRoot(expr, x, integrateByParts)) is { }) return answer;
+            // A linear over a linear beside the root of a symbolic cubic that vanishes midway between
+            // the pole and the zero, as one arctangent: Welz's
+            // `(a + x)/((x - a) sqrt(a^2 x - (1 + a^2) x^2 + x^3))`. Before x is taken out of the
+            // root, after which the search ran out of time on the symbolic ones.
+            if ((answer = IndefiniteIntegralSolver.SolveAPseudoEllipticQuotientOverTheRootOfACubicWithARootMidway(expr, x)) is { }) return answer;
             // And a fractional power of a sum whose every term has x in it, the power of x taken out
             // with the factor that is constant where it is not zero: `1/sqrt(a x^2 + b x^5)`.
             if ((answer = IndefiniteIntegralSolver.SolveByTakingAPowerOfXOutOfAFractionalPower(expr, x, integrateByParts)) is { }) return answer;
@@ -1392,6 +1400,10 @@ namespace AngouriMath.Functions.Algebra
             // `A - B y` whose A/B agrees with a branch of y at the poles, found by an ansatz
             // over Padé approximants.
             if ((answer = SquareRootLogarithmAnsatz.Integrate(expr, x)) is { }) return answer;
+            // `(x + s)/((x^2 + s x + s^2) (a + b x^3)^(1/3))`, `(s^2 - x^2)/((s^3 - x^3) (a + b x^3)^(1/3))`
+            // in two elementary terms, in closed form: after the ansatz over a cube root, which
+            // answers most of the numeric spellings and declined Welz's, with symbols in the binomial.
+            if ((answer = IndefiniteIntegralSolver.SolveALinearOverTheQuadraticFactorOfADifferenceOfCubesBesideACubeRoot(expr, x)) is { }) return answer;
             // And a sum with the root below the bar, over its conjugate: after every rule above,
             // which answer the numeric spellings, `1/(a c + b c x^2 + d sqrt(a + b x^2))` among them.
             if ((answer = IndefiniteIntegralSolver.SolveByTheConjugateOfASumWithARootOfAQuadraticBelowTheBar(expr, x, integrateByParts)) is { }) return answer;
