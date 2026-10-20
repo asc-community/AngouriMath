@@ -15992,6 +15992,137 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A sum of terms each a power of one function <c>K</c> whose derivative is free of it -- an
+        /// inverse trigonometric function or an error function -- times a cofactor free of it,
+        /// integrated by parts down the powers: <c>∫ A K^p = F K^p - ∫ p F K^(p - 1) K'</c> for
+        /// <c>F = ∫ A</c>, the cofactor of the top power, and the last integral joins the terms a
+        /// power below. Where every power cancels so, the parts are the antiderivative:
+        /// <c>x^3/((1 + a^2 x^2) atan(a x)^3) - 3 x^2/(2 a atan(a x)^2)</c> is
+        /// <c>(-x^3/(2 a atan(a x)^2))'</c>, in one step, and
+        /// <c>x asin(x)^(3/2)/(1 - x^2)^2 - 3 x/(8 (1 - x^2) sqrt(asin(x)))</c> in two. Where what is
+        /// left is free of <c>K</c>, it is asked: <c>erf(b x) e^(-b^2 x^2) (1/x^3 + b^2/x)</c> leaves
+        /// <c>b e^(-2 b^2 x^2)/(sqrt(pi) x^2)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The terms are not elementary apart -- <c>∫ x/((1 - x^2) sqrt(asin(x)))</c> is
+        /// <c>∫ tan(t)/sqrt(t) dt</c> -- so the split declined each, and by parts reads one term
+        /// at a time. Rubi's 5.1.4, 5.3.4 and 8.1 write such sums to test that the parts meet.
+        /// </para>
+        /// <para>
+        /// One such function in the sum, every term a rational power of it times a cofactor free
+        /// of it, the powers a whole number apart, at most five apart, and each step's
+        /// <c>F</c> free of <c>K</c>. A group that cancels is decided at sampled points, and the
+        /// answer is checked by differentiating it back. A remainder free of <c>K</c> is asked
+        /// only for a top power of two terms or more with a cofactor among them that is not
+        /// algebraic, which is where the cofactors integrate together and not apart: a sum of
+        /// algebraic cofactors, <c>a + b asin(c x)</c>, is what the split answers term by term,
+        /// and this rule would only respell it. At the question asked only, and not inside its
+        /// own questions, which are free of <c>K</c> anyway.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static Entity? SolveASumOfPowersOfAnInverseOrErrorFunctionByPartsDownThePowers(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked || expr is not (Sumf or Minusf) || descendingThePowers)
+                return null;
+            Entity? kernel = null;
+            foreach (var node in expr.Nodes)
+                if (node is Arcsinf or Arccosf or Arctanf or Arccotanf or Erff or Erfcf or Erfif && node.ContainsNode(x))
+                {
+                    if (kernel is null)
+                        kernel = node;
+                    else if (node != kernel)
+                        return null;
+                }
+            if (kernel is null)
+                return null;
+            var slope = kernel.Differentiate(x).InnerSimplified;
+            if (slope.ContainsNode(kernel))
+                return null;
+            Number.Rational? PowerOfTheKernel(Entity factor)
+                => factor == kernel ? Number.Integer.One
+                   : factor is Powf(var @base, Number.Rational power) && PowerOfTheKernel(@base) is { } inner ? inner * power
+                   : null;
+            var terms = new List<(Number.Rational Power, Entity Cofactor)>();
+            foreach (var term in Sumf.LinearChildren(expr))
+            {
+                Number.Rational power = Number.Integer.Zero;
+                Entity cofactor = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(term))
+                    if (!factor.ContainsNode(kernel))
+                        cofactor *= factor;
+                    else if (PowerOfTheKernel(factor) is { } read)
+                        power += read;
+                    else
+                        return null;
+                terms.Add((power, cofactor));
+            }
+            var top = terms.Select(term => term.Power).Aggregate((l, r) => Above(r, l) ? r : l);
+            var lowest = terms.Select(term => term.Power).Aggregate((l, r) => Above(l, r) ? r : l);
+            if (terms.Any(term => !(top - term.Power).ERational.Denominator.Equals(EInteger.One))
+                || Above(top - lowest, Number.Integer.Create(5)))
+                return null;
+            var groups = new List<(Number.Rational Power, Entity Cofactor)>();
+            foreach (var (power, cofactor) in terms)
+                Join(groups, power, cofactor);
+            var atTheTop = terms.Where(term => Same(term.Power, top)).ToList();
+            var mayAskWhatIsLeft = atTheTop.Count >= 2 && atTheTop.Any(term => !IsAlgebraicIn(term.Cofactor, x));
+            if (groups.Count < 2 && !mayAskWhatIsLeft)
+                return null;
+            descendingThePowers = true;
+            try
+            {
+                Entity parts = Number.Integer.Zero;
+                for (var step = 0; step < 8; step++)
+                {
+                    groups.RemoveAll(group => Functions.PartialFractions.HoldsAtSampledPoints(group.Cofactor, Number.Integer.Zero, x));
+                    if (groups.Count == 0)
+                        return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(parts, expr, x) ? parts : null;
+                    var (power, cofactor) = groups.Aggregate((l, r) => Above(r.Power, l.Power) ? r : l);
+                    if (power.ERational.IsZero)
+                    {
+                        // Free of K: asked where the top power's cofactors integrate together only.
+                        if (groups.Count > 1 || !mayAskWhatIsLeft
+                            || Integration.ComputeAsAQuestionOfItsOwn(cofactor, x, integrateByParts) is not { } rest)
+                            return null;
+                        var answer = parts + rest;
+                        return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+                    }
+                    // Below zero the powers never reach a remainder free of K, so below the lowest
+                    // written one nothing is left to cancel.
+                    if (power.ERational.Sign < 0 && Above(lowest, power)
+                        || Integration.ComputeAsAQuestionOfItsOwn(cofactor, x, integrateByParts) is not { } integrated
+                        || integrated.ContainsNode(kernel))
+                        return null;
+                    parts += integrated * (Same(power, Number.Integer.One) ? kernel : MathS.Pow(kernel, power));
+                    groups.RemoveAll(group => Same(group.Power, power));
+                    Join(groups, power - Number.Integer.One, -power * integrated * slope);
+                    for (var i = 0; i < groups.Count; i++)
+                        groups[i] = (groups[i].Power, groups[i].Cofactor.InnerSimplified);
+                }
+                return null;
+            }
+            finally
+            {
+                descendingThePowers = false;
+            }
+            static bool Same(Number.Rational a, Number.Rational b) => a.ERational.CompareTo(b.ERational) == 0;
+            static bool Above(Number.Rational a, Number.Rational b) => a.ERational.CompareTo(b.ERational) > 0;
+            static void Join(List<(Number.Rational Power, Entity Cofactor)> groups, Number.Rational power, Entity cofactor)
+            {
+                var at = groups.FindIndex(group => Same(group.Power, power));
+                if (at < 0)
+                    groups.Add((power, cofactor));
+                else
+                    groups[at] = (power, groups[at].Cofactor + cofactor);
+            }
+        }
+
+        /// <summary>Set while <see cref="SolveASumOfPowersOfAnInverseOrErrorFunctionByPartsDownThePowers"/> asks its questions.</summary>
+        [System.ThreadStatic] private static bool descendingThePowers;
+
+        /// <summary>
         /// A product of powers times a sum that is the derivative of the product with some of
         /// the powers raised by one: <c>e^x x^2 ln(x)^2 (3 + (3 + x) ln(x))</c> is
         /// <c>(e^x x^3 ln(x)^3)'</c>, and Rubi's
