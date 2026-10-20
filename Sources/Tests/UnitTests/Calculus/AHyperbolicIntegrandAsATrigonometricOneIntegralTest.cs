@@ -31,7 +31,9 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("sinh(x)/(a + b*sinh(x) + c*sinh(x)^2)")]
         // Rubi's 6.5.3.
         [InlineData("coth(a + b*x)/sqrt(c + b*sech(a + b*x))")]
-        public void AsTheTrigonometricQuestion(string integrand)
+        public void AsTheTrigonometricQuestion(string integrand) => AnsweredAndCheckedBack(integrand);
+
+        private static string AnsweredAndCheckedBack(string integrand)
         {
             var integral = integrand.ToEntity().Integrate("x");
             var text = integral.Stringize();
@@ -53,7 +55,25 @@ namespace AngouriMath.Tests.Calculus
                     $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
             }
             Assert.True(compared >= 5, $"only {compared} points could be compared for {integrand}");
+            return text;
         }
+
+        // Wanting a sum over roots in e^x, these are asked in s only where s does not want one too:
+        // there the trigonometric answer stands, in closed form.
+        [Theory]
+        [InlineData("1/(1 + sinh(x)^4)")]
+        [InlineData("1/(1 + cosh(x)^3)")]
+        [InlineData("sech(x)^2/(3 - 4*tanh(x)^3)")]
+        public void KeepsTheClosedFormWhereSFactorsIntoQuadratics(string integrand)
+            => Assert.DoesNotContain("sum(", AnsweredAndCheckedBack(integrand));
+
+        // And where s wants one too, as for a cubic in sin(s) or 1 + cos(s)^8, the second pass answers
+        // in e^x, as before the rule.
+        [Theory]
+        [InlineData("1/(1 + sinh(x)^3)")]
+        [InlineData("1/(1 + cosh(x)^8)")]
+        public void LeavesTheSumOverRootsToTheSecondPass(string integrand)
+            => Assert.Contains("sum(", AnsweredAndCheckedBack(integrand));
 
         // Asked before the rules in x, the question in s took the time they answer these in.
         [Theory]
