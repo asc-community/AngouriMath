@@ -789,6 +789,8 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveByTheMoebiusSubstitutionOfAQuotientOfLinears(expr, x)) is { }) return answer;
             // And a power of x times the logarithm of A + B sqrt(Q), by parts, its derivative over the conjugate.
             if ((answer = IndefiniteIntegralSolver.SolveByPartsAgainstALogarithmOfARadicalSum(expr, x)) is { }) return answer;
+            // A function of tanh(L) or coth(L) alone that is not rational in it, under u = tanh(L).
+            if ((answer = IndefiniteIntegralSolver.SolveAFunctionOfTheHyperbolicTangent(expr, x, integrateByParts)) is { }) return answer;
             // A power of an exponential with a positive base is the exponential of the product,
             // exactly, and only that spelling is one the exponential rules read.
             if ((answer = IndefiniteIntegralSolver.SolveByFlatteningAPowerOfAnExponential(expr, x, integrateByParts)) is { }) return answer;

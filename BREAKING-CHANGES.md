@@ -282,6 +282,20 @@ becomes a polynomial in `u` times exponentials and trigonometric functions, and 
 | `"(a+b*atan(c*x))^2/(1+i*c*x)^4".ToEntity().Integrate("x")` | `integral(...)` | 731 characters |
 | `"(a+b*atan(c*x))^3/(d+i*c*d*x)^4".ToEntity().Integrate("x")` | `integral(...)` | 1,202 characters |
 
+### A function of the hyperbolic tangent alone is integrated under `u = tanh`
+
+**Answers where there were none.** `tanh(x)/sqrt(a + b tanh(x)^2 + c tanh(x)^4)` was declined, and so were 35 more of
+Rubi's 6.3 and 6.4: the coth twins, `tanh/(a + b tanh^4)^k`, `sin(tanh(a + b x))^k` and `cos(coth(...))^k`,
+and `(b coth(c + d x)^4)^(k/3)`. The parser writes `tanh(L)` as `(e^(2 L) - 1)/(e^(2 L) + 1)`, so nothing read them as
+a function of the tangent; under `u = tanh(L)`, `dx = du/(b (1 - u^2))`, and the question in `u` is the one the
+trigonometric counterparts are answered through. Only where the integrand is not rational in `u`: rational functions of
+tanh keep the answers the exponential substitution gives them ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sin(tanh(a+b*x))".ToEntity().Integrate("x")` | `integral(...)` | `Si` and `Ci` of `1 - tanh(a + b x)` and `1 + tanh(a + b x)` |
+| `"tanh(x)/sqrt(a+b*tanh(x)^2+c*tanh(x)^4)".ToEntity().Integrate("x")` | `integral(...)` | a logarithm of the root, piecewise on the sign of `a + b + c` |
+
 ### A constant or an exponential evaluated at a higher precision than before has all of its digits
 
 **More digits where there were a hundred.** `pi`, `e` and an exponential, evaluated once at one precision, went on
