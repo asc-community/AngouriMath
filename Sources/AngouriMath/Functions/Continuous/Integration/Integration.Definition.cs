@@ -795,6 +795,8 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfAQuotientOfLinearsOverAHalfOddPowerOfTheirProduct(expr, x)) is { }) return answer;
             // A quotient by a radical sum whose conjugate product is a constant, over the conjugate.
             if ((answer = IndefiniteIntegralSolver.SolveByTheConjugateOfARadicalSumBelowTheBar(expr, x, integrateByParts)) is { }) return answer;
+            // By parts against an inverse hyperbolic function beside a non-polynomial, its logarithm's derivative written algebraically.
+            if ((answer = IndefiniteIntegralSolver.SolveByPartsAgainstAnInverseHyperbolicFunctionAsItsLogarithm(expr, x, integrateByParts)) is { }) return answer;
             // A power of an exponential with a positive base is the exponential of the product,
             // exactly, and only that spelling is one the exponential rules read.
             if ((answer = IndefiniteIntegralSolver.SolveByFlatteningAPowerOfAnExponential(expr, x, integrateByParts)) is { }) return answer;

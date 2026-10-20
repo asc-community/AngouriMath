@@ -20738,6 +20738,159 @@ namespace AngouriMath.Functions.Algebra
             }
         }
 
+        /// <summary>
+        /// By parts against an inverse hyperbolic function written as the logarithm the parser makes of
+        /// it, the logarithm's derivative written as the algebraic function it is:
+        /// <c>ln(A + sqrt(A^2 + k))' = A'/sqrt(A^2 + k)</c> for a constant <c>k</c> -- <c>asinh</c>,
+        /// <c>acosh</c>, <c>asech</c> and <c>acsch</c> -- and <c>ln((1 + u)/(1 - u))' = 2 u'/(1 - u^2)</c>,
+        /// the same for <c>(u + 1)/(u - 1)</c> -- <c>atanh</c> and <c>acoth</c>. With the integrand
+        /// <c>P + Q L</c> for the logarithm <c>L</c> and <c>G = integral Q</c>, it is
+        /// <c>integral P + G L - integral G L'</c>. Rubi's 7.1-7.6, <c>x (a + b acosh(c x))/(d + e x^2)^2</c>
+        /// and <c>asech(a + b x)/x^3</c>, which timed out.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// Differentiated as written, the logarithm is a quotient with the root in both parts, which the
+        /// search never brought down to the root alone. The derivatives are identities of the algebra
+        /// with no branch in them. Only for a <c>Q</c> that is rational and not a polynomial: beside a
+        /// polynomial the inverse function is answered already, and asked here would come back respelled;
+        /// beside a root the rules for the inverse function answer, and asking the root's integral here
+        /// first took the time they answer in. Not
+        /// re-entered, and not where <c>G</c> holds <c>L</c> itself, whose question is the one asked:
+        /// <c>asinh(x)/sqrt(x^2 + 1)</c> is <c>L L'</c>. Nor where the answer holds on part of the
+        /// line only, an inequality in x among its conditions: Rubi's 7.5.1 <c>(a + b asech(c x))/x^n</c>
+        /// is answered for every x without this rule. Nor where a factor below <c>Q</c>'s bar divides the
+        /// function's own quadratic, <c>1 - u^2</c> or the radicand, as in <c>atanh(a x)/(1 - a^2 x^2)^3</c>:
+        /// the substitution under the function answers those, and by parts here ran out of time. And an
+        /// artanh or arcoth only of a linear: beside <c>atanh(x sqrt(e)/sqrt(d + e x^2))/x^n</c> the
+        /// remainder was slow to decline.
+        /// </remarks>
+        internal static Entity? SolveByPartsAgainstAnInverseHyperbolicFunctionAsItsLogarithm(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (againstAnInverseHyperbolicFunction)
+                return null;
+            // The one logarithm of x of either shape, its derivative, and the function's own quadratic.
+            Entity? logarithm = null, derivative = null;
+            List<Entity>? quadratic = null;
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not Logf(var @base, var argument) || @base != MathS.e || !argument.ContainsNode(x))
+                    continue;
+                if (ADerivativeOfTheLogarithm(argument, x) is not { } read)
+                    continue;
+                if (logarithm is not null && logarithm != node)
+                    return null;
+                (logarithm, derivative, quadratic) = (node, read.Derivative, read.Quadratic);
+            }
+            if (logarithm is null || derivative is null || quadratic is null)
+                return null;
+            // expr = P + Q L.
+            var t = Variable.CreateUnique(expr, "l_inv");
+            var inT = expr.Replace(node => node == logarithm ? t : node);
+            if (inT.ContainsNode(logarithm) || !TreeAnalyzer.TryGetPolyLinear(inT, t, out var q, out var p) || TreeAnalyzer.IsZero(q)
+                || q.ContainsNode(t) || p.ContainsNode(t))
+                return null;
+            if (TreeAnalyzer.TryGetPolynomial(q, x, out var asPolynomial) && asPolynomial.Keys.All(k => k.Sign >= 0))
+                return null;
+            // And only for a rational one: beside a root, `(a + b asinh(c x)) sqrt(d + c^2 d x^2)` and the like,
+            // the rules for the inverse function answer at once, and the root's integral asked here took their time.
+            if (!IsARationalFunction(q, x))
+                return null;
+            // Nor where a factor below Q's bar divides the function's own quadratic: the substitution
+            // under the function answers `atanh(a x)/(1 - a^2 x^2)^3` at once, and
+            // `atanh(a x)/(x^2 (1 - a^2 x^2)^2)`, where by parts here ran out of time.
+            foreach (var factor in Mulf.LinearChildren(Functions.SingleQuotient.Of(q).Denominator))
+            {
+                var below = factor is Powf(var raised, Number.Integer { EInteger.Sign: > 0 }) ? raised : factor;
+                if (!below.ContainsNode(x))
+                    continue;
+                if (quadratic.Any(own => AreProportionalAtSampledPoints(below, own, x)))
+                    return null;
+                // A linear one where the quadratic is zero at its root.
+                if (TreeAnalyzer.TryGetPolyLinear(below, x, out var slope, out var offset) && !VanishesIdentically(slope)
+                    && VanishesIdentically(quadratic[0].Substitute(x, -offset / slope)))
+                    return null;
+            }
+            againstAnInverseHyperbolicFunction = true;
+            try
+            {
+                if (Integration.ComputeAsAQuestionOfItsOwn(q, x, integrateByParts) is not { } g
+                    || g.Nodes.Any(node => node is Integralf || node == MathS.NaN || node == logarithm))
+                    return null;
+                if (Integration.ComputeAsAQuestionOfItsOwn(g * derivative, x, integrateByParts) is not { } rest
+                    || rest.Nodes.Any(node => node is Integralf || node == MathS.NaN))
+                    return null;
+                Entity first = Number.Integer.Zero;
+                if (!TreeAnalyzer.IsZero(p))
+                {
+                    if (Integration.ComputeAsAQuestionOfItsOwn(p, x, integrateByParts) is not { } integralOfP
+                        || integralOfP.Nodes.Any(node => node is Integralf || node == MathS.NaN))
+                        return null;
+                    first = integralOfP;
+                }
+                // Not an answer for part of the line only, where the function has one for all of it:
+                // beside 1/x^2 the remainder for `asech(c x)` was answered where `1 - c x >= 0`, and
+                // without this rule `(a + b asech(c x))/x^2` is answered for every x. An even power
+                // above zero leaves out a point, not a part: `(a + b x)^2 > 0`.
+                var answer = first + g * logarithm - rest;
+                if (answer.Nodes.Any(node => node is Greaterf or GreaterOrEqualf or Lessf or LessOrEqualf && node.ContainsNode(x)
+                    && node is not Greaterf(Powf(_, Number.Integer { EInteger.IsEven: true }), Number.Integer { IsZero: true })))
+                    return null;
+                return answer;
+            }
+            finally
+            {
+                againstAnInverseHyperbolicFunction = false;
+            }
+
+            // The derivative, and the function's own quadratic, 1 - u^2 or the radicand, as numerators
+            // in x: the quadratic first, then for 1 - u^2 its factors 1 - u and 1 + u.
+            static (Entity Derivative, List<Entity> Quadratic)? ADerivativeOfTheLogarithm(Entity argument, Entity.Variable x)
+            {
+                // (1 + u)/(1 - u) or (u + 1)/(u - 1): the two sides add to 2 or differ by 2.
+                if (argument is Divf(var top, var bottom))
+                {
+                    Entity u;
+                    if (Functions.PartialFractions.IsZeroAsAValue((top + bottom - 2).InnerSimplified))
+                        u = ((top - bottom) / 2).InnerSimplified;
+                    else if (Functions.PartialFractions.IsZeroAsAValue((top - bottom - 2).InnerSimplified))
+                        u = ((top + bottom) / 2).InnerSimplified;
+                    else
+                        return null;
+                    // Of a linear only: beside atanh(x sqrt(e)/sqrt(d + e x^2)) the remainder is slow to decline.
+                    if (!TreeAnalyzer.TryGetPolyLinear(u, x, out _, out _))
+                        return null;
+                    return (2 * u.Differentiate(x) / (1 - MathS.Sqr(u)),
+                        new List<Entity> { Above(1 - MathS.Sqr(u)), Above(1 - u), Above(1 + u) });
+                }
+                // A + sqrt(R) with R - A^2 a nonzero constant.
+                if (argument is not (Sumf or Minusf))
+                    return null;
+                Entity? radicand = null;
+                Entity a = Number.Integer.Zero;
+                foreach (var term in Sumf.LinearChildren(argument))
+                {
+                    if (radicand is null && term is Powf(var r, Number.Rational half) && half == Number.Rational.Create(1, 2) && r.ContainsNode(x))
+                        radicand = r;
+                    else
+                        a += term;
+                }
+                if (radicand is null || !a.ContainsNode(x))
+                    return null;
+                var difference = radicand - a * a;
+                var atAPoint = Functions.PartialFractions.Bare(difference.Substitute(x, Number.Rational.Create(37, 23)).Simplify());
+                if (atAPoint.ContainsNode(x) || VanishesIdentically(atAPoint) || !VanishesIdentically(difference - atAPoint))
+                    return null;
+                return (a.Differentiate(x) / MathS.Sqrt(radicand), new List<Entity> { Above(radicand) });
+
+                // `1/(c x)^2 - 1` is `1 - (c x)^2` over `(c x)^2`, and the factors are above.
+                static Entity Above(Entity expr) => Functions.SingleQuotient.Of(expr).Numerator;
+            }
+        }
+
+        /// <summary>Set while <see cref="SolveByPartsAgainstAnInverseHyperbolicFunctionAsItsLogarithm"/> asks its questions.</summary>
+        [System.ThreadStatic] private static bool againstAnInverseHyperbolicFunction;
+
         /// <summary>Set while <see cref="SolveByTakingTheWholePowersOutOfAPowerOfAProduct"/> asks its question.</summary>
         [System.ThreadStatic] private static bool takingTheWholePowersOut;
 

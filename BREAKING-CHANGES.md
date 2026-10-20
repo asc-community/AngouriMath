@@ -5509,6 +5509,25 @@ the crash harness found. Both now agree with the solver
 | `"{ x : 1/0 = x }".ToEntity().Evaled` | `NaN` | `{ }` |
 | `"x subset 2".ToEntity().Solve("x")` | `x * subset ^ 2` had no solution: `{ }` — `subset` is new since | `{ }`, where the unreleased keyword threw |
 
+### An inverse hyperbolic function beside a factor that is not a polynomial is integrated by parts against its logarithm
+
+**Answers where there were none.** `x (a + b acosh(c x))/(d + e x^2)^2`, `x (a + b acsch(c x))/(d + e x^2)^3`,
+`asech(a + b x)/x^3` and `acsch(a + b x)/x^3`, Rubi's 7.2 to 7.6, were declined. The parser writes each inverse
+hyperbolic function as a logarithm, `ln(A + sqrt(A^2 + k))` or `ln((1 + u)/(1 - u))`, and differentiated as written that
+is a quotient with the root in both parts, which the search never brought down to the root alone. Its derivative is now
+written as the algebraic function it is, `A'/sqrt(A^2 + k)` or `2 u'/(1 - u^2)`, and `P + Q L` is integrated as
+`integral P + G L - integral G L'` with `G` the antiderivative of `Q`. Only where `Q` is rational and not a polynomial,
+beside which the function is answered already; not where a factor below `Q`'s bar divides the function's own quadratic,
+as in `atanh(a x)/(1 - a^2 x^2)^3`, which the substitution under the function answers; and not where `G` holds `L`
+itself ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x*(a + b*acosh(c*x))/(d + k*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 1,624 characters |
+| `"x*(a + b*acsch(c*x))/(d + k*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 2,596 characters |
+| `"asech(a + b*x)/x^3".ToEntity().Integrate("x")` | `integral(...)` | 2,831 characters |
+| `"acsch(a + b*x)/x^3".ToEntity().Integrate("x")` | `integral(...)` | 2,746 characters |
+
 ### `asech(a + b x)` and `acsch(a + b x)` beside a power of `x` are integrated
 
 By parts they leave `1/(x (a + b x)^2 sqrt(1/(a + b x)^2 - 1))`, and the chain never read it:
