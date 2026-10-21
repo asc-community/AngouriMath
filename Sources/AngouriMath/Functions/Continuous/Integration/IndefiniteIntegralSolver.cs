@@ -35437,7 +35437,7 @@ namespace AngouriMath.Functions.Algebra
         /// <c>c^b x^(n b)</c> for a positive <c>c</c> and a <c>n</c> that is not whole.
         /// </summary>
         internal static Entity? SolveByDistributingAPowerOfAMonomial(Entity expr, Entity.Variable x, bool integrateByParts)
-            => DistributeAFractionalPower(expr, x, integrateByParts, constantAlone: false);
+            => DistributeAFractionalPower(expr, x, integrateByParts, constantAlone: false, negativeArm: false);
 
         /// <summary>
         /// A constant taken out of a fractional power of a factor in which <c>x</c> enters only
@@ -35446,7 +35446,7 @@ namespace AngouriMath.Functions.Algebra
         /// constant, which the answer says where the constant is a symbol.
         /// </summary>
         internal static Entity? SolveByTakingAConstantOutOfAFractionalPower(Entity expr, Entity.Variable x, bool integrateByParts)
-            => DistributeAFractionalPower(expr, x, integrateByParts, constantAlone: true);
+            => DistributeAFractionalPower(expr, x, integrateByParts, constantAlone: true, negativeArm: false);
 
         /// <summary>
         /// A constant taken out of a fractional power, and a power of the variable split off
@@ -35466,12 +35466,22 @@ namespace AngouriMath.Functions.Algebra
         /// The two are asked from two places: the monomial where it always was, and the constant
         /// alone after the rules that answer its shapes for any real constant, since this one
         /// owes <c>provided c &gt; 0</c> and, asked first, answered them weaker.
+        /// A constant alone that is written with a minus in front, as Rubi's
+        /// <c>(a + b tan(x))/sqrt(-e tan(x))</c> writes it, has the other sign's arm beside it:
+        /// <c>(c g)^b</c> is <c>(-c)^b (-g)^b</c> for a negative <c>c</c>, and the answer is the
+        /// two, each where it holds. With the first alone it said nothing for a positive <c>e</c>,
+        /// where the integrand is real wherever the tangent is negative: the arm it gave is the one
+        /// where the symbol is negative. A constant written without a minus keeps the one arm,
+        /// which is the case of its symbols positive. With <paramref name="negativeArm"/> the
+        /// constant is taken out the other way, `-c` assumed positive.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
-        private static Entity? DistributeAFractionalPower(Entity expr, Entity.Variable x, bool integrateByParts, bool constantAlone)
+        private static Entity? DistributeAFractionalPower(Entity expr, Entity.Variable x, bool integrateByParts, bool constantAlone, bool negativeArm)
         {
             Entity assumed = Entity.Boolean.True;
             var changed = false;
+            var symbolicConstantsTaken = 0;
+            var aSymbolicConstantIsNegated = false;
             var written = expr.Replace(node =>
             {
                 if (node is not Powf(var @base, var exponent) || exponent.ContainsNode(x) || exponent is Number.Integer
@@ -35583,6 +35593,13 @@ namespace AngouriMath.Functions.Algebra
                 {
                     if (constant.Vars.Any() is false)
                         return node;
+                    aSymbolicConstantIsNegated |= Mulf.LinearChildren(constant).Any(factor => factor is Number.Real { IsNegative: true });
+                    symbolicConstantsTaken++;
+                    if (negativeArm)
+                    {
+                        constant = (-constant).InnerSimplified;
+                        rest = -rest;
+                    }
                     var positive = new Greaterf(constant, Number.Integer.Zero);
                     assumed = assumed == Entity.Boolean.True ? positive : assumed & positive;
                 }
@@ -35606,7 +35623,16 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             if (Integration.ComputeAsTheSameQuestion(rewritten, x, integrateByParts) is not { } answer)
                 return null;
-            return assumed == Entity.Boolean.True ? answer : answer.Provided(assumed);
+            if (assumed == Entity.Boolean.True)
+                return answer;
+            var thisArm = answer.Provided(assumed);
+            // One symbolic constant with a minus written in it: the other sign's arm, asked the
+            // same way, beside this one.
+            if (constantAlone && !negativeArm && symbolicConstantsTaken == 1 && aSymbolicConstantIsNegated
+                && thisArm is Providedf thisCase
+                && DistributeAFractionalPower(expr, x, integrateByParts, constantAlone, negativeArm: true) is Providedf otherCase)
+                return MathS.Piecewise(new[] { thisCase, otherCase });
+            return thisArm;
 
             static Entity SimplifiedExponent(Entity exponent)
                 => exponent is Number || exponent.Complexity > 40 ? exponent : Functions.PartialFractions.Bare(exponent.Simplify());

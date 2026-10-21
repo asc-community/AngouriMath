@@ -4287,6 +4287,22 @@ odd power below it comes out with its sign in front of the answer, `|1 + x|` bei
 | `"sqrt(x/(1 + x)^3)".ToEntity().Integrate("x")` | `integral(...)` | the same with `sgn(1 + x)` |
 | `"((1 + x)/x^3)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | the same as the first |
 
+### A constant with a minus written in it comes out of a fractional power for either sign
+
+**Answers where there were none.** `(a + b tan(c + d x))/sqrt(-k tan(c + d x))` was left unevaluated, and so were
+`sqrt(-k tan(x))` and its cotangent kin. Taking the constant out, `(c g)^b = c^b g^b`, holds for a positive `c`, and
+where `c` is written with a minus, as Rubi's 4.3.2.1 writes `-e`, the arm for a positive `c` is the one where its
+symbol is negative; the integrand is real for a positive `k` too, wherever the tangent is negative. Such a constant
+is now also taken out as `(-c)^b (-g)^b` for a negative `c`, and the answer is a piecewise of the two, each where it
+holds. A constant written without a minus keeps the one arm, for its symbols positive
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a+b*tan(c+d*x))/sqrt(-k*tan(c+d*x))".ToEntity().Integrate("x")` | `integral(...)` | 2,034 characters, an arm for `-k > 0` and one for `k > 0` |
+| `"sqrt(-k*tan(x))".ToEntity().Integrate("x")` | `integral(...)` | 766 characters, the same two arms |
+| `"(a+b*cot(c+d*x))/sqrt(-k*cot(c+d*x))".ToEntity().Integrate("x")` | `integral(...)` | 1,517 characters, the same two arms |
+
 ### A function comes out of a fractional power of its even power with its sign
 
 **Improvement, not silent.** The entry two above made `(sin(x)^2)^(3/2)` the modulus `|sin(x)|^3`
