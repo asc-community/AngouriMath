@@ -55,6 +55,21 @@ numbers for every coefficient the solve is now done in exact rationals, to degre
 | `"1/((3-2*x+x^2)^(11/2)*(1+x+2*x^2)^5)".ToEntity().Integrate("x")` | `integral(...)` | 1,853 characters |
 | `"1/((3-2*x+x^2)^(21/2)*(1+x+2*x^2)^10)".ToEntity().Integrate("x")` | `integral(...)` | 3,475 characters |
 
+### Two powers of exponentials with one logarithmic derivative are read as multiples of one exponential
+
+**Answers where there were none.** Rubi's 2.3 `(a + b (F^(e (c + d x)))^n)^p (G^(h (f + g x)))^(d e n ln(F)/(g h ln(G)))`
+was declined, and on unreleased master ran past its budget, and so were the power of `G` over a power of the sum and
+beside its root. A power of an exponential is `K e^(r x)`, `K` constant wherever it is differentiable and `r` its logarithmic derivative; two whose `r`
+is one, decided by value, are written over the one exponential, the question in it is `(a + b K e^(r x))^p e^(r x)`, and
+the answer is Rubi's. A power of an exponential was written so only beside a polynomial below the bar before
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a+b*(F^(k*(c+d*x)))^n)^p*(G^(h*(f+g*x)))^(d*k*n*ln(F)/(g*h*ln(G)))".ToEntity().Integrate("x")` | `integral(...)` | `(G^(h (f + g x)))^(...) (a + b (F^(k (c + d x)))^n)^(p + 1)/((p + 1) b (F^(k (c + d x)))^n n d k ln(F))` |
+| `"(G^(h*(f+g*x)))^(d*k*n*ln(F)/(g*h*ln(G)))/(a+b*(F^(k*(c+d*x)))^n)^2".ToEntity().Integrate("x")` | `integral(...)` | 466 characters |
+| `"(a+b*(F^(k*(c+d*x)))^n)^p*(F^(h*(f+g*x)))^(d*k*n/(g*h))".ToEntity().Integrate("x")` | `integral(...)` | 167 characters |
+
 ### An exponential of something of the reciprocal of a linear is integrated beside another linear
 
 **Answers where there were none.** `f^(c/(a + b x)) x^2` was declined, and so were 24 more of Rubi's 2.3:
@@ -245,6 +260,24 @@ It is written out again in the precision asked for now
 |---|---|---|
 | `Rational.Create(128, 12167)`'s `EDecimal`, read at the default precision and then under 300 digits | 100 digits | 300 digits |
 | `sqrt(46) * 128/12167` evaluated under 300 digits, with that rational | relative error `4.7e-101` | correct to 300 digits |
+
+### A polynomial over a power of a linear beside `a + b ln(c x^n)` is integrated by parts against its antiderivative vanishing at zero
+
+**Answers where there were none.** Rubi's 3.1.4 `x^5 (a + b ln(c x^n))/(d + e x)^7` was declined, and on unreleased
+master ran past forty seconds, and so were `x^6 (a + b ln(c x^n))/(d + e x)^8` and `x^5 (a + b ln(x))/(d + e x)^7`.
+By parts against the logarithm, the antiderivative of `P/(d + e x)^q` that vanishes at zero is `x M/(d + e x)^(q - 1)`, its coefficients read off
+`N' (d + e x) - (q - 1) e N = P` from `N(0) = 0`, and beside the logarithm's derivative `b n/x` what is left is
+`b n M/(d + e x)^(q - 1)`, a polynomial over a power of the linear. The quotient handed on before held every power of the
+linear in the antiderivative multiplied together, of degree twenty-two for the first. Where the degree of `P` is at most
+`q - 2`, and only where that quotient does not split over its written factors
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^5*(a+b*ln(c*x^n))/(d+k*x)^7".ToEntity().Integrate("x")` | `integral(...)` | 387 characters |
+| `"x^6*(a+b*ln(c*x^n))/(d+k*x)^8".ToEntity().Integrate("x")` | `integral(...)` | 438 characters |
+| `"x^5*(a+b*ln(x))/(d+k*x)^7".ToEntity().Integrate("x")` | `integral(...)` | 375 characters |
+| `"x^4*(a+b*ln(c*x^n))/(d+k*x)^7".ToEntity().Integrate("x")` | `integral(...)` | 426 characters |
 
 ### A power of x times the logarithm of a polynomial plus a root is integrated by parts over the conjugate
 
@@ -2556,6 +2589,22 @@ answered it wrongly ([#1770](https://github.com/asc-community/AngouriMath/issues
 |---|---|---|
 | `"1/((x^2 + 3)^2*(x + sqrt(x^2 + 3)))".ToEntity().Integrate("x")` | `integral(...)` | `-2/((sqrt(x^2 + 3) + x)^2 + 3)^2` |
 
+### A root over the root of the quartic inside it, beside a power of a linear, is split over the quartic's factors
+
+**Answers where there were none.** Rubi's 1.3.2 `sqrt(2 x^2 + sqrt(3 + 4 x^4))/((c + d x) sqrt(3 + 4 x^4))` and the same
+over `(c + d x)^2` were declined, and so were Welz's `sqrt(x^2 + sqrt(1 + x^4))/((1 + x) sqrt(1 + x^4))` and its square.
+Where `c^2 = b d^2`, `sqrt(c x^2 + d sqrt(a + b x^4))/sqrt(a + b x^4)` is `sqrt(d/(2 sqrt(b)))` times
+`1/sqrt(x^2 + i beta) + 1/sqrt(x^2 - i beta)` on the real line, `beta = sqrt(a/b)`, and each over a power of a linear is
+an inverse hyperbolic tangent and roots by the recurrence. The sum is real, and continuous on each side of the pole: the
+logarithm of a quotient that the table writes for a real root jumps on the real line for an imaginary one. For positive
+numbers `a`, `b`, `c` and `d` ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(2*x^2+sqrt(3+4*x^4))/((c+d*x)*sqrt(3+4*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 608 characters |
+| `"sqrt(2*x^2+sqrt(3+4*x^4))/((c+d*x)^2*sqrt(3+4*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 928 characters |
+| `"sqrt(x^2+sqrt(1+x^4))/((1+x)*sqrt(1+x^4))".ToEntity().Integrate("x")` | `integral(...)` | 273 characters |
+
 ### A whole power of a sum of two square roots below the bar is rationalised
 
 **Answers where there were none.** `x/(sqrt(a + b x) + sqrt(c + b x))^3` was declined, while the
@@ -3465,6 +3514,20 @@ arctangents and two inverse hyperbolic tangents for each sign of `c r`
 | `"x/((b*x^3 + 2*a*(5 + 3*sqrt(3)))*sqrt(a + b*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,663 characters, by the sign of `a` |
 | `"x/((b*x^3 + 2*a*(5 - 3*sqrt(3)))*sqrt(a + b*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,703 characters, by the sign of `a` |
 | `"x/((x^3 + 10 + 6*sqrt(3))*sqrt(1 + x^3))".ToEntity().Integrate("x")` | `integral(...)` | 626 characters |
+
+### A linear over the root of a quartic whose symbols are a scale of x is integrated in the scaled variable
+
+**Answers where there were none.** Rubi's 1.3.2 `x/sqrt(-44375 b^4 + 576000 b^3 c x + 576000 b^2 c^2 x^2 + 5308416 c^4 x^4)`
+was declined, and so was Bronstein's `x/sqrt(x^4 + 10 x^2 - 96 x - 71)` with a scale in it, while each was answered with
+numbers for the symbols. Under `x = (b/c) t` the quartic is `5308416 b^4` times a monic one in `t` with rational
+coefficients, and the logarithmic ansatz answers that: `ln(p + q sqrt(P))/(18432 c^2)` for `p` of degree eight. The
+scaling of the variable took one symbol and did not take the square out from under the root
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x/sqrt(-44375*b^4+576000*b^3*c*x+576000*b^2*c^2*x^2+5308416*c^4*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 520 characters |
+| `"x/sqrt(x^4+10*a^2*x^2-96*a^3*x-71*a^4)".ToEntity().Integrate("x")` | `integral(...)` | 312 characters |
 
 ### `x^2` over a three-quarter power of a quadratic binomial beside another is integrated where that is elementary
 
