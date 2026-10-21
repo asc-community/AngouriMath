@@ -14320,26 +14320,35 @@ namespace AngouriMath.Functions.Algebra
         /// <summary>
         /// A polynomial times an odd half power of a linear over a whole power of a quadratic with
         /// a root at zero, <c>P(x) (d + e x)^(j/2)/(b x + c x^2)^m</c> with <c>j</c> odd and
-        /// positive and <c>m &gt;= 3</c>, under <c>t = sqrt(d + e x)</c> with the quadratic written
-        /// as its two linears, <c>x (b + c x)</c>.
+        /// positive and <c>m &gt;= 2</c>, under <c>t = sqrt(d + e x)</c> with the quadratic written
+        /// as its two linears, <c>x (b + c x)</c>, and split over them.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// With <c>x = (t^2 - d)/e</c>, <c>b + c x = (c t^2 + r)/e</c> for <c>r = b e - c d</c>, and
-        /// <c>dx = 2 t dt/e</c>, the integrand is
-        /// <c>2 e^(2m - 1) P((t^2 - d)/e) t^(j + 1)/((t^2 - d)^m (c t^2 + r)^m)</c>, and exactly so:
-        /// <c>t^j</c> is <c>(d + e x)^(j/2)</c> for the principal root and every complex <c>x</c>.
-        /// The two factors below the bar have the resultant <c>b e</c>, and a compound coefficient
-        /// is named by a symbol of its own and written back into the answer, as in
-        /// <see cref="SolveCubeRootsOfTwoLinearsBesideAWholePowerOfAThird"/>.
+        /// With <c>s = t^2</c>, <c>x = (s - d)/e</c>, <c>b + c x = c (s + rho)/e</c> for
+        /// <c>rho = r/c</c> and <c>r = b e - c d</c>, and <c>dx = 2 t dt/e</c>, the integrand is
+        /// <c>2 e^(2m - 1)/c^m N(s)/((s - d)^m (s + rho)^m)</c> with
+        /// <c>N(s) = s^((j + 1)/2) P((s - d)/e)</c>, and exactly so: <c>t^j</c> is
+        /// <c>(d + e x)^(j/2)</c> for the principal root and every complex <c>x</c>. That is its
+        /// quotient by the monic denominator, a polynomial in <c>s</c>, and its partial fractions
+        /// over <c>s - d</c> and <c>s + rho</c>, whose coefficients are those of the Taylor series
+        /// of <c>N</c> over the other power at each root. The roots are <c>b e/c</c> apart, which
+        /// is not zero. Each linear's fractions are asked as one question in <c>t</c>. Each of
+        /// <c>d</c>, <c>b e/c</c>, <c>e</c> and the coefficients of <c>P</c> that is compound is
+        /// named by a symbol of its own and written back into the answer, as in
+        /// <see cref="SolveCubeRootsOfTwoLinearsBesideAWholePowerOfAThird"/>, and <c>rho</c> is
+        /// written in them, so that a power of <c>x</c> in <c>P</c> cancels.
         /// </para>
         /// <para>
-        /// Rubi's <c>(A + B x) (d + e x)^(j/2)/(b x + c x^2)^3</c> ran past the budget: the rational
-        /// function in <c>t</c> is answered in a second, and the substitution that reaches it is
-        /// late in the chain and multiplies the quadratic out. Only the root above the bar and a
-        /// third power or higher, with a symbol to name: the root below the bar, the second power,
-        /// and numbers for coefficients are answered as they are, and left to that. Declined where
-        /// <c>d</c> or <c>r</c> is zero as a value, the linear then sharing a root with the quadratic.
+        /// Rubi's <c>(A + B x) (d + e x)^(j/2)/(b x + c x^2)^3</c> ran past the budget: the
+        /// substitution that reaches it is late in the chain and multiplies the quadratic out.
+        /// Asked as one rational function in <c>t</c>, the second power came back in up to 940,000
+        /// characters and 11 GB, <c>(d + e x)^(7/2)/(b x + c x^2)^2</c> among them, and the third
+        /// in 10,000 to 66,000; split, each is under 7,000 characters, in megabytes. The first
+        /// power and numbers for coefficients are answered compactly as they are, and left to
+        /// that, and so is the root below the bar, which puts a power of <c>s</c> below it too.
+        /// Declined where <c>d</c> or <c>r</c> is zero as a value, the linear then sharing a root
+        /// with the quadratic.
         /// https://github.com/asc-community/AngouriMath/issues/233
         /// </para>
         /// </remarks>
@@ -14370,7 +14379,7 @@ namespace AngouriMath.Functions.Algebra
             }
             if (root is not var (linear, half) || quadratic is not var (q, n) || half.Sign <= 0
                 || half.Multiply(ERational.FromInt32(2)) is not { } twice || !twice.IsInteger() || !twice.ToEInteger().CanFitInInt32()
-                || n < 3 || n > MaximumQuadraticPowerUnderARoot)
+                || n < 2 || n > MaximumQuadraticPowerUnderARoot)
                 return null;
             var j = twice.ToEInteger().ToInt32Checked();
             if (j > MaximumHalfPowerOfTheLinear
@@ -14385,40 +14394,136 @@ namespace AngouriMath.Functions.Algebra
                 || VanishesIdentically(e) || VanishesIdentically(d) || VanishesIdentically(r))
                 return null;
 
-            var t = Variable.CreateUnique(expr, "t_root");
-            var named = new List<(Variable Name, Entity Value)>();
-            Entity Named(Entity value)
-            {
-                if (value is Number or Variable || value is Mulf(Number, Variable) || value is Powf(Variable, Number))
-                    return value;
-                var name = Variable.CreateUnique(expr + t + named.Aggregate((Entity)Number.Integer.Zero, (sum, pair) => sum + pair.Name), "k_named");
-                named.Add((name, value));
-                return name;
-            }
-            // P((t^2 - d)/e) e^degree as a polynomial in t^2: the coefficient of t^(2l) is the sum
-            // over i of p_i e^(degree - i) binomial(i, l) (-d)^(i - l).
-            Entity above = Number.Integer.Zero;
+            // P((t^2 - d)/e) e^degree as a polynomial in s = t^2, whose coefficient of s^l is the sum
+            // over i of p_i e^(degree - i) binomial(i, l) (-d)^(i - l), and with the quadratic's
+            // coefficients and r there is something to name, or the rules after this answer it.
+            var coefficients = new Entity[degree + 1];
             for (var l = 0; l <= degree; l++)
             {
                 Entity coefficient = Number.Integer.Zero;
                 foreach (var (i, p) in read.Select(pair => (pair.Key.ToInt32Checked(), pair.Value)).Where(pair => pair.Item1 >= l))
                     coefficient += p * MathS.Pow(e, degree - i) * Binomial(i, l) * MathS.Pow(-d, i - l);
-                // t^0 is written as nothing: InnerSimplified makes it 1 provided t is not 0.
-                if (!VanishesIdentically(coefficient))
-                    above += l == 0 ? Named(Reduced(coefficient)) : Named(Reduced(coefficient)) * MathS.Pow(t, 2 * l);
+                coefficients[l] = VanishesIdentically(coefficient) ? Number.Integer.Zero : Reduced(coefficient);
             }
+            if (coefficients.Concat(new[] { Reduced(-d), Reduced(c), Reduced(r) }).All(value => value is Number || IsAName(value)))
+                return null;
+
+            // The integrand is 2 e^(2n - 1 - degree)/c^n times N(s)/((s - d)^n (s + rho)^n) in
+            // s = t^2, with N = s^h P((s - d)/e) e^degree and rho = r/c: its polynomial part, and
+            // its partial fractions over s - d and s + rho, whose coefficients are those of the
+            // Taylor series at each root of N over the other power. The atoms are named and rho is
+            // written in them, so that a power of x in P cancels there.
+            var h = (j + 1) / 2;
+            var t = Variable.CreateUnique(expr, "t_root");
+            var named = new List<(Variable Name, Entity Value)>();
+            Entity Named(Entity value)
+            {
+                if (value is Number || IsAName(value))
+                    return value;
+                var name = Variable.CreateUnique(expr + t + named.Aggregate((Entity)Number.Integer.Zero, (sum, pair) => sum + pair.Name), "k_named");
+                named.Add((name, value));
+                return name;
+            }
+            var atD = Named(Reduced(d));
+            var delta = Named(Reduced(b * e / c));
+            var rho = delta - atD;
+            var slope = Named(Reduced(e));
+            var ofP = read.Select(pair => (Power: pair.Key.ToInt32Checked(), Coefficient: Named(Reduced(pair.Value)))).ToList();
+            var numerator = new Entity[h + degree + 1];
+            for (var l = 0; l < h; l++)
+                numerator[l] = Number.Integer.Zero;
+            for (var l = 0; l <= degree; l++)
+            {
+                Entity coefficient = Number.Integer.Zero;
+                foreach (var (i, p) in ofP.Where(pair => pair.Power >= l))
+                    coefficient += p * PowerOf(slope, degree - i) * Binomial(i, l) * PowerOf(-atD, i - l);
+                numerator[h + l] = Reduced(coefficient);
+            }
+            // The shift a question in t is asked over, named apart from what it is in the atoms.
+            var shift = Named(Reduced(r / c));
             var square = MathS.Sqr(t);
-            var below = MathS.Pow(square + Named(Reduced(-d)), n) * MathS.Pow(Named(Reduced(c)) * square + Named(Reduced(r)), n);
-            // With nothing to name the coefficients are numbers, and the rules after this answer them.
-            if (named.Count == 0)
-                return null;
-            var inT = (MathS.Pow(t, j + 1) * above / below).InnerSimplified;
-            if (Integration.ComputeAsAQuestionOfItsOwn(inT, t, integrateByParts) is not { } answer
-                || answer.Nodes.Any(node => node == MathS.NaN))
-                return null;
+
+            // The quotient by the monic (s - d)^n (s + rho)^n, integrated term by term.
+            Entity inT = Number.Integer.Zero;
+            if (numerator.Length > 2 * n)
+            {
+                var monic = new Entity[2 * n + 1];
+                for (var k = 0; k <= 2 * n; k++)
+                    monic[k] = Number.Integer.Zero;
+                for (var first = 0; first <= n; first++)
+                    for (var second = 0; second <= n; second++)
+                        monic[first + second] += Binomial(n, first) * PowerOf(-atD, n - first) * Binomial(n, second) * PowerOf(rho, n - second);
+                var remainder = numerator.ToArray();
+                for (var top = numerator.Length - 1; top >= 2 * n; top--)
+                {
+                    var quotient = Reduced(remainder[top]);
+                    if (quotient == Number.Integer.Zero)
+                        continue;
+                    for (var k = 0; k < 2 * n; k++)
+                        remainder[top - 2 * n + k] -= quotient * monic[k];
+                    var power = 2 * (top - 2 * n) + 1;
+                    inT += quotient * MathS.Pow(t, power) / power;
+                }
+            }
+
+            // Each power of s - d and of s + rho over a coefficient named apart, and each sum
+            // asked as one question: the answer over one quadratic is one piecewise in the sign
+            // of its constant.
+            var parts = new List<(Variable Name, Entity Value)>();
+            foreach (var (at, gap, linearInS) in new[] { (atD, delta, square - atD), (-rho, -delta, square + shift) })
+            {
+                Entity? fractions = null;
+                foreach (var (power, value) in TaylorCoefficients(at, gap).Select((value, m) => (n - m, value)))
+                {
+                    if (VanishesIdentically(value))
+                        continue;
+                    var name = Variable.CreateUnique(expr + t + named.Concat(parts).Aggregate((Entity)Number.Integer.Zero, (sum, pair) => sum + pair.Name), "k_part");
+                    parts.Add((name, value));
+                    var term = name / (power == 1 ? linearInS : MathS.Pow(linearInS, power));
+                    fractions = fractions is null ? term : fractions + term;
+                }
+                if (fractions is null)
+                    continue;
+                if (Integration.ComputeAsAQuestionOfItsOwn(fractions, t, integrateByParts) is not { } part
+                    || part.Nodes.Any(node => node == MathS.NaN))
+                    return null;
+                inT += part;
+            }
+            var answer = inT;
+            foreach (var (name, value) in parts)
+                answer = answer.Substitute(name, value);
             foreach (var (name, value) in named)
                 answer = answer.Substitute(name, value);
-            return Reduced(2 * constant * MathS.Pow(e, 2 * n - 1 - degree)) * answer.Substitute(t, MathS.Sqrt(linear));
+            return Reduced(2 * constant * MathS.Pow(e, 2 * n - 1 - degree) / MathS.Pow(c, n)) * answer.Substitute(t, MathS.Sqrt(linear));
+
+            // The coefficients of u^0 to u^(n - 1) in N(at + u)/(u + gap)^n, in lowest terms.
+            Entity[] TaylorCoefficients(Entity at, Entity gap)
+            {
+                var shifted = new Entity[n];
+                for (var q = 0; q < n; q++)
+                {
+                    Entity sum = Number.Integer.Zero;
+                    for (var l = q; l < numerator.Length; l++)
+                        if (numerator[l] != Number.Integer.Zero)
+                            sum += numerator[l] * Binomial(l, q) * PowerOf(at, l - q);
+                    shifted[q] = sum;
+                }
+                var series = new Entity[n];
+                for (var m = 0; m < n; m++)
+                {
+                    Entity sum = Number.Integer.Zero;
+                    for (var q = 0; q <= m; q++)
+                        sum += shifted[q] * Binomial(n + m - q - 1, m - q) * Number.Integer.Create((m - q) % 2 == 0 ? 1 : -1) / MathS.Pow(gap, n + m - q);
+                    series[m] = Reduced(sum);
+                }
+                return series;
+            }
+
+            static bool IsAName(Entity value)
+                => value is Variable || value is Mulf(Number, Variable) || value is Powf(Variable, Number);
+
+            static Entity PowerOf(Entity @base, int power)
+                => power == 0 ? Number.Integer.One : power == 1 ? @base : MathS.Pow(@base, power);
 
             static Entity Reduced(Entity constant)
                 => constant.Vars.Any() ? Functions.PartialFractions.InLowestTermsOverTheSymbols(constant) : constant.InnerSimplified;

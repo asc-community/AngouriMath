@@ -743,8 +743,8 @@ namespace AngouriMath.Functions.Algebra
             // roots with the coefficients named, before the polynomial term takes it a level down to
             // the substitution there, whose rational function ran past the budget.
             if ((answer = IndefiniteIntegralSolver.SolveCubeRootsOfTwoLinearsBesideAWholePowerOfAThird(expr, x, integrateByParts)) is { }) return answer;
-            // And a root of a linear over a third power or higher of `b x + c x^2`, under the root,
-            // the quadratic kept as its two linears: the substitution there multiplies it out.
+            // And a root of a linear over a second power or higher of `b x + c x^2`, under the root,
+            // split over the quadratic's two linears: the substitution there multiplies it out.
             if ((answer = IndefiniteIntegralSolver.SolveAnOddHalfPowerOfALinearOverAPowerOfAQuadraticWithARootAtZero(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByWritingEachLinearOnce(expr, x, integrateByParts)) is { }) return answer;
             // The same with a symbol for an exponent, where the product is one power that is not
