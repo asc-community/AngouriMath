@@ -38176,7 +38176,8 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// A fractional or symbolic power of a monomial, distributed: <c>(c x^n)^b</c> is
-        /// <c>c^b x^(n b)</c> for a positive <c>c</c> and a <c>n</c> that is not whole.
+        /// <c>c^b x^(n b)</c> for a positive <c>c</c> and a fractional <c>n</c>, and
+        /// <c>K x^(n b)</c> for a symbolic one, with <c>K = (c x^n)^b/x^(n b)</c> constant.
         /// </summary>
         internal static Entity? SolveByDistributingAPowerOfAMonomial(Entity expr, Entity.Variable x, bool integrateByParts)
             => DistributeAFractionalPower(expr, x, integrateByParts, constantAlone: false, negativeArm: false);
@@ -38198,12 +38199,25 @@ namespace AngouriMath.Functions.Algebra
         /// folds to a power of <c>c x^n</c> and stopped there.
         /// </summary>
         /// <remarks>
-        /// Exact on the domain the integrand has. With a symbolic <c>n</c>, <c>x^n</c> is real
+        /// Exact on the domain the integrand has. With a fractional <c>n</c>, <c>x^n</c> is real
         /// only for a positive <c>x</c> -- at a negative one it is a complex number or nothing --
-        /// so the integrand is defined there and nowhere else, and on <c>x &gt; 0</c> the
-        /// identity holds for a positive <c>c</c>. That condition travels with the answer as
-        /// <c>provided c &gt; 0</c>, unless <c>c</c> is a positive number already; the
-        /// <c>(e x)^(n - 1)</c> of Rubi's 6.5.2 carries the same one. A whole exponent is
+        /// and on <c>x &gt; 0</c> the identity holds for a positive <c>c</c>. That condition
+        /// travels with the answer as <c>provided c &gt; 0</c>, unless <c>c</c> is a positive
+        /// number already; the <c>(e x)^(n - 1)</c> of Rubi's 6.5.2 carries the same one.
+        /// A symbolic <c>n</c> confines nothing: it can be an even number, and then
+        /// <c>(x^n)^b</c> is real for a negative <c>x</c> too, where <c>x^(n b)</c> is not it --
+        /// <c>(x^2)^(1/2)</c> is <c>|x|</c> and <c>x^(2 (1/2))</c> is <c>x</c>, so Rubi's 3.5
+        /// <c>(ln(a x^n)^m)^p/x</c>, answered <c>ln(a x^n)^(m p + 1)/(n (m p + 1))</c>, had the
+        /// wrong sign wherever the logarithm is negative for <c>m = 2</c>, <c>p = 1/2</c>. There
+        /// the power is written <c>K x^(n b)</c> with <c>K = (c x^n)^b/x^(n b)</c>, whose logarithmic
+        /// derivative is <c>b n/x - n b/x = 0</c>, so it is constant wherever the power is
+        /// continuous, for every <c>c</c>, <c>n</c> and <c>b</c>: the answer is <c>K</c> times the
+        /// answer for <c>x^(n b)</c>, <c>x (x^n)^b/(n b + 1)</c> for the power alone, which is
+        /// Rubi's, and no condition on <c>c</c> is owed. Only for a factor of the integrand:
+        /// inside a sum <c>K</c> does not come out in front, and with it as a symbol there
+        /// <c>1/(1 + 4 (x^(2 n))^(1/n))</c> was a 568-character piecewise on the sign of
+        /// <c>K</c> where it is <c>arctan(2 x)/2</c>; there the power is split as for a
+        /// fractional <c>n</c>, which holds for <c>x &gt; 0</c>. A whole exponent is
         /// <see cref="SolveByDistributingWholePowersOfProducts"/>'s, and needs no condition.
         /// The two are asked from two places: the monomial where it always was, and the constant
         /// alone after the rules that answer its shapes for any real constant, since this one
@@ -38222,6 +38236,23 @@ namespace AngouriMath.Functions.Algebra
         {
             Entity assumed = Entity.Boolean.True;
             var changed = false;
+            var named = new List<(Variable Name, Entity Value)>();
+            // The factors of the integrand, a whole power of one read as its base and a whole
+            // power of a product as its factors: a power among them takes its constant factor
+            // out in front of the integral.
+            var factorsOfTheIntegrand = new HashSet<Entity>();
+            void GatherTheFactors(Entity product)
+            {
+                foreach (var factor in Mulf.LinearChildren(product))
+                {
+                    var raised = factor is Powf(var @base, Number.Integer) ? @base : factor;
+                    if (raised is Mulf or Divf)
+                        GatherTheFactors(raised);
+                    else
+                        factorsOfTheIntegrand.Add(raised);
+                }
+            }
+            GatherTheFactors(expr);
             var symbolicConstantsTaken = 0;
             var aSymbolicConstantIsNegated = false;
             var written = expr.Replace(node =>
@@ -38288,8 +38319,9 @@ namespace AngouriMath.Functions.Algebra
                 // not `x`'s -- `(2 u^3)^(3/2)` is `2^(3/2) sgn(u) u^(9/2)`, and splitting it
                 // without the sign is a wrong answer where `u < 0`, which the rules for a root
                 // of an even power answer correctly and this must leave to them. With a
-                // fractional or symbolic `n` the integrand is real only for a positive `x`, and
-                // there the split is exact. The constant comes out either way.
+                // fractional `n` the integrand is real only for a positive `x`, and there the
+                // split is exact; a symbolic one is split with its constant factor, below. The
+                // constant comes out either way.
                 // An even whole power of a function is not this rule's: `(a sin(x)^2)^(5/2)` is
                 // `a^(5/2) sgn(sin x) sin(x)^5` for *any* real `a`, because an even power is
                 // never negative, and the rule that takes the function out of it with its sign
@@ -38311,6 +38343,19 @@ namespace AngouriMath.Functions.Algebra
                 // the rules that answer its shapes for any real constant.
                 if (split == constantAlone)
                     return node;
+                // A symbolic n can be whole, and even: `(x^n)^b` is then real for a negative x as
+                // well, and `x^(n b)` is not it -- `(x^2)^(1/2)` is `|x|`. The quotient
+                // K = (c x^n)^b / x^(n b) is constant wherever the power is continuous, for every
+                // c, n and b, so for a factor of the integrand it goes in front of the integral as
+                // a constant and is written back into the answer. See the remarks.
+                if (split && degree!.Evaled is not Number && factorsOfTheIntegrand.Contains(node))
+                {
+                    var power = SimplifiedExponent((degree * exponent).InnerSimplified);
+                    var name = Variable.CreateUnique(named.Aggregate(expr, (all, pair) => all + pair.Name), "k_monomial");
+                    named.Add((name, node / MathS.Pow(x, power)));
+                    changed = true;
+                    return name * MathS.Pow(x, power);
+                }
                 // Taking the constant out rewrites the question, and the rewritten question is
                 // asked at the same depth, so the rewrite has to be one that brings the answer
                 // closer or it multiplies the search at every level. It does where the rest is a
@@ -38375,6 +38420,24 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             if (Integration.ComputeAsTheSameQuestion(rewritten, x, integrateByParts) is not { } answer)
                 return null;
+            // The last first: the replacement is made from the inside out, so a power around
+            // another holds the factor named for the inner one, `(a (b x^m)^n)^(1/(m n))`.
+            Entity WrittenBack(Entity written)
+            {
+                for (var i = named.Count - 1; i >= 0; i--)
+                    written = written.Substitute(named[i].Name, named[i].Value);
+                return written;
+            }
+            answer = WrittenBack(answer);
+            // K's x^(-n b) beside the x^(n b + 1) of the power rule is x: the answer for the
+            // power alone is x (c x^n)^b/(n b + 1).
+            if (named.Count > 0)
+            {
+                var powers = named.Select(pair => WrittenBack(((Divf)pair.Value).Dividend)).ToList();
+                answer = answer.Replace(node => node is Mulf or Divf && Flattened(node).Any(factor => powers.Contains(factor)
+                        || factor is Powf(var below, var minusOne) && minusOne == Number.Integer.MinusOne && powers.Contains(below))
+                    ? WithThePowersOfXGathered(node, x) : node);
+            }
             if (assumed == Entity.Boolean.True)
                 return answer;
             var thisArm = answer.Provided(assumed);
@@ -38388,6 +38451,67 @@ namespace AngouriMath.Functions.Algebra
 
             static Entity SimplifiedExponent(Entity exponent)
                 => exponent is Number || exponent.Complexity > 40 ? exponent : Functions.PartialFractions.Bare(exponent.Simplify());
+
+            // The powers of x among the factors of a product as one power, the exponent
+            // simplified: `x^a x^b` is `x^(a + b)` for every a and b on the principal branch,
+            // x = 0 aside.
+            static Entity WithThePowersOfXGathered(Entity product, Entity.Variable x)
+            {
+                Entity exponent = Number.Integer.Zero;
+                var gathered = 0;
+                var above = new List<Entity>();
+                var below = new List<Entity>();
+                foreach (var factor in Flattened(product))
+                    switch (factor)
+                    {
+                        case Entity.Variable bare when bare == x:
+                            exponent += Number.Integer.One;
+                            gathered++;
+                            break;
+                        case Powf(Entity.Variable bare, var power) when bare == x && !power.ContainsNode(x):
+                            exponent += power;
+                            gathered++;
+                            break;
+                        case Powf(Powf(Entity.Variable bare, var power), var minusOne) when bare == x && !power.ContainsNode(x)
+                                && minusOne == Number.Integer.MinusOne:
+                            exponent -= power;
+                            gathered++;
+                            break;
+                        case Powf(var divisor, var minusOne) when minusOne == Number.Integer.MinusOne:
+                            below.Add(divisor);
+                            break;
+                        default:
+                            above.Add(factor);
+                            break;
+                    }
+                if (gathered < 2)
+                    return product;
+                var folded = SimplifiedExponent(exponent.InnerSimplified);
+                if (folded != Number.Integer.Zero)
+                    above.Insert(0, folded == Number.Integer.One ? x : MathS.Pow(x, folded));
+                var numerator = above.Count == 0 ? Number.Integer.One : above.Aggregate((all, factor) => all * factor);
+                return below.Count == 0 ? numerator : numerator / below.Aggregate((all, factor) => all * factor);
+            }
+
+            // The factors of a product, with a quotient below the bar read as its factors there:
+            // `1/(K/x^m)` is `x^m K^(-1)`, where the factor in front stands below the bar. A
+            // divisor below a divisor arrives inverted twice.
+            static IEnumerable<Entity> Flattened(Entity product)
+            {
+                static Entity Inverted(Entity part)
+                    => part is Powf(var divisor, var minusOne) && minusOne == Number.Integer.MinusOne ? divisor : MathS.Pow(part, Number.Integer.MinusOne);
+                foreach (var factor in Mulf.LinearChildren(product))
+                    if (factor is Powf(var inner, var minusOne) && minusOne == Number.Integer.MinusOne)
+                    {
+                        if (inner is Mulf or Divf)
+                            foreach (var part in Mulf.LinearChildren(inner))
+                                yield return Inverted(part);
+                        else
+                            yield return Inverted(inner);
+                    }
+                    else
+                        yield return factor;
+            }
         }
 
         /// <summary>

@@ -948,7 +948,8 @@ namespace AngouriMath.Functions.Algebra
             // past a quartic -- `(e - 4 f x^3)/(e^2 + 4 d f x^2 + 4 e f x^3 + 4 f^2 x^6)`.
             if ((answer = IndefiniteIntegralSolver.SolveAsTheArctangentOfAPowerOfXOverABinomial(expr, x, integrateByParts)) is { }) return answer;
             // And a fractional or symbolic power of a monomial: `(c x^n)^b` is `c^b x^(n b)`
-            // for a positive `c`, on the `x > 0` where a symbolic `n` leaves the integrand real.
+            // for a positive `c`, on the `x > 0` where a fractional `n` leaves the integrand real,
+            // and a constant times `x^(n b)` on each interval for a symbolic one.
             if ((answer = IndefiniteIntegralSolver.SolveByDistributingAPowerOfAMonomial(expr, x, integrateByParts)) is { }) return answer;
             // A power of a constant multiple of the radicand a logarithm holds under a root,
             // written over that radicand: `acosh(c x)` beside `(d - c^2 d x^2)^(5/2)`.

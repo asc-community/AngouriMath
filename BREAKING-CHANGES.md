@@ -3100,6 +3100,32 @@ answered. The exponent is simplified now. Rubi's 1.1.3.2
 | `"1/(a + b*(c*x^n)^(2/n))".ToEntity().Integrate("x")` | `integral(...)` | an arctangent or a logarithm in `b c^(2/n) x`, by the sign of `a b c^(2/n)` |
 | `"1/(1 + 4*(x^(2*n))^(1/n))".ToEntity().Integrate("x")` | `integral(...)` | `arctan(2 x)/2` |
 
+### A symbolic power of a monomial is integrated on both sides of 0, for a constant of either sign
+
+**Answers where there were none, and wrong ones on the unreleased master corrected.** 2.5.0 declined
+`(c x^n)^b` for a symbolic `n`, and the unreleased master integrated it as `c^b x^(n b)`, `provided c > 0`, on
+the premise that a symbolic `n` leaves the integrand real only for a positive `x`. An even `n` does not: `(x^m)^p`
+was answered `x^(m p + 1)/(m p + 1)`, which at `m = 2`, `p = 1/2` is `x^2/2` where the integral of `|x|` is
+`x |x|/2`, wrong for every `x < 0`; and through `u = ln(a x^n)`, `u = sin(x)` and `u = tan(x)` so were Rubi's 3.5
+`(ln(a x^n)^m)^p/x` and `(b ln(a x^n)^m)^p/x` wherever the logarithm is negative, `(sin(x)^m)^p cos(x)` wherever
+the sine is, and Rubi's 4.3 `(b tan(c + d x)^p)^(1/p)` wherever the tangent is. Where such a power is a factor of
+the integrand it is written `K x^(n b)` with `K = (c x^n)^b/x^(n b)`, constant wherever the power is continuous
+for every `c`, `n` and `b`, and `K` comes out in front of the integral: the answer for the power alone is
+`x (c x^n)^b/(n b + 1)`, Rubi's, with no condition on `c`. Inside a sum the power is split as before. Of Rubi's
+1.1.3.2, 51 answers on the unreleased master are 4 to 32 characters shorter, 47 of them for losing the
+`provided b > 0`, and 12 are 3 to 96 characters longer: three that had nothing else to cancel `K` against, and
+nine where the power stands in a sum beside itself as well, `(c x^n)^(1/n)/(a + b (c x^n)^(1/n))^2`
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(x^m)^p".ToEntity().Integrate("x")` | `integral(...)` | `x * (x ^ m) ^ p / (m * p + 1) + C`; `x ^ (m * p + 1) / (m * p + 1) + C` on the unreleased master |
+| `"(c*x^n)^b".ToEntity().Integrate("x")` | `integral(...)` | `x * (c * x ^ n) ^ b / (b * n + 1) + C`; `(c ^ b * x ^ (b * n + 1) / (b * n + 1) provided c > 0) + C` on the unreleased master |
+| `"(ln(a*x^n)^m)^p/x".ToEntity().Integrate("x")` | `integral(...)` | `ln(a * x ^ n) * (ln(a * x ^ n) ^ m) ^ p / (m * p + 1) / n + C`; `ln(a * x ^ n) ^ (m * p + 1) / (m * p + 1) / n + C` on the unreleased master |
+| `"(sin(x)^m)^p*cos(x)".ToEntity().Integrate("x")` | `integral(...)` | `sin(x) * (sin(x) ^ m) ^ p / (m * p + 1) + C`; `sin(x) ^ (m * p + 1) / (m * p + 1) + C` on the unreleased master |
+| `"1/(x*(b*x^n)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | `1 / ((-(1 + 3/2 * n) + 1) * (b * x ^ n) ^ (3/2)) + C`, 52 characters; 80, with `provided b > 0`, on the unreleased master |
+| `"(b*tan(c+d*x)^p)^(1/p)".ToEntity().Integrate("x")` | `integral(...)` | 119 characters; 71 on the unreleased master |
+
 ### A function of a quotient of two linears is integrated over the quotient's denominator
 
 **Answers where there were none.** `sin((a + b x)/(c + d x))` and its powers were declined, and so
