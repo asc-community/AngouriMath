@@ -1040,6 +1040,14 @@ namespace AngouriMath.Functions.Algebra
             // elementary: Welz's `x/((4 - x^3) sqrt(1 - x^3))`.
             if ((answer = IndefiniteIntegralSolver.SolveXOverACubicBinomialBesideTheRootOfAnother(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByReducingThePolynomialOverALinearFactor(expr, x, integrateByParts)) is { }) return answer;
+            // Hyperbolic powers two apart whose coefficients kill the reduction's residual, asked
+            // again below, are a sum's before this split too: split, each elliptic term went
+            // through the chain alone, and `x/csch(x)^(3/2) + x sqrt(csch(x))/3` was declined
+            // here in ten seconds before the rule answered it in a tenth of one. Fractional
+            // powers only, which no term of the split answers apart.
+            if (expr is Entity.Sumf or Entity.Minusf
+                && (answer = IndefiniteIntegralSolver.SolveAPairOfHyperbolicPowersTwoApart(expr, x, integrateByParts)) is { })
+                return answer;
             if (expr is Entity.Sumf or Entity.Minusf
                 && (answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x, integrateByParts)) is { })
                 return answer;

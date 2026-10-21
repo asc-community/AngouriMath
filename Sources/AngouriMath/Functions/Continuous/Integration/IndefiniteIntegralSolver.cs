@@ -5070,6 +5070,19 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Whether a factor of <paramref name="denominator"/> is a whole power past the first of
+        /// something in <paramref name="x"/>: what a rule for a power of a quadratic below the
+        /// bar needs, asked before the numerator is read. Under a substitution the numerator can
+        /// be a sum of exponentials brought over one bar, thousands of terms, and three such
+        /// rules expanded it in turn to be told it was not a polynomial -- six seconds each of
+        /// the inverse hyperbolic substitution for `x^4 (d + e x^2)^3 (a + b arcosh(c x))`, whose
+        /// denominator holds no x at all. https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        private static bool HasAWholePowerPastTheFirstOf(Entity denominator, Entity.Variable x)
+            => Mulf.LinearChildren(denominator).Any(factor =>
+                factor is Powf(var @base, Number.Integer { EInteger: var whole }) && whole.CompareTo(EInteger.FromInt32(2)) >= 0 && @base.ContainsNode(x));
+
+        /// <summary>
         /// Whether <paramref name="expr"/> is built from <paramref name="x"/> by the four
         /// operations and rational powers alone: no function of <paramref name="x"/> anywhere.
         /// </summary>
@@ -7788,9 +7801,10 @@ namespace AngouriMath.Functions.Algebra
         internal static Entity? SolveXOverACubicBinomialBesideTheRootOfAnother(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
-            if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var above) || above.Count != 1
-                || !above.TryGetValue(EInteger.One, out var multiple) || multiple.ContainsNode(x))
-                return null;
+            // The root below the bar read before the numerator, which is the expensive half: under
+            // a substitution a sum of exponentials over a common denominator has no root below it
+            // and a numerator of thousands of terms, and expanding that to be told it is not x took
+            // seconds of the inverse hyperbolic substitution for `x^4 (d + e x^2)^3 (a + b arcosh(c x))`.
             Entity? radicand = null;
             Entity below = Number.Integer.One;
             foreach (var factor in Mulf.LinearChildren(denominator))
@@ -7802,7 +7816,12 @@ namespace AngouriMath.Functions.Algebra
                 }
                 else
                     below = below == Number.Integer.One ? factor : below * factor;
-            if (radicand is null || ACubicBinomial(radicand) is not var (c, d) || ACubicBinomial(below) is not var (a, b))
+            if (radicand is null)
+                return null;
+            if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var above) || above.Count != 1
+                || !above.TryGetValue(EInteger.One, out var multiple) || multiple.ContainsNode(x))
+                return null;
+            if (ACubicBinomial(radicand) is not var (c, d) || ACubicBinomial(below) is not var (a, b))
                 return null;
             static bool Zero(Entity condition) => Functions.PartialFractions.IsZeroAsAValue(condition);
             if (Zero(a) || Zero(b) || Zero(c) || Zero(d) || Zero(b * c - a * d))
@@ -23678,7 +23697,8 @@ namespace AngouriMath.Functions.Algebra
             if (!Integration.AnsweringTheQuestionAsked)
                 return null;
             var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
-            if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var top) || top.Keys.Any(k => k.Sign < 0 || !k.CanFitInInt32()))
+            if (!HasAWholePowerPastTheFirstOf(denominator, x)
+                || !TreeAnalyzer.TryGetPolynomial(numerator, x, out var top) || top.Keys.Any(k => k.Sign < 0 || !k.CanFitInInt32()))
                 return null;
             Entity? quadratic = null;
             var power = 0;
@@ -24595,6 +24615,8 @@ namespace AngouriMath.Functions.Algebra
             if (!Integration.AnsweringTheQuestionAsked)
                 return null;
             var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            if (!HasAWholePowerPastTheFirstOf(denominator, x))
+                return null;
             Entity? quadratic = null;
             var power = 0;
             Entity? linear = null;
@@ -24718,6 +24740,8 @@ namespace AngouriMath.Functions.Algebra
         internal static Entity? SolveAPowerOfALinearBesideTheDerivativeOfAQuadraticOverItsPower(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            if (!HasAWholePowerPastTheFirstOf(denominator, x))
+                return null;
             Entity? quadratic = null;
             var power = 0;
             Entity? linear = null;
@@ -32798,11 +32822,19 @@ namespace AngouriMath.Functions.Algebra
             // sub-integrand of the chain.
             // A root of a quotient counts as the two roots it splits into -- a sum with a
             // quotient in it, `1/cos(x)^4 - 1`, being a quotient once combined.
-            if (expr.Nodes.Sum(node => node is Powf(var @base, Number.Rational half)
-                    && half is not Number.Integer && half.ERational.Denominator.Equals(EInteger.FromInt32(2))
-                    && @base.ContainsNode(x)
-                        ? (@base is Divf || Functions.SingleQuotient.Of(AsOneQuotient(@base)).Denominator != Number.Integer.One ? 2 : 1)
-                        : 0) < 2)
+            // The root inside the logarithm an inverse hyperbolic function is written as counts as
+            // none: that logarithm is the inverse hyperbolic substitution's, which reads it as
+            // written, and combined, `ln(1/u + sqrt(1 + 1/u^2))` is `ln(1/u + sqrt(u^4 + u^2)/u^2)`,
+            // which nothing reads -- `u^7` beside it, from `x^3 arcsch(sqrt(x))`, was eighteen
+            // seconds of search to decline before the substitution answered it in a tenth of one.
+            // https://github.com/asc-community/AngouriMath/issues/233
+            if (RootsToCombine(expr) < 2)
+                return null;
+            if (expr.Nodes.Any(node => node is Logf(_, var inside) && HasARadicalOf(inside, x))
+                && RootsToCombine(expr.Replace(node => node is Logf(var logarithmBase, var antilogarithm) && logarithmBase == MathS.e
+                    && antilogarithm.ContainsNode(x) && ReadAnInverseHyperbolic(antilogarithm, x) is not null
+                        ? Number.Integer.One
+                        : node)) < 2)
                 return null;
             var rewritten = CombineRadicalsIn(expr, x);
             // The rewriting is exact and the rewritten integrand is the question asked in
@@ -32832,6 +32864,13 @@ namespace AngouriMath.Functions.Algebra
                 && !result.Nodes.Any(node => node == MathS.NaN))
                 return sign * result;
             return null;
+
+            int RootsToCombine(Entity written)
+                => written.Nodes.Sum(node => node is Powf(var @base, Number.Rational half)
+                    && half is not Number.Integer && half.ERational.Denominator.Equals(EInteger.FromInt32(2))
+                    && @base.ContainsNode(x)
+                        ? (@base is Divf || Functions.SingleQuotient.Of(AsOneQuotient(@base)).Denominator != Number.Integer.One ? 2 : 1)
+                        : 0);
         }
 
         /// <summary>
@@ -36255,6 +36294,11 @@ namespace AngouriMath.Functions.Algebra
         {
             if (!Integration.AnsweringTheQuestionAsked)
                 return null;
+            // The arctangent the numerator needs is the integrand's: asked first, since the
+            // quotient below brings a sum of exponentials over one bar, every term's
+            // denominator multiplied into every other.
+            if (!expr.Nodes.Any(node => node is Arctanf && node.ContainsNode(x)))
+                return null;
             var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
             Arctanf? arctangent = null;
             Entity? rate = null;
@@ -37174,29 +37218,23 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// Whether <paramref name="expr"/> over <paramref name="derivative"/> takes two values at
-        /// two points where <paramref name="candidate"/>, a sine, cosine, tangent, cotangent,
-        /// secant or cosecant of a linear, takes one -- every other symbol pinned -- which no
-        /// function of the candidate does. False for any other candidate, and wherever a value
-        /// cannot be had or the candidate itself does not repeat there.
+        /// two points where <paramref name="candidate"/> takes one -- every other symbol pinned --
+        /// which no function of the candidate does. False for a candidate
+        /// <see cref="TheOtherPointWhereTheCandidateRepeats"/> finds no such pair for, and wherever
+        /// a value cannot be had or the candidate itself does not repeat there.
         /// </summary>
         private static bool TheQuotientDisagreesWhereTheCandidateRepeats(Entity expr, Entity derivative, Entity candidate, Entity.Variable x)
         {
-            Entity? argument = candidate switch
-            {
-                Sinf(var a) => a, Cosf(var a) => a, Tanf(var a) => a,
-                Cotanf(var a) => a, Secantf(var a) => a, Cosecantf(var a) => a,
-                _ => null,
-            };
-            if (argument is null || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out var intercept)
-                || slope.Evaled is Number.Complex { IsZero: true })
+            // Past a trigonometric function itself, only where the quotient is cheap to evaluate: a
+            // special function's value is a series, and beside `x^5 erf(b x)^2` the even powers of x
+            // the search offers were four hundred evaluations that refused nothing, a quarter more
+            // of the integrand's allocation.
+            if (candidate is not (Sinf or Cosf or Tanf or Cotanf or Secantf or Cosecantf)
+                && (expr.Nodes.Any(IsASpecialFunction) || PowerOfXAsWritten(expr, x) > LargestPowerEvaluatedForARepeat))
                 return false;
             Entity first = Number.Real.Create(EDecimal.FromString("0.37"));
-            Entity second = candidate switch
-            {
-                Sinf or Cosecantf => (MathS.pi - 2 * intercept) / slope - first,
-                Cosf or Secantf => -2 * intercept / slope - first,
-                _ => first + MathS.pi / slope,
-            };
+            if (TheOtherPointWhereTheCandidateRepeats(candidate, x, first) is not { } second)
+                return false;
             var pinned = new Dictionary<Variable, Entity>();
             var values = new[] { "1.37", "0.61", "2.23", "1.91", "0.83", "1.13" };
             var index = 0;
@@ -37210,17 +37248,137 @@ namespace AngouriMath.Functions.Algebra
                     value = value.Substitute(pair.Key, pair.Value);
                 return value.Evaled is Number.Complex { IsNaN: false } number && number.IsFinite ? number : null;
             }
-            static bool Close(Number.Complex left, Number.Complex right, double tolerance)
+            // Compared in doubles, and not compared where a double does not hold the value. At a
+            // rational point the values are exact rationals, and for `x^24 (a x + b x^38)^12` under
+            // `u = x^24` each has two thousand digits: their difference, taken as numbers, ran for
+            // minutes, where the doubles say in a millisecond that they are opposite.
+            static bool? Close(Number.Complex left, Number.Complex right, double tolerance)
             {
-                var scale = System.Math.Max(1.0, ((Number.Real)left.Abs()).EDecimal.ToDouble());
-                return ((Number.Real)(left - right).Abs()).EDecimal.ToDouble() <= tolerance * scale;
+                var (leftReal, leftImaginary) = (left.RealPart.EDecimal.ToDouble(), left.ImaginaryPart.EDecimal.ToDouble());
+                var (rightReal, rightImaginary) = (right.RealPart.EDecimal.ToDouble(), right.ImaginaryPart.EDecimal.ToDouble());
+                var scale = System.Math.Max(1.0, System.Math.Sqrt(leftReal * leftReal + leftImaginary * leftImaginary));
+                var difference = System.Math.Sqrt((leftReal - rightReal) * (leftReal - rightReal) + (leftImaginary - rightImaginary) * (leftImaginary - rightImaginary));
+                return !double.IsNaN(scale) && !double.IsInfinity(scale) && !double.IsNaN(difference) && !double.IsInfinity(difference)
+                    ? difference <= tolerance * scale : null;
             }
             if (At(candidate, first) is not { } candidateFirst || At(candidate, second) is not { } candidateSecond
-                || !Close(candidateFirst, candidateSecond, 1e-9))
+                || Close(candidateFirst, candidateSecond, 1e-9) is not true)
                 return false;
             var quotient = expr / derivative;
             return At(quotient, first) is { } quotientFirst && At(quotient, second) is { } quotientSecond
-                && !Close(quotientFirst, quotientSecond, 1e-6);
+                && Close(quotientFirst, quotientSecond, 1e-6) is false;
+        }
+
+        /// <summary>
+        /// The power of x past which <see cref="TheQuotientDisagreesWhereTheCandidateRepeats"/> does
+        /// not evaluate for a candidate other than a trigonometric function. The values at the two
+        /// points are exact, and their digits grow with the power: `x^36 (a + b x^37)^12` offers
+        /// `u = x^36`, and evaluating its quotient at the two points, for every expansion the search
+        /// asks, took the row from 68 ms to 296.
+        /// </summary>
+        private const long LargestPowerEvaluatedForARepeat = 64;
+
+        /// <summary>
+        /// The largest power <paramref name="x"/> is raised to in <paramref name="expr"/> as written:
+        /// the powers of a product added, of a sum the largest, a whole power multiplying its base's,
+        /// on either side of the bar; capped, so that it cannot overflow.
+        /// </summary>
+        private static long PowerOfXAsWritten(Entity expr, Entity.Variable x)
+        {
+            const long cap = 1L << 40;
+            long Of(Entity node) => System.Math.Min(cap, node switch
+            {
+                _ when !node.ContainsNode(x) => 0,
+                Variable => 1,
+                Powf(var @base, Number.Integer { EInteger: var power }) => Of(@base) * (power.Abs().CompareTo(EInteger.FromInt64(cap)) > 0 ? cap : power.Abs().ToInt64Checked()),
+                Mulf(var left, var right) => Of(left) + Of(right),
+                Divf(var left, var right) => Of(left) + Of(right),
+                _ => node.DirectChildren.Max(Of),
+            });
+            return Of(expr);
+        }
+
+        /// <summary>
+        /// A point other than <paramref name="first"/> where <paramref name="candidate"/> takes the
+        /// value it takes at <paramref name="first"/>, or null. A function of one sine, cosine,
+        /// tangent, cotangent, secant or cosecant of a linear, with <paramref name="x"/> nowhere
+        /// else, repeats where that function does: a sine at <c>pi - theta</c>, a cosine at
+        /// <c>-theta</c>, a tangent a period on. A quadratic repeats across its vertex, and a
+        /// constant times an even power of a quotient of linears, or of one linear, where the
+        /// quotient takes the opposite value.
+        /// </summary>
+        /// <remarks>
+        /// The trigonometric function alone was read, and a multiple of one was not:
+        /// <c>sin(x) tan(6x)</c> written in the sine and cosine of <c>x</c> offers <c>2 cos(x)</c>, and
+        /// simplifying the integrand over its derivative to refuse it was eight seconds. The
+        /// quotient by the derivative of <c>e ((c + d x)/(a + b x))^2</c> holds the quotient itself,
+        /// which the square does not determine -- nine seconds of Rubi's 3.2.1
+        /// <c>1/((a g + b g x)^2 (A + B ln(e (c + d x)^2/(a + b x)^2))^2)</c> -- and that over the
+        /// derivative of <c>a + b x + c x^2</c> holds the linears of
+        /// <c>(a + b x + c x^2)^(5/2)/((d + e x)(f + g x))</c>, five more.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        private static Entity? TheOtherPointWhereTheCandidateRepeats(Entity candidate, Entity.Variable x, Entity first)
+        {
+            var trigonometric = candidate.Nodes
+                .Where(node => node is Sinf or Cosf or Tanf or Cotanf or Secantf or Cosecantf && node.ContainsNode(x)).Distinct().ToList();
+            if (trigonometric.Count == 1)
+            {
+                var function = trigonometric[0];
+                if (candidate.Replace(node => node == function ? Number.Integer.One : node).ContainsNode(x)
+                    || !TreeAnalyzer.TryGetPolyLinear(function.DirectChildren.First(), x, out var slope, out var intercept)
+                    || slope.Evaled is Number.Complex { IsZero: true })
+                    return null;
+                return function switch
+                {
+                    Sinf or Cosecantf => (MathS.pi - 2 * intercept) / slope - first,
+                    Cosf or Secantf => -2 * intercept / slope - first,
+                    _ => first + MathS.pi / slope,
+                };
+            }
+            if (trigonometric.Count > 1 || !IsARationalFunction(candidate, x))
+                return null;
+            if (candidate is Sumf or Minusf && TreeAnalyzer.TryGetPolyQuadratic(candidate, x, out var leading, out var linear, out _)
+                && leading.Evaled is not Number.Complex { IsZero: true })
+                return -linear / leading - first;
+            // k ((p + q x)/(r + s x))^n for an even n, or k (p + q x)^n: the quotient R takes -R(first) at
+            // -(p + R(first) r)/(q + R(first) s).
+            Entity? above = null, below = null;
+            EInteger? power = null;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(candidate))
+            {
+                if (!factor.ContainsNode(x))
+                    continue;
+                if (factor is not Powf(var @base, Number.Integer { EInteger: var raised }) || raised.IsZero)
+                    return null;
+                var signed = underneath ? raised.Negate() : raised;
+                if (!signed.Abs().Remainder(EInteger.FromInt32(2)).IsZero || power is { } known && !known.Equals(signed.Negate()))
+                    return null;
+                if (signed.Sign > 0 && above is null)
+                    above = @base;
+                else if (signed.Sign < 0 && below is null)
+                    below = @base;
+                else
+                    return null;
+                power = signed;
+            }
+            if (power is null)
+                return null;
+            Entity p = Number.Integer.One, q = Number.Integer.Zero, r = Number.Integer.One, s = Number.Integer.Zero;
+            if (above is not null)
+            {
+                if (!TreeAnalyzer.TryGetPolyLinear(above, x, out var aboveSlope, out var aboveIntercept) || aboveSlope is null || aboveIntercept is null)
+                    return null;
+                (q, p) = (aboveSlope, aboveIntercept);
+            }
+            if (below is not null)
+            {
+                if (!TreeAnalyzer.TryGetPolyLinear(below, x, out var belowSlope, out var belowIntercept) || belowSlope is null || belowIntercept is null)
+                    return null;
+                (s, r) = (belowSlope, belowIntercept);
+            }
+            var atFirst = (above ?? Number.Integer.One).Substitute(x, first) / (below ?? Number.Integer.One).Substitute(x, first);
+            return -(p + atFirst * r) / (q + atFirst * s);
         }
 
         /// <summary>
