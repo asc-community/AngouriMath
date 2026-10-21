@@ -13671,9 +13671,17 @@ namespace AngouriMath.Functions.Algebra
             // a root of a linear over a linear. `sqrt(a + i a tan(x))/(c + d tan(x))^(3/2)` was a
             // search past thirty seconds as a quotient by 1 + u^2, and in the sum's conjugate it is
             // answered in a second.
+            // And not simplified where it is a quotient of powers of distinct sums each coefficient of
+            // which is a symbol or one, which the simplifier hands back as it came but for two
+            // neighbours to one power below the bar gathered: Rubi's 4.3.4.2
+            // `(c + d u)^3 (A + B u + C u^2)/((a + b u)^3 (1 + u^2))` spent 13 of its 14 s being
+            // simplified to itself. See IsAQuotientOfDistinctSumsOfSymbolsInLowestTerms.
             var integrand = ByTheSumsConjugate(inU, uSub) is { } overTheConjugate
                 ? overTheConjugate
-                : Functions.SingleQuotient.Combine(inU / (1 + MathS.Sqr(uSub))).Simplify();
+                : Functions.SingleQuotient.Combine(inU / (1 + MathS.Sqr(uSub))) is var overOneBar
+                  && IsAQuotientOfDistinctSumsOfSymbolsInLowestTerms(overOneBar, uSub)
+                    ? WithNeighboursToOnePowerGathered(overOneBar)
+                    : overOneBar.Simplify();
             if (integrand is Providedf(var withoutCondition, _))
                 integrand = withoutCondition;
             // Asked as the same question: the rewrite renames the variable and adds no step of
@@ -13684,6 +13692,113 @@ namespace AngouriMath.Functions.Algebra
             return Integration.ComputeAsTheSameQuestion(integrand, uSub, integrateByParts) is { } result
                 ? result.Substitute(uSub, tangent)
                 : null;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="expr"/> is a quotient of products of positive whole powers of
+        /// sums in <paramref name="u"/> of the first or second degree with a constant term, each
+        /// term of a sum one, a symbol, or one of them times <c>u</c> or <c>u^2</c>, the symbols of
+        /// a sum distinct and some sum holding one, no sum written twice, and no two neighbours
+        /// to one power above the bar.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Such a quotient is in lowest terms and its factors coprime: no sum has a content or a
+        /// power of <c>u</c> to take out, two sums are proportional only where they are the same
+        /// sum, a quadratic is irreducible, and a linear divides none, since
+        /// <c>q0 c1^2 - q1 c0 c1 + q2 c0^2</c> is one or two monomials with a plus sign and at most
+        /// one with a minus, which cannot cancel. Nothing is left for the simplifier, which hands
+        /// it back as it came: ten of the eleven integrands of Rubi's 4.3.4.2 with whole powers,
+        /// which the tangent substitution makes such quotients, came back from it unchanged after
+        /// 6.5 to 13.4 s each with the seven symbols in them, and the eleventh after 3.7 s with
+        /// its two neighbours to one power below the bar gathered, which
+        /// <see cref="WithNeighboursToOnePowerGathered"/> does as it does. The answer is the one
+        /// the simplified integrand had.
+        /// </para>
+        /// <para>
+        /// Neighbours to one power above the bar are excluded: there the simplifier gathers them
+        /// and writes a lone <c>1 + u^2</c> below as <c>u^2 + 1</c> as well, and the integral is
+        /// asked of that spelling -- 4.3.2.1's <c>(a + b tan)^2 (c + d tan)^2</c> answered with
+        /// <c>ln(tan^2 + 1)</c> where <c>ln(1 + tan^2)</c> was written. A difference, a numeric
+        /// coefficient other than one, a root or a factor that is not a sum is excluded too, as
+        /// nothing measured.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
+        private static bool IsAQuotientOfDistinctSumsOfSymbolsInLowestTerms(Entity expr, Entity.Variable u)
+        {
+            if (expr is not Divf(var top, var bottom))
+                return false;
+            var sums = new List<Dictionary<int, Entity?>>();
+            var holdsASymbol = false;
+            foreach (var side in new[] { top, bottom })
+            {
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    var (sum, power) = factor is Powf(var @base, Number.Integer { EInteger: var whole }) ? (@base, whole) : (factor, EInteger.One);
+                    if (sum is not Sumf || power.Sign <= 0)
+                        return false;
+                    // Each power of u at most once, its coefficient the symbol or null for one.
+                    var terms = new Dictionary<int, Entity?>();
+                    foreach (var term in Sumf.LinearChildren(sum))
+                    {
+                        Entity? coefficient = null;
+                        var ofU = term;
+                        if (term is Mulf(Variable symbol, var rest) && symbol != u)
+                            (coefficient, ofU) = (symbol, rest);
+                        else if (term is Mulf(var restFirst, Variable symbolLast) && symbolLast != u)
+                            (coefficient, ofU) = (symbolLast, restFirst);
+                        int degree;
+                        if (ofU == u)
+                            degree = 1;
+                        else if (ofU is Powf(var squared, Number.Integer { EInteger: var two }) && squared == u && two.Equals(EInteger.FromInt32(2)))
+                            degree = 2;
+                        else if (coefficient is null && ofU is Variable constant && constant != u)
+                            (coefficient, degree) = (constant, 0);
+                        else if (coefficient is null && ofU == Number.Integer.One)
+                            degree = 0;
+                        else
+                            return false;
+                        if (terms.ContainsKey(degree) || coefficient is not null && terms.ContainsValue(coefficient))
+                            return false;
+                        terms[degree] = coefficient;
+                        holdsASymbol |= coefficient is not null;
+                    }
+                    if (!terms.ContainsKey(0) || terms.Count < 2
+                        || sums.Any(other => other.Count == terms.Count && other.All(pair => terms.TryGetValue(pair.Key, out var same) && Equals(same, pair.Value))))
+                        return false;
+                    sums.Add(terms);
+                }
+            }
+            return holdsASymbol && ReferenceEquals(WithNeighboursToOnePowerGathered(top), top);
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> with each product of two powers to one whole exponent written
+        /// as that power of their product, from the leaves up: <c>(P^2 Q^2) R^2</c> is
+        /// <c>(P Q R)^2</c>, and <c>P^2 Q^3 R^2</c> is left as it is. What the simplifier does to
+        /// a quotient that <see cref="IsAQuotientOfDistinctSumsOfSymbolsInLowestTerms"/> reads,
+        /// below the bar, and all it does: <c>(A + B u)/((a + b u)^2 (c + d u)^2 (g + h u)^2 (1 + u^2))</c>
+        /// came back from it so after 21 s.
+        /// </summary>
+        private static Entity WithNeighboursToOnePowerGathered(Entity expr)
+        {
+            switch (expr)
+            {
+                case Divf(var above, var below):
+                    var gatheredAbove = WithNeighboursToOnePowerGathered(above);
+                    var gatheredBelow = WithNeighboursToOnePowerGathered(below);
+                    return ReferenceEquals(gatheredAbove, above) && ReferenceEquals(gatheredBelow, below) ? expr : gatheredAbove / gatheredBelow;
+                case Mulf(var left, var right):
+                    var gatheredLeft = WithNeighboursToOnePowerGathered(left);
+                    var gatheredRight = WithNeighboursToOnePowerGathered(right);
+                    if (gatheredLeft is Powf(var leftBase, Number.Integer leftPower) && gatheredRight is Powf(var rightBase, Number.Integer rightPower)
+                        && leftPower == rightPower)
+                        return MathS.Pow(leftBase * rightBase, leftPower);
+                    return ReferenceEquals(gatheredLeft, left) && ReferenceEquals(gatheredRight, right) ? expr : gatheredLeft * gatheredRight;
+                default:
+                    return expr;
+            }
         }
 
         /// <summary>
@@ -37109,6 +37224,136 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Whether <paramref name="expr"/> over <paramref name="derivative"/> takes two real values
+        /// at two points where <paramref name="candidate"/>, a quadratic written as a sum, takes
+        /// one -- about its vertex, every other symbol pinned -- which no function of the candidate
+        /// does. False for any other candidate, where the evaluations are not worth it (see
+        /// <see cref="IsWorthEvaluatingAtRealPoints"/>), and wherever a real value cannot be had.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="TheQuotientDisagreesWhereTheCandidateRepeats"/> for a quadratic: <c>p x^2 + q x + r</c>
+        /// takes one value at <c>x</c> and <c>-q/p - x</c>. Under <c>A + B t + C t^2</c> the quotient of
+        /// <c>sqrt(c + d t) (a + b t)^3 (A + B t + C t^2)/(1 + t^2)</c> by <c>B + 2 C t</c>, what the
+        /// tangent makes of Rubi's 4.3.4.2, was simplified for a second to be refused. Real values
+        /// only: what is tried after the simplification keeps the value on the real line, and a root
+        /// of a negative number off it may take the other branch.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        private static bool TheQuotientDisagreesAboutTheVertex(Entity expr, Entity derivative, Entity candidate, Entity.Variable x)
+        {
+            // Every candidate of every search comes here, so the cheap refusals come first: the
+            // written degree costs no expansion.
+            if (candidate is not (Sumf or Minusf) || DegreeAsWritten(candidate, x) != 2 || !IsWrittenAsAPolynomial(candidate, x)
+                || !IsWorthEvaluatingAtRealPoints(expr) || !IsWorthEvaluatingAtRealPoints(derivative, anySize: true)
+                || !TreeAnalyzer.TryGetPolyQuadratic(candidate, x, out var squared, out var linear, out _)
+                || squared.ContainsNode(x) || linear.ContainsNode(x))
+                return false;
+            var pins = PinsFor(expr.Vars.Concat(derivative.Vars).Concat(candidate.Vars), x);
+            if (AtRealPoint(squared, pins, x, 0) is not (var p, _) || p == 0 || AtRealPoint(linear, pins, x, 0) is not (var q, _))
+                return false;
+            const double first = 0.37;
+            var second = -q / p - first;
+            var quotient = expr / derivative;
+            return AtRealPoint(quotient, pins, x, first) is (var one, var scaleOne) && AtRealPoint(quotient, pins, x, second) is (var other, var scaleOther)
+                && System.Math.Abs(one - other) > 1e-6 * System.Math.Max(1.0, System.Math.Max(scaleOne, scaleOther));
+        }
+
+        /// <summary>
+        /// Whether two evaluations of <paramref name="expr"/> at real points are worth more than
+        /// simplifying it: past a complexity of <see cref="SmallestQuotientWorthEvaluating"/>, free
+        /// of the imaginary unit, and every node a sum, a difference, a product, a quotient, a
+        /// number, a symbol or a power with a numeric exponent.
+        /// </summary>
+        /// <remarks>
+        /// Measured on the quotients of the substitution search: at a complexity of 7 to 23 the
+        /// simplification took a megabyte and a few milliseconds, no more than the evaluations,
+        /// and at 31 -- <c>sqrt(u) (a + b t)^3 (A + B t + C t^2)/(d (1 + t^2))</c> -- five seconds.
+        /// Beside the imaginary unit the values are complex and say nothing, and beside
+        /// <c>Ei(u)</c> the evaluations took more than the simplification they spare.
+        /// </remarks>
+        private static bool IsWorthEvaluatingAtRealPoints(Entity expr, bool anySize = false)
+            => (anySize || expr.Complexity > SmallestQuotientWorthEvaluating) && !HoldsTheImaginaryUnit(expr)
+               && expr.Nodes.All(node => node is Sumf or Minusf or Mulf or Divf or Number or Variable || node is Powf(_, Number));
+
+        /// <summary>
+        /// A value for every symbol but <paramref name="x"/>, one each from a short list; none for
+        /// <c>pi</c> and <c>e</c>, which have their own.
+        /// </summary>
+        private static Dictionary<Variable, double> PinsFor(IEnumerable<Variable> symbols, Entity.Variable x)
+        {
+            var values = new[] { 1.37, 0.61, 2.23, 1.91, 0.83, 1.13, 1.71 };
+            var pins = new Dictionary<Variable, double>();
+            foreach (var symbol in symbols)
+                if (symbol != x && symbol != MathS.pi && symbol != MathS.e && !pins.ContainsKey(symbol))
+                    pins[symbol] = values[pins.Count % values.Length];
+            return pins;
+        }
+
+        /// <summary>
+        /// The value of <paramref name="expr"/> at <paramref name="x"/> = <paramref name="at"/> in
+        /// doubles, every symbol pinned, beside the largest magnitude met on the way, which bounds
+        /// the rounding; null where a node is not a sum, a product, a quotient, a number, a symbol
+        /// or a numeric power, where a symbol is not pinned, and where a value is not real and
+        /// finite. A root of a negative number is not real here, odd or even.
+        /// </summary>
+        private static (double Value, double Scale)? AtRealPoint(Entity expr, Dictionary<Variable, double> pins, Entity.Variable x, double at)
+        {
+            var scale = 0.0;
+            double Of(Entity node)
+            {
+                var value = node switch
+                {
+                    Variable v when v == x => at,
+                    Variable v when v == MathS.pi => System.Math.PI,
+                    Variable v when v == MathS.e => System.Math.E,
+                    Variable v => pins.TryGetValue(v, out var pinned) ? pinned : double.NaN,
+                    Number.Rational rational => rational.ERational.ToDouble(),
+                    Number.Real real => real.EDecimal.ToDouble(),
+                    Sumf(var left, var right) => Of(left) + Of(right),
+                    Minusf(var left, var right) => Of(left) - Of(right),
+                    Mulf(var left, var right) => Of(left) * Of(right),
+                    Divf(var left, var right) => Of(left) / Of(right),
+                    Powf(var @base, Number.Integer whole) when whole.EInteger.CanFitInInt32()
+                        => System.Math.Pow(Of(@base), whole.EInteger.ToInt32Checked()),
+                    Powf(var @base, Number.Rational fraction) => Of(@base) is var inner && inner >= 0
+                        ? System.Math.Pow(inner, fraction.ERational.ToDouble()) : double.NaN,
+                    _ => double.NaN,
+                };
+                if (System.Math.Abs(value) > scale)
+                    scale = System.Math.Abs(value);
+                return value;
+            }
+            var result = Of(expr);
+            return double.IsNaN(result) || double.IsInfinity(result) || double.IsInfinity(scale) ? null : (result, scale);
+        }
+
+        /// <summary>See <see cref="IsWorthEvaluatingAtRealPoints"/>.</summary>
+        private const int SmallestQuotientWorthEvaluating = 25;
+
+        /// <summary>
+        /// Whether <paramref name="expr"/>, written in <paramref name="x"/> and a candidate's variable
+        /// <paramref name="uSub"/>, takes two real values at two points of x, <paramref name="uSub"/>
+        /// and every other symbol held at one value each. Then it is no function of
+        /// <paramref name="uSub"/> alone, and no rewriting that keeps its value takes the x out of
+        /// it. False where the evaluations are not worth it (see
+        /// <see cref="IsWorthEvaluatingAtRealPoints"/>), wherever a real value cannot be had at
+        /// either point, and where the two agree.
+        /// </summary>
+        /// <remarks>
+        /// Real values only: a rewriting may hold on the real line and not off it, where a root of a
+        /// negative number takes the other branch, and two values that differ there say nothing
+        /// about the simplified form. https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        private static bool VariesWithTheVariableWhereTheCandidateIsHeld(Entity expr, Variable uSub, Entity.Variable x)
+        {
+            if (!IsWorthEvaluatingAtRealPoints(expr))
+                return false;
+            var pins = PinsFor(expr.Vars, x);
+            return AtRealPoint(expr, pins, x, 0.29) is (var first, var scaleFirst) && AtRealPoint(expr, pins, x, 0.53) is (var second, var scaleSecond)
+                && System.Math.Abs(first - second) > 1e-6 * System.Math.Max(1.0, System.Math.Max(scaleFirst, scaleSecond));
+        }
+
+        /// <summary>
         /// <paramref name="integrandInU"/> with the part of it still in <paramref name="x"/> written
         /// in <paramref name="uSub"/>, where that part is a constant times a power of the candidate
         /// <paramref name="u"/>, from <c>-2</c> to <c>2</c>; or <see langword="null"/>.
@@ -40554,7 +40799,8 @@ namespace AngouriMath.Functions.Algebra
                 // quotient in u and simplifying it is milliseconds per candidate, and the
                 // complement pass below is the same function spelled otherwise. The problems of
                 // Rubi's 4.7.2, 4.3.10 and 4.4.10 the integrator answers took a fifth less time.
-                if (!complementEvenPowers && TheQuotientDisagreesWhereTheCandidateRepeats(expr, duDx, u, x))
+                if (!complementEvenPowers && (TheQuotientDisagreesWhereTheCandidateRepeats(expr, duDx, u, x)
+                    || TheQuotientDisagreesAboutTheVertex(expr, duDx, u, x)))
                     continue;
 
                 // Try to express expr as h(u) * du/dx
@@ -40625,12 +40871,27 @@ namespace AngouriMath.Functions.Algebra
                     // nothing to cancel. Only there: beside a sine, a secant, a logarithm or the
                     // imaginary unit the simplified form is what the rules after this read, and
                     // `cot(c + d x)^8/(a + a sin(c + d x))` went from one second to seventy without it.
+                    // And under a linear candidate a quotient that takes two values at two points of x
+                    // where u is held keeps an x through any simplification, which keeps its value,
+                    // and is refused below as it is: what is tried after the simplification either
+                    // keeps the value too or, for a linear candidate, is not tried, and
+                    // `WithAFactorProportionalToTheDerivative` reads the integrand as written. Under
+                    // `u = c + d t` the quotient `sqrt(u) (a + b t)^3 (A + B t + C t^2)/(d (1 + t^2))`,
+                    // what the tangent makes of Rubi's 4.3.4.2, spent five seconds being simplified
+                    // to be refused.
                     var inTermsOfU = InTermsOf(quotient, u, uSub, x);
                     integrandInU = !inTermsOfU.ContainsNode(x)
                         && TreeAnalyzer.TryGetPolyLinear(u, x, out var slope, out var offset) && !slope.ContainsNode(x) && !offset.ContainsNode(x)
                         && IsAFunctionOfTheTangentAlone(inTermsOfU, uSub) && !HoldsTheImaginaryUnit(inTermsOfU)
                         ? Functions.PartialFractions.Bare(inTermsOfU.InnerSimplified)
-                        : SimplifiedWithoutTheImaginaryUnit(inTermsOfU, expr);
+                        // The cheap tests first: reading every candidate as a polynomial expands it,
+                        // and that alone cost the rules that do not reach the evaluation.
+                        : inTermsOfU.ContainsNode(x) && !duDx.ContainsNode(x) && IsWorthEvaluatingAtRealPoints(inTermsOfU)
+                          && IsWrittenAsAPolynomial(u, x)
+                          && TreeAnalyzer.TryGetPolynomial(u, x, out var asAPolynomial) && asAPolynomial.Keys.Max()!.Equals(EInteger.One)
+                          && VariesWithTheVariableWhereTheCandidateIsHeld(inTermsOfU, uSub, x)
+                            ? inTermsOfU
+                            : SimplifiedWithoutTheImaginaryUnit(inTermsOfU, expr);
                     // A factor written on both sides of the bar cancelled, where x survived:
                     // the one-level simplification leaves `u/((a w + b)^2 p u)` as it is, and
                     // the candidate was refused for the u it did not cancel.
