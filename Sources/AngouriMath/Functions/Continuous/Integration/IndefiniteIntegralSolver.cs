@@ -26056,6 +26056,113 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An exponential of a constant plus a multiple of the reciprocal of a linear over a whole
+        /// power of another linear, <c>F^(a + b/(c + d x))/(g + h x)^n</c>, under
+        /// <see cref="SolveAnExponentialInTheReciprocalOfALinear"/>'s substitution <c>u = 1/(c + d x)</c>,
+        /// asked before the rules that do not read it: in <c>u</c> it is
+        /// <c>-d^(n - 1) u^(n - 2) F^(a + b u)/((d g - c h) u + h)^n</c>, the exponential integral of a
+        /// shifted argument, which <see cref="SolveAnExponentialOfALinearOverAPowerOfALinear"/> and
+        /// <see cref="SolveAnExponentialOverSeveralLinears"/> answer. The exponent may be written
+        /// <c>e + f (a + b x)/(c + d x)</c>. Rubi's 2.3.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// In its place at the end of the dispatch the substitution was reached only after every rule
+        /// above it had declined, and <c>F^(e + f (a + b x)/(c + d x))/(g + h x)^n</c> took 2 to 10
+        /// seconds and 0.4 to 12 GB for <c>n = 1</c> to 4, past the budget for 3 and 4, for the answer
+        /// it writes in a twentieth of a second. Only for an exponent linear in <c>u</c> and another
+        /// linear below the bar whose slope in <c>u</c>, <c>d g - c h</c>, is not zero as a value. A
+        /// multiple of <c>c + d x</c> is not another linear, though a power of <c>c + d x</c> alone
+        /// arrives as one, written monic: its elementary cases are the ansatz's, which writes them
+        /// shorter, and <see cref="SolveAnElementaryMomentOfAnExponentialInAPowerOfTheReciprocal"/>'s.
+        /// Another linear above the bar only, and a Gaussian in <c>u</c>, keep the rule's place.
+        /// </remarks>
+        internal static Entity? SolveAnExponentialInTheReciprocalOfALinearOverAnotherLinear(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (ReadAnExponentialInTheReciprocalOfALinear(expr, x) is not { ExponentInU: var exponentInU, U: var u, Beside: (_, var below, _) }
+                || !below.ContainsNode(u)
+                || !TreeAnalyzer.TryGetPolyLinear(exponentInU, u, out var rate, out _) || rate is null || VanishesIdentically(rate))
+                return null;
+            // Each linear below the bar a linear in u, its slope not zero as a value.
+            foreach (var factor in Mulf.LinearChildren(below))
+            {
+                var linearInU = factor is Powf(var raised, Number.Integer) ? raised : factor;
+                if (!TreeAnalyzer.TryGetPolyLinear(linearInU, u, out var slopeInU, out _) || slopeInU is null || VanishesIdentically(slopeInU))
+                    return null;
+            }
+            return SolveAnExponentialInTheReciprocalOfALinear(expr, x, integrateByParts);
+        }
+
+        /// <summary>
+        /// An exponential of a constant plus a multiple of a power of the reciprocal of a linear,
+        /// over a power of the linear, where the integral is elementary:
+        /// <c>F^(a + b/(c + d x)^k)/(c + d x)^n</c> with <c>k >= 2</c> and <c>n - 1</c> a positive
+        /// multiple of <c>k</c>. Under <see cref="SolveAnExponentialInTheReciprocalOfALinear"/>'s
+        /// <c>u = 1/(c + d x)</c> it is <c>-(1/d) u^(n - 2) F^(a + b u^k)</c>, and under <c>w = u^k</c> a
+        /// polynomial in <c>w</c> times <c>F^(a + b w)</c>, which the question in <c>u</c> is answered by.
+        /// Rubi's 2.3. https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// In the substitution's place at the end of the dispatch these were reached after every rule
+        /// above it had declined: <c>F^(a + b/(c + d x)^2)/(c + d x)^13</c> took 6 seconds and 6 GB,
+        /// <c>F^(a + b/(c + d x)^3)/(c + d x)^13</c> and higher ran past the budget, and the questions
+        /// in <c>u</c> take a hundredth of a second. The power below the bar arrives written monic,
+        /// <c>c/d + x</c> beside the <c>c + d x</c> of the exponent, and is read as a constant multiple
+        /// of the linear by value. Only where the integral is elementary, and only for a linear other
+        /// than the variable: asked here for every power, the exponential integral and the error
+        /// function came out longer or slower than where they are answered now, a linear exponent in
+        /// <c>u</c>, which the ansatz answers in the base, three times longer, and the moments of
+        /// <c>f^(a + b/x^2)</c>, answered in a hundredth of a second already, respelled.
+        /// </remarks>
+        internal static Entity? SolveAnElementaryMomentOfAnExponentialInAPowerOfTheReciprocal(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (ReadAnExponentialInTheReciprocalOfALinear(expr, x) is not var (constant, @base, exponentInU, u, linear, slope, power, beside)
+                || linear == x || power.Sign >= 0
+                || !TreeAnalyzer.TryGetPolynomial(exponentInU, u, out var monomials) || monomials.Count > 2)
+                return null;
+            // A + B u^k: one power past the constant, its coefficient not zero as a value.
+            var raised = monomials.Where(pair => pair.Key.Sign != 0).ToList();
+            if (raised.Count != 1 || monomials.Keys.Any(degree => degree.Sign < 0) || VanishesIdentically(raised[0].Value))
+                return null;
+            var k = raised[0].Key;
+            // u^(n - 2) du with n - 1 a positive multiple of k is a whole power of w = u^k times dw.
+            var belowMinusOne = power.Negate().Subtract(EInteger.One);
+            var powerInU = belowMinusOne.Subtract(EInteger.One);
+            if (k.CompareTo(EInteger.FromInt32(2)) < 0 || k.CompareTo(EInteger.FromInt32(8)) > 0
+                || belowMinusOne.Sign <= 0 || !belowMinusOne.Remainder(k).IsZero || powerInU.CompareTo(EInteger.FromInt32(32)) > 0)
+                return null;
+            var factor = -constant / slope;
+            // Another linear only as a multiple of the linear, which is how the power below the bar
+            // arrives, written monic: `c/d + x` beside the `c + d x` of the exponent is
+            // `(d^0 c - c) u + 1` in u, a constant whose slope is zero as a value and not as written.
+            // Its value at u = 0, and d to the power the reader kept apart. Bare, since the `d^0` in
+            // it is 1 provided d is not 0, which the substitution already assumes.
+            if (beside is var (above, below, slopePower))
+            {
+                if (!IsAConstantInU(above) || !IsAConstantInU(below))
+                    return null;
+                var ofTheSlope = slopePower - EInteger.One;
+                var multiple = Functions.PartialFractions.Bare((above.Substitute(u, Number.Integer.Zero) / below.Substitute(u, Number.Integer.Zero)).InnerSimplified);
+                factor = ofTheSlope.IsZero ? -constant
+                    : ofTheSlope.Sign > 0 ? -constant * MathS.Pow(slope, Number.Integer.Create(ofTheSlope))
+                    : -constant / MathS.Pow(slope, Number.Integer.Create(-ofTheSlope));
+                if (multiple != Number.Integer.One)
+                    factor *= multiple;
+            }
+            var exponential = MathS.Pow(@base, exponentInU);
+            var question = powerInU.IsZero ? exponential : MathS.Pow(u, Number.Integer.Create(powerInU)) * exponential;
+            if (Integration.ComputeAsAQuestionOfItsOwn(question, u, integrateByParts) is not { } answerInU
+                || answerInU.Nodes.Any(node => node is Integralf || node == MathS.NaN))
+                return null;
+            return (factor * answerInU.Substitute(u, 1 / linear)).InnerSimplified;
+
+            // A product of whole powers of linears in u, each of slope zero as a value.
+            bool IsAConstantInU(Entity product) => !product.ContainsNode(u) || Mulf.LinearChildren(product).All(part =>
+                !part.ContainsNode(u) || TreeAnalyzer.TryGetPolyLinear(part is Powf(var raisedLinear, Number.Integer) ? raisedLinear : part, u, out var slopeInU, out _)
+                    && (slopeInU is null || VanishesIdentically(slopeInU)));
+        }
+
+        /// <summary>
         /// <paramref name="expr"/> read as a constant times <c>F^E</c> times a whole power of a
         /// linear <c>L</c>, with every <c>x</c> in <c>E</c> inside a reciprocal power of <c>L</c>:
         /// the constant, <c>F</c>, <c>E</c> written in <c>u = 1/L</c>, <c>u</c>, <c>L</c>, its slope
