@@ -127,11 +127,11 @@ namespace AngouriMath
                             + $"use {nameof(Real)}.{nameof(Real.Create)} instead");
 
                     if (!MathS.Settings.DowncastingEnabled)
-                        return new Rational(value.ToLowestTerms());
+                        return new Rational(value.InLowestTerms());
 
-                    // Call ToLowestTerms() through new RationalNumber first
+                    // Call InLowestTerms() through new RationalNumber first
                     // before determining whether the denominator equals one
-                    var @return = new Rational(value.ToLowestTerms());
+                    var @return = new Rational(value.InLowestTerms());
                     if (@return.ERational.Denominator.Equals(1))
                         return Integer.Create(@return.ERational.Numerator);
                     else
@@ -208,7 +208,7 @@ namespace AngouriMath
                         var rat = FindRationalExactly(inv, iterCount - 1);
                         if (rat is null)
                             return null;
-                        return new Rational((intPart * sign + sign / rat.ERational).ToLowestTerms());
+                        return new Rational((intPart * sign + sign / rat.ERational).InLowestTerms());
                     }
                 }
 

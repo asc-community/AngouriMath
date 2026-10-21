@@ -174,9 +174,9 @@ namespace AngouriMath.Functions.Algebra.Groebner
                         continue;
                     var factor = vector[pivot].Divide(rowVectors[row][pivot]);
                     for (var i = 0; i < vector.Length; i++)
-                        vector[i] = vector[i].Subtract(factor.Multiply(rowVectors[row][i])).ToLowestTerms();
+                        vector[i] = vector[i].Subtract(factor.Multiply(rowVectors[row][i])).InLowestTerms();
                     for (var i = 0; i < rowCombinations[row].Length && i < combination.Length; i++)
-                        combination[i] = combination[i].Add(factor.Multiply(rowCombinations[row][i])).ToLowestTerms();
+                        combination[i] = combination[i].Add(factor.Multiply(rowCombinations[row][i])).InLowestTerms();
                 }
 
                 var pivotAt = -1;

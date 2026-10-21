@@ -2897,7 +2897,7 @@ namespace AngouriMath.Functions.Algebra
             var n = EInteger.Zero;
             foreach (var (polynomial, _) in blocks)
                 foreach (var power in polynomial.Keys)
-                    n = n.Gcd(power);
+                    n = n.GreatestCommonDivisor(power);
             // In x^2 for two blocks or more only: one quadratic in x^2 is the biquadratic rule's.
             if (n.CompareTo(EInteger.FromInt32(2)) < 0 || n.Equals(EInteger.FromInt32(2)) && blocks.Count < 2
                 || n.CompareTo(EInteger.FromInt32(MaximumPowerOfXBesideABlock)) > 0)
@@ -8345,7 +8345,7 @@ namespace AngouriMath.Functions.Algebra
             if (!Read(expr, 1) || bracket is null)
                 return false;
 
-            var lowest = exponentFound.ToLowestTerms();
+            var lowest = exponentFound.InLowestTerms();
             if (lowest.Denominator.Equals(EInteger.One)
                 || !lowest.Numerator.CanFitInInt32() || !lowest.Denominator.CanFitInInt32())
                 return false;
@@ -9032,15 +9032,15 @@ namespace AngouriMath.Functions.Algebra
             var denominators = EInteger.One;
             foreach (var multiple in multiples.Values)
             {
-                numerators = numerators.Gcd(multiple.Numerator.Abs());
-                denominators = denominators.Multiply(multiple.Denominator).Divide(denominators.Gcd(multiple.Denominator));
+                numerators = numerators.GreatestCommonDivisor(multiple.Numerator.Abs());
+                denominators = denominators.Multiply(multiple.Denominator).Divide(denominators.GreatestCommonDivisor(multiple.Denominator));
             }
             var step = ERational.Create(numerators, denominators);
-            if (multiples.Values.Any(multiple => multiple.Divide(step).ToLowestTerms().Numerator.Abs().CompareTo(EInteger.FromInt32(12)) > 0))
+            if (multiples.Values.Any(multiple => multiple.Divide(step).InLowestTerms().Numerator.Abs().CompareTo(EInteger.FromInt32(12)) > 0))
                 return null;
             var w = Variable.CreateUnique(expr, "w_exp");
             var inW = exponentials.Replace(node =>
-                multiples.TryGetValue(node, out var multiple) ? MathS.Pow(w, Number.Integer.Create(multiple.Divide(step).ToLowestTerms().Numerator)) : node);
+                multiples.TryGetValue(node, out var multiple) ? MathS.Pow(w, Number.Integer.Create(multiple.Divide(step).InLowestTerms().Numerator)) : node);
             if (inW.ContainsNode(x))
                 return null;
 
@@ -10936,7 +10936,7 @@ namespace AngouriMath.Functions.Algebra
                         // `sin^3 cos^(-3/2)` is its negative there. An odd denominator is read as
                         // it always was, the real root: `(c sin^3)^(1/3)` as `c^(1/3) sin`, which
                         // is the integrand wherever that is real.
-                        if ((multiplicity * power.ERational).ToLowestTerms().Denominator.IsEven
+                        if ((multiplicity * power.ERational).InLowestTerms().Denominator.IsEven
                             && @base is not TrigonometricFunction
                             && !(@base is Mulf(Number.Rational { IsPositive: true }, TrigonometricFunction)))
                             distributed = true;
@@ -10972,7 +10972,7 @@ namespace AngouriMath.Functions.Algebra
         /// </summary>
         private static bool IsWholeAndFitsAnInt(ERational value, out int whole)
         {
-            var lowest = value.ToLowestTerms();
+            var lowest = value.InLowestTerms();
             if (lowest.Denominator.Equals(EInteger.One) && lowest.Numerator.CanFitInInt32())
             {
                 whole = lowest.Numerator.ToInt32Checked();
@@ -10999,7 +10999,7 @@ namespace AngouriMath.Functions.Algebra
         /// has already said is whole.
         /// </summary>
         private static int WholeOf(ERational value)
-            => value.ToLowestTerms().Numerator.ToInt32Checked();
+            => value.InLowestTerms().Numerator.ToInt32Checked();
 
         /// <summary>
         /// Reads <paramref name="expr"/> as a whole power of a secant or a cosecant, however it
@@ -13759,7 +13759,7 @@ namespace AngouriMath.Functions.Algebra
                 var power = MathS.Pow(@base, Number.Rational.Create(each));
                 rebuilt = rebuilt is null ? power : rebuilt * power;
             }
-            var reduced = total.ToLowestTerms();
+            var reduced = total.InLowestTerms();
             return reduced.Denominator.Equals(EInteger.One) && reduced.Numerator.IsEven ? rebuilt : null;
         }
 
@@ -16201,16 +16201,16 @@ namespace AngouriMath.Functions.Algebra
             var denominators = EInteger.One;
             foreach (var slope in slopes)
             {
-                numerators = numerators.Gcd(slope.ERational.Numerator.Abs());
+                numerators = numerators.GreatestCommonDivisor(slope.ERational.Numerator.Abs());
                 denominators = denominators.Multiply(slope.ERational.Denominator)
-                    .Divide(denominators.Gcd(slope.ERational.Denominator));
+                    .Divide(denominators.GreatestCommonDivisor(slope.ERational.Denominator));
             }
             var common = ERational.Create(numerators, denominators);
             var multiples = new HashSet<int>();
             foreach (var slope in slopes)
             {
                 // Reduced before its numerator is read: `Divide` leaves `2/2` as it is.
-                var multiple = slope.ERational.Divide(common).ToLowestTerms();
+                var multiple = slope.ERational.Divide(common).InLowestTerms();
                 if (!multiple.IsInteger() || !multiple.Numerator.Abs().CanFitInInt32())
                     return null;
                 var n = multiple.Numerator.Abs().ToInt32Unchecked();
@@ -16245,7 +16245,7 @@ namespace AngouriMath.Functions.Algebra
                     || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out var offset)
                     || slope.Evaled is not Number.Rational rational)
                     return node;
-                var multiple = rational.ERational.Divide(common).ToLowestTerms();
+                var multiple = rational.ERational.Divide(common).InLowestTerms();
                 var n = multiple.Numerator.Abs().ToInt32Unchecked();
                 var negative = multiple.Numerator.Sign < 0;
                 var (sin, cos) = SineAndCosineOfAMultiple(n, sine, cosine);
@@ -16535,7 +16535,7 @@ namespace AngouriMath.Functions.Algebra
                         && TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out _)
                         && slope.Evaled is Number.Rational rational)
                     {
-                        var multiple = rational.ERational.Divide(common).ToLowestTerms();
+                        var multiple = rational.ERational.Divide(common).InLowestTerms();
                         return multiple.Numerator.Abs().CanFitInInt32() ? multiple.Numerator.Abs().ToInt32Unchecked() : int.MaxValue / 4;
                     }
                     return 1;
@@ -19345,7 +19345,7 @@ namespace AngouriMath.Functions.Algebra
                     if (pair.Value.Evaled is not Number.Rational coefficient)
                         return false;
                     var term = coefficient.ERational.Multiply(value.ERational);
-                    sums[pair.Key] = sums.TryGetValue(pair.Key, out var so) ? so.Add(term).ToLowestTerms() : term.ToLowestTerms();
+                    sums[pair.Key] = sums.TryGetValue(pair.Key, out var so) ? so.Add(term).InLowestTerms() : term.InLowestTerms();
                 }
             }
             foreach (var pair in target)
@@ -19353,7 +19353,7 @@ namespace AngouriMath.Functions.Algebra
                 if (pair.Value.Evaled is not Number.Rational wanted)
                     return false;
                 var have = sums.TryGetValue(pair.Key, out var sum) ? sum : ERational.Zero;
-                if (!have.Subtract(wanted.ERational).ToLowestTerms().IsZero)
+                if (!have.Subtract(wanted.ERational).InLowestTerms().IsZero)
                     return false;
                 sums.Remove(pair.Key);
             }
@@ -19373,7 +19373,7 @@ namespace AngouriMath.Functions.Algebra
                     {
                         var power = l.Key + r.Key;
                         var term = l.Value.Multiply(r.Value);
-                        rationalProduct[power] = rationalProduct.TryGetValue(power, out var so) ? so.Add(term).ToLowestTerms() : term.ToLowestTerms();
+                        rationalProduct[power] = rationalProduct.TryGetValue(power, out var so) ? so.Add(term).InLowestTerms() : term.InLowestTerms();
                     }
                 var written = new Dictionary<EInteger, Entity>();
                 foreach (var pair in rationalProduct)
@@ -20370,7 +20370,7 @@ namespace AngouriMath.Functions.Algebra
                 return false;
             var denominator = EInteger.One;
             foreach (var coefficient in rational)
-                denominator = denominator.Multiply(coefficient.Denominator).Divide(denominator.Gcd(coefficient.Denominator));
+                denominator = denominator.Multiply(coefficient.Denominator).Divide(denominator.GreatestCommonDivisor(coefficient.Denominator));
             var whole = new EInteger[rational.Length];
             for (var i = 0; i < whole.Length; i++)
                 whole[i] = rational[i].Numerator.Multiply(denominator.Divide(rational[i].Denominator));
@@ -21430,14 +21430,14 @@ namespace AngouriMath.Functions.Algebra
                 (m[row], m[pivot]) = (m[pivot], m[row]);
                 var lead = m[row][column];
                 for (var j = column; j <= columns; j++)
-                    m[row][j] = m[row][j].Divide(lead).ToLowestTerms();
+                    m[row][j] = m[row][j].Divide(lead).InLowestTerms();
                 for (var i = 0; i < rows; i++)
                 {
                     if (i == row || m[i][column].IsZero)
                         continue;
                     var factor = m[i][column];
                     for (var j = column; j <= columns; j++)
-                        m[i][j] = m[i][j].Subtract(factor.Multiply(m[row][j])).ToLowestTerms();
+                        m[i][j] = m[i][j].Subtract(factor.Multiply(m[row][j])).InLowestTerms();
                 }
                 pivotOf[column] = row;
                 row++;
@@ -27875,8 +27875,8 @@ namespace AngouriMath.Functions.Algebra
             var denominators = EInteger.One;
             foreach (var q in powers)
             {
-                numerators = numerators.Gcd(q.Numerator.Abs());
-                denominators = denominators.Multiply(q.Denominator).Divide(denominators.Gcd(q.Denominator));
+                numerators = numerators.GreatestCommonDivisor(q.Numerator.Abs());
+                denominators = denominators.Multiply(q.Denominator).Divide(denominators.GreatestCommonDivisor(q.Denominator));
             }
             var k = ERational.Create(numerators, denominators);
             if (powers[0].Sign < 0)
@@ -28185,8 +28185,8 @@ namespace AngouriMath.Functions.Algebra
             var denominators = EInteger.One;
             foreach (var slope in slopes)
             {
-                numerators = numerators.Gcd(slope.Numerator.Abs());
-                denominators = denominators.Multiply(slope.Denominator).Divide(denominators.Gcd(slope.Denominator));
+                numerators = numerators.GreatestCommonDivisor(slope.Numerator.Abs());
+                denominators = denominators.Multiply(slope.Denominator).Divide(denominators.GreatestCommonDivisor(slope.Denominator));
             }
             if (numerators.IsZero)
                 return null;
@@ -28212,7 +28212,7 @@ namespace AngouriMath.Functions.Algebra
             var rewritten = expr.Replace(node =>
                 offsets.TryGetValue(node, out var found)
                     ? (shifted ? Number.Integer.One : MathS.Pow(commonBase, found.Offset))
-                      * MathS.Pow(u, Number.Integer.Create(found.Slope.Divide(k).ToLowestTerms().Numerator))
+                      * MathS.Pow(u, Number.Integer.Create(found.Slope.Divide(k).InLowestTerms().Numerator))
                     : node);
 
             if (rewritten.ContainsNode(x))
@@ -29223,7 +29223,7 @@ namespace AngouriMath.Functions.Algebra
                 {
                     if (@base.Evaled is not Number.Rational rational || rational.ERational.Sign <= 0 || rational.ERational.Equals(ERational.One))
                         return expr;
-                    var written = rational.ERational.ToLowestTerms();
+                    var written = rational.ERational.InLowestTerms();
                     if (!bases.Contains(written))
                         bases.Add(written);
                 }
@@ -29265,7 +29265,7 @@ namespace AngouriMath.Functions.Algebra
                 return expr;
             return expr.Replace(node =>
                 node is Powf(var @base, var exponent) && !@base.ContainsNode(x) && exponent.ContainsNode(x) && exponent is not Number
-                && @base.Evaled is Number.Rational rational && powers.TryGetValue(rational.ERational.ToLowestTerms(), out var power)
+                && @base.Evaled is Number.Rational rational && powers.TryGetValue(rational.ERational.InLowestTerms(), out var power)
                     ? MathS.Pow(common, power == 1 ? exponent : (Number.Integer.Create(power) * exponent).InnerSimplified)
                     : node);
         }
@@ -29336,7 +29336,7 @@ namespace AngouriMath.Functions.Algebra
             foreach (var (_, multiple) in multiples)
             {
                 denominators = denominators.Lcm(multiple.ERational.Denominator);
-                numerators = numerators.Gcd(multiple.ERational.Numerator);
+                numerators = numerators.GreatestCommonDivisor(multiple.ERational.Numerator);
             }
             var yScaleRational = ERational.Create(numerators, denominators);
             // With a whole number for the first slope, and asked to, y is x itself (plus the
@@ -29351,7 +29351,7 @@ namespace AngouriMath.Functions.Algebra
                 yScaleRational = ERational.Create(EInteger.One, wholeSlope.EInteger);
             var yScale = Number.Rational.Create(yScaleRational);
             foreach (var (node, multiple) in multiples)
-                exponentials[node] = multiple.ERational.Divide(yScaleRational).ToLowestTerms().Numerator;
+                exponentials[node] = multiple.ERational.Divide(yScaleRational).InLowestTerms().Numerator;
             y = (yScale * (slopeOfY * x + offsetOfY)).InnerSimplified;
             dxOverDy = TreeAnalyzer.IsZero(offsetOfY) && slopeOfY == Number.Integer.One && yScale == Number.Integer.One
                 ? Number.Integer.One
@@ -30024,7 +30024,7 @@ namespace AngouriMath.Functions.Algebra
                 }
                 if (constantFactor is not null)
                 {
-                    var exponent = Number.Rational.Create(ofOneMinusUSquared.Multiply(root.ERational).ToLowestTerms());
+                    var exponent = Number.Rational.Create(ofOneMinusUSquared.Multiply(root.ERational).InLowestTerms());
                     atoms[atom] = MathS.Pow(constantFactor.InnerSimplified, root) * (exponent == Number.Integer.Zero ? Number.Integer.One : MathS.Pow(oneMinusUSquared, exponent));
                     return atom;
                 }
@@ -30033,7 +30033,7 @@ namespace AngouriMath.Functions.Algebra
                 if (!radicandTop.ContainsNode(w) && !radicandBottom.ContainsNode(w)
                     && IsAConstantTimesAPowerOfOneMinusUSquared(radicandBottom, out var bottomConstant, out var m) && m > 0)
                 {
-                    var wPower = root.ERational.Multiply(ERational.FromInt32(-2 * m)).ToLowestTerms();
+                    var wPower = root.ERational.Multiply(ERational.FromInt32(-2 * m)).InLowestTerms();
                     if (wPower.Denominator.Equals(EInteger.One))
                     {
                         rationalRadicand = bottomConstant.Evaled is Number.Rational number
@@ -30852,7 +30852,7 @@ namespace AngouriMath.Functions.Algebra
                 || !inT.Nodes.Any(node => node is Arcsinf or Arccosf or Arctanf or Arccotanf or Logf && node.ContainsNode(t)))
                 return null;
             // PeterO keeps a quotient as written: -4/2 has the denominator 2 until it is reduced.
-            var k = ((m + ERational.One) / n).ToLowestTerms();
+            var k = ((m + ERational.One) / n).InLowestTerms();
             if (!k.Denominator.Equals(EInteger.One) || !k.Numerator.CanFitInInt32())
                 return null;
             var exponent = k.Numerator.ToInt32Unchecked() - 1;
@@ -31016,7 +31016,7 @@ namespace AngouriMath.Functions.Algebra
             var cosine = new Dictionary<int, ERational> { [0] = ERational.One };
             var sine = new Dictionary<int, ERational>();
             static void Add(Dictionary<int, ERational> into, int k, ERational value)
-                => into[k] = (into.TryGetValue(k, out var old) ? old + value : value).ToLowestTerms();
+                => into[k] = (into.TryGetValue(k, out var old) ? old + value : value).InLowestTerms();
             var half = ERational.Create(1, 2);
             for (var step = 0; step < sines + cosines; step++)
             {
@@ -31699,29 +31699,29 @@ namespace AngouriMath.Functions.Algebra
                 // A power of a product splits into the powers of its factors only where it is
                 // whole: (c - a c x)^(9/2) is not c^(9/2) (1 - a x)^(9/2) where both are negative,
                 // and beyond |u| = 1 that integrand is real while the split one changes its sign.
-                if (!power.ToLowestTerms().Denominator.Equals(EInteger.One)
+                if (!power.InLowestTerms().Denominator.Equals(EInteger.One)
                     && (MultipleOf(@base, quadratic, 2) is not null || MultipleOf(@base, 1 + u, 1) is not null || MultipleOf(@base, 1 - u, 1) is not null))
                     return null;
                 if (MultipleOf(@base, quadratic, 2) is { } k2)
                 {
                     plusPower += power; minusPower += power;
-                    constant *= MathS.Pow(k2, Number.Rational.Create(power.ToLowestTerms().Numerator, power.ToLowestTerms().Denominator));
+                    constant *= MathS.Pow(k2, Number.Rational.Create(power.InLowestTerms().Numerator, power.InLowestTerms().Denominator));
                 }
                 else if (MultipleOf(@base, 1 + u, 1) is { } kPlus)
                 {
                     plusPower += power;
-                    constant *= MathS.Pow(kPlus, Number.Rational.Create(power.ToLowestTerms().Numerator, power.ToLowestTerms().Denominator));
+                    constant *= MathS.Pow(kPlus, Number.Rational.Create(power.InLowestTerms().Numerator, power.InLowestTerms().Denominator));
                 }
                 else if (MultipleOf(@base, 1 - u, 1) is { } kMinus)
                 {
                     minusPower += power;
-                    constant *= MathS.Pow(kMinus, Number.Rational.Create(power.ToLowestTerms().Numerator, power.ToLowestTerms().Denominator));
+                    constant *= MathS.Pow(kMinus, Number.Rational.Create(power.InLowestTerms().Numerator, power.InLowestTerms().Denominator));
                 }
                 else
                     rest = below ? rest / factor : rest * factor;
             }
-            plusPower = plusPower.ToLowestTerms();
-            minusPower = minusPower.ToLowestTerms();
+            plusPower = plusPower.InLowestTerms();
+            minusPower = minusPower.InLowestTerms();
             static bool Whole(ERational r) => r.Denominator.Equals(EInteger.One);
             static bool HalfOdd(ERational r) => r.Denominator.Equals(EInteger.FromInt32(2));
             // Both half an odd number: (1 + u)^A (1 - u)^B is (1 + u)^(A - B) (1 - u^2)^B, one power of
@@ -31730,7 +31730,7 @@ namespace AngouriMath.Functions.Algebra
             if (HalfOdd(plusPower) && HalfOdd(minusPower))
             {
                 quadraticPower = minusPower;
-                plusPower = (plusPower - minusPower).ToLowestTerms();
+                plusPower = (plusPower - minusPower).InLowestTerms();
                 minusPower = ERational.Zero;
             }
             else if (!Whole(plusPower) || !Whole(minusPower))
@@ -31804,7 +31804,7 @@ namespace AngouriMath.Functions.Algebra
                 var u = ((plus - minus) / 2).InnerSimplified;
                 if (!TreeAnalyzer.TryGetPolyLinear(u, x, out var slope, out _) || Functions.PartialFractions.IsZeroAsAValue(slope))
                     return node;
-                var twice = (half * 2).ToLowestTerms();
+                var twice = (half * 2).InLowestTerms();
                 if (!twice.Denominator.Equals(EInteger.One) || !twice.Numerator.CanFitInInt32() || twice.IsZero)
                     return node;
                 var n = twice.Numerator.ToInt32Unchecked();
@@ -32442,7 +32442,7 @@ namespace AngouriMath.Functions.Algebra
                     if (factor is not Powf(var function, Number.Integer degree) || !degree.EInteger.IsEven || degree.EInteger.Sign <= 0
                         || TreeAnalyzer.TryGetPolynomial(function, x, out _) || function is Powf(_, not Number.Integer))
                         return node;
-                    var product = exponent.ERational.Multiply(ERational.FromEInteger(degree.EInteger)).ToLowestTerms();
+                    var product = exponent.ERational.Multiply(ERational.FromEInteger(degree.EInteger)).InLowestTerms();
                     if (!product.Denominator.Equals(EInteger.One))
                         return node;
                     functions.Add((function, product.Numerator));
@@ -37840,13 +37840,13 @@ namespace AngouriMath.Functions.Algebra
             }
             static bool IsAWholeNumberOfSteps(ERational difference)
             {
-                // ToLowestTerms: a difference of two halves comes back as `8/2` unreduced.
-                var reduced = difference.ToLowestTerms();
+                // InLowestTerms: a difference of two halves comes back as `8/2` unreduced.
+                var reduced = difference.InLowestTerms();
                 return reduced.Denominator.Equals(EInteger.One) && reduced.Numerator.Remainder(EInteger.FromInt32(2)).IsZero;
             }
             if (terms.Any(term => !IsAWholeNumberOfSteps(highest.Subtract(term.Exponent.ERational))))
                 return null;
-            var steps = highest.Subtract(lowest).ToLowestTerms().Numerator.Divide(EInteger.FromInt32(2));
+            var steps = highest.Subtract(lowest).InLowestTerms().Numerator.Divide(EInteger.FromInt32(2));
             if (steps.CompareTo(EInteger.FromInt32(8)) > 0)
                 return null;
             if (terms.All(term => term.Exponent is Number.Integer))
@@ -40283,15 +40283,15 @@ namespace AngouriMath.Functions.Algebra
             var denominators = EInteger.One;
             foreach (var multiple in multiples.Values)
             {
-                numerators = numerators.Gcd(multiple.Numerator.Abs());
-                denominators = denominators.Multiply(multiple.Denominator).Divide(denominators.Gcd(multiple.Denominator));
+                numerators = numerators.GreatestCommonDivisor(multiple.Numerator.Abs());
+                denominators = denominators.Multiply(multiple.Denominator).Divide(denominators.GreatestCommonDivisor(multiple.Denominator));
             }
             var step = ERational.Create(numerators, denominators);
-            if (multiples.Values.Any(multiple => multiple.Divide(step).ToLowestTerms().Numerator.Abs().CompareTo(EInteger.FromInt32(8)) > 0))
+            if (multiples.Values.Any(multiple => multiple.Divide(step).InLowestTerms().Numerator.Abs().CompareTo(EInteger.FromInt32(8)) > 0))
                 return null;
             var w = Variable.CreateUnique(expr, "w_hyp");
             Entity InW(Entity e) => e.Replace(node =>
-                node != outer && multiples.TryGetValue(node, out var multiple) ? MathS.Pow(w, Number.Integer.Create(multiple.Divide(step).ToLowestTerms().Numerator)) : node);
+                node != outer && multiples.TryGetValue(node, out var multiple) ? MathS.Pow(w, Number.Integer.Create(multiple.Divide(step).InLowestTerms().Numerator)) : node);
             // The exponent `c (w + s/w) + d`: a multiple of the sine or the cosine in w and nothing else.
             if (!TreeAnalyzer.TryGetPolynomial(InW(outer.Exponent), w, out var exponentRead)
                 || exponentRead.Keys.Any(degree => degree.Abs().CompareTo(EInteger.One) > 0)

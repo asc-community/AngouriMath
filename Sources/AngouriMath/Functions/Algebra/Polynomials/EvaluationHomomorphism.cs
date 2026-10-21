@@ -185,12 +185,12 @@ namespace AngouriMath.Functions
                 if (Evaluate(pair.Value, others, point, depth + 1) is not { } inner)
                     return null;
                 total = total.Add(inner.Multiply(ERational.Create(at.Pow(pair.Key), EInteger.One)))
-                    .ToLowestTerms();
+                    .InLowestTerms();
             }
             return total;
         }
 
         private static EInteger Lcm(EInteger left, EInteger right)
-            => left.Divide(left.Gcd(right)).Multiply(right);
+            => left.Divide(left.GreatestCommonDivisor(right)).Multiply(right);
     }
 }

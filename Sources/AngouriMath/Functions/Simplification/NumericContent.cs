@@ -74,7 +74,7 @@ namespace AngouriMath.Functions
                 coefficients.Add(coefficient);
                 // Gcd(0, n) is n, so seeding with zero makes the first term the running answer
                 // without a special case for it, and Gcd is never negative.
-                content = content.Gcd(coefficient);
+                content = content.GreatestCommonDivisor(coefficient);
             }
 
             // One is not a factor worth taking out, and zero cannot be: every coefficient being

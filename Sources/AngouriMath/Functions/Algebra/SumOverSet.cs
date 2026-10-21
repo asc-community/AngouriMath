@@ -212,7 +212,7 @@ namespace AngouriMath.Functions
                 rational[MultivariatePolynomial.PowerOf(term.Key, 0)] = term.Value;
             var denominator = EInteger.One;
             foreach (var coefficient in rational)
-                denominator = denominator.Divide(denominator.Gcd(coefficient.Denominator)).Multiply(coefficient.Denominator);
+                denominator = denominator.Divide(denominator.GreatestCommonDivisor(coefficient.Denominator)).Multiply(coefficient.Denominator);
             var whole = new EInteger[rational.Length];
             for (var i = 0; i < whole.Length; i++)
                 whole[i] = rational[i].Numerator.Multiply(denominator.Divide(rational[i].Denominator));

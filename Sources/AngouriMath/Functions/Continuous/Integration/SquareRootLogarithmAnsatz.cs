@@ -305,11 +305,11 @@ namespace AngouriMath.Functions.Algebra
                     // constant line too, alpha^2 = r_0.
                     var squaresOfBeta = new List<ERational>();
                     var linear = rem1.Multiply(q1.ERational).Subtract(rem0.Multiply(ERational.FromInt32(2))).Multiply(ERational.FromInt32(2));
-                    var delta = linear.Multiply(linear).Subtract(discriminant.Multiply(rem1.Multiply(rem1)).Multiply(ERational.FromInt32(4))).ToLowestTerms();
+                    var delta = linear.Multiply(linear).Subtract(discriminant.Multiply(rem1.Multiply(rem1)).Multiply(ERational.FromInt32(4))).InLowestTerms();
                     if (TryRationalSquareRoot(delta) is { } rootOfDelta)
                         foreach (var sign in new[] { 1, -1 })
                         {
-                            var u = linear.Negate().Add(rootOfDelta.Multiply(ERational.FromInt32(sign))).Divide(discriminant.Multiply(ERational.FromInt32(2))).ToLowestTerms();
+                            var u = linear.Negate().Add(rootOfDelta.Multiply(ERational.FromInt32(sign))).Divide(discriminant.Multiply(ERational.FromInt32(2))).InLowestTerms();
                             if (u.Sign > 0 && !squaresOfBeta.Any(known => known.Equals(u)))
                                 squaresOfBeta.Add(u);
                         }
@@ -333,7 +333,7 @@ namespace AngouriMath.Functions.Algebra
                         var qOver = XPoly.FromCoefficients(over, q.Coefficients);
                         // 1/(s sqrt(d)) is sqrt(d)/(s d).
                         Entity generator = Rational.Create(s) * rootOfD;
-                        Entity inverseOfGenerator = Rational.Create(ERational.One.Divide(s.Multiply(ERational.FromEInteger(d))).ToLowestTerms()) * rootOfD;
+                        Entity inverseOfGenerator = Rational.Create(ERational.One.Divide(s.Multiply(ERational.FromEInteger(d))).InLowestTerms()) * rootOfD;
                         Entity alpha, beta;
                         XPoly inverseOfTwice;
                         if (u.IsZero)
@@ -345,13 +345,13 @@ namespace AngouriMath.Functions.Algebra
                         else
                         {
                             beta = generator;
-                            alpha = over.Normalize(Rational.Create(rem1.Add(u.Multiply(q1.ERational)).Divide(ERational.FromInt32(2)).ToLowestTerms()) * inverseOfGenerator);
+                            alpha = over.Normalize(Rational.Create(rem1.Add(u.Multiply(q1.ERational)).Divide(ERational.FromInt32(2)).InLowestTerms()) * inverseOfGenerator);
                             // (2L)^(-1) modulo q is ((alpha - beta q_1) - beta x)/(2N) for the norm
                             // N = alpha^2 - alpha beta q_1 + beta^2 q_0 of the line, a rational.
                             var norm = over.Normalize(alpha * alpha - alpha * beta * q1 + beta * beta * q0);
                             if (norm.Evaled is not Rational normValue || normValue.ERational.IsZero)
                                 continue;
-                            var overTwiceNorm = Rational.Create(ERational.One.Divide(normValue.ERational.Multiply(ERational.FromInt32(2))).ToLowestTerms());
+                            var overTwiceNorm = Rational.Create(ERational.One.Divide(normValue.ERational.Multiply(ERational.FromInt32(2))).InLowestTerms());
                             inverseOfTwice = XPoly.FromCoefficients(over, new Dictionary<int, Entity>
                             {
                                 [0] = over.Normalize((alpha - beta * q1) * overTwiceNorm),
@@ -568,7 +568,7 @@ namespace AngouriMath.Functions.Algebra
                 var coefficients = new Dictionary<int, Entity>();
                 for (var k = 0; k < current.Length; k++)
                     if (!current[k].IsZero)
-                        coefficients[k] = Rational.Create(current[k].Divide(scale).ToLowestTerms());
+                        coefficients[k] = Rational.Create(current[k].Divide(scale).InLowestTerms());
                 leftover = XPoly.FromCoefficients(field, coefficients);
             }
             return (factors, scale, leftover);
@@ -621,11 +621,11 @@ namespace AngouriMath.Functions.Algebra
             var carry = ERational.Zero;
             for (var k = coefficients.Length - 1; k >= 1; k--)
             {
-                carry = coefficients[k].Add(carry).ToLowestTerms();
+                carry = coefficients[k].Add(carry).InLowestTerms();
                 quotient[k - 1] = carry;
                 carry = carry.Multiply(a);
             }
-            return coefficients[0].Add(carry).ToLowestTerms().IsZero ? quotient : null;
+            return coefficients[0].Add(carry).InLowestTerms().IsZero ? quotient : null;
         }
 
         /// <summary>The exact quotient by <paramref name="divisor"/>, or null.</summary>
@@ -638,10 +638,10 @@ namespace AngouriMath.Functions.Algebra
             var quotient = new ERational[coefficients.Length - divisor.Length + 1];
             for (var k = quotient.Length - 1; k >= 0; k--)
             {
-                var term = remainder[k + divisor.Length - 1].Divide(leading).ToLowestTerms();
+                var term = remainder[k + divisor.Length - 1].Divide(leading).InLowestTerms();
                 quotient[k] = term;
                 for (var i = 0; i < divisor.Length; i++)
-                    remainder[k + i] = remainder[k + i].Subtract(term.Multiply(divisor[i])).ToLowestTerms();
+                    remainder[k + i] = remainder[k + i].Subtract(term.Multiply(divisor[i])).InLowestTerms();
             }
             for (var i = 0; i < divisor.Length - 1; i++)
                 if (!remainder[i].IsZero)
@@ -766,7 +766,7 @@ namespace AngouriMath.Functions.Algebra
             if (divisor.CompareTo(bound) > 0)
                 return null;
             squareFree = squareFree.Multiply(remaining);
-            return (squareFree, ERational.Create(square, value.Denominator).ToLowestTerms());
+            return (squareFree, ERational.Create(square, value.Denominator).InLowestTerms());
         }
 
         /// <summary>The rational square root of a non-negative rational, where it has one.</summary>
@@ -832,8 +832,8 @@ namespace AngouriMath.Functions.Algebra
             {
                 var sum = ERational.Zero;
                 for (var i = 1; i < k; i++)
-                    sum = sum.Add(series[i].Multiply(series[k - i])).ToLowestTerms();
-                series.Add(At(k).Subtract(sum).Divide(twoS).ToLowestTerms());
+                    sum = sum.Add(series[i].Multiply(series[k - i])).InLowestTerms();
+                series.Add(At(k).Subtract(sum).Divide(twoS).InLowestTerms());
             }
             return series;
         }
@@ -994,24 +994,24 @@ namespace AngouriMath.Functions.Algebra
             (ERational, ERational) Times((ERational, ERational) l, (ERational, ERational) r)
             {
                 var cross = l.Item2.Multiply(r.Item2);
-                return (l.Item1.Multiply(r.Item1).Subtract(m0.Multiply(cross)).ToLowestTerms(),
-                        l.Item1.Multiply(r.Item2).Add(l.Item2.Multiply(r.Item1)).Subtract(m1.Multiply(cross)).ToLowestTerms());
+                return (l.Item1.Multiply(r.Item1).Subtract(m0.Multiply(cross)).InLowestTerms(),
+                        l.Item1.Multiply(r.Item2).Add(l.Item2.Multiply(r.Item1)).Subtract(m1.Multiply(cross)).InLowestTerms());
             }
             // 1/(u + v c): the conjugate over the norm, the modulus being c^2 + m1 c + m0.
             (ERational, ERational)? Inverse((ERational, ERational) value)
             {
                 var (u, v) = value;
                 if (v.IsZero)
-                    return u.IsZero ? null : (ERational.One.Divide(u).ToLowestTerms(), ERational.Zero);
+                    return u.IsZero ? null : (ERational.One.Divide(u).InLowestTerms(), ERational.Zero);
                 // (u + v c)(u' + v' c) = 1 with c^2 = -m1 c - m0: solve the 2x2 system.
                 // Real part: u u' - m0 v v' = 1; c part: u v' + v u' - m1 v v' = 0.
                 // From the second, u' = (m1 v v' - u v')/v = v'(m1 v - u)/v; substitute:
                 // v' [u (m1 v - u)/v - m0 v] = 1.
-                var factor = u.Multiply(m1.Multiply(v).Subtract(u)).Divide(v).Subtract(m0.Multiply(v)).ToLowestTerms();
+                var factor = u.Multiply(m1.Multiply(v).Subtract(u)).Divide(v).Subtract(m0.Multiply(v)).InLowestTerms();
                 if (factor.IsZero)
                     return null;
-                var vPrime = ERational.One.Divide(factor).ToLowestTerms();
-                var uPrime = vPrime.Multiply(m1.Multiply(v).Subtract(u)).Divide(v).ToLowestTerms();
+                var vPrime = ERational.One.Divide(factor).InLowestTerms();
+                var uPrime = vPrime.Multiply(m1.Multiply(v).Subtract(u)).Divide(v).InLowestTerms();
                 return (uPrime, vPrime);
             }
             var pivotColumns = new List<int>();
@@ -1041,8 +1041,8 @@ namespace AngouriMath.Functions.Algebra
                     for (var k = 0; k < unknowns; k++)
                     {
                         var (t0, t1) = Times(factor, (a0[rank][k], a1[rank][k]));
-                        a0[row][k] = a0[row][k].Subtract(t0).ToLowestTerms();
-                        a1[row][k] = a1[row][k].Subtract(t1).ToLowestTerms();
+                        a0[row][k] = a0[row][k].Subtract(t0).InLowestTerms();
+                        a1[row][k] = a1[row][k].Subtract(t1).InLowestTerms();
                     }
                 }
                 pivotColumns.Add(column);

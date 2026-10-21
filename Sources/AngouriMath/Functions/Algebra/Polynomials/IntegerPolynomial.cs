@@ -194,7 +194,7 @@ namespace AngouriMath.Functions
         {
             var content = EInteger.Zero;
             foreach (var coefficient in coefficients)
-                content = content.Gcd(coefficient);
+                content = content.GreatestCommonDivisor(coefficient);
             return content;
         }
 
@@ -276,7 +276,7 @@ namespace AngouriMath.Functions
             if (right.IsZero)
                 return left.PrimitivePart().ScaleBy(left.Content());
 
-            var contentGcd = left.Content().Gcd(right.Content());
+            var contentGcd = left.Content().GreatestCommonDivisor(right.Content());
             var a = left.PrimitivePart();
             var b = right.PrimitivePart();
             if (a.Degree < b.Degree)

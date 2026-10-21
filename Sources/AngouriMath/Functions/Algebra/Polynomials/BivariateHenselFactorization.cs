@@ -628,6 +628,6 @@ namespace AngouriMath.Functions
 
         private static EInteger Lcm(EInteger left, EInteger right)
             => left.IsZero || right.IsZero ? EInteger.One
-                : left.Divide(left.Gcd(right)).Multiply(right);
+                : left.Divide(left.GreatestCommonDivisor(right)).Multiply(right);
     }
 }

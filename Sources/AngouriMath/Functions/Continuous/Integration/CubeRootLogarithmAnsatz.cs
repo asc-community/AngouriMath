@@ -380,16 +380,16 @@ namespace AngouriMath.Functions.Algebra
                     {
                         if (!TryReadOverAQuadratic(l, c, modulus, out var l0, out var l1) || !TryReadOverAQuadratic(r, c, modulus, out var r0, out var r1))
                             return false;
-                        a0 = l0.Add(r0).ToLowestTerms();
-                        a1 = l1.Add(r1).ToLowestTerms();
+                        a0 = l0.Add(r0).InLowestTerms();
+                        a1 = l1.Add(r1).InLowestTerms();
                         return true;
                     }
                     case Minusf(var l, var r):
                     {
                         if (!TryReadOverAQuadratic(l, c, modulus, out var l0, out var l1) || !TryReadOverAQuadratic(r, c, modulus, out var r0, out var r1))
                             return false;
-                        a0 = l0.Subtract(r0).ToLowestTerms();
-                        a1 = l1.Subtract(r1).ToLowestTerms();
+                        a0 = l0.Subtract(r0).InLowestTerms();
+                        a1 = l1.Subtract(r1).InLowestTerms();
                         return true;
                     }
                     case Mulf(var l, var r):
@@ -398,8 +398,8 @@ namespace AngouriMath.Functions.Algebra
                             return false;
                         // (l0 + l1 c)(r0 + r1 c), with c^2 = -m1 c - m0.
                         var cross = l1.Multiply(r1);
-                        a0 = l0.Multiply(r0).Subtract(m0.Multiply(cross)).ToLowestTerms();
-                        a1 = l0.Multiply(r1).Add(l1.Multiply(r0)).Subtract(m1.Multiply(cross)).ToLowestTerms();
+                        a0 = l0.Multiply(r0).Subtract(m0.Multiply(cross)).InLowestTerms();
+                        a1 = l0.Multiply(r1).Add(l1.Multiply(r0)).Subtract(m1.Multiply(cross)).InLowestTerms();
                         return true;
                     }
                     case Divf(var l, var r):
@@ -407,8 +407,8 @@ namespace AngouriMath.Functions.Algebra
                         if (!TryReadOverAQuadratic(l, c, modulus, out var l0, out var l1) || !TryReadOverAQuadratic(r, c, modulus, out var r0, out var r1)
                             || !r1.IsZero || r0.IsZero)
                             return false;
-                        a0 = l0.Divide(r0).ToLowestTerms();
-                        a1 = l1.Divide(r0).ToLowestTerms();
+                        a0 = l0.Divide(r0).InLowestTerms();
+                        a1 = l1.Divide(r0).InLowestTerms();
                         return true;
                     }
                     case Powf(var b, Integer k) when k.EInteger.CanFitInInt32() && k.EInteger.Sign >= 0 && k.EInteger.ToInt32Unchecked() <= 8:
@@ -419,8 +419,8 @@ namespace AngouriMath.Functions.Algebra
                         for (var i = 0; i < k.EInteger.ToInt32Unchecked(); i++)
                         {
                             var cross = a1.Multiply(b1);
-                            var next0 = a0.Multiply(b0).Subtract(m0.Multiply(cross)).ToLowestTerms();
-                            a1 = a0.Multiply(b1).Add(a1.Multiply(b0)).Subtract(m1.Multiply(cross)).ToLowestTerms();
+                            var next0 = a0.Multiply(b0).Subtract(m0.Multiply(cross)).InLowestTerms();
+                            a1 = a0.Multiply(b1).Add(a1.Multiply(b0)).Subtract(m1.Multiply(cross)).InLowestTerms();
                             a0 = next0;
                         }
                         return true;
@@ -728,7 +728,7 @@ namespace AngouriMath.Functions.Algebra
                 {
                     var f = part.Factor;
                     if (f.Degree == 1)
-                        roots.Add(Rational.Create(ERational.Create(f[0], f[1]).Negate().ToLowestTerms()));
+                        roots.Add(Rational.Create(ERational.Create(f[0], f[1]).Negate().InLowestTerms()));
                     else if (f.Degree == 2)
                         quadratics.Add(RationalPolynomial.FromInteger(f).ToEntity(x));
                 }
@@ -767,16 +767,16 @@ namespace AngouriMath.Functions.Algebra
             var pp = q[1];
             var qq = q[0];
             yield return rootOfM;
-            var discriminantOverThree = qq.Multiply(ERational.FromInt32(4)).Subtract(pp.Multiply(pp)).Divide(ERational.FromInt32(3)).ToLowestTerms();
+            var discriminantOverThree = qq.Multiply(ERational.FromInt32(4)).Subtract(pp.Multiply(pp)).Divide(ERational.FromInt32(3)).InLowestTerms();
             if (!TryRationalSquareRoot(discriminantOverThree, out var s))
                 yield break;
             foreach (var sign in new[] { 1, -1 })
             {
-                var t = pp.Add(s.Multiply(ERational.FromInt32(sign))).Divide(ERational.FromInt32(2)).ToLowestTerms();
-                var cubeOfU = ERational.One.Divide(pp.Multiply(qq).Subtract(t.Multiply(qq).Multiply(ERational.FromInt32(3))).Add(t.Multiply(t).Multiply(t))).ToLowestTerms();
+                var t = pp.Add(s.Multiply(ERational.FromInt32(sign))).Divide(ERational.FromInt32(2)).InLowestTerms();
+                var cubeOfU = ERational.One.Divide(pp.Multiply(qq).Subtract(t.Multiply(qq).Multiply(ERational.FromInt32(3))).Add(t.Multiply(t).Multiply(t))).InLowestTerms();
                 if (!TryRationalCubeRoot(cubeOfU, out var u))
                     continue;
-                var v = t.Multiply(u).ToLowestTerms();
+                var v = t.Multiply(u).InLowestTerms();
                 yield return rootOfM * (Rational.Create(u) * x + Rational.Create(v));
             }
         }
@@ -790,7 +790,7 @@ namespace AngouriMath.Functions.Algebra
             var d = value.Denominator.Sqrt();
             if (!n.Multiply(n).Equals(value.Numerator) || !d.Multiply(d).Equals(value.Denominator))
                 return false;
-            root = ERational.Create(n, d).ToLowestTerms();
+            root = ERational.Create(n, d).InLowestTerms();
             return true;
         }
 
@@ -803,7 +803,7 @@ namespace AngouriMath.Functions.Algebra
             var d = magnitude.Denominator.Root(3);
             if (!n.Pow(3).Equals(magnitude.Numerator) || !d.Pow(3).Equals(magnitude.Denominator))
                 return false;
-            root = ERational.Create(negative ? n.Negate() : n, d).ToLowestTerms();
+            root = ERational.Create(negative ? n.Negate() : n, d).InLowestTerms();
             return true;
         }
 
@@ -867,7 +867,7 @@ namespace AngouriMath.Functions.Algebra
                     root = c * c / Integer.Create(cubeOfSquare);
                 if (root is null)
                     return null;
-                var scale = ERational.Create(negative ? cube.Negate() : cube, magnitude.Denominator).ToLowestTerms();
+                var scale = ERational.Create(negative ? cube.Negate() : cube, magnitude.Denominator).InLowestTerms();
                 return Rational.Create(scale) * root;
             }
 

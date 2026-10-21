@@ -226,7 +226,7 @@ namespace AngouriMath.Functions.Algebra
                     var f = irreducible.Factor;
                     Entity? term = f.Degree switch
                     {
-                        1 => RationalResidue(ERational.Create(f[0], f[1]).Negate().ToLowestTerms(), part.Multiplicity, above, below, derivative, x),
+                        1 => RationalResidue(ERational.Create(f[0], f[1]).Negate().InLowestTerms(), part.Multiplicity, above, below, derivative, x),
                         2 => QuadraticResidues(f, part.Multiplicity, above, below, derivative, x),
                         _ => null,
                     };
@@ -447,8 +447,8 @@ namespace AngouriMath.Functions.Algebra
             IntegerPolynomial f, int degree, RationalPolynomial above, RationalPolynomial below, RationalPolynomial derivative, Variable x)
         {
             // f = f2 t^2 + f1 t + f0, roots -f1/(2 f2) ± sqrt(f1^2/(4 f2^2) - f0/f2).
-            var a = ERational.Create(f[1], f[2].Multiply(EInteger.FromInt32(2))).Negate().ToLowestTerms();
-            var w = a.Multiply(a).Subtract(ERational.Create(f[0], f[2])).ToLowestTerms();
+            var a = ERational.Create(f[1], f[2].Multiply(EInteger.FromInt32(2))).Negate().InLowestTerms();
+            var w = a.Multiply(a).Subtract(ERational.Create(f[0], f[2])).InLowestTerms();
             if (w.IsZero)
                 return null;
             var field = new QuadraticExtension(w);
@@ -572,7 +572,7 @@ namespace AngouriMath.Functions.Algebra
         }
 
         private static EInteger Lcm(EInteger a, EInteger b)
-            => a.IsZero || b.IsZero ? EInteger.Zero : a.Multiply(b).Abs().Divide(a.Gcd(b));
+            => a.IsZero || b.IsZero ? EInteger.Zero : a.Multiply(b).Abs().Divide(a.GreatestCommonDivisor(b));
 
         /// <summary>
         /// <c>Res_x(D, A - t D')</c> as a polynomial in <c>t</c>: of degree at most <c>deg D</c>,
@@ -598,7 +598,7 @@ namespace AngouriMath.Functions.Algebra
             var coefficients = (ERational[])values.Clone();
             for (var level = 1; level <= degree; level++)
                 for (var k = degree; k >= level; k--)
-                    coefficients[k] = coefficients[k].Subtract(coefficients[k - 1]).Divide(points[k].Subtract(points[k - level])).ToLowestTerms();
+                    coefficients[k] = coefficients[k].Subtract(coefficients[k - 1]).Divide(points[k].Subtract(points[k - level])).InLowestTerms();
             var result = RationalPolynomial.Zero;
             for (var k = degree; k >= 0; k--)
             {
@@ -657,14 +657,14 @@ namespace AngouriMath.Functions.Algebra
                 var common = EInteger.One;
                 for (var column = 0; column < size; column++)
                 {
-                    var reduced = rows[row][column].ToLowestTerms();
+                    var reduced = rows[row][column].InLowestTerms();
                     rows[row][column] = reduced;
-                    common = common.Multiply(reduced.Denominator).Divide(common.Gcd(reduced.Denominator));
+                    common = common.Multiply(reduced.Denominator).Divide(common.GreatestCommonDivisor(reduced.Denominator));
                 }
                 scale = scale.Multiply(ERational.FromEInteger(common));
                 a[row] = new EInteger[size];
                 for (var column = 0; column < size; column++)
-                    a[row][column] = rows[row][column].Multiply(ERational.FromEInteger(common)).ToLowestTerms().Numerator;
+                    a[row][column] = rows[row][column].Multiply(ERational.FromEInteger(common)).InLowestTerms().Numerator;
             }
             var sign = 1;
             var previous = EInteger.One;
@@ -700,7 +700,7 @@ namespace AngouriMath.Functions.Algebra
             var determinant = ERational.FromEInteger(a[size - 1][size - 1]);
             if (sign < 0)
                 determinant = determinant.Negate();
-            return determinant.Divide(scale).ToLowestTerms();
+            return determinant.Divide(scale).InLowestTerms();
         }
 
         private static RationalPolynomial Derivative(RationalPolynomial poly)
@@ -742,7 +742,7 @@ namespace AngouriMath.Functions.Algebra
             var denominator = value.Denominator.Sqrt();
             if (!numerator.Multiply(numerator).Equals(value.Numerator) || !denominator.Multiply(denominator).Equals(value.Denominator))
                 return false;
-            root = ERational.Create(numerator, denominator).ToLowestTerms();
+            root = ERational.Create(numerator, denominator).InLowestTerms();
             return true;
         }
 
@@ -751,8 +751,8 @@ namespace AngouriMath.Functions.Algebra
         {
             internal Element(ERational re, ERational im)
             {
-                Re = re.ToLowestTerms();
-                Im = im.ToLowestTerms();
+                Re = re.InLowestTerms();
+                Im = im.InLowestTerms();
             }
 
             internal ERational Re { get; }

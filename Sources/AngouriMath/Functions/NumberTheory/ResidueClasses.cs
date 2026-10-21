@@ -102,7 +102,7 @@ namespace AngouriMath.Functions
             b = b.Mod(n);
             if (a.IsZero)
                 return b.IsZero ? MathS.Sets.Z : Set.Empty;
-            var g = a.Gcd(n);
+            var g = a.GreatestCommonDivisor(n);
             if (!b.Remainder(g).IsZero)
                 return Set.Empty;
             var reduced = n.Divide(g);
@@ -116,7 +116,7 @@ namespace AngouriMath.Functions
         /// </summary>
         internal static Set Meet(Variable x, EInteger a, EInteger m, EInteger b, EInteger n)
         {
-            var g = m.Gcd(n);
+            var g = m.GreatestCommonDivisor(n);
             if (!(a - b).Mod(g).IsZero)
                 return Set.Empty;
             // x = a + m t, and m t = b - a (mod n): a linear congruence in t modulo n.

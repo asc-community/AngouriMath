@@ -256,7 +256,7 @@ namespace AngouriMath
                     if (Q(power).Evaled is not Number.Rational coefficient)
                         return null;
                     rational[power] = coefficient.ERational;
-                    denominators = denominators.Divide(denominators.Gcd(rational[power].Denominator)).Multiply(rational[power].Denominator);
+                    denominators = denominators.Divide(denominators.GreatestCommonDivisor(rational[power].Denominator)).Multiply(rational[power].Denominator);
                 }
                 var size = n + m;
                 var sylvester = new EInteger[size, size];

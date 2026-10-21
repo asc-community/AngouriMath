@@ -931,7 +931,7 @@ namespace AngouriMath.Functions.Boolean
                 || rest.ContainsNode(x) || slope.Evaled is not Integer { EInteger: var step })
                 return null;
             var m = modulus.Abs();
-            return step.IsZero ? EInteger.One : m.Divide(m.Gcd(step.Abs()));
+            return step.IsZero ? EInteger.One : m.Divide(m.GreatestCommonDivisor(step.Abs()));
         }
 
         /// <summary>
@@ -967,7 +967,7 @@ namespace AngouriMath.Functions.Boolean
                     continue;
                 if (DivisibilityPeriod(atom, x) is { } repeats)
                 {
-                    period = period.Divide(period.Gcd(repeats)).Multiply(repeats);
+                    period = period.Divide(period.GreatestCommonDivisor(repeats)).Multiply(repeats);
                     if (period.CompareTo(EInteger.FromInt32(LargestPrefix)) > 0)
                         return null;
                     any = true;
@@ -1056,7 +1056,7 @@ namespace AngouriMath.Functions.Boolean
                     continue;
                 if (DivisibilityPeriod(conjunct, x) is { } repeats)
                 {
-                    period = period.Divide(period.Gcd(repeats)).Multiply(repeats);
+                    period = period.Divide(period.GreatestCommonDivisor(repeats)).Multiply(repeats);
                     repeating = true;
                     continue;
                 }
@@ -1168,7 +1168,7 @@ namespace AngouriMath.Functions.Boolean
             }
             // The units modulo M, each the residue of infinitely many primes past the threshold.
             for (var residue = EInteger.One; residue.CompareTo(modulus) <= 0; residue += 1)
-                if (residue.Gcd(modulus).Equals(EInteger.One))
+                if (residue.GreatestCommonDivisor(modulus).Equals(EInteger.One))
                     Tell(past.Substitute(x, Integer.Create(residue)).InnerSimplified(isExact));
             if (Tally(kind, holds, fails, undecided, distinct: true) is not { } verdict)
                 return null;
@@ -1203,7 +1203,7 @@ namespace AngouriMath.Functions.Boolean
                         return null;
                     if (Period(first, x, set) is not { } one || Period(second, x, set) is not { } another)
                         return null;
-                    return one * another / one.Gcd(another);
+                    return one * another / one.GreatestCommonDivisor(another);
                 // An equation or an order comparison between residues -- a^7 mod 7 = a mod 7,
                 // Fermat's little theorem as Sullivan and Mackey write it (Prob 8.9.26) -- repeats
                 // with the least common multiple of the moduli it mentions.
@@ -1216,7 +1216,7 @@ namespace AngouriMath.Functions.Boolean
                         return rounding;
                     if (ResiduePeriod(lhs, x, set) is not { } l || ResiduePeriod(rhs, x, set) is not { } r)
                         return null;
-                    return l * r / l.Gcd(r);
+                    return l * r / l.GreatestCommonDivisor(r);
                 default:
                     return body.ContainsNode(x) ? null : EInteger.One;
             }
@@ -1281,7 +1281,7 @@ namespace AngouriMath.Functions.Boolean
                         return null;
                     if (ResiduePeriod(first, x, set) is not { } one || ResiduePeriod(second, x, set) is not { } another)
                         return null;
-                    return one * another / one.Gcd(another);
+                    return one * another / one.GreatestCommonDivisor(another);
                 default:
                     return null;
             }
@@ -1318,7 +1318,7 @@ namespace AngouriMath.Functions.Boolean
                 {
                     rounded = true;
                     var q = slope.Denominator.Abs();
-                    period = period * q / period.Gcd(q);
+                    period = period * q / period.GreatestCommonDivisor(q);
                 }
                 drift = drift.Add(coefficient.Multiply(slope));
             }
@@ -1354,7 +1354,7 @@ namespace AngouriMath.Functions.Boolean
             {
                 if (power.Base.Evaled is not Integer { EInteger: var @base } || !power.Exponent.Vars.All(v => v == x) || !IsWholePolynomial(power.Exponent))
                     return null;
-                if (!@base.Gcd(modulus).Equals(EInteger.One))
+                if (!@base.GreatestCommonDivisor(modulus).Equals(EInteger.One))
                     return null;
                 var order = EInteger.One;
                 var value = @base.Mod(modulus);
@@ -1365,7 +1365,7 @@ namespace AngouriMath.Functions.Boolean
                 }
                 if (!value.Equals(EInteger.One))
                     return null;
-                period = period * order / period.Gcd(order);
+                period = period * order / period.GreatestCommonDivisor(order);
                 replaced = replaced.Substitute(power, Variable.CreateUnique(expr, "power_" + count++));
             }
             return IsWholePolynomial(replaced) ? period : null;
