@@ -1058,6 +1058,124 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>x^j T^alpha Q^beta</c>, for a power of a quotient of linears <c>T = (p + q x)/(r + s x)</c>
+        /// and one of a multiple of their product, <c>Q = kappa (p + q x)(r + s x)</c>, where the
+        /// antiderivative is algebraic: <c>T^alpha Q^(beta + 1) P(x)</c> with <c>P</c> of degree
+        /// <c>j - 1</c>. With <c>D = q r - p s</c>, <c>T'/T = kappa D/Q</c>, so the derivative is
+        /// <c>T^alpha Q^beta (alpha kappa D P + (beta + 1) Q' P + Q P')</c>, and asking the bracket
+        /// to be <c>x^j</c> is, with <c>Q = A x^2 + B x + C</c>, the three-term system
+        /// <c>A (m + 2 beta + 1) p_(m-1) + (alpha kappa D + B (m + beta + 1)) p_m + C (m + 1) p_(m+1) = [m = j]</c>
+        /// for <c>m</c> from 0 to <c>j</c>: solved from the top, <c>p_(j-1) = 1/(A (j + 2 beta + 1))</c>,
+        /// down to <c>p_0</c>, and the equation at <c>m = 0</c> checked. Rubi's 7.3.6
+        /// <c>e^(n artanh(a x)) x^2 (c - a^2 c x^2)^(-1 - n^2/2)</c> is
+        /// <c>e^(n artanh(a x)) (1 - a n x)/(a^3 c n (1 - n^2) (c - a^2 c x^2)^(n^2/2))</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// One equation more than unknowns: where the check fails the antiderivative is not this
+        /// one term -- it has a logarithm, or is hypergeometric -- and the rule declines. Where it
+        /// holds, the rules after it ran past the budget: <c>e^(6 artanh(a x)) x^2/(c - a^2 c x^2)^19</c>
+        /// was written as a rational function over a denominator of degree 38 and handed to the
+        /// partial fractions, and is <c>(6 a x - 1)/(210 a^3 c^19 (1 - a x)^21 (1 + a x)^15)</c>;
+        /// <c>e^(5 artanh(a x)) x^2/(c - a^2 c x^2)^(27/2)</c> the same, and
+        /// <c>e^(artanh(a x)/2) x^2/(c - a^2 c x^2)^(9/8)</c> was declined. Where the denominator
+        /// is small the partial fractions answer it too, as a sum over its two roots:
+        /// <c>e^(2 artanh(a x)) x^2/(c - a^2 c x^2)^3</c> is here <c>(2 a x - 1) T Q^(-2)/(6 a^3 c)</c>.
+        /// The Moebius substitution after it takes a power of <c>Q</c> that fixes the degree of
+        /// <c>P</c>; this takes the degree from <c>x^j</c>.
+        /// </para>
+        /// <para>
+        /// The powers are differentiated as principal powers wherever <c>T</c> and <c>Q</c> are not 0,
+        /// on a cut as off it, so the answer holds where the integrand is defined, and is checked
+        /// at sampled points as well. Only for <c>x</c> above the bar: without it <c>P</c> has no
+        /// degree to take.
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveAPowerOfXBesidePowersOfAQuotientOfLinearsAndTheirProductAlgebraically(Entity expr, Entity.Variable x)
+        {
+            Entity? quotient = null, alpha = null, quadratic = null, beta = null;
+            Entity constant = Number.Integer.One;
+            var j = 0;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (!underneath && APowerOfTheVariable(factor, x) is { } k && k > 0)
+                {
+                    j += k;
+                    continue;
+                }
+                if (quotient is null && AsAPowerOfAQuotient(factor, x) is var (written, exponent))
+                {
+                    (quotient, alpha) = (written, underneath ? -exponent : exponent);
+                    continue;
+                }
+                var (@base, power) = factor is Powf(var b, var e) ? (b, e) : (factor, (Entity)Number.Integer.One);
+                if (quadratic is null && !power.ContainsNode(x) && @base is not Divf)
+                {
+                    (quadratic, beta) = (@base, underneath ? -power : power);
+                    continue;
+                }
+                return null;
+            }
+            if (quotient is not Divf(var top, var bottom) || alpha is null || quadratic is null || beta is null || j < 1 || j > 12
+                || !TreeAnalyzer.TryGetPolyLinear(top, x, out var q, out var p) || TreeAnalyzer.IsZero(q)
+                || !TreeAnalyzer.TryGetPolyLinear(bottom, x, out var s, out var r) || TreeAnalyzer.IsZero(s)
+                || !TreeAnalyzer.TryGetPolyQuadratic(quadratic, x, out var a2, out var b2, out var c2) || TreeAnalyzer.IsZero(a2))
+                return null;
+            var determinant = (q * r - p * s).InnerSimplified;
+            var kappa = Functions.PartialFractions.Bare((a2 / (q * s)).Simplify());
+            if (VanishesIdentically(determinant)
+                || !VanishesIdentically(b2 - kappa * (p * s + q * r)) || !VanishesIdentically(c2 - kappa * p * r))
+                return null;
+            (alpha, beta) = (alpha.InnerSimplified, beta.InnerSimplified);
+            var alphaKappaD = (alpha * kappa * determinant).InnerSimplified;
+            // p_0 .. p_(j - 1), and p_j = 0, from the top down.
+            var coefficients = new Entity[j + 1];
+            coefficients[j] = Number.Integer.Zero;
+            for (var m = j; m >= 1; m--)
+            {
+                var divisor = (a2 * (m + 2 * beta + 1).Expand()).InnerSimplified;
+                if (VanishesIdentically(divisor))
+                    return null;
+                Entity rest = m == j ? Number.Integer.One
+                    : -((alphaKappaD + b2 * (m + beta + 1).Expand()) * coefficients[m] + c2 * (m + 1) * coefficients[m + 1]);
+                coefficients[m - 1] = Functions.PartialFractions.Bare((rest / divisor).Simplify());
+            }
+            var second = j >= 2 ? coefficients[1] : Number.Integer.Zero;
+            if (!VanishesIdentically((alphaKappaD + b2 * (beta + 1)) * coefficients[0] + c2 * second))
+                return null;
+            Entity polynomial = Number.Integer.Zero;
+            for (var m = 0; m < j; m++)
+                if (!VanishesIdentically(coefficients[m]))
+                    polynomial += coefficients[m] * (m == 0 ? Number.Integer.One : m == 1 ? x : MathS.Pow(x, m));
+            var answer = (constant * MathS.Pow(quotient, alpha) * MathS.Pow(quadratic, (beta + 1).Expand().InnerSimplified) * polynomial).InnerSimplified;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+
+            // T^alpha as it is written, or as e^(alpha ln(T)) where it is not folded yet.
+            static (Entity Quotient, Entity Exponent)? AsAPowerOfAQuotient(Entity factor, Entity.Variable x)
+            {
+                if (factor is Powf(Divf(var above, var below) quotient, var exponent) && !exponent.ContainsNode(x)
+                    && above.ContainsNode(x) && below.ContainsNode(x))
+                    return (quotient, exponent);
+                if (factor is not Powf(var e, var power) || e != MathS.e || !power.ContainsNode(x))
+                    return null;
+                var logarithms = power.Nodes.OfType<Logf>().Where(node => node.Base == MathS.e && node.ContainsNode(x)).Distinct().ToList();
+                if (logarithms.Count != 1 || logarithms[0].Antilogarithm is not Divf(var top, var bottom) || !top.ContainsNode(x) || !bottom.ContainsNode(x))
+                    return null;
+                var placeholder = Variable.CreateUnique(power, "l_quot");
+                if (!TreeAnalyzer.TryGetPolyLinear(power.Replace(node => node == logarithms[0] ? placeholder : node), placeholder, out var multiple, out var free)
+                    || multiple.ContainsNode(x) || !TreeAnalyzer.IsZero(free))
+                    return null;
+                return (logarithms[0].Antilogarithm, multiple);
+            }
+        }
+
+        /// <summary>
         /// A function of the hyperbolic tangent of a linear, under <c>u = tanh(a + b x)</c>: the parser
         /// writes <c>tanh(L)</c> as <c>(W - 1)/(W + 1)</c> and <c>coth(L)</c> as <c>(W + 1)/(W - 1)</c>
         /// with <c>W = e^(2 L)</c>, so an integrand built from those alone is <c>R(u)</c>, and
@@ -37776,15 +37894,18 @@ namespace AngouriMath.Functions.Algebra
         /// negative power goes through <c>u</c>: <c>w - c</c> is a constant times <c>g(u/2 + beta)^2</c>
         /// for a sine or a cosine <c>g</c>, so <c>x/g</c> is constant on each side of 0, and the
         /// powers <c>-1</c> and <c>-2</c> are sine and cosine integrals of <c>(a + b u)/(2 b)</c>
-        /// (hyperbolic ones for the hyperbolic cosine), the rest the recurrence run backwards. Exact on
-        /// the real domain; off it <c>x/g</c> can change sign across a cut.
+        /// (hyperbolic ones for the hyperbolic cosine and sine), the rest the recurrence run backwards.
+        /// Exact on the real domain; off it <c>x/g</c> can change sign across a cut. For the inverse
+        /// hyperbolic sine <c>g</c> is <c>cosh(u/2 + c pi/4)</c>: <c>cosh(u/2) + c sinh(u/2)</c> is
+        /// <c>sqrt(2)</c> times it, and its square is <c>1 + c sinh(u) = c d x^2</c>.
         /// </summary>
         /// <remarks>
         /// Each <c>u</c> has <c>u'' = e w u'^3</c>, and with <c>c^2 = 1</c> (or <c>-1</c>) the radicand of
         /// <c>u'</c> is <c>d x^2 (2 c + d x^2)</c> up to sign, so <c>H u' = 2</c> and
         /// <c>(x (a + b u)^n + 2 e n b H (a + b u)^(n - 1))'</c> is <c>(a + b u)^n</c> plus a multiple of
         /// <c>(a + b u)^(n - 2)</c>. Rubi's 5.1.5, 5.2.5 and 7.2.5 <c>(a + b acos(1 + d x^2))^4</c>
-        /// and the like were declined.
+        /// and the like were declined, and 7.1.5 <c>1/(a + b asinh(i + d x^2))^n</c>, which had no
+        /// row in the table below.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveAPowerOfAnInverseFunctionOfAQuadraticByTheRecurrence(Entity expr, Entity.Variable x)
@@ -37920,6 +38041,9 @@ namespace AngouriMath.Functions.Algebra
                     (Arcsinf, _, _, false) => (false, -MathS.pi / 4, false, false, -1),
                     (Logf, -1, 1, true) => (true, Number.Integer.Zero, true, true, 1),
                     (Logf, -1, 1, false) => (false, Number.Integer.Zero, true, false, 1),
+                    // asinh with c = +-i: cosh(u/2) + c sinh(u/2) is sqrt(2) cosh(u/2 + c pi/4), whose
+                    // square is 1 + c sinh(u) = c d x^2.
+                    (Logf, -1, -1, _) => (false, c * MathS.pi / 4, true, false, 1),
                     _ => null,
                 };
                 if (table is not var (gIsSine, beta, hyperbolic, cosine, hSign))
@@ -37950,6 +38074,10 @@ namespace AngouriMath.Functions.Algebra
                     integrals[k - 2] = (x * MathS.Pow(a_bu, k) + 2 * e * k * b * h * MathS.Pow(a_bu, k - 1) - integrals[k])
                         / (4 * e * MathS.Sqr(b) * k * (k - 1));
                 var answer = integrals[n].InnerSimplified;
+                // With c = +-i the integrand is real nowhere, so it is compared where it is complex:
+                // the argument of the logarithm stays off its cut there, its imaginary part the sign of c.
+                if (squareAtZero == -1)
+                    return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
                 return Functions.PartialFractions.DerivativeDiffersWhereReal(answer, expr, x) ? null : answer;
             }
         }

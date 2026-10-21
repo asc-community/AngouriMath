@@ -213,6 +213,23 @@ is a polynomial in `t` times a power of it ([#233](https://github.com/asc-commun
 | `"e^(n*acoth(a*x))/(c-a^2*c*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | three powers of `(a x + 1)/(a x - 1)`, `n/2 - 1` to `n/2 + 1` |
 | `"e^(n*acoth(a*x))/(c-a^2*c*x^2)^4".ToEntity().Integrate("x")` | `integral(...)` | seven powers of it, `n/2 - 3` to `n/2 + 3` |
 
+### A power of x beside powers of a quotient of linears and of their product is integrated as one term
+
+**Answers where there were none.** `e^(n artanh(a x)) x^2 (c - a^2 c x^2)^(-1 - n^2/2)` was declined, and so were
+`e^(6 artanh(a x)) x^2/(c - a^2 c x^2)^19`, `e^(5 artanh(a x)) x^2/(c - a^2 c x^2)^(27/2)` and its reciprocal twin, and
+`e^(artanh(a x)/2) x^2/(c - a^2 c x^2)^(9/8)`, Rubi's 7.3.6. With `T = (1 + a x)/(1 - a x)` and `Q = c - a^2 c x^2`,
+each is `x^j T^alpha Q^beta`, and its antiderivative is `T^alpha Q^(beta + 1)` times a polynomial of degree `j - 1`,
+found by one linear solve whose last equation is checked; where it fails the rule declines
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(n*atanh(a*x))*x^2*(c-a^2*c*x^2)^(-1-1/2*n^2)".ToEntity().Integrate("x")` | `integral(...)` | 167 characters |
+| `"e^(6*atanh(a*x))*x^2/(c-a^2*c*x^2)^19".ToEntity().Integrate("x")` | `integral(...)` | `T^3 Q^(-18) (6 a x - 1)/(210 a^3 c)`, 119 characters |
+| `"e^(5*atanh(a*x))*x^2/(c-a^2*c*x^2)^(27/2)".ToEntity().Integrate("x")` | `integral(...)` | 125 characters |
+| `"e^(1/2*atanh(a*x))*x^2/(c-a^2*c*x^2)^(9/8)".ToEntity().Integrate("x")` | `integral(...)` | 121 characters |
+| `"e^(2*atanh(a*x))*x^2/(c-a^2*c*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 109 characters |
+
 ### The last digits of an evaluated sine, cosine, tangent, arcsine or arctangent
 
 **Silent, and in the hundredth digit.** `EvalNumerical` at the default hundred digits gives the
@@ -1387,7 +1404,10 @@ values, and too few points could be compared. The answer is now refused only whe
 a cosine `g`, so `x/g` is constant on each side of 0; the powers `-1` and `-2` are then sine and cosine integrals of
 `(a + b u)/(2 b)`, hyperbolic ones for the inverse hyperbolic cosine, and the recurrence run backwards gives the
 rest. The answers hold on the real domain of the integrand
-([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+([#718](https://github.com/asc-community/AngouriMath/issues/718)). The six of Rubi's 7.1.5
+`1/(a + b asinh(+-i + d x^2))^n` are answered the same way, with `g = cosh(u/2 + c pi/4)`: `cosh(u/2) + c sinh(u/2)` is
+`sqrt(2)` times it, and its square is `1 + c sinh(u) = c d x^2`. They are complex at every `x`, and are checked there
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
@@ -1397,6 +1417,8 @@ rest. The answers hold on the real domain of the integrand
 | `"1/(a+b*asin(-1+d*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 224 characters |
 | `"1/(a+b*acosh(1+d*x^2))^2".ToEntity().Integrate("x")` | `integral(...)` | 608 characters |
 | `"1/(a+b*acosh(-1+d*x^2))^3".ToEntity().Integrate("x")` | `integral(...)` | 633 characters |
+| `"1/(a+b*asinh(i+d*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 482 characters |
+| `"1/(a+b*asinh(-i+d*x^2))^3".ToEntity().Integrate("x")` | `integral(...)` | 735 characters |
 
 ### The reciprocal of a binomial in a high power of a sine, cosine or hyperbolic one is split over its roots
 
