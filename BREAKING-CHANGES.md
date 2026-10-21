@@ -6950,6 +6950,27 @@ written back is the argument's, which is that of `x` only for a positive slope a
 | `"asec(x)^2/(x*sqrt(x^2 - 1))".ToEntity().Integrate("x")` | `integral(...)` | the same |
 | `"asec(x + 3)^2/((x + 3)*sqrt((x + 3)^2 - 1))".ToEntity().Integrate("x")` | `integral(...)` | right for `x > -2` and for `x < -4` |
 
+### `x^(4k - 1) (a + b arcsec(c x))/sqrt(1 - c^4 x^4)` and the arccosecant's are integrated on both sides of `|c x| = 1`
+
+**Answers where there were none.** Rubi's 5.5.1 and 5.6.1 `x^(4k - 1) (a + b arcsec(c x))/sqrt(1 - c^4 x^4)`
+and the arccosecant's were declined by 2.5.0, and on the unreleased master answered for `|c x| > 1` only. By
+parts leaves a root of `1 - 1/(c x)^2`, which is written apart as `sqrt((c x)^2 - 1)/|c x|`, and the antiderivative
+of what that leaves came back `provided (c x)^2 - 1 >= 0`, a condition the step dropped: for `|c x| < 1`, where the
+integrand is complex, the answer's derivative was the integrand's negative. `sqrt(1 - u^2)/sqrt(u - 1)` is
+`sqrt(-(1 + u))` for `u > 1` and its negative for `-1 < u < 1`, so with `sgn((c x)^2 - 1)` in front the antiderivative
+holds on both sides, as Rubi's does with `sqrt(1 - c^2 x^2)/(c x sqrt(1 - 1/(c^2 x^2)))`. The sign is checked at two
+points of every interval between its roots, and goes in front only where the integrand has no value at them, here
+`0/0`; where no sign is found the condition is kept, and the answer says where it holds. The same holds of
+`x^3 (a + b arcsec(c x)) sqrt(1 - c^4 x^4)` and its kin, also declined by 2.5.0
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^3*(a + b*arcsec(c*x))/sqrt(1 - c^4*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 322 characters, for `c^2 x^2 < 1` and `> 1`; 298 for `c^2 x^2 > 1` only on the unreleased master |
+| `"x^7*(a + b*arcsec(c*x))/sqrt(1 - c^4*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 678 characters, the same; 654 on the unreleased master |
+| `"x^11*(a + b*arcsec(c*x))/sqrt(1 - c^4*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 1,211 characters, the same; 1,187 on the unreleased master |
+| `"x^3*(a + b*arccsc(c*x))/sqrt(1 - c^4*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 321 characters, the same; 297 on the unreleased master |
+
 ### A perfect square in a power of the variable is read as one
 
 `sqrt(a^2 + 2 a b x^2 + b^2 x^4) sqrt(c + e x + d x^2)` was left unevaluated. The radicand is

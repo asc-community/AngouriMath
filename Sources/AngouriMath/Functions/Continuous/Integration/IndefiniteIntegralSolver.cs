@@ -31749,6 +31749,19 @@ namespace AngouriMath.Functions.Algebra
             foreach (var pair in signs)
                 if (pair.Value % 2 == 1 && extended is { })
                     extended = MathS.Signum(pair.Key) * extended;
+            // Bare drops the conditions the simplification attaches, a denominator nonzero, and
+            // with them one of another kind, that the antiderivative holds on part of the line
+            // only: the root of `1 - 1/x^2` written apart is `sqrt(x^2 - 1)/|x|`, and the
+            // remainder parts leaves from Rubi's `x^3 arcsec(x)/sqrt(1 - x^4)` written so comes
+            // back `provided x^2 - 1 >= 0`. Returned bare it was taken for an antiderivative on
+            // `|x| < 1` as well, where its derivative is the integrand's negative.
+            if (tookAPowerOfX && extended is { } && TheRestrictionsOnTheVariable(forPositive, x) is { Count: > 0 } restrictions)
+            {
+                var (offIt, stillUnder) = OffItsRestrictions(expr, extended, restrictions, byParity: !(wholePowersOfX && everyPowerOfXFromAFactor), x);
+                extended = offIt;
+                if (stillUnder is { })
+                    assumed = assumed == Entity.Boolean.True ? stillUnder : assumed & stillUnder;
+            }
             return extended?.Provided(assumed);
 
             // What is set free under the root is a polynomial of degree four at most: the
@@ -31904,6 +31917,120 @@ namespace AngouriMath.Functions.Algebra
                 }
                 return MathS.Pow(positive, exponent);
             }
+        }
+
+        /// <summary>
+        /// The conjuncts of the condition <paramref name="answer"/> is given under that confine
+        /// <paramref name="x"/> to part of the real line, its inequalities in <paramref name="x"/>:
+        /// not those the simplification attaches, a denominator nonzero, which leave out points.
+        /// </summary>
+        private static List<Entity> TheRestrictionsOnTheVariable(Entity answer, Entity.Variable x)
+            => answer.InnerSimplified is Providedf(_, var condition)
+                ? Andf.LinearChildren(condition).Where(conjunct => conjunct is Greaterf or GreaterOrEqualf or Lessf or LessOrEqualf && conjunct.ContainsNode(x)).Distinct().ToList()
+                : new List<Entity>();
+
+        /// <summary>
+        /// <paramref name="answer"/>, an antiderivative of <paramref name="integrand"/> where
+        /// <paramref name="restrictions"/> hold, as one wherever the integrand has a value, with the
+        /// condition it still holds under, <see langword="null"/> where it needs none: as it is
+        /// where it holds on every interval between the roots of the restrictions, with the sign
+        /// of the one restriction in front where that is what it is off it, and under the
+        /// restrictions otherwise. <paramref name="byParity"/> where <paramref name="answer"/> is
+        /// the antiderivative for positive x written in |x|.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>sqrt(1 - u^2)/sqrt(u - 1)</c> is <c>sqrt(-(1 + u))</c> for <c>u &gt; 1</c> and its
+        /// negative for <c>-1 &lt; u &lt; 1</c>, where the root below the bar is imaginary, so an
+        /// antiderivative found through the one is the negative of one off it, and
+        /// <c>sgn(u - 1) F</c> holds on both sides. Rubi writes that sign as
+        /// <c>sqrt(1 - c^2 x^2)/(c x sqrt(1 - 1/(c^2 x^2)))</c>, which is <c>i sgn(c x) sgn(c^2 x^2 - 1)</c>.
+        /// Only where the integrand has no value at the restriction's roots, which then part its
+        /// domain: where it has one, an antiderivative is continuous there and <c>sgn(P) F</c> is not.
+        /// </para>
+        /// <para>
+        /// Decided at two points of every interval between the real roots of the restrictions and
+        /// of x, comparing complex values, every other symbol pinned to an exact rational so that
+        /// the roots are exact. An interval where the two cannot be compared does not hold. The
+        /// derivative is compared with each <c>(P^(1/n))^n</c> in the answer written <c>P</c>, which
+        /// is the same number on every branch: <c>(sqrt(x^2 - 1))^2</c> under a root, inside
+        /// <c>(-1, 1)</c>, is an interval about the negative axis that the evaluation cannot place
+        /// on either side of the cut.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
+        private static (Entity Answer, Entity? Condition) OffItsRestrictions(Entity integrand, Entity answer, List<Entity> restrictions, bool byParity, Entity.Variable x)
+        {
+            Entity Written(Entity inX) => byParity ? inX.Substitute(x, MathS.Abs(x)) : inX;
+            var condition = restrictions.Select(Written).Aggregate((left, right) => left & right);
+            // What each restriction says is positive, or not negative.
+            var positives = restrictions.Select(restriction => restriction switch
+            {
+                Greaterf(var left, var right) => left - right,
+                GreaterOrEqualf(var left, var right) => left - right,
+                Lessf(var left, var right) => right - left,
+                LessOrEqualf(var left, var right) => right - left,
+                _ => restriction
+            }).Select(positive => positive.Expand().InnerSimplified).Distinct().ToList();
+            var parameters = integrand.Vars.Concat(answer.Vars).Concat(positives.SelectMany(positive => positive.Vars))
+                .Where(v => v != x).Distinct().ToList();
+            Entity Pinned(Entity e)
+            {
+                for (var i = 0; i < parameters.Count; i++)
+                    e = e.Substitute(parameters[i], Number.Rational.Create((i % 3) switch { 0 => 137, 1 => 271, _ => 83 } + 100 * i, 100));
+                return e;
+            }
+            // The real roots of x and of each restriction, exact.
+            var bases = new List<Entity> { x };
+            foreach (var positive in positives)
+            {
+                var pinned = Pinned(positive).InnerSimplified;
+                bases.Add(pinned);
+                if (byParity)
+                    bases.Add(pinned.Substitute(x, -x).InnerSimplified);
+            }
+            var realRoots = new List<(Entity Root, double At, bool OfARestriction)>();
+            for (var index = 0; index < bases.Count; index++)
+            {
+                var polynomial = bases[index];
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, x, out _) || MathS.SolveEquation(polynomial, x) is not Set.FiniteSet solutions)
+                    return (answer, condition);
+                foreach (var solution in solutions.Elements)
+                {
+                    if (solution.Evaled is not Number.Complex { IsFinite: true } value)
+                        return (answer, condition);
+                    if (value.ImaginaryPart.EDecimal.IsZero)
+                        realRoots.Add((solution, (double)value.RealPart, index > 0));
+                }
+            }
+            var at = realRoots.Select(root => root.At).Distinct().OrderBy(root => root).ToList();
+            var intervals = new List<double[]> { new[] { at[0] - 1, at[0] - 2 }, new[] { at[at.Count - 1] + 1, at[at.Count - 1] + 2 } };
+            for (var i = 0; i + 1 < at.Count; i++)
+                if (at[i + 1] - at[i] > 1e-9)
+                    intervals.Add(new[] { at[i] + (at[i + 1] - at[i]) / 3, at[i] + 2 * (at[i + 1] - at[i]) / 3 });
+            var points = intervals.Select(pair => pair.Select(point => point.ToString("0.0###########", System.Globalization.CultureInfo.InvariantCulture)).ToArray()).ToList();
+            var pinnedIntegrand = Pinned(integrand);
+            bool Holds(Entity candidate)
+            {
+                using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+                var derivative = Functions.PartialFractions.Bare(Pinned(candidate))
+                    .Replace(node => node is Powf(Powf(var radicand, Number.Rational root), Number.Integer power)
+                        && root.ERational.Numerator.Equals(EInteger.One) && root.ERational.Denominator.Equals(power.EInteger) ? radicand : node)
+                    .Differentiate(x);
+                return points.All(pair => Functions.PartialFractions.HoldsAtSampledPoints(derivative, pinnedIntegrand, x, pair));
+            }
+            if (Holds(answer))
+                return (answer, null);
+            if (positives.Count == 1)
+            {
+                var signed = MathS.Signum(Written(positives[0])) * answer;
+                // The integrand without a value at each real root of the restriction: 0/0 there.
+                var partsTheDomain = realRoots.Where(root => root.OfARestriction)
+                    .All(root => pinnedIntegrand.Substitute(x, root.Root).Evaled is Number.Complex { IsFinite: false });
+                if (partsTheDomain && Holds(signed))
+                    return (signed, null);
+            }
+            return (answer, condition);
         }
 
         /// <summary>
