@@ -105,7 +105,7 @@ namespace AngouriMath.Functions
         {
             var terms = new Dictionary<ulong, ERational>();
             if (!value.IsZero)
-                terms[0] = value.ToLowestTerms();
+                terms[0] = value.InLowestTerms();
             return new(variableCount, terms);
         }
 
@@ -177,7 +177,7 @@ namespace AngouriMath.Functions
                     into[monomial] = value;
                 return;
             }
-            var sum = existing.Add(value).ToLowestTerms();
+            var sum = existing.Add(value).InLowestTerms();
             if (sum.IsZero)
                 into.Remove(monomial);
             else
@@ -194,7 +194,7 @@ namespace AngouriMath.Functions
                 {
                     if (!TryMultiplyMonomials(left.Key, right.Key, VariableCount, out var monomial))
                         return null;
-                    Accumulate(result, monomial, left.Value.Multiply(right.Value).ToLowestTerms());
+                    Accumulate(result, monomial, left.Value.Multiply(right.Value).InLowestTerms());
                     if (result.Count > maxTerms)
                         return null;
                 }
@@ -231,7 +231,7 @@ namespace AngouriMath.Functions
                 return Zero(VariableCount);
             var result = new Dictionary<ulong, ERational>(terms.Count);
             foreach (var term in terms)
-                result[term.Key] = term.Value.Multiply(factor).ToLowestTerms();
+                result[term.Key] = term.Value.Multiply(factor).InLowestTerms();
             return new(VariableCount, result);
         }
 
@@ -324,7 +324,7 @@ namespace AngouriMath.Functions
                 if (power == 0)
                     continue;
                 Accumulate(result, Without(term.Key, variable) | Pack(variable, power - 1),
-                    term.Value.Multiply(ERational.FromInt32(power)).ToLowestTerms());
+                    term.Value.Multiply(ERational.FromInt32(power)).InLowestTerms());
             }
             return new(VariableCount, result);
         }
@@ -347,7 +347,7 @@ namespace AngouriMath.Functions
                 return this;
             if (IsConstant)
             {
-                var value = ConstantValue.ToLowestTerms();
+                var value = ConstantValue.InLowestTerms();
                 if (value.Sign < 0)
                     return null;
                 var (above, below) = (value.Numerator.Sqrt(), value.Denominator.Sqrt());
@@ -443,7 +443,7 @@ namespace AngouriMath.Functions
                 // no later step can make it one -- so this is a "no" and not a "gave up".
                 if (!TryDivideMonomials(lead, divisorLead, VariableCount, out var monomial))
                     return null;
-                var value = rest.terms[lead].Divide(divisorValue).ToLowestTerms();
+                var value = rest.terms[lead].Divide(divisorValue).InLowestTerms();
                 quotient[monomial] = value;
                 if (divisor.MultiplyByTerm(monomial, value) is not { } product)
                 {
@@ -468,7 +468,7 @@ namespace AngouriMath.Functions
             {
                 if (!TryMultiplyMonomials(term.Key, monomial, VariableCount, out var product))
                     return null;
-                result[product] = term.Value.Multiply(value).ToLowestTerms();
+                result[product] = term.Value.Multiply(value).InLowestTerms();
             }
             return new(VariableCount, result);
         }
@@ -526,7 +526,7 @@ namespace AngouriMath.Functions
                 denominators = Lcm(denominators, term.Value.Denominator);
             var numerators = EInteger.Zero;
             foreach (var term in terms)
-                numerators = numerators.Gcd(
+                numerators = numerators.GreatestCommonDivisor(
                     term.Value.Numerator.Multiply(denominators.Divide(term.Value.Denominator)));
             if (numerators.IsZero)
                 return this;
@@ -536,7 +536,7 @@ namespace AngouriMath.Functions
             return ScaleBy(scale);
         }
 
-        private static EInteger Lcm(EInteger a, EInteger b) => a.Divide(a.Gcd(b)).Multiply(b);
+        private static EInteger Lcm(EInteger a, EInteger b) => a.Divide(a.GreatestCommonDivisor(b)).Multiply(b);
 
         internal bool SameAs(MultivariatePolynomial other)
         {
@@ -606,7 +606,7 @@ namespace AngouriMath.Functions
             var inverse = ERational.One.Divide(parsed.ConstantValue);
             var result = ERational.One;
             for (var i = 0; i < -power; i++)
-                result = result.Multiply(inverse).ToLowestTerms();
+                result = result.Multiply(inverse).InLowestTerms();
             return Constant(variables.Count, result);
         }
 

@@ -448,7 +448,7 @@ namespace AngouriMath
                 var denominator = EInteger.One;
                 foreach (var coefficient in rational)
                     denominator = coefficient.Denominator
-                        .Divide(coefficient.Denominator.Gcd(denominator)).Multiply(denominator);
+                        .Divide(coefficient.Denominator.GreatestCommonDivisor(denominator)).Multiply(denominator);
                 var whole = new EInteger[rational.Length];
                 for (var i = 0; i < whole.Length; i++)
                     whole[i] = rational[i].Numerator.Multiply(denominator.Divide(rational[i].Denominator));

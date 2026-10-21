@@ -414,7 +414,7 @@ namespace AngouriMath.Functions
             return candidates.Distinct();
         }
 
-        private static EInteger Lcm(EInteger a, EInteger b) => a.Divide(a.Gcd(b)).Multiply(b);
+        private static EInteger Lcm(EInteger a, EInteger b) => a.Divide(a.GreatestCommonDivisor(b)).Multiply(b);
 
         private static IEnumerable<EInteger> Divisors(EInteger n)
         {

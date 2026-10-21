@@ -135,7 +135,7 @@ namespace AngouriMath.Functions
                 return false;
             if (leading.CompareTo(ERational.One) != 0)
             {
-                var inverse = ERational.One.Divide(leading).ToLowestTerms();
+                var inverse = ERational.One.Divide(leading).InLowestTerms();
                 numerator = numerator.ScaleBy(inverse);
                 denominator = denominator.ScaleBy(inverse);
             }

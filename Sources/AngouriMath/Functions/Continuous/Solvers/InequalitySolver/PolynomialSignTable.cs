@@ -198,7 +198,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             if (degree == 1)
             {
-                var root = ERational.Create(factor[0].Negate(), factor[1]).ToLowestTerms();
+                var root = ERational.Create(factor[0].Negate(), factor[1]).InLowestTerms();
                 // The root is exact; its double is what the sample points are placed from,
                 // and a rational too large to be one at all would put them nowhere.
                 var approximation = root.ToDouble();
@@ -354,7 +354,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
         private static ERational Midpoint(double left, double right)
             => ERational.FromDouble(left).Add(ERational.FromDouble(right))
-                        .Divide(ERational.FromInt32(2)).ToLowestTerms();
+                        .Divide(ERational.FromInt32(2)).InLowestTerms();
 
         private static ERational Below(double leastRoot, ERational bound)
         {
@@ -381,7 +381,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 if (magnitude.CompareTo(greatest) > 0)
                     greatest = magnitude;
             }
-            return ERational.One.Add(ERational.Create(greatest, leading)).ToLowestTerms();
+            return ERational.One.Add(ERational.Create(greatest, leading)).InLowestTerms();
         }
 
         /// <summary>
@@ -393,10 +393,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var result = ERational.Zero;
             for (var power = poly.Degree; power >= 0; power--)
                 result = result.Multiply(point).Add(ERational.Create(poly[power], EInteger.One));
-            return result.ToLowestTerms();
+            return result.InLowestTerms();
         }
 
         private static EInteger Lcm(EInteger left, EInteger right)
-            => left.Divide(left.Gcd(right)).Multiply(right);
+            => left.Divide(left.GreatestCommonDivisor(right)).Multiply(right);
     }
 }

@@ -213,7 +213,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 ? new Entity[] { 0 } // x5 + x3 + x2 - common power is 2, one root is 0, then x3 + x + 1
                 : Enumerable.Empty<Entity>();
             var powers = monomialsByPower.Keys.ToList();
-            var gcdPower = powers.Aggregate((accumulate, current) => accumulate.Gcd(current));
+            var gcdPower = powers.Aggregate((accumulate, current) => accumulate.GreatestCommonDivisor(current));
             // // //
 
             if (gcdPower.IsZero)

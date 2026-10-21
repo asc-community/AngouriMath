@@ -56,14 +56,14 @@ namespace AngouriMath.Functions
                 return Zero;
             var trimmed = new ERational[length];
             for (var i = 0; i < length; i++)
-                trimmed[i] = coefficientsLowestFirst[i].ToLowestTerms();
+                trimmed[i] = coefficientsLowestFirst[i].InLowestTerms();
             return new(trimmed);
         }
 
         [ConstantField] internal static readonly RationalPolynomial Zero = new(NoCoefficients);
 
         internal static RationalPolynomial Constant(ERational value)
-            => value.IsZero ? Zero : new(new[] { value.ToLowestTerms() });
+            => value.IsZero ? Zero : new(new[] { value.InLowestTerms() });
 
         internal static RationalPolynomial One => Constant(ERational.One);
 
@@ -129,7 +129,7 @@ namespace AngouriMath.Functions
                 {
                     if (other.coefficients[j].IsZero)
                         continue;
-                    product[i + j] = product[i + j].Add(coefficients[i].Multiply(other.coefficients[j])).ToLowestTerms();
+                    product[i + j] = product[i + j].Add(coefficients[i].Multiply(other.coefficients[j])).InLowestTerms();
                 }
             }
             return Create(product);
@@ -170,11 +170,11 @@ namespace AngouriMath.Functions
             {
                 if (working[power].IsZero)
                     continue;
-                var factor = working[power].Divide(divisor.Leading).ToLowestTerms();
+                var factor = working[power].Divide(divisor.Leading).InLowestTerms();
                 quotientCoefficients[power - divisor.Degree] = factor;
                 for (var i = 0; i <= divisor.Degree; i++)
                     working[power - divisor.Degree + i] =
-                        working[power - divisor.Degree + i].Subtract(factor.Multiply(divisor[i])).ToLowestTerms();
+                        working[power - divisor.Degree + i].Subtract(factor.Multiply(divisor[i])).InLowestTerms();
             }
 
             quotient = Create(quotientCoefficients);

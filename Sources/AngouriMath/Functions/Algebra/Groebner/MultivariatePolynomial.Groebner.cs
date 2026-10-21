@@ -41,7 +41,7 @@ namespace AngouriMath.Functions
         {
             var built = new Dictionary<ulong, ERational>();
             if (!coefficient.IsZero)
-                built[monomial] = coefficient.ToLowestTerms();
+                built[monomial] = coefficient.InLowestTerms();
             return new(variableCount, built);
         }
 

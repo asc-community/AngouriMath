@@ -1849,13 +1849,13 @@ namespace AngouriMath.Functions
                 var common = EInteger.One;
                 for (var column = 0; column <= width; column++)
                 {
-                    var reduced = augmented[row][column].ToLowestTerms();
+                    var reduced = augmented[row][column].InLowestTerms();
                     augmented[row][column] = reduced;
-                    common = common.Multiply(reduced.Denominator).Divide(common.Gcd(reduced.Denominator));
+                    common = common.Multiply(reduced.Denominator).Divide(common.GreatestCommonDivisor(reduced.Denominator));
                 }
                 a[row] = new EInteger[width + 1];
                 for (var column = 0; column <= width; column++)
-                    a[row][column] = augmented[row][column].Multiply(ERational.FromEInteger(common)).ToLowestTerms().Numerator;
+                    a[row][column] = augmented[row][column].Multiply(ERational.FromEInteger(common)).InLowestTerms().Numerator;
             }
             var prime = EInteger.FromInt64(LiftingPrime);
             static long Mod(EInteger value, EInteger prime)
@@ -2032,7 +2032,7 @@ namespace AngouriMath.Functions
                     var sum = ERational.Zero;
                     for (var j = 0; j < rank; j++)
                         sum = sum.Add(solution[j].Multiply(ERational.FromEInteger(s[i][j])));
-                    holds = sum.Subtract(ERational.FromEInteger(t[i])).ToLowestTerms().IsZero;
+                    holds = sum.Subtract(ERational.FromEInteger(t[i])).InLowestTerms().IsZero;
                 }
                 if (holds)
                     break;
@@ -2047,14 +2047,14 @@ namespace AngouriMath.Functions
                 var sum = ERational.Zero;
                 for (var j = 0; j < rank; j++)
                     sum = sum.Add(solution[j].Multiply(ERational.FromEInteger(a[row][pivotColumns[j]])));
-                if (!sum.Subtract(ERational.FromEInteger(a[row][width])).ToLowestTerms().IsZero)
+                if (!sum.Subtract(ERational.FromEInteger(a[row][width])).InLowestTerms().IsZero)
                     return false;
             }
             values = new Entity[width];
             for (var column = 0; column < width; column++)
                 values[column] = Integer.Zero;
             for (var j = 0; j < rank; j++)
-                values[pivotColumns[j]] = Rational.Create(solution[j].ToLowestTerms());
+                values[pivotColumns[j]] = Rational.Create(solution[j].InLowestTerms());
             return true;
         }
 
@@ -2079,7 +2079,7 @@ namespace AngouriMath.Functions
             }
             if (t1.IsZero || t1.Abs().CompareTo(bound) > 0)
                 return false;
-            value = ERational.Create(t1.Sign < 0 ? r1.Negate() : r1, t1.Abs()).ToLowestTerms();
+            value = ERational.Create(t1.Sign < 0 ? r1.Negate() : r1, t1.Abs()).InLowestTerms();
             return true;
         }
 
@@ -2132,7 +2132,7 @@ namespace AngouriMath.Functions
                 // that is not grows with every row it is used against.
                 var pivotValue = augmented[rank][column];
                 for (var k = 0; k <= width; k++)
-                    augmented[rank][k] = augmented[rank][k].Divide(pivotValue).ToLowestTerms();
+                    augmented[rank][k] = augmented[rank][k].Divide(pivotValue).InLowestTerms();
                 for (var row = 0; row < rows; row++)
                 {
                     if (row == rank)
@@ -2141,7 +2141,7 @@ namespace AngouriMath.Functions
                     if (factor.IsZero)
                         continue;
                     for (var k = 0; k <= width; k++)
-                        augmented[row][k] = augmented[row][k].Subtract(factor.Multiply(augmented[rank][k])).ToLowestTerms();
+                        augmented[row][k] = augmented[row][k].Subtract(factor.Multiply(augmented[rank][k])).InLowestTerms();
                 }
                 pivotColumnOfRow[rank] = column;
                 rank++;
@@ -2153,7 +2153,7 @@ namespace AngouriMath.Functions
             for (var column = 0; column < width; column++)
                 values[column] = Integer.Zero;
             for (var row = 0; row < rank; row++)
-                values[pivotColumnOfRow[row]] = Rational.Create(augmented[row][width].ToLowestTerms());
+                values[pivotColumnOfRow[row]] = Rational.Create(augmented[row][width].InLowestTerms());
             return true;
         }
 

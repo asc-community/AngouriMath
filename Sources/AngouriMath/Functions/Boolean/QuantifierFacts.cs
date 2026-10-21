@@ -344,7 +344,7 @@ namespace AngouriMath.Functions.Boolean
                     Divf(_, Integer { EInteger: var by }) when !by.IsZero => by.Abs(),
                     _ => EInteger.One,
                 };
-                denominator = denominator.Divide(denominator.Gcd(divisor)).Multiply(divisor);
+                denominator = denominator.Divide(denominator.GreatestCommonDivisor(divisor)).Multiply(divisor);
             }
             if (denominator.Equals(EInteger.One))
                 return null;

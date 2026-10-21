@@ -221,7 +221,7 @@ namespace AngouriMath.Functions
         }
 
         private static EInteger Lcm(EInteger left, EInteger right)
-            => left.Divide(left.Gcd(right)).Multiply(right);
+            => left.Divide(left.GreatestCommonDivisor(right)).Multiply(right);
 
         /// <summary>
         /// Reading each exponent back as one digit of the numeral — or <see langword="null"/>

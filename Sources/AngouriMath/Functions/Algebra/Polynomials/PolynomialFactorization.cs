@@ -222,7 +222,7 @@ namespace AngouriMath.Functions
             if (FactorPrimitive(primitive) is not { } parts)
                 return null;
 
-            return new Factorization(ERational.Create(content, denominator).ToLowestTerms(), parts);
+            return new Factorization(ERational.Create(content, denominator).InLowestTerms(), parts);
         }
 
         /// <summary>
@@ -577,7 +577,7 @@ namespace AngouriMath.Functions
             return true;
         }
 
-        private static EInteger Lcm(EInteger a, EInteger b) => a.Divide(a.Gcd(b)).Multiply(b);
+        private static EInteger Lcm(EInteger a, EInteger b) => a.Divide(a.GreatestCommonDivisor(b)).Multiply(b);
 
         /// <summary>A polynomial written as a rational constant times powers of irreducibles.</summary>
         internal readonly struct Factorization

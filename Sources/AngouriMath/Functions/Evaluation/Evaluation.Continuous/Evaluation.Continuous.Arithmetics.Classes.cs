@@ -839,12 +839,12 @@ namespace AngouriMath
                     (a, b) => (a, b) switch
                     {
                         // gcd is non-negative by convention, and gcd(0, n) is |n|.
-                        (Integer l, Integer r) => Integer.Create(l.EInteger.Gcd(r.EInteger)),
+                        (Integer l, Integer r) => Integer.Create(l.EInteger.GreatestCommonDivisor(r.EInteger)),
                         // gcd(a/b, c/d) = gcd(a, c) / lcm(b, d) -- which is what SymPy gives,
                         // so gcd(1/2, 1/3) is 1/6 rather than an error.
                         (Rational l, Rational r) => Rational.Create(
-                            l.Numerator.EInteger.Gcd(r.Numerator.EInteger),
-                            l.Denominator.EInteger / l.Denominator.EInteger.Gcd(r.Denominator.EInteger) * r.Denominator.EInteger),
+                            l.Numerator.EInteger.GreatestCommonDivisor(r.Numerator.EInteger),
+                            l.Denominator.EInteger / l.Denominator.EInteger.GreatestCommonDivisor(r.Denominator.EInteger) * r.Denominator.EInteger),
                         var (l, r) when l == r => l,
                         // The polynomial case is left to the node: PolynomialGcd already
                         // computes one for the cancellation rule, and wiring it in here is
@@ -867,14 +867,14 @@ namespace AngouriMath
                         // the only common multiple there is.
                         (Integer l, Integer r) => l.EInteger.IsZero || r.EInteger.IsZero
                             ? Integer.Zero
-                            : Integer.Create((l.EInteger * r.EInteger).Abs() / l.EInteger.Gcd(r.EInteger)),
+                            : Integer.Create((l.EInteger * r.EInteger).Abs() / l.EInteger.GreatestCommonDivisor(r.EInteger)),
                         // lcm(a/b, c/d) = lcm(a, c) / gcd(b, d), the mirror of the gcd's rule and
                         // what SymPy gives: lcm(1/2, 1/3) is 1.
                         (Rational l, Rational r) => l.Numerator.EInteger.IsZero || r.Numerator.EInteger.IsZero
                             ? Integer.Zero
                             : Rational.Create(
-                                (l.Numerator.EInteger * r.Numerator.EInteger).Abs() / l.Numerator.EInteger.Gcd(r.Numerator.EInteger),
-                                l.Denominator.EInteger.Gcd(r.Denominator.EInteger)),
+                                (l.Numerator.EInteger * r.Numerator.EInteger).Abs() / l.Numerator.EInteger.GreatestCommonDivisor(r.Numerator.EInteger),
+                                l.Denominator.EInteger.GreatestCommonDivisor(r.Denominator.EInteger)),
                         var (l, r) when l == r => l,
                         _ => null
                     },

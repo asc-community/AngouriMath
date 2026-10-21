@@ -192,7 +192,7 @@ namespace AngouriMath
             /// </code>
             /// </example>
             public static Integer GreatestCommonDivisor(Integer a, Integer b)
-                => a.EInteger.Gcd(b.EInteger);
+                => a.EInteger.GreatestCommonDivisor(b.EInteger);
 
         }
 

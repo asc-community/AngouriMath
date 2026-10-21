@@ -390,7 +390,7 @@ namespace AngouriMath.Functions
                 return null;
             // s k + e = 0 mod m: solvable where g = gcd(s, m) divides e, and then k is one class
             // modulo m / g, found by trying its members.
-            var g = s.EInteger.Gcd(m);
+            var g = s.EInteger.GreatestCommonDivisor(m);
             if (!e.EInteger.Remainder(g).IsZero)
                 return (EInteger.Zero, EInteger.Zero);
             var classModulus = m.Divide(g);
@@ -408,7 +408,7 @@ namespace AngouriMath.Functions
         /// </summary>
         private static (EInteger Residue, EInteger Modulus)? Combined(EInteger r1, EInteger m1, EInteger r2, EInteger m2)
         {
-            var combined = m1.Divide(m1.Gcd(m2)).Multiply(m2);
+            var combined = m1.Divide(m1.GreatestCommonDivisor(m2)).Multiply(m2);
             if (combined.CompareTo(EInteger.FromInt32(MaxModulus)) > 0)
                 return null;
             for (var t = r1; t.CompareTo(combined) < 0; t = t.Add(m1))

@@ -164,7 +164,7 @@ namespace AngouriMath.Functions
             var (bWhole, bFactors) = Factors(b);
             if (aWhole.IsZero || bWhole.IsZero)
                 return (Times(a, b), b, a);
-            var whole = aWhole.Abs().Divide(aWhole.Abs().Gcd(bWhole.Abs())).Multiply(bWhole.Abs());
+            var whole = aWhole.Abs().Divide(aWhole.Abs().GreatestCommonDivisor(bWhole.Abs())).Multiply(bWhole.Abs());
             var common = new List<(Entity Base, EInteger Power)>(aFactors);
             foreach (var (@base, power) in bFactors)
             {

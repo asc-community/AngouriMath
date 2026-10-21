@@ -298,7 +298,7 @@ namespace AngouriMath
         public static EInteger Lcm(this EInteger bigintFirst, EInteger bigintSecond) =>
             bigintFirst.IsZero && bigintSecond.IsZero
             ? EInteger.Zero
-            : bigintFirst.Abs().Divide(bigintFirst.Gcd(bigintSecond)).Multiply(bigintSecond.Abs());
+            : bigintFirst.Abs().Divide(bigintFirst.GreatestCommonDivisor(bigintSecond)).Multiply(bigintSecond.Abs());
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Combination"/>, equivalent to nCr
         /// or <a href="https://en.wikipedia.org/wiki/Binomial_coefficient"/></summary>
