@@ -735,6 +735,9 @@ namespace AngouriMath.Functions.Algebra
             // seconds there, and over `(3 - x - 10x^2)^(5/2)` it takes half of one.
             // A linear below the cube root of a quadratic, in closed form where Rubi has one.
             if ((answer = IndefiniteIntegralSolver.SolveALinearBelowACubeRootOfAQuadraticInClosedForm(expr, x)) is { }) return answer;
+            // And over the cube root of a quadratic beside another about the same axis, in the
+            // variable that takes the linear terms away: Rubi's 1.2.1.6 pseudo-elliptic 232 is 231 there.
+            if ((answer = IndefiniteIntegralSolver.SolveOverTheCubeRootOfAQuadraticBesideAnotherAboutOneAxis(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveTwoLinearsToOnePowerAsOneQuadratic(expr, x, integrateByParts)) is { }) return answer;
             // A linear and a quadratic to one power as one binomial, `(1 + x) (1 - x + x^2)` as
             // `1 + x^3`, which the rules for a power of a binomial answer.
@@ -996,6 +999,10 @@ namespace AngouriMath.Functions.Algebra
             // where Chebyshev's third case is a whole number at most 0: by Rubi's reduction, which
             // the rule above does not read for a power on its own or past the first step.
             if ((answer = IndefiniteIntegralSolver.SolveABinomialInTheThirdCaseWithASymbolicExponent(expr, x)) is { }) return answer;
+            // And a sum of powers of x times a power with a symbol in it of a linear in a root of x,
+            // or of its square, the derivative of that power times the linear and powers of the
+            // root where the terms' remainders cancel: Rubi's 1.2.3.2 `Q^p/x^2 - K Q^p/x`.
+            if ((answer = IndefiniteIntegralSolver.SolveASumOfPowersOfXTimesAPowerOfALinearInARootOfX(expr, x)) is { }) return answer;
             // Powers of two linears whose exponents sum to a whole number below -2, beside a polynomial of
             // low degree, by t = L1/L2: a power of t beside a polynomial. The rule above reads the sum -2.
             if ((answer = IndefiniteIntegralSolver.SolveTwoLinearPowersWhoseExponentsSumToAWholeNumber(expr, x)) is { }) return answer;
