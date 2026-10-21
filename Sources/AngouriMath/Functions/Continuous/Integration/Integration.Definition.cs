@@ -773,6 +773,10 @@ namespace AngouriMath.Functions.Algebra
             // A power of a linear that is not whole, times a linear, over a whole power of a quadratic,
             // the power of the quadratic lowered one at a time.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfALinearOverAPowerOfAQuadratic(expr, x, integrateByParts)) is { }) return answer;
+            // A power of x below -1 over a high whole power of a symbolic binomial, the power of x
+            // raised to -1 or more: before the next, which reads x as a linear beside the quadratic,
+            // and the partial fractions, which ran out the budget on `1/(x^6 (a + b x^2)^10)`.
+            if ((answer = IndefiniteIntegralSolver.SolveANegativePowerOfXOverAWholePowerOfABinomialByRaisingThePowerOfX(expr, x, integrateByParts)) is { }) return answer;
             // A rational function over a whole power of a symbolic quadratic, the power lowered one
             // at a time, before the partial fractions take the quadratic apart over its roots.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOverAPowerOfASymbolicQuadratic(expr, x, integrateByParts)) is { }) return answer;
@@ -1461,6 +1465,9 @@ namespace AngouriMath.Functions.Algebra
             // apart where its residue, the radicand at its root, is zero.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingALinearBelowTheBarOverTheRadicand(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByEulerSubstitution(expr, x)) is { }) return answer;
+            // And a root over the root of a quadratic, or over the roots of two linears with one
+            // slope, in the variable that rationalises the roots inside: `sqrt(1 - x^2 + x sqrt(x^2 - 1))`.
+            if ((answer = IndefiniteIntegralSolver.SolveANestedRootByRationalisingTheRootsInIt(expr, x, integrateByParts)) is { }) return answer;
             // And a root of a palindromic quartic, which is a root of a quadratic in x -+ 1/x:
             // Charlwood's `(1 + x^2)/((1 - x^2) sqrt(1 + x^4))` is `-du/(u sqrt(u^2 + 2))`.
             if ((answer = IndefiniteIntegralSolver.SolveByReciprocalSubstitution(expr, x)) is { }) return answer;
@@ -1606,6 +1613,14 @@ namespace AngouriMath.Functions.Algebra
             // A rational function of x and ln(x) over distinct linears in the logarithm, by partial
             // fractions in it, where nothing has answered it whole: `(2 L^2 - L - x^2)/(L^3 - x^2 L)`.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOfTheLogarithmByPartialFractionsInIt(expr, x, integrateByParts)) is { }) return answer;
+            // A power of x below -1 beside a root of a binomial and a rational function of its
+            // power, the pole at zero taken out by the reduction raising the power of x. Last:
+            // the rules above answer the shapes they share with it in other spellings, and the
+            // cube-root ansatz stops at the ninth degree of `1/(x^3 (1 - x^3)^(2/3) (1 + x^3))`.
+            if ((answer = IndefiniteIntegralSolver.SolveANegativePowerOfXBesideARootOfABinomialByRaisingThePowerOfX(expr, x, integrateByParts)) is { }) return answer;
+            // And a product of powers that is the derivative of one with symbolic exponents, its
+            // constant read at a point where the quotient of the brackets does not simplify free of x.
+            if ((answer = IndefiniteIntegralSolver.SolveAsTheDerivativeOfAProductOfPowersReadAtAPoint(expr, x, integrateByParts)) is { }) return answer;
             // An arcoth of a linear as its artanh plus a constant, last of all, so that every arcoth
             // answered as written keeps that answer: `acoth(x)^2/(1 - x^2)^2` is
             // `(atanh(x) + K)^2/(1 - x^2)^2` with `K = acoth(x) - atanh(x)`, constant where it is
