@@ -2146,6 +2146,19 @@ is written in closed form. A quadratic that factors over linears is left to the 
 | `"(f + g*x)/((d + k*x)^2*(a + b*x + c*x^2)^3)".ToEntity().Integrate("x")` | `integral(...)` | 21,943 characters |
 | `"(A + B*x + C*x^2)/((d + k*x)^3*(a + c*x^2)^3)".ToEntity().Integrate("x")` | `integral(...)` | 25,201 characters |
 
+### A power of x beside a high power of a binomial in x^2 is left to the binomial rules
+
+**Shorter answers.** The rule above took a power of x off `1/(x^4 (a + b x^2)^10)`, Rubi's 1.1.2.2, four times, over ten
+levels of its recurrence each, and the answer's like terms were never gathered. Beside a power of x past the second
+and a binomial in `x^2` to the sixth power or past it, it now declines, as it already did where the integrand is odd,
+and the rules for `x^m (a + b x^2)^p` answer it. Beside `x^2` the two are a trade, shorter there at four times the
+cost, and it is left as it was ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(x^4*(a+b*x^2)^10)".ToEntity().Integrate("x")` | `integral(...)`; 75,607 characters on the unreleased master | 8,559 characters |
+| `"1/(x^6*(a+b*x^2)^8)".ToEntity().Integrate("x")` | `integral(...)`; 33,638 characters on the unreleased master | 6,063 characters |
+
 ### An odd power of a quadratic's derivative over a power of the quadratic is integrated in the quadratic
 
 **Shorter answers, and answers where there were none.** `(b + 2c x)^9/(a + b x + c x^2)^3` was answered through the

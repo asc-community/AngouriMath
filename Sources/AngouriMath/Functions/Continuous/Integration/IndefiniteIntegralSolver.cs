@@ -25984,14 +25984,19 @@ namespace AngouriMath.Functions.Algebra
             // a second and ten levels of this ran past the budget.
             if (Functions.PartialFractions.HoldsTheImaginaryUnit(quadratic) || linear is null && VanishesIdentically(a1))
                 return null;
-            // Nor beside a power of x where the integrand is odd and the power of the quadratic high:
-            // it is then x times a function of x^2, the substitution's under u = x^2, and peeling
-            // fifteen powers of x off `(b + 2 c x^2)/(x^15 (b + c x^2)^8)` here ran past the budget,
-            // where in u it is two linears. An even one, and a low power, are left here, where they
-            // were answered.
+            // Nor beside a power of x where the power of the quadratic is high. Odd, the integrand is
+            // x times a function of x^2, the substitution's under u = x^2, and peeling fifteen powers
+            // of x off `(b + 2 c x^2)/(x^15 (b + c x^2)^8)` here ran past the budget, where in u it is
+            // two linears. Even, and peeled past the second power of x, it is the binomial rules'
+            // `x^m (a + b x^2)^p`: peeled here four times over ten levels of the recurrence, Rubi's
+            // 1.1.2.2 `1/(x^4 (a + b x^2)^10)` came back in 75,607 characters, its like terms never
+            // gathered, and the binomial rules write 8,559. Beside `x^2` the two are a trade, shorter
+            // there at four times the cost, and it stays here. A low power is left here, where it was
+            // answered.
             if (linear is not null && power >= 6 && VanishesIdentically(a1) && TreeAnalyzer.TryGetPolyLinear(linear, x, out _, out var interceptOfTheLinear)
                 && VanishesIdentically(interceptOfTheLinear)
-                && top.Keys.All(degree => degree.IsEven != (linearPower % 2 == 0)))
+                && (top.Keys.All(degree => degree.IsEven != (linearPower % 2 == 0))
+                    || linearPower >= 3 && top.Keys.All(degree => degree.IsEven == (linearPower % 2 == 0))))
                 return null;
             // A quadratic that factors over linears is the partial fractions' to take apart, and
             // they do it cheaply: `(d + e x)^10/((d + e x) (a e + c d x))^4`, written out, went from
