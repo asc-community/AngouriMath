@@ -1036,6 +1036,24 @@ namespace AngouriMath.Functions
                 if (!TreeAnalyzer.TryGetPolynomial(quadraticFactor, x, out var quadratic) || !quadratic.ContainsKey(EInteger.FromInt32(2)))
                     return false;
                 var leading = quadratic[EInteger.FromInt32(2)];
+                // A repeated quadratic over the rationals whose roots are Gaussian rationals, the
+                // tangent's `1 + u^2`, by its residues at one root: Newton's iteration below takes
+                // the symbols of the other factors through every round, and Rubi's
+                // `sin(x)^6/(a + b tan(x))^2`, `u^6/((1 + u^2)^4 (a + b u)^2)` under the tangent,
+                // ran past thirty seconds in it.
+                // https://github.com/asc-community/AngouriMath/issues/233
+                if (multiplicity > 1 && OverTheGaussianRoots(numerator, factors, written, quadratic, multiplicity, x) is { } overThePowers)
+                {
+                    // Over `leading^i Q^(j-i)` as the digits below are, for the same answer.
+                    for (var power = multiplicity; power >= 1; power--)
+                    {
+                        var below = multiplicity - power;
+                        var scale = below > 0 && leading != Integer.One ? (below == 1 ? leading : MathS.Pow(leading, below)) : Integer.One;
+                        if (OverAPowerOfTheQuadratic(overThePowers[power - 1].P, overThePowers[power - 1].Q, quadraticFactor, power, scale, x) is { } term)
+                            sum += term;
+                    }
+                    continue;
+                }
                 var s = InLowestTermsOverTheSymbols((quadratic.TryGetValue(EInteger.One, out var q1) ? q1 : Integer.Zero) / leading);
                 var t = InLowestTermsOverTheSymbols((quadratic.TryGetValue(EInteger.Zero, out var q0) ? q0 : Integer.Zero) / leading);
                 // The numerators over the powers of the quadratic are the digits of
@@ -1072,26 +1090,12 @@ namespace AngouriMath.Functions
                     var (p, q) = digits[i];
                     if (p.Nodes.Any(node => node == MathS.NaN) || q.Nodes.Any(node => node == MathS.NaN))
                         return false;
-                    Entity over = q == Integer.Zero ? p : p == Integer.Zero ? q * x : p + q * x;
-                    if (over == Integer.Zero)
-                        continue;
                     // The digits are of `N/others` in powers of the monic quadratic `Q/leading`,
                     // and `1/(Q/leading)^(j-i)` is `leading^(j-i)/Q^(j-i)`, so over `Q` itself the
                     // `i`th digit stands over `leading^i Q^(j-i)`.
-                    // Written with the coefficients' common denominator in front: left inside,
-                    // `(P/D + Q x/D)/(1 + x^2)` was combined into one quotient over `D (1 + x^2)`,
-                    // a quadratic with symbols in every coefficient, and integrated as a
-                    // piecewise on the sign of its discriminant.
-                    var (pAbove, pBelow) = SingleQuotient.Of(p);
-                    var (qAbove, qBelow) = SingleQuotient.Of(q);
-                    var (above, below) = pBelow == qBelow
-                        ? (pAbove + qAbove * x, pBelow)
-                        : (pAbove * qBelow + qAbove * pBelow * x, pBelow * qBelow);
-                    var remaining = multiplicity - i;
-                    Entity under = remaining == 1 ? quadraticFactor : MathS.Pow(quadraticFactor, remaining);
-                    if (i > 0 && leading != Integer.One)
-                        below *= i == 1 ? leading : MathS.Pow(leading, i);
-                    sum += below == Integer.One ? above / under : MathS.Pow(below, Integer.MinusOne) * (above / under);
+                    var scale = i > 0 && leading != Integer.One ? (i == 1 ? leading : MathS.Pow(leading, i)) : Integer.One;
+                    if (OverAPowerOfTheQuadratic(p, q, quadraticFactor, multiplicity - i, scale, x) is { } term)
+                        sum += term;
                 }
             }
 
@@ -1099,6 +1103,274 @@ namespace AngouriMath.Functions
                 return false;
             decomposition = sum / constant;
             return true;
+        }
+
+        /// <summary>
+        /// <c>(p + q x)/(scale Q^power)</c> for the written quadratic <c>Q</c>, with the
+        /// coefficients' common denominator in front; null where the numerator is zero.
+        /// </summary>
+        private static Entity? OverAPowerOfTheQuadratic(Entity p, Entity q, Entity quadraticFactor, int power, Entity scale, Variable x)
+        {
+            Entity over = q == Integer.Zero ? p : p == Integer.Zero ? q * x : p + q * x;
+            if (over == Integer.Zero)
+                return null;
+            // Written with the coefficients' common denominator in front: left inside,
+            // `(P/D + Q x/D)/(1 + x^2)` was combined into one quotient over `D (1 + x^2)`,
+            // a quadratic with symbols in every coefficient, and integrated as a
+            // piecewise on the sign of its discriminant.
+            var (pAbove, pBelow) = SingleQuotient.Of(p);
+            var (qAbove, qBelow) = SingleQuotient.Of(q);
+            var (above, below) = pBelow == qBelow
+                ? (pAbove + qAbove * x, pBelow)
+                : (pAbove * qBelow + qAbove * pBelow * x, pBelow * qBelow);
+            Entity under = power == 1 ? quadraticFactor : MathS.Pow(quadraticFactor, power);
+            if (scale != Integer.One)
+                below *= scale;
+            return below == Integer.One ? above / under : MathS.Pow(below, Integer.MinusOne) * (above / under);
+        }
+
+        /// <summary>
+        /// The numerators <c>p + q x</c> over <c>l^(k - m) Q^m</c>, <c>l</c> the leading
+        /// coefficient and <c>k</c> the <paramref name="multiplicity"/>, for <c>m</c> from one to
+        /// <c>k</c> at index <c>m - 1</c>, of the block at
+        /// <c>Q^multiplicity</c> -- the written factor <paramref name="written"/> -- of
+        /// <paramref name="numerator"/> over the product of <paramref name="factors"/>, where
+        /// <c>Q</c> is a quadratic over the rationals with the roots <c>r = ρ + σ i</c> and its
+        /// conjugate, <c>ρ</c> and <c>σ</c> rational. Null where <c>Q</c> is not such a
+        /// quadratic, or a side does not read as a polynomial over the rationals in the symbols.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The residue formula at the root: with <c>Q^k = l^k (x - r)^k (x - r̄)^k</c>, the
+        /// coefficient <c>c_j</c> of <c>1/(x - r)^j</c> is the <c>(k - j)</c>th Taylor coefficient
+        /// at <c>r</c> of <c>N/(R l^k (x - r̄)^k)</c>, <c>R</c> the other factors, which is the
+        /// quotient of two series in <c>x - r</c> -- one division per order. The coefficients
+        /// at <c>r̄</c> are the conjugates: conjugation fixes the rationals in the symbols and so
+        /// fixes <c>N/D</c>, which holds as polynomial identities whatever the symbols are. So
+        /// the block is <c>Σ 2 Re(c_j (x - r̄)^j)/M^j</c> for the monic <c>M = Q/l</c>, and each
+        /// numerator, written in powers of <c>M</c>, gives its digits to the powers below it.
+        /// </para>
+        /// <para>
+        /// Over the Gaussian rationals as pairs of polynomials, the unit a variable <c>j</c>
+        /// with <c>j^2 = -1</c> read off as the parity of its power: every order of the series
+        /// is a pair over a power of the norm of the series' leading term, and nothing is put in
+        /// lowest terms until the last coefficient. The digits of <c>(x - r̄)^j</c> in powers of
+        /// <c>M</c> are numbers.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        private static (Entity P, Entity Q)[]? OverTheGaussianRoots(
+            Entity numerator, List<(Entity Factor, int Degree)> factors, Entity written,
+            Dictionary<EInteger, Entity> quadratic, int multiplicity, Variable x)
+        {
+            ERational? Read(int degree)
+                => !quadratic.TryGetValue(EInteger.FromInt32(degree), out var read) ? ERational.Zero
+                : read.Evaled is Rational rational ? rational.ERational : null;
+            if (quadratic.Keys.Any(degree => degree.Sign < 0 || degree.CompareTo(EInteger.FromInt32(2)) > 0)
+                || Read(2) is not { } leading || leading.IsZero || Read(1) is not { } linear || Read(0) is not { } free)
+                return null;
+            // M = x^2 + s x + t = (x - ρ)^2 + σ^2.
+            var s = linear.Divide(leading).ToLowestTerms();
+            var t = free.Divide(leading).ToLowestTerms();
+            var rho = s.Negate().Divide(ERational.FromInt32(2)).ToLowestTerms();
+            var sigmaSquared = t.Subtract(rho.Multiply(rho)).ToLowestTerms();
+            if (sigmaSquared.Sign <= 0)
+                return null;
+            var (sigmaAbove, sigmaBelow) = (sigmaSquared.Numerator.Sqrt(), sigmaSquared.Denominator.Sqrt());
+            if (!sigmaAbove.Multiply(sigmaAbove).Equals(sigmaSquared.Numerator) || !sigmaBelow.Multiply(sigmaBelow).Equals(sigmaSquared.Denominator))
+                return null;
+            var sigma = ERational.Create(sigmaAbove, sigmaBelow);
+
+            // Both sides at x = r + o, the unit named: x - r̄ is o + 2σ i there.
+            Entity nameSource = numerator;
+            foreach (var (factor, _) in factors)
+                nameSource += factor;
+            var offset = Variable.CreateUnique(nameSource, "o");
+            var unit = Variable.CreateUnique(nameSource + offset, "j");
+            var at = Rational.Create(rho) + Rational.Create(sigma) * unit + offset;
+            Entity rest = MathS.Pow(offset + Rational.Create(sigma.Multiply(ERational.FromInt32(2))) * unit, multiplicity);
+            if (leading.CompareTo(ERational.One) != 0)
+                rest *= MathS.Pow(Rational.Create(leading), multiplicity);
+            // Each side over one bar first, the bars free of x going to the other side: a linear
+            // made monic is `a/b + x`, and a quotient of symbols is no polynomial to the reader.
+            Entity shifted = Integer.One;
+            bool TakeIn(Entity side, bool above)
+            {
+                var (sideBase, sidePower) = side is Powf(var raised, Integer { EInteger.Sign: > 0 } times) && times.EInteger.CanFitInInt32()
+                    ? (raised, times.EInteger.ToInt32Unchecked()) : (side, 1);
+                var (overOneBar, under) = SingleQuotient.Of(SingleQuotient.Combine(sideBase).InnerSimplified);
+                if (under.ContainsNode(x))
+                    return false;
+                var inOffset = MathS.Pow(Bare(overOneBar).Substitute(x, at), sidePower);
+                if (above)
+                    shifted *= inOffset;
+                else
+                    rest *= inOffset;
+                if (under != Integer.One)
+                {
+                    if (above)
+                        rest *= MathS.Pow(under, sidePower);
+                    else
+                        shifted *= MathS.Pow(under, sidePower);
+                }
+                return true;
+            }
+            if (!TakeIn(numerator, above: true))
+                return null;
+            foreach (var (other, _) in factors)
+                if (other != written && !TakeIn(other, above: false))
+                    return null;
+            var variables = shifted.Vars.Concat(rest.Vars).Distinct().OrderBy(v => v.Name, System.StringComparer.Ordinal).ToArray();
+            if (variables.Length > MultivariatePolynomial.MaxVariables || variables.Contains(x))
+                return null;
+            var indices = new Dictionary<Variable, int>(variables.Length);
+            for (var i = 0; i < variables.Length; i++)
+                indices[variables[i]] = i;
+            if (MultivariatePolynomial.TryParse(shifted, indices) is not { } top || MultivariatePolynomial.TryParse(rest, indices) is not { } bottom)
+                return null;
+            var zero = MultivariatePolynomial.Zero(variables.Length);
+            (MultivariatePolynomial Re, MultivariatePolynomial Im)[] TaylorCoefficients(MultivariatePolynomial polynomial)
+            {
+                var byPower = polynomial.CoefficientsIn(indices[offset]);
+                var coefficients = new (MultivariatePolynomial, MultivariatePolynomial)[multiplicity];
+                for (var order = 0; order < multiplicity; order++)
+                    coefficients[order] = byPower.TryGetValue(order, out var atOrder) ? RealAndImaginaryParts(atOrder, indices[unit]) : (zero, zero);
+                return coefficients;
+            }
+            const int largest = 4096;
+            (MultivariatePolynomial, MultivariatePolynomial)? Times((MultivariatePolynomial Re, MultivariatePolynomial Im) left, (MultivariatePolynomial Re, MultivariatePolynomial Im) right)
+                => left.Re.Multiply(right.Re, largest) is { } rr && left.Im.Multiply(right.Im, largest) is { } ii
+                   && left.Re.Multiply(right.Im, largest) is { } ri && left.Im.Multiply(right.Re, largest) is { } ir
+                    ? (rr.Subtract(ii), ri.Add(ir)) : null;
+            var above = TaylorCoefficients(top);
+            var below = TaylorCoefficients(bottom);
+            // A root the other factors share is not this block's alone.
+            var (leadRe, leadIm) = below[0];
+            if (leadRe.IsZero && leadIm.IsZero)
+                return null;
+            var conjugate = (leadRe, leadIm.ScaleBy(ERational.FromInt32(-1)));
+            if (leadRe.Multiply(leadRe, largest) is not { } leadReSquared || leadIm.Multiply(leadIm, largest) is not { } leadImSquared)
+                return null;
+            // The series of N/(R l^k (x - r̄)^k) at r is S_m/norm^(m + 1), order m, with
+            // S_m = (A_m norm^m - Σ B_n S_(m-n) norm^(n-1)) conj(B_0).
+            var norm = leadReSquared.Add(leadImSquared);
+            var normPowers = new MultivariatePolynomial[multiplicity + 1];
+            normPowers[0] = MultivariatePolynomial.One(variables.Length);
+            for (var power = 1; power <= multiplicity; power++)
+                if (normPowers[power - 1].Multiply(norm, largest) is { } next)
+                    normPowers[power] = next;
+                else
+                    return null;
+            var series = new (MultivariatePolynomial Re, MultivariatePolynomial Im)[multiplicity];
+            for (var order = 0; order < multiplicity; order++)
+            {
+                if (above[order].Re.Multiply(normPowers[order], largest) is not { } valueRe || above[order].Im.Multiply(normPowers[order], largest) is not { } valueIm)
+                    return null;
+                (MultivariatePolynomial Re, MultivariatePolynomial Im) value = (valueRe, valueIm);
+                for (var n = 1; n <= order; n++)
+                {
+                    if (Times(below[n], series[order - n]) is not var (productRe, productIm)
+                        || productRe.Multiply(normPowers[n - 1], largest) is not { } scaledRe || productIm.Multiply(normPowers[n - 1], largest) is not { } scaledIm)
+                        return null;
+                    value = (value.Re.Subtract(scaledRe), value.Im.Subtract(scaledIm));
+                }
+                if (Times(value, conjugate) is not var (seriesRe, seriesIm))
+                    return null;
+                series[order] = (seriesRe, seriesIm);
+            }
+
+            // (x - r̄)^j = ((x - ρ) + σ i)^j, by its real and imaginary parts, lowest power first.
+            var binomial = new (ERational Re, ERational Im)[] { (ERational.One, ERational.Zero) };
+            var real = new ERational[multiplicity + 1][];
+            var imaginary = new ERational[multiplicity + 1][];
+            for (var j = 1; j <= multiplicity; j++)
+            {
+                var next = new (ERational Re, ERational Im)[binomial.Length + 1];
+                for (var m = 0; m < next.Length; m++)
+                    next[m] = (ERational.Zero, ERational.Zero);
+                for (var m = 0; m < binomial.Length; m++)
+                {
+                    // times x, and times -ρ + σ i
+                    next[m + 1] = (next[m + 1].Re.Add(binomial[m].Re), next[m + 1].Im.Add(binomial[m].Im));
+                    next[m] = (next[m].Re.Add(binomial[m].Re.Multiply(rho.Negate())).Subtract(binomial[m].Im.Multiply(sigma)),
+                        next[m].Im.Add(binomial[m].Im.Multiply(rho.Negate())).Add(binomial[m].Re.Multiply(sigma)));
+                }
+                binomial = next;
+                real[j] = binomial.Select(c => c.Re.ToLowestTerms()).ToArray();
+                imaginary[j] = binomial.Select(c => c.Im.ToLowestTerms()).ToArray();
+            }
+
+            // The digits in powers of M: c_j (x - r)^(-j) and its conjugate are 2 Re(c_j (x - r̄)^j)/M^j,
+            // and the i-th digit of that numerator stands over M^(j - i), which is l^(j - i)/Q^(j - i),
+            // written l^k/(l^(k - j + i) Q^(j - i)) as the digits of Newton's iteration are.
+            // Every c_j is over norm^(k - j + 1), and is put over norm^k.
+            var numerators = new (MultivariatePolynomial Constant, MultivariatePolynomial Slope)[multiplicity + 1];
+            for (var m = 1; m <= multiplicity; m++)
+                numerators[m] = (zero, zero);
+            for (var j = 1; j <= multiplicity; j++)
+            {
+                var (cRe, cIm) = series[multiplicity - j];
+                if (cRe.Multiply(normPowers[j - 1], largest) is not { } overRe || cIm.Multiply(normPowers[j - 1], largest) is not { } overIm)
+                    return null;
+                var realDigits = DigitsOverTheMonicQuadratic(real[j], s, t);
+                var imaginaryDigits = DigitsOverTheMonicQuadratic(imaginary[j], s, t);
+                for (var i = 0; 2 * i <= j; i++)
+                {
+                    var m = j - i;
+                    var scale = ERational.FromInt32(2).Multiply(Power(leading, multiplicity));
+                    var (re0, re1) = i < realDigits.Count ? realDigits[i] : (ERational.Zero, ERational.Zero);
+                    var (im0, im1) = i < imaginaryDigits.Count ? imaginaryDigits[i] : (ERational.Zero, ERational.Zero);
+                    numerators[m] = (
+                        numerators[m].Constant.Add(overRe.ScaleBy(scale.Multiply(re0))).Subtract(overIm.ScaleBy(scale.Multiply(im0))),
+                        numerators[m].Slope.Add(overRe.ScaleBy(scale.Multiply(re1))).Subtract(overIm.ScaleBy(scale.Multiply(im1))));
+                }
+            }
+            var denominator = MathS.Pow(norm.ToEntity(variables), multiplicity);
+            var result = new (Entity P, Entity Q)[multiplicity];
+            for (var m = 1; m <= multiplicity; m++)
+            {
+                var p = numerators[m].Constant.IsZero ? Integer.Zero : InLowestTermsOverTheSymbols(numerators[m].Constant.ToEntity(variables) / denominator);
+                var q = numerators[m].Slope.IsZero ? Integer.Zero : InLowestTermsOverTheSymbols(numerators[m].Slope.ToEntity(variables) / denominator);
+                if (p.ContainsNode(x) || q.ContainsNode(x) || p.ContainsNode(unit) || q.ContainsNode(unit) || p.ContainsNode(offset) || q.ContainsNode(offset))
+                    return null;
+                result[m - 1] = (p, q);
+            }
+            return result;
+        }
+
+        /// <summary><paramref name="value"/> to the whole power <paramref name="exponent"/>.</summary>
+        private static ERational Power(ERational value, int exponent)
+        {
+            var result = ERational.One;
+            for (var k = 0; k < exponent; k++)
+                result = result.Multiply(value).ToLowestTerms();
+            return result;
+        }
+
+        /// <summary>
+        /// The digits <c>(r0, r1)</c>, lowest first, of the polynomial over the rationals with
+        /// <paramref name="coefficients"/>, lowest power first, in powers of the monic quadratic
+        /// <c>x^2 + s x + t</c>.
+        /// </summary>
+        private static List<(ERational, ERational)> DigitsOverTheMonicQuadratic(ERational[] coefficients, ERational s, ERational t)
+        {
+            var digits = new List<(ERational, ERational)>();
+            var current = (ERational[])coefficients.Clone();
+            while (current.Length > 0)
+            {
+                var remainder = (ERational[])current.Clone();
+                var quotient = new ERational[System.Math.Max(0, current.Length - 2)];
+                for (var k = current.Length - 1; k >= 2; k--)
+                {
+                    var coefficient = remainder[k];
+                    quotient[k - 2] = coefficient;
+                    remainder[k - 1] = remainder[k - 1].Subtract(coefficient.Multiply(s)).ToLowestTerms();
+                    remainder[k - 2] = remainder[k - 2].Subtract(coefficient.Multiply(t)).ToLowestTerms();
+                }
+                digits.Add((remainder[0], remainder.Length > 1 ? remainder[1] : ERational.Zero));
+                current = quotient;
+            }
+            return digits;
         }
 
         /// <summary>

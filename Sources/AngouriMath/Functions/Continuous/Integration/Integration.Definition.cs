@@ -1105,6 +1105,11 @@ namespace AngouriMath.Functions.Algebra
             // among the coefficients, split over the quadratic's two roots: under the
             // half-angle it is a quartic in t with a symbol in every coefficient.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOfASineOverASymbolicQuadratic(expr, x, integrateByParts)) is { }) return answer;
+            // And of the sine over written powers of linears in it, one with a symbolic root cubed,
+            // split in the sine itself: under the half-angle that linear is a symbolic quadratic in
+            // t, and the split of its cube took the budget. Before the substitution search, which
+            // with a shifted argument asked it again in its own variable and spent the budget.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOfASineOverPowersOfLinearsInIt(expr, x, integrateByParts)) is { }) return answer;
             // And over a binomial in a higher power of it, over the binomial's roots.
             if ((answer = IndefiniteIntegralSolver.SolveAReciprocalOfABinomialInAPowerOfASineOverItsRoots(expr, x)) is { }) return answer;
             // Fractional powers of `a ± a sin(y)` beside anything rational in the sine and
