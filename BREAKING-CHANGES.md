@@ -7316,6 +7316,35 @@ written back is the argument's, which is that of `x` only for a positive slope a
 | `"asec(x)^2/(x*sqrt(x^2 - 1))".ToEntity().Integrate("x")` | `integral(...)` | the same |
 | `"asec(x + 3)^2/((x + 3)*sqrt((x + 3)^2 - 1))".ToEntity().Integrate("x")` | `integral(...)` | right for `x > -2` and for `x < -4` |
 
+### An answer through a root taken real holds where a second root makes the integrand real
+
+**Answers where there were none.** An integrand real where a radicand is negative, a second root
+being imaginary there too, was integrated through the root of that radicand as a non-negative real
+`u`, and the answer said `provided` the radicand is not negative: under `u = sqrt(tan(c + d x))` for
+`sqrt(cot(c + d x)) (a + b tan(c + d x))^(5/2) (A + B tan(c + d x))`, twenty-five more of Rubi's
+4.3.3.1 and twelve of its 4.3.2.1, and under `u = sqrt(w - 1)`, `w = x^2`, for the remainder by parts
+leaves from Timofeev's `arcsec(x) sqrt(x^2 - 1)/x^4` and `arcsec(x)/(x^2 - 1)^(5/2)`. On the
+unreleased master these said nothing where `tan(c + d x) < -a/b`, or on `0 < x < 1`, though each
+integrand is real there; 2.5.0 declined them. The answer is measured there now, its derivative
+against the integrand at a spread of points where the radicand is negative, the symbols pinned to
+four patterns of signs. These hold where the integrand is real and not where it is imaginary, so
+beside one other half-odd root the condition is that either radicand has its sign,
+`provided tan(c + d x) >= 0 or a + b tan(c + d x) <= 0`, the integrand's real domain; for the
+arcsecants it is `x^2 - 1 >= 0 or (x^2)^2 - x^2 <= 0`, true for every real `x`. An answer that also
+holds at every point measured where the integrand is imaginary carries no condition. One that differs
+where the integrand is real keeps the old one, and so does one whose integrand is real nowhere beyond
+the radicand's zero, which is not measured: Bondarenko's `sqrt(x + sqrt(1 + x))/(1 + x^2)` keeps
+`provided 1 + x >= 0`, though its answer, a sum over the roots of an octic, holds beyond `x = -1` as a
+complex function ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"asec(x)*sqrt(-1 + x^2)/x^4".ToEntity().Integrate("x")` | `integral(...)` | 212 characters, `provided x^2 - 1 >= 0 or (x^2)^2 - x^2 <= 0` |
+| `"asec(x)/(-1 + x^2)^(5/2)".ToEntity().Integrate("x")` | `integral(...)` | 506 characters, the same condition twice |
+| `"sqrt(cot(c + d*x))*sqrt(a + b*tan(c + d*x))".ToEntity().Integrate("x")` | `integral(...)` | 523 characters, `provided tan(c + d x) >= 0 or a + b tan(c + d x) <= 0` |
+| `"sqrt(a + b*tan(c + d*x))*(A + B*tan(c + d*x))/tan(c + d*x)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 1,067 characters, the same and `not a = 0` |
+| `"sqrt(cot(c + d*x))*(a + b*tan(c + d*x))^(5/2)*(A + B*tan(c + d*x))".ToEntity().Integrate("x")` | past twenty seconds | 2,767 characters, the same |
+
 ### `x^(4k - 1) (a + b arcsec(c x))/sqrt(1 - c^4 x^4)` and the arccosecant's are integrated on both sides of `|c x| = 1`
 
 **Answers where there were none.** Rubi's 5.5.1 and 5.6.1 `x^(4k - 1) (a + b arcsec(c x))/sqrt(1 - c^4 x^4)`

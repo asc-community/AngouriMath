@@ -14296,7 +14296,12 @@ namespace AngouriMath.Functions.Algebra
             if (Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is not { } result)
                 return null;
             var back = result.Substitute(u, MathS.Pow(radicalBase, Number.Rational.Create(1, q)));
-            return condition is null ? back : back.Provided(condition);
+            // Beside a second root the integrand can be real where this radicand is negative, and
+            // the condition was the whole of its domain there: the remainder parts leaves from
+            // Timofeev's `arcsec(x) sqrt(x^2 - 1)/x^4`, in `w = x^2`, is
+            // `(w - 1)^(3/2)/(sqrt(w^2 - w) w^2)`, real on `0 < w < 1`, where the answer through an
+            // imaginary u holds. So the condition stays only where the answer does not hold there.
+            return condition is null ? back : ConditionedOnTheRadicand(back, expr, radicalBase, x);
         }
 
         /// <summary>
@@ -41274,6 +41279,63 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <paramref name="answer"/>, an antiderivative of <paramref name="expr"/> through the root of
+        /// <paramref name="radicand"/> taken as a non-negative real, conditioned on the radicand only
+        /// as far as that is owed. Beside a second even root the integrand can be real where the
+        /// radicand is negative, a product of two imaginary roots, and there the answer is measured:
+        /// where it holds at every point the condition is not owed at all, and where it holds just
+        /// where the integrand is real, beside one other root of a half-odd power, the condition is
+        /// the radicand's or the other's negative, which is where the integrand is real.
+        /// </summary>
+        /// <remarks>
+        /// The answers to <c>sqrt(cot(c + d x)) (a + b tan(c + d x))^(5/2) (A + B tan(c + d x))</c>, to
+        /// twenty-five more of Rubi's 4.3.3.1 and to twelve of its 4.3.2.1, as
+        /// <c>sqrt(cot(c + d x)) sqrt(a + b tan(c + d x))</c>, said <c>provided tan(c + d x) &gt;= 0</c>, and those to
+        /// Timofeev's <c>arcsec(x) sqrt(x^2 - 1)/x^4</c> and <c>arcsec(x)/(x^2 - 1)^(5/2)</c>
+        /// <c>provided x^2 - 1 &gt;= 0</c>, each nothing at all on part of the line where the
+        /// integrand is real; each holds there as it stands.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        private static Entity ConditionedOnTheRadicand(Entity answer, Entity expr, Entity radicand, Entity.Variable x)
+        {
+            var condition = radicand >= Number.Integer.Zero;
+            if (!HoldsAnEvenRootBesides(expr, radicand, x))
+                return answer.Provided(condition);
+            switch (Functions.PartialFractions.WhereTheDerivativeHoldsBeyondTheRadicand(answer, expr, radicand, x))
+            {
+                case Functions.PartialFractions.BeyondTheRadicand.Everywhere:
+                    return answer;
+                case Functions.PartialFractions.BeyondTheRadicand.WhereTheIntegrandIsReal
+                    when TheOneOtherRadicandOfAHalfOddPower(expr, radicand, x) is { } other:
+                    return answer.Provided(condition | other <= Number.Integer.Zero);
+                default:
+                    return answer.Provided(condition);
+            }
+        }
+
+        /// <summary>
+        /// The one base other than <paramref name="radicand"/> under a power of
+        /// <paramref name="expr"/> that is not whole, where every such power is half-odd; else null.
+        /// </summary>
+        private static Entity? TheOneOtherRadicandOfAHalfOddPower(Entity expr, Entity radicand, Entity.Variable x)
+        {
+            Entity? other = null;
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not Powf(var @base, Number.Rational power) || power is Number.Integer || !@base.ContainsNode(x))
+                    continue;
+                if (!power.ERational.Denominator.Equals(EInteger.FromInt32(2)))
+                    return null;
+                if (@base == radicand)
+                    continue;
+                if (other is not null && other != @base)
+                    return null;
+                other = @base;
+            }
+            return other;
+        }
+
+        /// <summary>
         /// Whether every function of <paramref name="u"/> in <paramref name="expr"/> is its tangent
         /// or its cotangent: sums, products, quotients and powers of those, and of anything free of
         /// <paramref name="u"/>.
@@ -41693,9 +41755,13 @@ namespace AngouriMath.Functions.Algebra
                         // `-2 u^2 (1 + 1/u^2)^(5/2)/sqrt(1 - u^4)`, whose power of a quotient was
                         // taken apart as `(1 + u^2)^(5/2)/|u|^5`, and was answered wrongly
                         // wherever the cosine is negative. So the answer is conditioned on the
-                        // radicand, as the factoring below conditions its own.
+                        // radicand, as the factoring below conditions its own -- unless the answer
+                        // is measured to hold where the radicand is negative and the integrand real:
+                        // `sqrt(a + b t)/(t^(1/2) (1 + t^2))` under `u = sqrt(t)` holds beyond
+                        // `t = -a/b`, and the condition left Rubi's `sqrt(cot(c + d x)) (a + b tan(c + d x))^(5/2)`
+                        // and the rest of its 4.3.3.1 with half its domain.
                         if (asTheRoot != resultInU)
-                            return Functions.PartialFractions.Bare(asTheRoot).Substitute(uSub, u).Provided(rootOf >= Number.Integer.Zero);
+                            return ConditionedOnTheRadicand(Functions.PartialFractions.Bare(asTheRoot).Substitute(uSub, u), expr, rootOf, x);
                         // And a rule below can take u real without reading its sign: `sqrt(u^4)`
                         // written as `u^2` is the other root wherever u is imaginary. That matters
                         // only where the integrand is real with the radicand negative, which takes
@@ -41735,9 +41801,10 @@ namespace AngouriMath.Functions.Algebra
                     // is imaginary and the identities the factoring used do not hold, so the
                     // answer is conditioned on the radicand, as the linear-radical substitution
                     // conditions its own. https://github.com/asc-community/AngouriMath/issues/718
+                    // And where the integrand is real with the radicand negative, held beside a second
+                    // root, the answer is kept there where it is measured to hold.
                     if (u is Powf(var radicand, Number.Rational root) && root.ERational.Denominator.IsEven)
-                        return Functions.PartialFractions.Bare(forPositiveU).Substitute(uSub, u)
-                            .Provided(radicand >= Number.Integer.Zero);
+                        return ConditionedOnTheRadicand(Functions.PartialFractions.Bare(forPositiveU).Substitute(uSub, u), expr, radicand, x);
                     if (ExtendedByParity(integrandInU, forPositiveU, uSub) is { } onBothSides)
                         return onBothSides.Substitute(uSub, u);
                 }

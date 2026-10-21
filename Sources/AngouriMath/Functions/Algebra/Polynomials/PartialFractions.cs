@@ -3064,6 +3064,161 @@ namespace AngouriMath.Functions
         }
 
         /// <summary>
+        /// Where the derivative of <paramref name="antiderivative"/> is shown to be
+        /// <paramref name="integrand"/> on the part of the line where <paramref name="radicand"/> is
+        /// negative: at every point there of a spread along the line, compared as complex numbers,
+        /// or at every point there where the integrand is real; at two points or more where it is
+        /// real, and nowhere that it is real does it differ or have no value. An answer built
+        /// through the root of the radicand as a real <c>u</c> -- a sign of <c>u</c> read as one,
+        /// <c>sqrt(u^2 w)</c> as <c>u sqrt(w)</c> -- was conditioned on the radicand for that, and
+        /// beside a second root imaginary there the integrand is real there too:
+        /// <c>sqrt(a + b t)/t^(3/2)</c> for <c>t &lt; -a/b</c>, a product of two imaginary roots.
+        /// Whether the identities still hold there depends on the signs, so it is measured rather
+        /// than assumed: <c>(1 + sec(x))^(5/2) sqrt(cos(x))</c> under <c>u = sqrt(cos(x))</c> was the
+        /// integrand's negative wherever the cosine is negative, and <c>sqrt(a + b t)/t^(3/2)</c>
+        /// under <c>u = sqrt(t)</c> is its antiderivative beyond <c>t = -a/b</c> and not between
+        /// <c>-a/b</c> and 0, where the integrand is imaginary.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The other symbols are pinned as <see cref="DerivativeHoldsAtSampledPoints"/> pins them, and
+        /// again with each of three patterns of signs, since the region and the identities both move
+        /// with them. A pattern counts only where the answer holds at a point where the radicand is
+        /// positive: an answer that is not one for those signs at all says nothing of this region.
+        /// </para>
+        /// <para>
+        /// Nothing is differentiated where the integrand is real at no point beyond the radicand's
+        /// zero: the condition is then the integrand's real domain already, or more, and measuring
+        /// the answer off it buys nothing on the real line. Bondarenko's
+        /// <c>sqrt(x + sqrt(1 + x))/(1 + x^2)</c> is such a one, its answer a sum over the roots of
+        /// an octic, and measured at the fifteen points it cost twice the integral's allocation to
+        /// show it holds beyond <c>x = -1</c> as a complex function. Off the real line the points are
+        /// compared until one differs.
+        /// </para>
+        /// </remarks>
+        internal static BeyondTheRadicand WhereTheDerivativeHoldsBeyondTheRadicand(Entity antiderivative, Entity integrand, Entity radicand, Variable x)
+        {
+            // Differentiated and evaluated at fifteen points for each of four patterns, an answer of
+            // a hundred thousand characters is a search of its own; it keeps its condition.
+            if (antiderivative.Complexity > LargestAnswerMeasuredBeyondTheRadicand)
+                return BeyondTheRadicand.NotShown;
+            using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+            var parameters = antiderivative.Vars.Concat(integrand.Vars).Concat(radicand.Vars).Where(v => v != x).Distinct().ToList();
+            // Each pattern once for the symbols there are: none, and the four are one. The points of
+            // each sorted first, which asks the integrand and the radicand alone.
+            var measured = new List<(Entity Antiderivative, Entity Integrand, List<Entity> Before, List<Entity> RealBeyond, List<Entity> ComplexBeyond)>();
+            foreach (var pattern in SignPatterns.Where(pattern => parameters.Count > 1 || pattern == 0 || parameters.Count == 1 && pattern == 1))
+            {
+                var (pinnedAntiderivative, pinnedIntegrand, pinnedRadicand) = (Bare(antiderivative), integrand, radicand);
+                for (var k = 0; k < parameters.Count; k++)
+                {
+                    var fraction = (k % 3) switch { 0 => "1.37", 1 => "2.71", _ => "0.83" };
+                    var magnitude = EDecimal.FromString(fraction).Add(EDecimal.FromInt32(k));
+                    var negative = pattern switch { 1 => k % 2 == 0, 2 => k % 2 == 1, 3 => true, _ => false };
+                    Entity value = Real.Create(negative ? magnitude.Negate() : magnitude);
+                    pinnedAntiderivative = pinnedAntiderivative.Substitute(parameters[k], value);
+                    pinnedIntegrand = pinnedIntegrand.Substitute(parameters[k], value);
+                    pinnedRadicand = pinnedRadicand.Substitute(parameters[k], value);
+                }
+                // In double intervals, which are cheap beside the decimals: a point either cannot tell
+                // is passed over.
+                var (before, realBeyond, complexBeyond) = (new List<Entity>(), new List<Entity>(), new List<Entity>());
+                foreach (var at in AlongTheLine)
+                {
+                    var point = Real.Create(EDecimal.FromString(at));
+                    if (IntervalEvaluation.Of(pinnedIntegrand.Substitute(x, point)) is not { IsFinite: true } value
+                        || IntervalEvaluation.Of(pinnedRadicand.Substitute(x, point)) is not { IsFinite: true, IsReal: true } radicandValue
+                        || radicandValue.Re.ContainsZero)
+                        continue;
+                    var isReal = value.Im.Magnitude <= 1e-9 * System.Math.Max(1, value.Magnitude);
+                    if (radicandValue.Re.Low > 0)
+                    {
+                        if (isReal)
+                            before.Add(point);
+                    }
+                    else
+                        (isReal ? realBeyond : complexBeyond).Add(point);
+                }
+                measured.Add((pinnedAntiderivative, pinnedIntegrand, before, realBeyond, complexBeyond));
+            }
+            if (!measured.Any(pattern => pattern.RealBeyond.Count > 0))
+                return BeyondTheRadicand.NotShown;
+
+            var inDecimals = new System.Lazy<PreciseEvaluation>[] { new(() => PreciseEvaluation.In(40)), new(() => PreciseEvaluation.In(80)) };
+            // The derivative of a pattern's answer, where it holds at a point before the zero.
+            var derivatives = new Entity?[measured.Count];
+            var controlled = new bool[measured.Count];
+            Entity? Controlled(int i)
+            {
+                if (controlled[i])
+                    return derivatives[i];
+                controlled[i] = true;
+                var (pinnedAntiderivative, pinnedIntegrand, before, _, _) = measured[i];
+                var derivative = Bare(pinnedAntiderivative).Differentiate(x);
+                return derivatives[i] = before.Any(point => Agree(derivative.Substitute(x, point), pinnedIntegrand.Substitute(x, point), 1e-9, inDecimals) is true)
+                    ? derivative : null;
+            }
+            var real = 0;
+            for (var i = 0; i < measured.Count; i++)
+            {
+                if (measured[i].RealBeyond.Count == 0 || Controlled(i) is not { } derivative)
+                    continue;
+                foreach (var point in measured[i].RealBeyond)
+                {
+                    if (Agree(derivative.Substitute(x, point), measured[i].Integrand.Substitute(x, point), 1e-9, inDecimals) is not true)
+                        return BeyondTheRadicand.NotShown;
+                    real++;
+                }
+            }
+            if (real < 2)
+                return BeyondTheRadicand.NotShown;
+            for (var i = 0; i < measured.Count; i++)
+            {
+                if (measured[i].ComplexBeyond.Count == 0 || Controlled(i) is not { } derivative)
+                    continue;
+                foreach (var point in measured[i].ComplexBeyond)
+                    if (Agree(derivative.Substitute(x, point), measured[i].Integrand.Substitute(x, point), 1e-9, inDecimals) is not true)
+                        return BeyondTheRadicand.WhereTheIntegrandIsReal;
+            }
+            return BeyondTheRadicand.Everywhere;
+        }
+
+        /// <summary>
+        /// What <see cref="WhereTheDerivativeHoldsBeyondTheRadicand"/> shows of an answer where the
+        /// radicand is negative.
+        /// </summary>
+        internal enum BeyondTheRadicand
+        {
+            /// <summary>Nothing: it differs where the integrand is real, too few points compared, or the integrand is real at none beyond the zero.</summary>
+            NotShown,
+            /// <summary>It holds where the integrand is real, and differs somewhere it is not.</summary>
+            WhereTheIntegrandIsReal,
+            /// <summary>It holds at every point compared, the integrand real there or not.</summary>
+            Everywhere,
+        }
+
+        /// <summary>
+        /// The largest answer, by <see cref="Entity.Complexity"/>, that
+        /// <see cref="WhereTheDerivativeHoldsBeyondTheRadicand"/> measures; the answers it was
+        /// written for are a few thousand characters.
+        /// </summary>
+        private const int LargestAnswerMeasuredBeyondTheRadicand = 20000;
+
+        /// <summary>
+        /// The signs of the pinned symbols: all positive, alternating either way, all negative.
+        /// </summary>
+        [ConstantField]
+        private static readonly int[] SignPatterns = { 0, 1, 2, 3 };
+
+        /// <summary>
+        /// A spread of points for <see cref="WhereTheDerivativeHoldsBeyondTheRadicand"/>, on both
+        /// sides of zero and of one, near and far.
+        /// </summary>
+        [ConstantField]
+        private static readonly string[] AlongTheLine =
+            { "-7.3", "-3.1", "-1.61", "-0.83", "-0.47", "-0.19", "0.13", "0.29", "0.53", "0.77", "0.94", "1.43", "2.3", "3.17", "6.1" };
+
+        /// <summary>
         /// Whether <paramref name="antiderivative"/> has no value at any of the points
         /// <see cref="HoldsAtSampledPoints"/> takes by default where <paramref name="integrand"/> has
         /// one, with the symbols pinned as it pins them: a conditional answer whose every condition
