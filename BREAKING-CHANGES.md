@@ -5587,6 +5587,28 @@ below are one indeterminate. Rubi's 7.5.1 and 7.6.1
 | `"x^2 * asech(c * x)".ToEntity().Integrate("x")` | `integral(...)`, the same | an antiderivative |
 | `"x / sqrt(1 + 1/(c*x)^2)".ToEntity().Integrate("x")` | `integral(x / sqrt(1 + 1 / (c * x) ^ 2), x)` | an antiderivative, `provided c^2 > 0` |
 
+### The sign and the modulus of an expression in roots are differentiated where the roots are real
+
+**Answers where there were none.** The derivative of `sgn(f)` and of `abs(f)` was left unevaluated
+wherever `f` is not real on the whole line, and a root of anything that can be negative is not.
+Where `f` is real wherever the bases of its roots are positive, the derivative is a piecewise now:
+the real-line rule, `0` and `sgn(f) f'`, where every such base is positive, and the derivative left
+as written elsewhere, since there a root is imaginary and `sgn(z) = z/|z|` turns with `z`. The
+antiderivatives of Rubi's `x^(-1 - 3n/2) (b x^n)^(3/2)`, `sqrt(1 + x + sqrt(1 + x))` and
+`(x - 4)/((1 + x^(1/3)) sqrt(x))` carry such a sign, and differentiating them back had a value
+nowhere. Three answers built under `u = sqrt(1 + x)` or `u = sqrt(x)` lose the
+`provided 1 + x >= 0` that was attached for want of a derivative to compare where the integrand
+is real; `sqrt(1 + x + sqrt(1 + x))` keeps the condition of the answer in `u` in its place, 26
+characters longer on the unreleased master
+([#1186](https://github.com/asc-community/AngouriMath/issues/1186)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sgn(sqrt(1 + x) + 1/2)".ToEntity().Differentiate("x")` | `derivative(sgn(sqrt(1 + x) + 1/2), x)` | `piecewise(0 provided (1 + x > 0 and not sqrt(1 + x) + 1/2 = 0), (derivative(sgn(sqrt(1 + x) + 1/2), x)) provided True)` |
+| `"abs(sqrt(x) - 1)".ToEntity().Differentiate("x")` | `derivative(abs(sqrt(x) - 1), x)` | `sgn(sqrt(x) - 1) * 1/2 * x ^ (-1/2)` where `x > 0` and `sqrt(x) - 1` is not `0`, the derivative as written elsewhere |
+| `"sgn(x^(1/3))".ToEntity().Differentiate("x")` | `derivative(sgn(x ^ (1/3)), x)` | `0` where `x > 0`, the derivative as written elsewhere |
+| `"1/sqrt(x + sqrt(1 + x))".ToEntity().Integrate("x")` | `integral(...)` | 268 characters; 290, with `provided 1 + x >= 0`, on the unreleased master |
+
 ### A conditional expression is differentiated where its condition holds
 
 **Answers where there were none.** `F provided P` is differentiated with `P` known to hold, and

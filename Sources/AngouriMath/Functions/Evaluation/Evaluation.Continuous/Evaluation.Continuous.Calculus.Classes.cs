@@ -58,8 +58,14 @@ namespace AngouriMath
                         // simplifies each pass, so asking it would simplify the very
                         // Derivativef this is deciding about and arrive back here unchanged.
                         // https://github.com/asc-community/AngouriMath/issues/1002
+                        //
+                        // Nor where the derivative comes back holding this very node: the sign
+                        // of sqrt(x) - 1 is flat where x > 0 and unevaluated elsewhere, a
+                        // piecewise whose second case is this node, and simplifying that case
+                        // would ask again without end.
                         (var expr, Variable var, int asInt)
                             when expr.InnerDifferentiate(var, asInt) is var res and not Derivativef
+                            && !res.ContainsNode(new Derivativef(expr, var, asInt))
                             => Core.Binding.Written(var, res.InnerSimplified(isExact)),
                         (var expr, Variable var, int asInt) => null,
                         (Application, _, _) => null,
