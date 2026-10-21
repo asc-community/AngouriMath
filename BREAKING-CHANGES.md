@@ -741,6 +741,41 @@ power, and the integrand is answered in a fraction of a second
 | `"csch(c+d*x)*(a+b*sinh(c+d*x)^4)^2".ToEntity().Integrate("x")` | past fifteen minutes | 426 characters |
 | `"csch(c+d*x)*(a+b*sinh(c+d*x)^4)^3".ToEntity().Integrate("x")` | past fifteen minutes | 646 characters |
 
+### Hyperbolic integrands are read through `cosh^2 = (1 + i sinh)(1 - i sinh)`, a symbolic power's own variable, and a phase
+
+**Answers where there were none, and shorter ones.** Rows of these shapes in Rubi's 6.1.1 and 6.7.1 were declined or ran
+out of time. Each is answered now through an identity of the hyperbolic functions that the substitutions did not use
+([#233](https://github.com/asc-community/AngouriMath/issues/233)):
+- `(g + f x)^m cosh(c + d x)^k/(a + i a sinh(c + d x))` and its `sinh^k` rows. `cosh^2 = (1 + i sinh)(1 - i sinh)`, so
+  the numerator divides by the denominator, leaving a polynomial and a constant over it.
+- `1/(sech(x) ± i tanh(x))^4`. It is `cosh(x)^4/(1 ± i sinh(x))^4`, which the same identity cancels to
+  `(1 ∓ i sinh(x))^2/(1 ± i sinh(x))^2`. Only `cosh^(2m)` over `(1 ± i sinh)^(2m)` and the other way up: cancelling
+  where a polynomial or another power of the binomial is left made other answers longer.
+- A symbolic power of `sinh`, `cosh`, `sech` or `csch` beside an odd power of the other function, with `tanh` and
+  `coth` read as quotients. `cosh(a + b x)^3 sinh(a + b x)^n` is integrated under `u = sinh`, and
+  `sech(a + b x)^n tanh(a + b x)^3` under `u = sech`. The power of `csch` stays a power of `u`, because it is not
+  `sinh^(-n)` where the sine is negative.
+- `(cosh(x) coth(x))^(3/2)` and `(csch(x) + sinh(x))^(3/2)`. Both are `(cosh(x)^2/sinh(x))^(3/2)`, which is
+  `cosh(x)^3 sinh(x)^(-3/2)` times a constant on each side of zero, odd in the cosine.
+- Half-odd powers of `S = b cosh(x) + c sinh(x) ± sqrt(b^2 - c^2)`. With `T = b sinh(x) + c cosh(x)` and `a` the
+  constant term, `d/dx (T S^(n - 1)) = n S^n - a (2n - 1) S^(n - 1)` steps the power to `±1/2`. The whole powers stay
+  the exponential substitution's, which writes them shorter.
+
+2.5.0 declined or ran out of time on all of the inputs below. The unreleased master answered some of them, and
+those answers are now two to twelve times shorter: `(sech(x) + i tanh(x))^2` and `^4` were 437 and 2,916
+characters, and `1/(sech(x) + i tanh(x))^2` and `^4` were 372 and 551.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(g+f*x)*cosh(c+d*x)^2/(a+i*a*sinh(c+d*x))".ToEntity().Integrate("x")` | `integral(...)` | 366 characters |
+| `"cosh(a+b*x)^3*sinh(a+b*x)^n".ToEntity().Integrate("x")` | `integral(...)` | 149 characters |
+| `"sech(a+b*x)^n*tanh(a+b*x)^3".ToEntity().Integrate("x")` | past two minutes | 183 characters |
+| `"coth(a+b*x)^3*csch(a+b*x)^n".ToEntity().Integrate("x")` | past a minute | 242 characters |
+| `"(cosh(x)*coth(x))^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 247 characters |
+| `"1/sqrt(b*cosh(x)+c*sinh(x)+sqrt(b^2-c^2))".ToEntity().Integrate("x")` | `integral(...)` | 409 characters |
+| `"1/(sech(x)+i*tanh(x))^4".ToEntity().Integrate("x")` | `integral(...)` | 241 characters |
+| `"(sech(x)+i*tanh(x))^4".ToEntity().Integrate("x")` | `integral(...)`, after 54 seconds | 251 characters, where the unreleased master gave 2,916 |
+
 ### A power of a polynomial whose leading coefficient is zero spelled otherwise is not divided by it
 
 **Answers where there were none.** `1/((a (1 + x^2))^2 - (a (1 - x^2))^2)^3` was left unevaluated. That is
