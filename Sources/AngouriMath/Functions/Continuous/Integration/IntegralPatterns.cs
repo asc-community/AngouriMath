@@ -819,8 +819,8 @@ namespace AngouriMath.Functions.Algebra
         /// <summary>
         /// The arm that a piecewise on a sign owes a quadratic off the real line, answered by
         /// <paramref name="form"/> wherever one of <paramref name="coefficients"/> is not real;
-        /// <see langword="null"/> where none of them holds the imaginary unit, and the sign arms
-        /// are left to decide.
+        /// <see langword="null"/> where none of them holds the imaginary unit or an even root of a
+        /// symbol, and the sign arms are left to decide.
         /// </summary>
         /// <remarks>
         /// The sign arms choose between forms by which is real where the integrand is, and off
@@ -834,17 +834,42 @@ namespace AngouriMath.Functions.Algebra
         /// came back as minus its integrand below -2. The arctangent and the logarithm use nothing about their root but
         /// <c>sqrt(q)^2 = q</c>, and are antiderivatives off the real line as well.
         /// https://github.com/asc-community/AngouriMath/issues/1598
+        /// <para>
+        /// An even root of a symbol leaves the real line as the imaginary unit does, on half of the
+        /// symbol's values: <c>1/(b (c + d x)^2 + sqrt(-a))</c> has the discriminant
+        /// <c>4 sqrt(-a) b d^2</c>, imaginary for every <c>a &gt; 0</c>, and was answered with
+        /// nothing there, an antiderivative of a function with one. Rubi's 1.3.1. An odd root is
+        /// real here, <c>(-8)^(1/3) = -2</c>, and is left to the sign arms, and so is a root seen
+        /// only squared: the discriminant of <c>a b - b^2 x^2 - x sqrt(b^2 - 4 a b^3)</c> holds
+        /// <c>sqrt(b^2 - 4 a b^3)^2</c>, and is real.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
         /// </remarks>
         private static Entity.Providedf? ArmOffTheRealLine(Entity form, params Entity[] coefficients)
         {
             Entity? offTheRealLine = null;
             foreach (var coefficient in coefficients)
-                if (coefficient.InnerSimplified.Nodes.Any(node => node is Entity.Number.Complex number && !number.ImaginaryPart.EDecimal.IsZero))
+            {
+                var simplified = coefficient.InnerSimplified;
+                if (simplified.Nodes.Any(node => node is Entity.Number.Complex number && !number.ImaginaryPart.EDecimal.IsZero)
+                    || AnEvenRootOfASymbolNotSquared(simplified))
                     offTheRealLine = offTheRealLine is null
                         ? !coefficient.In(AngouriMath.Core.Domain.Real)
                         : offTheRealLine | !coefficient.In(AngouriMath.Core.Domain.Real);
+            }
             return offTheRealLine is null ? null : new Entity.Providedf(form, offTheRealLine);
         }
+
+        // An even root of something with a symbol in it, anywhere but as the base of an even power.
+        private static bool AnEvenRootOfASymbolNotSquared(Entity expr) => expr switch
+        {
+            Entity.Powf(var root, Entity.Number.Integer { EInteger.IsEven: true }) when IsAnEvenRootOfASymbol(root) => false,
+            _ when IsAnEvenRootOfASymbol(expr) => true,
+            _ => expr.DirectChildren.Any(AnEvenRootOfASymbolNotSquared),
+        };
+
+        private static bool IsAnEvenRootOfASymbol(Entity expr)
+            => expr is Entity.Powf(var radicand, Entity.Number.Rational { ERational.Denominator.IsEven: true }) && radicand.Vars.Any();
 
         /// <summary>
         /// ∫ (px + q)/(ax^2 + bx + c) dx, by writing the numerator as a multiple of the
