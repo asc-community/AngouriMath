@@ -812,6 +812,25 @@ sum in `t = w/v`, and each root's `1/(w - r v)` is again an even quadratic
 | `"x^2*(1+x^2)/(a*x^6+b*(1+x^2)^3)".ToEntity().Integrate("x")` | `integral(...)` | 896 characters |
 | `"(1+x^2)/(a*x^4+b*(1+x^2)^2)".ToEntity().Integrate("x")` | `integral(...)` | 289 characters |
 
+### A quadratic with symbols in it that is a perfect square only as a value is written as the square of its linear
+
+**Answers where there were none.** `1/(b cosh(x) + c sinh(x) + sqrt(b^2 - c^2))^n` for `n` of 2, 3 and 4 was declined,
+and on the unreleased master took 5 to 28 s for a piecewise of 2,364 to 6,793 characters, an arm for each sign of a
+discriminant that is zero; Rubi's 6.7.1:879-881. The exponential substitution makes of it a power of
+`(b - c)/(b + c) + 2 sqrt(b^2 - c^2)/(b + c) u + u^2` beside a power of `u`, which is
+`(u + sqrt(b^2 - c^2)/(b + c))^2`: its discriminant is zero only once the root is squared and the quotients are put
+over one bar, which the simplification does not do. A repeated quadratic below the bar with symbols in it whose
+discriminant is zero as a value, and not as the simplifier writes it, is written as its leading coefficient times the
+square of its linear before the partial fractions, and the integrand is a polynomial over a power of one linear
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(b*cosh(x)+c*sinh(x)+sqrt(b^2-c^2))^2".ToEntity().Integrate("x")` | `integral(...)` | 194 characters |
+| `"1/(b*cosh(x)+c*sinh(x)+sqrt(b^2-c^2))^3".ToEntity().Integrate("x")` | `integral(...)` | 288 characters |
+| `"1/(b*cosh(x)+c*sinh(x)+sqrt(b^2-c^2))^4".ToEntity().Integrate("x")` | `integral(...)` | 436 characters |
+| `"1/(b*cosh(x)+c*sinh(x)-sqrt(b^2-c^2))^4".ToEntity().Integrate("x")` | `integral(...)` | 434 characters |
+
 ### A symbolic cubic with a repeated root is written over its roots
 
 **Answers where there were none.** `1/(x^3 - 3b x + 2b^(3/2))` was left unevaluated: its coefficients are symbolic, so
