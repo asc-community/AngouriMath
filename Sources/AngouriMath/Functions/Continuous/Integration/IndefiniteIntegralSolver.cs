@@ -16148,11 +16148,39 @@ namespace AngouriMath.Functions.Algebra
             if (inU.ContainsNode(x))
                 return null;
             // dx = du/d.
-            if (Integration.ComputeAsAQuestionOfItsOwn((inU / slope).InnerSimplified, u, integrateByParts) is not { } answer)
+            var question = (inU / slope).InnerSimplified;
+            // A zero over a constant among partial fractions over the linear -- what a pole whose
+            // residue vanishes leaves -- is written `0 provided c != 0` by the inner simplification,
+            // and the condition rises to the top of the question in u, where only the substitution
+            // search reads a question: it spent seven seconds declining the remainder by parts of
+            // Rubi's `(A + B ln(e (a + b x)/(c + d x)))/(f + g x)^5` for it, and the sum was then
+            // integrated term by term in x, in a longer answer. The condition says only that a
+            // constant is not zero, which the generic case takes, so the question is asked without
+            // it. Not beside a polynomial term, which in u integrates to a multiple of the linear
+            // where in x it is one of x, the longer spelling.
+            if (question is Providedf(var unconditioned, var condition) && IsANonzeroCondition(condition, u)
+                && expr is Sumf or Minusf && Sumf.LinearChildren(expr).Any(IsAZeroOverAConstant)
+                && Sumf.LinearChildren(expr).All(term => IsAZeroOverAConstant(term) || term.ContainsNode(x) && !TreeAnalyzer.TryGetPolynomial(term, x, out _)))
+                question = unconditioned;
+            if (Integration.ComputeAsAQuestionOfItsOwn(question, u, integrateByParts) is not { } answer)
                 return null;
             var back = answer.Substitute(u, linear);
             return back.Nodes.Any(node => node == MathS.NaN) ? null : back;
+
+            bool IsAZeroOverAConstant(Entity term) => term is Divf(var zero, var constant) && zero == Number.Integer.Zero && !constant.ContainsNode(x);
         }
+
+        /// <summary>
+        /// Whether <paramref name="condition"/> says only that constants are not zero:
+        /// <c>not c = 0</c> with <c>c</c> free of <paramref name="u"/>, or a conjunction of such.
+        /// </summary>
+        private static bool IsANonzeroCondition(Entity condition, Entity.Variable u) => condition switch
+        {
+            Andf(var left, var right) => IsANonzeroCondition(left, u) && IsANonzeroCondition(right, u),
+            Notf(Equalsf(var left, var right)) => !left.ContainsNode(u) && !right.ContainsNode(u)
+                && (right.Evaled is Number.Complex { IsZero: true } || left.Evaled is Number.Complex { IsZero: true }),
+            _ => false,
+        };
 
         /// <summary>
         /// A polynomial times powers of error functions of one shifted linear, written in
@@ -28508,7 +28536,25 @@ namespace AngouriMath.Functions.Algebra
         {
             if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
                 return null;
-            expr = WithNegativePowersOfProductsApart(expr);
+            // The reciprocal of a product read as the quotient it is, where written apart it hides
+            // a linear. The constant-over-a-product branch of SolveAsPolynomialTerm hands
+            // `1/((a/b + x)^3 (A + B ln(...)))` on as its power -1, and that power written apart
+            // over one bar is `((a + b x)^3)^(-1) b^3`, a power of a power, from which no linear is
+            // read: declined, the substitution search spent five to forty seconds on it and
+            // declined it too, and the quotient one level up was then answered here at once. Read
+            // as that quotient it is answered as that quotient is, in the same words. A reciprocal
+            // that written apart is read, `((a + b x)(c + d x) L^2)^(-1)`, is read so, as before.
+            var readFromTheReciprocal = false;
+            var apart = WithNegativePowersOfProductsApart(expr);
+            if (expr is Powf(Mulf reciprocal, Number.Integer { EInteger: var minusOne }) && minusOne.Equals(EInteger.FromInt32(-1))
+                && FactorsOfTheIntegrand(apart).Any(pair => pair.Factor is Powf(Powf(var nested, _), _) && nested.ContainsNode(x)
+                    && !nested.Nodes.Any(node => node is Logf)))
+            {
+                expr = Number.Integer.One / reciprocal;
+                readFromTheReciprocal = true;
+                apart = WithNegativePowersOfProductsApart(expr);
+            }
+            expr = apart;
             // The logarithm's argument: a product of constants and powers of two linears with
             // opposite exponents.
             Entity? logarithm = null;
@@ -28621,6 +28667,14 @@ namespace AngouriMath.Functions.Algebra
                     return null;
             }
             if (logarithmsFactor is null || aPolynomialBesideTheLogarithm)
+                return null;
+            // Read from the reciprocal, a power of t beside the logarithm's alone is left where it
+            // went before: the substitution search after this rule answers it through the
+            // logarithm, writing `e^((A + B ln(k t))/B)/t` as the `k e^(A/B)` it is -- Rubi's
+            // `1/((a g + b g x)^2 (A + B ln(e (a + b x)/(c + d x))))` in 129 characters, where
+            // this writes 231.
+            if (readFromTheReciprocal && powerOfDenominator.Evaled is Number.Complex { IsZero: true }
+                && powerOfT.Evaled is not Number.Complex { IsZero: true })
                 return null;
             Entity above = constantInFront * logarithmsFactor, below = Number.Integer.One;
             foreach (var (@base, power) in new[] { (t, Functions.PartialFractions.Bare(powerOfT.Simplify())), (denominatorInT, Functions.PartialFractions.Bare(powerOfDenominator.Simplify())) })
@@ -28761,11 +28815,14 @@ namespace AngouriMath.Functions.Algebra
             Entity? differentiated = null;
             Entity writtenPower = Number.Integer.One;
             Entity rational = Number.Integer.One;
+            var aPolynomialBeside = true;
             foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
             {
                 if (!factor.ContainsNode(x) || IsARationalFunction(factor, x))
                 {
                     rational = underneath ? rational / factor : rational * factor;
+                    if (factor.ContainsNode(x) && (underneath || factor is Powf(_, var exponentOfFactor) && exponentOfFactor.Evaled is not Number.Integer { EInteger.Sign: >= 0 }))
+                        aPolynomialBeside = false;
                     continue;
                 }
                 if (differentiated is not null)
@@ -28793,8 +28850,16 @@ namespace AngouriMath.Functions.Algebra
             // And term by term, each term of the sum differentiated on its own: simplified
             // whole, `b/(a + b x) - d/(c + d x)` is brought over one bar, and the pieces below
             // then hold a quadratic with symbols in it.
+            // And beside a polynomial, a power of a quotient with x on both sides written apart as
+            // well: `ln(e ((a + b x)/(c + d x))^n)` as written differentiates to two terms each
+            // over `(c + d x)^2 (a + b x)`, and the long division of every remainder by that
+            // cubic, its symbolic coefficients simplified, took Rubi's
+            // `(a g + b g x)^4 (A + B ln(e ((a + b x)/(c + d x))^n))` seventeen seconds and an
+            // answer of 4,063 characters, where the spelling `e (a + b x)^n/(c + d x)^n` takes a
+            // third of a second. Beside a polynomial only: over `(f + g x)^5` the remainders
+            // written so took one second to six.
             var derivativeTerms = new List<Entity>();
-            foreach (var term in TermsDistributed(WithLogarithmsOfProductsApart(differentiated, x)))
+            foreach (var term in TermsDistributed(WithLogarithmsOfProductsApart(differentiated, x, powersOfQuotientsApart: aPolynomialBeside)))
             {
                 var termDerivative = Functions.PartialFractions.Bare(term.Differentiate(x).InnerSimplified);
                 if (termDerivative == Number.Integer.Zero || termDerivative.Evaled is Number.Complex { IsZero: true })
@@ -29067,22 +29132,38 @@ namespace AngouriMath.Functions.Algebra
         /// as the sum of the logarithms of the factors holding <paramref name="x"/>, each
         /// times its power, and the constant factors dropped. Equal to the original up to a
         /// constant on each interval where both are defined, which is all a derivative sees.
+        /// With <paramref name="powersOfQuotientsApart"/>, a power of a quotient of two factors
+        /// holding <paramref name="x"/> is written apart too, each side's logarithm times the
+        /// power: <c>ln(e ((a + b x)/(c + d x))^n)</c> is <c>n ln(a + b x) - n ln(c + d x)</c>,
+        /// whose derivative is the same, since <c>(Q^n)'/Q^n = n Q'/Q</c>.
         /// </summary>
-        private static Entity WithLogarithmsOfProductsApart(Entity expr, Entity.Variable x)
+        private static Entity WithLogarithmsOfProductsApart(Entity expr, Entity.Variable x, bool powersOfQuotientsApart)
             => expr.Replace(node =>
             {
                 if (node is not Logf(var @base, var argument) || @base != MathS.e || !argument.ContainsNode(x) || argument is not (Mulf or Divf or Powf))
                     return node;
                 Entity sum = Number.Integer.Zero;
                 foreach (var (factor, underneath) in FactorsOfTheIntegrand(argument))
+                    Add(factor, underneath, Number.Integer.One);
+                return sum;
+
+                void Add(Entity factor, bool underneath, Entity outer)
                 {
                     if (!factor.ContainsNode(x))
-                        continue;
+                        return;
                     var (inner, power) = factor is Powf(var b, var p) && !p.ContainsNode(x) ? (b, p) : (factor, (Entity)Number.Integer.One);
+                    if (outer != Number.Integer.One)
+                        power = power == Number.Integer.One ? outer : outer * power;
+                    if (powersOfQuotientsApart && power != Number.Integer.One
+                        && inner is Divf(var numerator, var denominator) && numerator.ContainsNode(x) && denominator.ContainsNode(x))
+                    {
+                        foreach (var (innerFactor, innerUnderneath) in FactorsOfTheIntegrand(inner))
+                            Add(innerFactor, underneath != innerUnderneath, power);
+                        return;
+                    }
                     var term = power == Number.Integer.One ? MathS.Ln(inner) : power * MathS.Ln(inner);
                     sum = underneath ? sum - term : sum + term;
                 }
-                return sum;
             });
 
         /// <summary>
