@@ -811,6 +811,104 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>A + B F(a x)</c> for <c>F</c> the inverse hyperbolic sine, cosine or tangent, over a
+        /// half-odd power <c>Q^(n + 1/2)</c> of <c>Q = d + e x^2</c>, <c>n &gt;= 1</c>, by parts against
+        /// <c>F</c>. <c>Q^(-n - 1/2)</c> is <c>((x Q^(1/2 - n))' + (2n - 2) Q^(1/2 - n))/((2n - 1) d)</c>, so
+        /// its antiderivative is <c>S = x sum alpha_k Q^(1/2 - k)</c>, <c>k = 1..n</c>; and the logarithm
+        /// <c>F</c> is written as has the derivative <c>2a/(1 - a^2 x^2)</c>, <c>a/sqrt(a^2 x^2 + 1)</c> or
+        /// <c>a/sqrt(a^2 x^2 - 1)</c>, even in <c>x</c>. So the remainder <c>F' S</c> is <c>x</c> times a
+        /// function of <c>x^2</c>, and under <c>w = x^2</c> each of its terms is a power of the linear
+        /// <c>d + e w</c> over <c>1 - a^2 w</c> or the root of another linear, closed by rationalising.
+        /// Rubi's 7.1.4, 7.2.4, 7.2.5 and 7.3.4, <c>atanh(a x)/(c + d x^2)^(9/2)</c> and the like.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// By parts in the search differentiates the logarithm as written, and the remainder's
+        /// numerator, <c>a (1 - a x) + a (1 + a x)</c> uncollected, was split into terms even in
+        /// <c>x</c>, each a harder question than the whole: from <c>(c + d x^2)^(7/2)</c> on they were
+        /// declined or ran out of time. Asked whole the remainder in <c>w</c> ran out of time too, and
+        /// each term of it is answered in half a second at most. Not where <c>Q</c> is the function's own quadratic, which the
+        /// substitution under the hyperbolic function answers; and only an argument <c>a x</c>, which
+        /// keeps the remainder odd. The identities hold for real <c>x</c> on every branch the
+        /// logarithms take, the cuts included, where each is a constant <c>i pi</c> off its modulus.
+        /// </remarks>
+        internal static Entity? SolveByPartsAgainstAnInverseHyperbolicOverAHalfOddPowerOfAQuadratic(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            var logarithms = expr.Nodes.Where(node => node is Logf(var logBase, var of) && logBase == MathS.e && of.ContainsNode(x)).Distinct().ToList();
+            if (logarithms.Count != 1 || logarithms[0] is not Logf(_, var antilogarithm)
+                || ReadAnInverseHyperbolic(antilogarithm, x) is not var (argument, kind) || kind > 3
+                || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var a, out var offset) || a is null
+                || TreeAnalyzer.IsZero(a) || offset is { } && !TreeAnalyzer.IsZero(offset))
+                return null;
+            var logarithm = logarithms[0];
+            Entity constant = Number.Integer.One;
+            Entity? function = null, quadratic = null;
+            Number.Rational? power = null;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (!underneath && function is null && factor.ContainsNode(logarithm))
+                {
+                    function = factor;
+                    continue;
+                }
+                if (quadratic is not null || factor is not Powf(var @base, Number.Rational exponent) || exponent is Number.Integer)
+                    return null;
+                (quadratic, power) = (@base, underneath ? exponent : (Number.Rational)(-exponent));
+            }
+            // A half-odd power n + 1/2 below the bar, n >= 1.
+            if (function is null || quadratic is null || power is null
+                || !power.ERational.Denominator.Equals(EInteger.FromInt32(2)) || power.ERational.Numerator.CompareTo(EInteger.FromInt32(3)) < 0
+                || !power.ERational.Numerator.CanFitInInt32())
+                return null;
+            var n = (power.ERational.Numerator.ToInt32Unchecked() - 1) / 2;
+            if (!TreeAnalyzer.TryGetPolyQuadratic(quadratic, x, out var e, out var linear, out var d)
+                || e is null || d is null || linear is { } && !TreeAnalyzer.IsZero(linear) || VanishesIdentically(e) || VanishesIdentically(d))
+                return null;
+            // The function linear in its logarithm: A' + B' ln(...).
+            var symbol = Variable.CreateUnique(expr, "w_inv");
+            if (!TreeAnalyzer.TryGetPolyLinear(function.Substitute(logarithm, symbol), symbol, out var slope, out var free)
+                || slope is null || slope.ContainsNode(x) || free is { } && free.ContainsNode(x) || VanishesIdentically(slope))
+                return null;
+            var w = Variable.CreateUnique(expr + symbol, "w_sq");
+            var squared = MathS.Sqr(a);
+            var (own, derivativeInW) = kind switch
+            {
+                1 => (1 + squared * MathS.Sqr(x), a / MathS.Sqrt(squared * w + 1)),
+                2 => (squared * MathS.Sqr(x) - 1, a / MathS.Sqrt(squared * w - 1)),
+                _ => (1 - squared * MathS.Sqr(x), 2 * a / (1 - squared * w)),
+            };
+            if (AreProportionalAtSampledPoints(quadratic, own, x))
+                return null;
+            // alpha_k of S_n by S_n = x Q^(1/2 - n)/((2n - 1) d) + (2n - 2)/((2n - 1) d) S_(n - 1).
+            var alphas = new Entity[n + 1];
+            for (var m = 1; m <= n; m++)
+            {
+                for (var k = 1; k < m; k++)
+                    alphas[k] = (2 * m - 2) * alphas[k] / ((2 * m - 1) * d);
+                alphas[m] = Number.Integer.One / ((2 * m - 1) * d);
+            }
+            Entity antiderivative = Number.Integer.Zero, remainder = Number.Integer.Zero;
+            for (var k = 1; k <= n; k++)
+            {
+                var alpha = alphas[k].InnerSimplified;
+                antiderivative += alpha * x * MathS.Pow(quadratic, Number.Rational.Create(1 - 2 * k, 2));
+                var term = MathS.Pow(d + e * w, Number.Rational.Create(1 - 2 * k, 2)) * derivativeInW;
+                if (Integration.ComputeAsAQuestionOfItsOwn(term, w, integrateByParts) is not { } integrated
+                    || integrated.Nodes.Any(node => node is Integralf || node == MathS.NaN))
+                    return null;
+                remainder += alpha / 2 * integrated.Substitute(w, MathS.Sqr(x));
+            }
+            return constant * (function * antiderivative - slope * remainder);
+        }
+
+        /// <summary>
         /// A power of a quotient of two linears beside whole powers of the two, under the Moebius
         /// substitution <c>t = (p + q x)/(r + s x)</c>: then <c>p + q x = t (r + s x)</c>,
         /// <c>r + s x = D/(q - s t)</c> and <c>dx = D/(q - s t)^2 dt</c> with <c>D = q r - p s</c>, so
@@ -11758,6 +11856,70 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>x^m arsech(sqrt(x))</c> or <c>x^m arcsch(sqrt(x))</c>, <c>m &gt;= 0</c>, by parts. The
+        /// logarithm <c>ln(p + s)</c> each is written as, <c>p = 1/sqrt(x)</c> and <c>s = sqrt(1/x -+ 1)</c>,
+        /// has the derivative <c>-p^3/(2 s)</c>, since <c>p' = -p^3/2</c> and <c>s^2 = p^2 -+ 1</c>; so the
+        /// remainder is <c>integral x^m p/s/(2 (m + 1))</c>. And <c>K = (p/s) sqrt(r)</c>, <c>r = 1 -+ x</c>,
+        /// has <c>K^2 = 1</c>: it is 1 or -1, constant where it is continuous, and the remainder is
+        /// <c>K integral x^m/sqrt(r)</c>, a polynomial times the root, with <c>K</c> written as it is
+        /// defined. Rubi's 7.5.2 and 7.6.2.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// Under <c>u = sqrt(x)</c> the substitution asked <c>2 u^7 arsech(u)</c> one level down, where
+        /// the rules that answer it at the top decline, and <c>x^3 arsech(sqrt(x))</c> ran out of time;
+        /// <c>x^2 arsech(sqrt(x))</c> took thirteen seconds and <c>x^3 arcsch(sqrt(x))</c> twenty-four. For the
+        /// secant's <c>K</c> is <c>-1</c> where <c>x &lt; 0</c>, and for the cosecant's where <c>-1 &lt; x &lt; 0</c>: left
+        /// out, the answer is wrong there, as the one the substitution gave <c>x arcsch(sqrt(x))</c> was.
+        /// </remarks>
+        internal static Entity? SolveByPartsAgainstAnInverseHyperbolicSecantOfARoot(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            Entity constant = Number.Integer.One;
+            Logf? logarithm = null;
+            var power = 0;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (!underneath && logarithm is null && factor is Logf ln && ln.Base == MathS.e)
+                {
+                    logarithm = ln;
+                    continue;
+                }
+                if (APowerOfTheVariable(factor, x) is not { } k)
+                    return null;
+                power += underneath ? -k : k;
+            }
+            if (logarithm is null || power < 0 || power > 24 || logarithm.Antilogarithm is not Sumf(var left, var right))
+                return null;
+            // p = 1/sqrt(x) and s = sqrt(1/x -+ 1), compared by value, in whatever spelling the parser gave them.
+            var reciprocalRoot = 1 / MathS.Sqrt(x);
+            foreach (var (p, s) in new[] { (left, right), (right, left) })
+            {
+                if (!TryReadAHalfPower(s, out var radicand, out var numerator) || numerator != 1
+                    || !Functions.PartialFractions.HoldsAtSampledPoints(p, reciprocalRoot, x))
+                    continue;
+                int sign;
+                if (Functions.PartialFractions.HoldsAtSampledPoints(radicand, 1 / x - 1, x)) sign = -1;
+                else if (Functions.PartialFractions.HoldsAtSampledPoints(radicand, 1 / x + 1, x)) sign = 1;
+                else continue;
+                var r = 1 + sign * x;
+                var raised = power + 1;
+                var below = power == 0 ? 1 / MathS.Sqrt(r) : (power == 1 ? x : MathS.Pow(x, power)) / MathS.Sqrt(r);
+                if (Integration.ComputeAsAQuestionOfItsOwn(below, x, integrateByParts) is not { } integral
+                    || integral.Nodes.Any(node => node is Integralf || node == MathS.NaN))
+                    return null;
+                var k = p / s * MathS.Sqrt(r);
+                var answer = constant * (MathS.Pow(x, raised) * logarithm + k * integral / 2) / raised;
+                return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+            }
+            return null;
+        }
+
+        /// <summary>
         /// An integrand holding an inverse hyperbolic function of a linear in the variable,
         /// integrated by the substitution that undoes it. The inverse hyperbolic functions
         /// are not nodes here -- <c>arsinh(L)</c> is written <c>ln(L + sqrt(L^2 + 1))</c>,
@@ -11977,6 +12139,82 @@ namespace AngouriMath.Functions.Algebra
                 return back.Provided(1 - MathS.Sqr(argument) > Number.Integer.Zero);
             }
             return back;
+        }
+
+        /// <summary>
+        /// An inverse hyperbolic cotangent of a linear <c>L</c> as its tangent plus a constant:
+        /// <c>arcoth(L) - artanh(L)</c> is <c>1/2 (ln(-q) - ln(q))</c> for <c>q = (1 + L)/(1 - L)</c>,
+        /// which is <c>i pi/2</c> where <c>|L| &lt; 1</c> and <c>-i pi/2</c> where <c>|L| &gt; 1</c> --
+        /// constant on each interval where both are continuous, and not the same constant on each.
+        /// With a symbol <c>K</c> for it the integrand is one in <c>artanh(L) + K</c>, which the
+        /// rules for the inverse hyperbolic tangent read; the answer is written back with
+        /// <c>K = arcoth(L) - artanh(L)</c>, whose derivative is zero wherever it has one, so that
+        /// it is right on every interval without a case for each.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// The parser writes <c>arcoth(L)</c> as <c>1/2 ln((L + 1)/(L - 1))</c>, which the
+        /// substitution under <c>L = tanh(u)</c> does not read as an inverse function: Rubi's 7.4.1
+        /// <c>acoth(x)^2/(1 - x^2)^2</c> was declined in half a second where
+        /// <c>(atanh(x) + k)^2/(1 - x^2)^2</c> is answered in a quarter of one. Last, after by parts,
+        /// so that every arcoth answered as written keeps its answer; at the top only, since it asks
+        /// the whole question again.
+        /// </remarks>
+        internal static Entity? SolveByWritingAnArcothAsAnArtanhPlusAConstant(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked || writingAnArcothAsAnArtanh)
+                return null;
+            var back = new List<(Entity.Variable Constant, Entity Value)>();
+            var rewritten = expr;
+            foreach (var node in expr.Nodes.Where(node => node is Logf(var @base, _) && @base == MathS.e).Distinct().ToList())
+            {
+                if (node is not Logf(_, Divf(var above, var below)) || ArgumentOfAnArcoth(above, below, x) is not { } argument)
+                    continue;
+                var constant = Variable.CreateUnique(rewritten, "k_coth");
+                var tangent = MathS.Ln((1 + argument) / (1 - argument));
+                // ln((L + 1)/(L - 1)) is 2 arcoth(L), and 2 artanh(L) + 2 K.
+                rewritten = rewritten.Replace(inside => inside == node ? tangent + 2 * constant : inside);
+                back.Add((constant, (node - tangent) / 2));
+            }
+            if (back.Count == 0)
+                return null;
+            Entity? answer;
+            writingAnArcothAsAnArtanh = true;
+            try
+            {
+                answer = Integration.ComputeAsAQuestionOfItsOwn(rewritten.InnerSimplified, x, integrateByParts);
+            }
+            finally
+            {
+                writingAnArcothAsAnArtanh = false;
+            }
+            if (answer is null || answer.Nodes.Any(node => node is Integralf))
+                return null;
+            foreach (var (constant, value) in back)
+                answer = answer.Substitute(constant, value);
+            // The identities the answer in K rests on were checked for a real K, and K is imaginary.
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
+
+        /// <summary>Whether <see cref="SolveByWritingAnArcothAsAnArtanhPlusAConstant"/> is asking already.</summary>
+        [System.ThreadStatic] private static bool writingAnArcothAsAnArtanh;
+
+        /// <summary>
+        /// The <c>L</c> of <c>ln((L + 1)/(L - 1))</c>, the logarithm the parser writes
+        /// <c>2 arcoth(L)</c> as, for a linear <c>L</c>: as written where it is written so, and
+        /// otherwise read off the two linears, which share their slope and whose offsets are two apart.
+        /// </summary>
+        private static Entity? ArgumentOfAnArcoth(Entity above, Entity below, Entity.Variable x)
+        {
+            if (above is Sumf(var argument, var one) && one == Number.Integer.One
+                && below is Minusf(var again, var minusOne) && minusOne == Number.Integer.One && again == argument)
+                return TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out _) && slope is { } && !TreeAnalyzer.IsZero(slope) ? argument : null;
+            if (!TreeAnalyzer.TryGetPolyLinear(above, x, out var slopeAbove, out var offsetAbove) || slopeAbove is null || offsetAbove is null
+                || !TreeAnalyzer.TryGetPolyLinear(below, x, out var slopeBelow, out var offsetBelow) || slopeBelow is null || offsetBelow is null
+                || TreeAnalyzer.IsZero(slopeAbove) || !VanishesIdentically(slopeAbove - slopeBelow) || !VanishesIdentically(offsetAbove - offsetBelow - 2))
+                return null;
+            var offset = (offsetAbove - 1).InnerSimplified;
+            return TreeAnalyzer.IsZero(offset) ? slopeAbove * x : slopeAbove * x + offset;
         }
 
         /// <summary>
@@ -29062,6 +29300,92 @@ namespace AngouriMath.Functions.Algebra
                     indices[symbol] = indices.Count;
                 return Functions.MultivariatePolynomial.TryParse(difference, indices) is { IsZero: true };
             }
+        }
+
+        /// <summary>
+        /// A polynomial <c>P</c> of degree <c>m</c> times a function <c>G</c> of one logarithm of a
+        /// quotient of linears, over the power <c>L^k</c> of a linear proportional to one of them,
+        /// with <c>m &lt;= k - 2</c>: <c>P</c> written in powers of <c>L</c> at its root,
+        /// <c>P = p_0 + p_1 L + ... + p_m L^m</c>, makes the integrand <c>sum p_j G/L^(k - j)</c>
+        /// exactly, and each term is a power of one of the logarithm's linears beside a function of
+        /// it, which <see cref="SolveByTheQuotientOfTheLogarithmsLinears"/> answers under the
+        /// quotient. Rubi's 7.3.4 <c>x (a + b atanh(c x))^2/(d + c d x)^3</c> is
+        /// <c>((a + b atanh(c x))^2/(d + c d x)^2 - d (a + b atanh(c x))^2/(d + c d x)^3)/(c d)</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// The rule for a rational function times a power of a logarithm took it by parts, and the
+        /// remainder ran past the budget. Not where a term would be over <c>L</c> alone, a
+        /// dilogarithm nothing here answers, and not where <c>G</c> is the logarithm's first power,
+        /// which that rule answers in one step and keeps the answer it gives.
+        /// </remarks>
+        internal static Entity? SolveByDividingAPolynomialByAPowerOfALinearOfTheLogarithm(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            Entity polynomial = Number.Integer.One, rest = Number.Integer.One, constant = Number.Integer.One;
+            Entity? linear = null;
+            var power = 0;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (underneath)
+                {
+                    // One power of one linear below the bar, and nothing else of x.
+                    if (linear is not null || factor is not Powf(var @base, Number.Integer { EInteger: var whole })
+                        || !whole.CanFitInInt32() || whole.ToInt32Unchecked() < 3
+                        || !TreeAnalyzer.TryGetPolyLinear(@base, x, out var slope, out _) || slope is null || TreeAnalyzer.IsZero(slope))
+                        return null;
+                    (linear, power) = (@base, whole.ToInt32Unchecked());
+                    continue;
+                }
+                if (TreeAnalyzer.TryGetPolynomial(factor, x, out var read) && read.Keys.All(degree => degree.Sign >= 0)
+                    && read.Values.All(coefficient => !coefficient.ContainsNode(x)))
+                    polynomial *= factor;
+                else
+                    rest *= factor;
+            }
+            if (linear is null || !rest.ContainsNode(x)
+                || !TreeAnalyzer.TryGetPolynomial(polynomial, x, out var readPolynomial) || readPolynomial.Count == 0)
+                return null;
+            var degree = readPolynomial.Keys.Max()!;
+            if (degree.Sign <= 0 || !degree.CanFitInInt32() || degree.ToInt32Unchecked() > power - 2)
+                return null;
+            // The rest a function of one logarithm of a quotient of linears, one of them L up to a
+            // constant, and not its first power.
+            var logarithms = rest.Nodes.Where(node => node is Logf(var logBase, var of) && logBase == MathS.e && of.ContainsNode(x)).Distinct().ToList();
+            if (logarithms.Count != 1 || logarithms[0] is not Logf(_, Divf(var above, var below))
+                || !TreeAnalyzer.TryGetPolyLinear(above, x, out _, out _) || !TreeAnalyzer.TryGetPolyLinear(below, x, out _, out _)
+                || !AreProportionalAtSampledPoints(linear, above, x) && !AreProportionalAtSampledPoints(linear, below, x))
+                return null;
+            var w = Variable.CreateUnique(expr, "w_log");
+            var inW = rest.Substitute(logarithms[0], w);
+            if (inW.ContainsNode(x) || TreeAnalyzer.TryGetPolynomial(inW, w, out var inTheLogarithm)
+                && inTheLogarithm.Keys.All(key => key.CompareTo(EInteger.One) <= 0))
+                return null;
+            if (!TreeAnalyzer.TryGetPolyLinear(linear, x, out var beta, out var alpha) || beta is null)
+                return null;
+            var root = Functions.PartialFractions.Bare((-(alpha ?? Number.Integer.Zero) / beta).InnerSimplified);
+            var count = degree.ToInt32Unchecked() + 1;
+            if (Functions.PartialFractions.TaylorCoefficientsAtTheRoot(polynomial, root, count, x) is not { } coefficients)
+                return null;
+            Entity total = Number.Integer.Zero;
+            for (var order = 0; order < count; order++)
+            {
+                if (Functions.PartialFractions.IsZeroAsAValue(coefficients[order]))
+                    continue;
+                var coefficient = Functions.PartialFractions.InLowestTermsOverTheSymbols(coefficients[order] / MathS.Pow(beta, order));
+                var piece = rest / MathS.Pow(linear, Number.Integer.Create(power - order));
+                if (Integration.ComputeAsAQuestionOfItsOwn(piece, x, integrateByParts) is not { } integrated
+                    || integrated.Nodes.Any(node => node is Integralf))
+                    return null;
+                total += coefficient * integrated;
+            }
+            return constant * total;
         }
 
         /// <summary>
