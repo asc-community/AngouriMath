@@ -46,8 +46,11 @@ namespace AngouriMath.Functions
             try
             {
                 // A nested run is looked up in what the runs before it answered; the outermost
-                // one has no runs before it. See simplifications.
-                if (simplifying == 1 || RewriteRecording.Current is not null || !expr.Nodes.All(IsElementary))
+                // one has no runs before it. See simplifications. Not while a limit reads an
+                // approach, on which logarithms gather that do not gather on their own account:
+                // the same tree simplified on two approaches, or on one and on none, is two answers.
+                if (simplifying == 1 || RewriteRecording.Current is not null || !expr.Nodes.All(IsElementary)
+                    || Algebra.LimitFunctional.IsReadingAnApproach)
                     return SimplifyAtDepth(expr, level);
                 var kept = simplifications ??= new();
                 if (kept.TryGetValue((expr, level), out var known) && Convenience.SettingsState.StillHolds(known.Under))
@@ -148,7 +151,7 @@ namespace AngouriMath.Functions
             return expanded;
         }
 
-        /// <summary>A node whose simplification reads nothing but its children and the settings.</summary>
+        /// <summary>A node whose simplification reads nothing but its children and the settings, outside a limit's approach.</summary>
         private static bool IsElementary(Entity node)
             => node is Number or Variable or Sumf or Minusf or Mulf or Divf or Powf or Logf
                 or TrigonometricFunction or Absf or Signumf;

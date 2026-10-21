@@ -7954,6 +7954,27 @@ arctangent, arccotangent or arccosecant whose argument diverges, which is now an
 | `integral(1/(2 + cos(x)), x, 0, pi)` | `integral(1 / (2 + cos(x)), x, 0, pi)` | `sqrt(3) * pi / 3` |
 | `limitleft(arctan(tan(x / 2)), x, pi)` | `limitleft(arctan(tan(x / 2)), x, pi)` | `pi / 2` |
 
+### A limit at -oo keeps the `i pi` of each logarithm of a negative operand
+
+**Wrong answers fixed.** `lim ln(x) + ln(x + 1) - ln(x^2 + x)` as `x → -∞` was `0`. Both `x` and
+`x + 1` are negative there, so each of the first two logarithms carries `i pi` and the limit is
+`2 pi i`. A limit at `-oo` is read at `+oo` with `-x` written for `x`, and the logarithms of
+operands holding one sign on the approach are gathered into one; the rewritten expression was
+simplified while the approach still said `-oo`, where `-x` and `1 - x` are positive, and its two
+logarithms were gathered. It is now read on the approach it is on. A nested simplification is also
+no longer answered from what an earlier one returned while a limit is being read, since it can
+gather logarithms there that it does not gather on its own account
+([#2022](https://github.com/asc-community/AngouriMath/issues/2022)). Both columns measured on a
+build, `v2.5.0` against this change.
+
+| `"….".ToEntity().Limit("x", "-oo")` of | Was (2.5.0) | Is |
+|---|---|---|
+| `ln(x) + ln(x + 1) - ln(x ^ 2 + x)` | `0` | `ln(-1) + ln(-1)` |
+| `ln(x) + ln(x - 1) - ln(x ^ 2 - x)` | `0` | `ln(-1) + ln(-1)` |
+| `(ln(x) + ln(x + 1) - ln(x ^ 2 + x)) * x / (x + 1)` | `0` | `ln(-1) + ln(-1)` |
+| `(ln(x) + ln(x + 1) - ln(x ^ 2 + x)) ^ 2` | `0` | `(ln(-1) + ln(-1)) ^ 2` |
+| `ln(-x) + ln(-x - 1) - ln(x ^ 2 + x)` | `0` | the same |
+
 ### A limit at infinity whose terms cancel around a slowly varying factor is answered
 
 `lim e^x (exp(1/x + e^(-x)) - exp(1/x))` as `x → ∞` is the example Gonnet and Gruntz introduce
