@@ -129,6 +129,23 @@ since semantic versioning admits it.
 Measured on the suite: **7 of 8,525 tests** referenced the old reading — five boolean-solver inputs
 written `A | B`, and two that existed to record this spelling as at risk.
 
+### An inverse hyperbolic function over a half-odd power of an even quadratic is integrated by parts against it
+
+**Answers where there were none.** `atanh(a x)/(c + d x^2)^(3/2)` was declined, and so were its powers up to `^(9/2)`,
+`acosh(a x)` over the same powers, and `(a + b asinh(c x))` and `(a + b acosh(c x))` over `(d + k x^2)^(3/2)` to
+`^(7/2)`: Rubi's 7.1.4, 7.2.4, 7.2.5 and 7.3.4. By parts, the antiderivative of the power is `x` times powers of
+`(c + d x^2)^(-1/2)`, and the logarithm's derivative is even in `x`, so the remainder is `x` times a function of
+`x^2`; under `w = x^2` each of its terms is a power of `c + d w` over `1 - a^2 w` or over the root of a linear,
+answered at once. Not where the quadratic is the function's own, `1 - a^2 x^2` for the artanh, which the
+substitution under the hyperbolic function answers ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"atanh(a*x)/(c+d*x^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 1,034 characters |
+| `"atanh(a*x)/(c+d*x^2)^(9/2)".ToEntity().Integrate("x")` | `integral(...)` | 7,136 characters |
+| `"acosh(a*x)/(c+d*x^2)^(9/2)".ToEntity().Integrate("x")` | `integral(...)` | 2,409 characters |
+| `"(a+b*asinh(c*x))/(d+k*x^2)^(7/2)".ToEntity().Integrate("x")` | `integral(...)` | 1,843 characters |
+
 ### A power of x times `atanh(sqrt(e) x/sqrt(d + e x^2))` is integrated by parts against the root
 
 **Answers where there were none.** `x atanh(sqrt(e) x/sqrt(d + e x^2))` was declined, and so were twelve more of Rubi's
@@ -141,6 +158,21 @@ quotient of two sums with a root in each, which the search never brought down to
 |---|---|---|
 | `"atanh(x*sqrt(k)/sqrt(d+k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | `x atanh(...) - sqrt(d + k x^2)/sqrt(k)`, written in the logarithm |
 | `"atanh(x*sqrt(k)/sqrt(d+k*x^2))/x^5".ToEntity().Integrate("x")` | `integral(...)` | by parts onto `1/(x^4 sqrt(d + k x^2))` |
+
+### A power of x times the arsech or arcsch of `sqrt(x)` is integrated by parts
+
+**Answers where there were none.** Every power from `x^0` to `x^3` times `asech(sqrt(x))` or `acsch(sqrt(x))`, Rubi's
+7.5.2 and 7.6.2, was declined or ran past thirty seconds. By parts the remainder is `K/(2 (m + 1))` times the
+integral of `x^m/sqrt(1 - x)`, or of `x^m/sqrt(1 + x)` for the arcsch, where `K = sqrt(1 - x)/(sqrt(x) sqrt(1/x - 1))` is `1` for `x > 0` and `-1` for `x < 0`, and the arcsch's
+`K = sqrt(1 + x)/(sqrt(x) sqrt(1/x + 1))` is `-1` between `-1` and `0` and `1` elsewhere. `K` is written in the answer
+as it is defined, so the answer holds on the negative half-line too
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^3*asech(sqrt(x))".ToEntity().Integrate("x")` | no answer in thirty seconds | 210 characters |
+| `"x*acsch(sqrt(x))".ToEntity().Integrate("x")` | `integral(...)` | 146 characters |
+| `"x^3*acsch(sqrt(x))".ToEntity().Integrate("x")` | no answer in thirty seconds | 205 characters |
 
 ### A power of x is taken out of a bracket to find the derivative of a product of powers
 
@@ -298,6 +330,19 @@ the working digits, or `MathS.Settings.PrecisionErrorZeroRange` where a caller h
 still that integer, so `e^(-123.456)` is 0 as it was.
 [#1338](https://github.com/asc-community/AngouriMath/issues/1338).
 
+### A polynomial over a power of the linear of an artanh is written in powers of the linear
+
+**Answers where there were none.** `x (a + b atanh(c x))^2/(d + c d x)^3`, Rubi's 7.3.4, ran out of time. In powers of
+`d + c d x`, `x` is `((d + c d x) - d)/(c d)`, and the integrand is two terms, each a power of one of the logarithm's
+linears beside a function of it, which are answered under `t = (1 + c x)/(1 - c x)`. Where the polynomial's degree is
+at most the power less two, so that no term is over the linear alone, and the function is not the logarithm's first
+power, which by parts answers as before ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x*(a+b*atanh(c*x))^2/(d+c*d*x)^3".ToEntity().Integrate("x")` | `integral(...)` | 731 characters |
+| `"x*(a+b*acoth(c*x))^2/(d+c*d*x)^3".ToEntity().Integrate("x")` | `integral(...)` | 756 characters |
+
 ### An arctangent over a power of `d (1 + i c x)` is integrated under the tangent
 
 **Answers where there were none.** `(a + b atan(c x))^2/(d + i c d x)^2` ran out of time, and so did seven more of
@@ -311,6 +356,20 @@ becomes a polynomial in `u` times exponentials and trigonometric functions, and 
 | `"x*(a+b*atan(c*x))^2/(d+i*c*d*x)^3".ToEntity().Integrate("x")` | `integral(...)` | 671 characters |
 | `"(a+b*atan(c*x))^2/(1+i*c*x)^4".ToEntity().Integrate("x")` | `integral(...)` | 731 characters |
 | `"(a+b*atan(c*x))^3/(d+i*c*d*x)^4".ToEntity().Integrate("x")` | `integral(...)` | 1,202 characters |
+
+### An arcoth of a linear is integrated as its artanh plus a constant
+
+**Answers where there were none.** `acoth(x)^2/(1 - x^2)^2`, Rubi's 7.4.1, was declined, where
+`(atanh(x) + k)^2/(1 - x^2)^2` is answered. `acoth(L) - atanh(L)` is `i pi/2` where `|L| < 1` and `-i pi/2` where `|L| > 1`:
+constant on each interval, and not the same constant on each. Such an integrand is now asked with a symbol `K` for it,
+as one in `atanh(L) + K`, and the answer is written back with `K = acoth(L) - atanh(L)`, so that it holds on every
+interval without a case for each. Only where nothing else answers the integrand as written
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"acoth(x)^2/(1-x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 1,304 characters, with `(ln((x + 1)/(x - 1)) - ln((1 + x)/(1 - x)))/2` for `K` |
+| `"acoth(c*x)^2/(1-c^2*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 1,681 characters |
 
 ### A function of the hyperbolic tangent alone is integrated under `u = tanh`
 

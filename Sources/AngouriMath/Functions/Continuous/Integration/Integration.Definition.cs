@@ -1112,6 +1112,10 @@ namespace AngouriMath.Functions.Algebra
             // where the rule below went step by step with the coefficients growing to
             // b^205, and the search after it went past its budget.
             if ((answer = IndefiniteIntegralSolver.SolveByTheQuotientOfTheLogarithmsLinears(expr, x, integrateByParts)) is { }) return answer;
+            // And a polynomial over a power of one of those linears, written in powers of it first:
+            // `x (a + b atanh(c x))^2/(d + c d x)^3` is two terms the rule above answers, where the
+            // rule after it took the whole by parts and the remainder ran past the budget.
+            if ((answer = IndefiniteIntegralSolver.SolveByDividingAPolynomialByAPowerOfALinearOfTheLogarithm(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionTimesAPowerOfALogarithm(expr, x, integrateByParts)) is { }) return answer;
             // A rational function of the hyperbolic tangent with a symbol among its
             // coefficients, by u = tanh(y): Rubi's `1/(a + b coth(c + d x)^2)^2` is a symbolic
@@ -1217,6 +1221,10 @@ namespace AngouriMath.Functions.Algebra
             // before the substitution search, which reads `x^(2n)` as a power of `x^n` only for a
             // number `n`.
             if ((answer = IndefiniteIntegralSolver.SolveByAPowerOfXWithASymbolicExponent(expr, x, integrateByParts)) is { }) return answer;
+            // A power of x times the inverse hyperbolic secant or cosecant of `sqrt(x)`, by parts onto
+            // `x^m/sqrt(1 -+ x)`: before the substitution search, whose `u = sqrt(x)` asked the
+            // question in u one level down, where it ran out of time.
+            if ((answer = IndefiniteIntegralSolver.SolveByPartsAgainstAnInverseHyperbolicSecantOfARoot(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
             // A constant times a whole power of something of x under a power that is not whole, the
             // whole power taken out with the factor constant where it is not zero:
@@ -1583,6 +1591,10 @@ namespace AngouriMath.Functions.Algebra
             // where it stands: `cos(x) sgn(sin(x))` is `|sin(x)|` by the substitution, and
             // `sgn(sin(x)) sin(x)` with the sign taken out first.
             if ((answer = IndefiniteIntegralSolver.SolveByTakingASignOut(expr, x, integrateByParts)) is { }) return answer;
+            // An inverse hyperbolic function of `a x` over a half-odd power of an even quadratic, by
+            // parts with the logarithm's derivative read off whole: the search's own parts split the
+            // remainder into terms harder than it, and past `(c + d x^2)^(7/2)` ran out of time.
+            if ((answer = IndefiniteIntegralSolver.SolveByPartsAgainstAnInverseHyperbolicOverAHalfOddPowerOfAQuadratic(expr, x, integrateByParts)) is { }) return answer;
             if (integrateByParts && (answer = IndefiniteIntegralSolver.SolveIntegratingByParts(expr, x)) is { }) return answer;
             // A hyperbolic integrand that is not rational in its exponential, asked as a trigonometric
             // one: last, since the question in s can take long where a rule above answers in x at once.
@@ -1594,6 +1606,11 @@ namespace AngouriMath.Functions.Algebra
             // A rational function of x and ln(x) over distinct linears in the logarithm, by partial
             // fractions in it, where nothing has answered it whole: `(2 L^2 - L - x^2)/(L^3 - x^2 L)`.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOfTheLogarithmByPartialFractionsInIt(expr, x, integrateByParts)) is { }) return answer;
+            // An arcoth of a linear as its artanh plus a constant, last of all, so that every arcoth
+            // answered as written keeps that answer: `acoth(x)^2/(1 - x^2)^2` is
+            // `(atanh(x) + K)^2/(1 - x^2)^2` with `K = acoth(x) - atanh(x)`, constant where it is
+            // continuous, which the substitution under the hyperbolic tangent answers.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingAnArcothAsAnArtanhPlusAConstant(expr, x, integrateByParts)) is { }) return answer;
             return null;
         }
         /// <summary>
