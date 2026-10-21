@@ -1170,10 +1170,10 @@ namespace AngouriMath.Functions
                 || Read(2) is not { } leading || leading.IsZero || Read(1) is not { } linear || Read(0) is not { } free)
                 return null;
             // M = x^2 + s x + t = (x - ρ)^2 + σ^2.
-            var s = linear.Divide(leading).ToLowestTerms();
-            var t = free.Divide(leading).ToLowestTerms();
-            var rho = s.Negate().Divide(ERational.FromInt32(2)).ToLowestTerms();
-            var sigmaSquared = t.Subtract(rho.Multiply(rho)).ToLowestTerms();
+            var s = linear.Divide(leading).InLowestTerms();
+            var t = free.Divide(leading).InLowestTerms();
+            var rho = s.Negate().Divide(ERational.FromInt32(2)).InLowestTerms();
+            var sigmaSquared = t.Subtract(rho.Multiply(rho)).InLowestTerms();
             if (sigmaSquared.Sign <= 0)
                 return null;
             var (sigmaAbove, sigmaBelow) = (sigmaSquared.Numerator.Sqrt(), sigmaSquared.Denominator.Sqrt());
@@ -1296,8 +1296,8 @@ namespace AngouriMath.Functions
                         next[m].Im.Add(binomial[m].Im.Multiply(rho.Negate())).Add(binomial[m].Re.Multiply(sigma)));
                 }
                 binomial = next;
-                real[j] = binomial.Select(c => c.Re.ToLowestTerms()).ToArray();
-                imaginary[j] = binomial.Select(c => c.Im.ToLowestTerms()).ToArray();
+                real[j] = binomial.Select(c => c.Re.InLowestTerms()).ToArray();
+                imaginary[j] = binomial.Select(c => c.Im.InLowestTerms()).ToArray();
             }
 
             // The digits in powers of M: c_j (x - r)^(-j) and its conjugate are 2 Re(c_j (x - r̄)^j)/M^j,
@@ -1343,7 +1343,7 @@ namespace AngouriMath.Functions
         {
             var result = ERational.One;
             for (var k = 0; k < exponent; k++)
-                result = result.Multiply(value).ToLowestTerms();
+                result = result.Multiply(value).InLowestTerms();
             return result;
         }
 
@@ -1364,8 +1364,8 @@ namespace AngouriMath.Functions
                 {
                     var coefficient = remainder[k];
                     quotient[k - 2] = coefficient;
-                    remainder[k - 1] = remainder[k - 1].Subtract(coefficient.Multiply(s)).ToLowestTerms();
-                    remainder[k - 2] = remainder[k - 2].Subtract(coefficient.Multiply(t)).ToLowestTerms();
+                    remainder[k - 1] = remainder[k - 1].Subtract(coefficient.Multiply(s)).InLowestTerms();
+                    remainder[k - 2] = remainder[k - 2].Subtract(coefficient.Multiply(t)).InLowestTerms();
                 }
                 digits.Add((remainder[0], remainder.Length > 1 ? remainder[1] : ERational.Zero));
                 current = quotient;
