@@ -1294,6 +1294,21 @@ arctangent, or an inverse hyperbolic tangent, of the tangent of the argument or 
 | `"1/(a+b*cosh(x)^5)".ToEntity().Integrate("x")` | `integral(...)` | 3,607 characters |
 | `"1/(a-b*cosh(x)^8)".ToEntity().Integrate("x")` | `integral(...)` | 1,441 characters |
 
+### A sum split into its terms is given up at the first term declined
+
+**Answers where there were none.** `1/(a sech(x) + b tanh(x))^2`, `1/(a coth(x) + b csch(x))^2` and
+`1/(1 - cosh(x)^8)`, Rubi's 6.7.1 and 6.2.7, were declined, and before this change ran past two minutes. Integrating
+a sum term by term asked every term after one had been declined, and declining those came before the rules that
+answer these integrands; the split now ends at the first term declined. More slowly, in ten to twenty seconds,
+`1/(1 - cosh(x)^6)` and `e^(a + b x + c x^2) (b + 2 c x)/(a + b x + c x^2)^2` are answered too
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(a*sech(x)+b*tanh(x))^2".ToEntity().Integrate("x")` | `integral(...)` | 1,836 characters |
+| `"1/(a*coth(x)+b*csch(x))^2".ToEntity().Integrate("x")` | `integral(...)` | 1,831 characters |
+| `"1/(1-cosh(x)^8)".ToEntity().Integrate("x")` | `integral(...)` | 1,232 characters |
+
 ### A whole power of an inverse function of `c + d x^2` is integrated by its recurrence
 
 **Answers where there were none.** `(a + b acos(1 + d x^2))^4` was declined, and so were twenty-five more of Rubi's
