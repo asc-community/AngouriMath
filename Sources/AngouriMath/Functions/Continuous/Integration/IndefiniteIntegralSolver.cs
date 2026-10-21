@@ -41189,10 +41189,37 @@ namespace AngouriMath.Functions.Algebra
             if (scale is null)
                 return null;
             var u = Variable.CreateUnique(expr, "u");
-            var inU = (scale * rest.Replace(node => node == polynomial ? u : node)).InnerSimplified;
+            // And a constant multiple of P, as that multiple of u: taking the leading coefficient's
+            // power out of a power below the bar hands on `e^P P'/(P/c)^2`, and with P read only as
+            // written, `e^(a + b x + c x^2) (b + 2 c x)/(a + b x + c x^2)^2` went on to the ansatz,
+            // which ran out of time, where `e^u/u^2` is answered at once.
+            // A whole power of one as that power of the multiple times the power of u, so that the
+            // multiple stands apart from u and the rules in u read a power of u alone.
+            TreeAnalyzer.TryGetPolynomial(polynomial, x, out var ofP);
+            var inU = (scale * rest
+                .Replace(node => node is Powf(var @base, Number.Integer whole) && @base != polynomial && AMultipleOfThePolynomial(@base) is { } multiple
+                    ? MathS.Pow(multiple, whole) * MathS.Pow(polynomial, whole) : node)
+                .Replace(node => node == polynomial ? u : AMultipleOfThePolynomial(node) is { } multiple ? multiple * u : node)).InnerSimplified;
             if (inU.ContainsNode(x))
                 return null;
             return Integration.ComputeAsAQuestionOfItsOwn(inU, u, integrateByParts)?.Substitute(u, polynomial);
+
+            // The constant k where the node is a polynomial in x equal to k P coefficient by coefficient.
+            Entity? AMultipleOfThePolynomial(Entity node)
+            {
+                if (node is not (Sumf or Minusf) || !node.ContainsNode(x) || ofP is null
+                    || !TreeAnalyzer.TryGetPolynomial(node, x, out var read) || read.Count != ofP.Count
+                    || read.Keys.Any(key => !ofP.ContainsKey(key)) || read.Values.Any(value => value.ContainsNode(x)))
+                    return null;
+                var top = ofP.Keys.Max()!;
+                var multiple = Functions.PartialFractions.InLowestTermsOverTheSymbols(read[top] / ofP[top]);
+                if (multiple.Evaled is Number.Complex { IsZero: true } || multiple.Nodes.Any(inner => inner == MathS.NaN))
+                    return null;
+                foreach (var pair in read)
+                    if (!VanishesIdentically(pair.Value - multiple * ofP[pair.Key]))
+                        return null;
+                return multiple;
+            }
         }
 
         /// <summary>

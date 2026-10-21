@@ -218,6 +218,21 @@ compared everywhere with its value at one positive point
 | `"asin(sqrt(1+b*x^2))^n/sqrt(1+b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 136 characters |
 | `"acos(sqrt(1+b*x^2))^n/sqrt(1+b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 137 characters |
 
+### An exponential of a polynomial beside its derivative over a power of a multiple of it is integrated in the polynomial
+
+**Answers where there were none.** `e^(a + b x + c x^2) (b + 2 c x)/(a + b x + c x^2)^3` ran out of time, where with
+`u = a + b x + c x^2` it is `e^u/u^3`. Taking the leading coefficient's power out of a power below the bar hands it on
+as `e^P P'/(P/c)^3`, and the exponent read as the variable was read only as written, so `P/c` was another polynomial
+and the question went on to the ansatz. A whole power of a constant multiple of the exponent is now read as that power
+of the multiple times the power of `u` (Rubi's 2.3, [#233](https://github.com/asc-community/AngouriMath/issues/233)).
+The square was answered by the unreleased master in fourteen seconds, as 90 characters; it is answered in a third of
+a second now, as 114, which carry a factor `(1/c)^(-2)/c^2` that is 1.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(a+b*x+c*x^2)*(b+2*c*x)/(a+b*x+c*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 197 characters |
+| `"e^(a+b*x+c*x^2)*(b+2*c*x)/(a+b*x+c*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 114 characters |
+
 ### A power of a sum beside its derivative is read with the logarithms in it as factors
 
 **Answers where there were none.** `(a m x^m + b n q ln(c x^n)^(q - 1))/(x (a x^m + b ln(c x^n)^q))` was declined, and so
