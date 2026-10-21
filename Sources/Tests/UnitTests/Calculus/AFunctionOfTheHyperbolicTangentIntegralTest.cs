@@ -40,6 +40,15 @@ namespace AngouriMath.Tests.Calculus
         public void LeavesAPowerOfOnePlusCothToTheExponentialSubstitution(string integrand)
             => Assert.True(AnsweredAndCheckedBack(integrand).Length < 1000, $"{integrand} was answered at length");
 
+        // Imaginary on the whole real line, i |csch(x)|, and real in u = tanh(x) only for |u| > 1,
+        // which tanh(x) never reaches: answered in u with conditions false at every real x, these
+        // are left to the rules in x, which answer them at every point.
+        [Theory]
+        [InlineData("sqrt(1 - coth(x)^2)")]
+        [InlineData("(1 - coth(x)^2)^(3/2)")]
+        [InlineData("1/sqrt(1 - coth(x)^2)")]
+        public void LeavesWhatTheTangentIsNeverRealOnToTheRulesInX(string integrand) => AnsweredAndCheckedBack(integrand);
+
         private static string AnsweredAndCheckedBack(string integrand)
         {
             var integral = integrand.ToEntity().Integrate("x");
