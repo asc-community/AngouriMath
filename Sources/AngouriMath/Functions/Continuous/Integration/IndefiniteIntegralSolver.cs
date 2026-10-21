@@ -1837,6 +1837,15 @@ namespace AngouriMath.Functions.Algebra
             if (!TryReadAsQuotient(expr, out var numerator, out var denominator))
                 return null;
 
+            // A quadratic below the bar with symbols in it that is a perfect square only as a value,
+            // written as the square of its linear: see WithSymbolicPerfectSquaresWritten. Once: a
+            // linear is no quadratic.
+            if (WithSymbolicPerfectSquaresWritten(denominator, x) is { } overSquares
+                && Patterns.GatherPowersOfOneBase(numerator / overSquares) is var overTheSquares
+                && (SolveByPartialFractions(overTheSquares, x, integrateByParts)
+                    ?? Integration.ComputeIndefiniteIntegral(overTheSquares, x, integrateByParts)) is { } overTheLinearsSquared)
+                return overTheLinearsSquared;
+
             // An odd power of a multiple of the denominator's derivative over a power of a quadratic,
             // in the quadratic: a polynomial over a power of one variable, where the partial
             // fractions wrote seventy thousand characters for `(b + 2c x)^9/(a + b x + c x^2)^3`.
@@ -19661,6 +19670,97 @@ namespace AngouriMath.Functions.Algebra
                 product *= power == Number.Integer.One ? @base : MathS.Pow(@base, power);
             }
             return product;
+        }
+
+        /// <summary>
+        /// <paramref name="denominator"/> with each written factor that is, to a whole power past the
+        /// first, a power of x times a quadratic <c>A x^2 + B x + C</c> with symbols in it whose discriminant
+        /// <c>B^2 - 4AC</c> is zero as a value and not as the simplifier writes it, written as
+        /// <c>x^k A (x + B/(2A))^2</c>; <see langword="null"/> where there is none.
+        /// </summary>
+        /// <remarks>
+        /// The exponential substitution makes of Rubi's 6.7.1 <c>1/(b cosh(x) + c sinh(x) + sqrt(b^2 - c^2))^4</c>
+        /// the quotient <c>256 u^7/(u ((b - c)/(b + c) + 2 sqrt(b^2 - c^2)/(b + c) u + u^2))^4</c>, whose
+        /// quadratic is <c>(u + sqrt(b^2 - c^2)/(b + c))^2</c>: its discriminant is
+        /// <c>4 (b - c)/(b + c) - 4 (b^2 - c^2)/(b + c)^2</c>, zero only once the root is squared and the
+        /// quotients are put over one bar, which the simplification does not do. Read as a quadratic
+        /// to the fourth power, the Hermite reduction solved for its numerators with the symbols in
+        /// every entry and declined after twenty seconds, and the table answered a piecewise of 6,557
+        /// characters on that discriminant, 53 GB in all; over the eighth power of the linear it is a
+        /// polynomial over a power of one linear, 416 characters in a second. The identity holds wherever <c>A</c> is not
+        /// zero, which a quadratic's leading coefficient is not. Only where the simplifier does not see
+        /// the zero, since the rules read that square already.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        private static Entity? WithSymbolicPerfectSquaresWritten(Entity denominator, Entity.Variable x)
+        {
+            var changed = false;
+            Entity product = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                // A repeated factor only, which is what the Hermite reduction grinds on: over a first
+                // power the rules answer at once, if at length. And only with a root of the symbols or
+                // a quotient by them among its coefficients, without which the simplifier sees the zero.
+                if (factor is not Powf(var @base, Number.Integer { EInteger.Sign: > 0 } power) || power == Number.Integer.One
+                    || @base is not (Sumf or Minusf) || !@base.ContainsNode(x) || !@base.Vars.Any(v => v != x)
+                    || !@base.Nodes.Any(node => !node.ContainsNode(x) && node.Vars.Any()
+                        && (node is Powf(_, Number.Rational { } exponent) && exponent is not Number.Integer || node is Divf(_, var under) && under.Vars.Any()))
+                    || !TreeAnalyzer.TryGetPolynomial(@base, x, out var read)
+                    || read.Keys.Any(degree => degree.Sign < 0) || read.Values.Any(coefficient => coefficient.ContainsNode(x))
+                    || read.Where(term => term.Value.Evaled is not Number.Complex { IsZero: true }).ToList() is not { Count: >= 2 } terms
+                    || terms.Min(term => term.Key) is not { } lowest || !terms.Max(term => term.Key)!.Equals(lowest.Add(EInteger.FromInt32(2)))
+                    || !lowest.CanFitInInt32())
+                {
+                    product *= factor;
+                    continue;
+                }
+                var a = read[lowest.Add(EInteger.FromInt32(2))];
+                var b = read.TryGetValue(lowest.Add(EInteger.One), out var b1) ? b1 : Number.Integer.Zero;
+                var c = read[lowest];
+                var discriminant = b * b - 4 * a * c;
+                // At a point first, which settles every quadratic that is not a square without
+                // expanding anything; then as the simplifier writes it, which the rules read.
+                if (!VanishesAtAPoint(discriminant) || SeenAsZero(discriminant)
+                    || !Functions.PartialFractions.IsZeroAsAValue(discriminant)
+                    || Functions.PartialFractions.IsZeroAsAValue(a))
+                {
+                    product *= factor;
+                    continue;
+                }
+                var shift = (b / (2 * a)).InnerSimplified;
+                if (shift.Vars.Any())
+                    shift = Functions.PartialFractions.Bare(shift.Simplify());
+                // Each power written apart, as a product of powers of its bases: a power of the
+                // square kept whole is a power of a power, which the rules read as neither.
+                var times = power.EInteger;
+                if (!lowest.IsZero)
+                    product *= MathS.Pow(x, Number.Integer.Create(lowest.Multiply(times)));
+                if (a.Evaled != Number.Integer.One)
+                    product *= MathS.Pow(a, power);
+                product *= MathS.Pow(x + shift, Number.Integer.Create(times.Multiply(EInteger.FromInt32(2))));
+                changed = true;
+            }
+            return changed ? product : null;
+
+            // Zero as the rules for a quadratic decide it: expanded, and else simplified.
+            static bool SeenAsZero(Entity expr)
+            {
+                var expanded = expr.Expand().InnerSimplified;
+                return TreeAnalyzer.IsZero(expanded) || Functions.PartialFractions.Bare(expanded.Simplify()).Evaled is Number.Complex { IsZero: true };
+            }
+
+            // Whether the value with every symbol pinned is zero or not a number; false where it is
+            // a number away from zero, which no symbolic zero is.
+            static bool VanishesAtAPoint(Entity expr)
+            {
+                var pinned = expr;
+                var values = new[] { 1.37, 0.61, 2.23, 1.91, 0.83, 1.13 };
+                var index = 0;
+                foreach (var symbol in expr.Vars.ToList())
+                    pinned = pinned.Substitute(symbol, values[index++ % values.Length]);
+                return pinned.Evaled is not Number.Complex { IsNaN: false } value
+                    || ((Number.Real)value.Abs()).EDecimal.ToDouble() <= 1e-9;
+            }
         }
 
         /// <summary>
