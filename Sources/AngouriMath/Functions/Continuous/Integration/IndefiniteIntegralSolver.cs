@@ -138,11 +138,21 @@ namespace AngouriMath.Functions.Algebra
                 return ((top * group.Radicals).InnerSimplified / bottom).InnerSimplified;
             }).ToList());
 
+            // Term by term, and over at the first term declined: the sum is answered only if every
+            // term is, and the terms after one declined were each asked to no purpose. Rubi's 6.1.7
+            // `csch(c + d x)^6 (a + b sinh(c + d x)^3)^3` is expanded into terms one of which is
+            // declined, and the terms after it cost 4.2 GB of the 5.5 the integral took.
             Entity? Integrated(List<Entity> terms)
-                => terms.Select(e => Integration.ComputeAsAQuestionOfItsOwn(e, x, integrateByParts)).Aggregate((e1, e2) => (e1, e2) switch {
-                    (null, _) or (_, null) => null,
-                    (var int1, var int2) => int1 + int2
-                });
+            {
+                Entity? sum = null;
+                foreach (var term in terms)
+                {
+                    if (Integration.ComputeAsAQuestionOfItsOwn(term, x, integrateByParts) is not { } integrated)
+                        return null;
+                    sum = sum is null ? integrated : sum + integrated;
+                }
+                return sum;
+            }
         }
 
         /// <summary>
@@ -28609,11 +28619,13 @@ namespace AngouriMath.Functions.Algebra
             // `sech(x)^2/(a + b tanh(x))^2` after three seconds: simplified once more it is a
             // quotient, which the symbolic quadratic rule answers with the case `a + b = 0` apart,
             // and a piecewise antiderivative leaves parts a piecewise to integrate. With numbers
-            // alone, or no sum written twice, it is simplified as it was.
+            // alone, or no sum written twice, it is simplified as it was -- but for a power of a
+            // symbolic polynomial of the third degree or more, without the expanded and factored
+            // forms the simplifier offers after its search: see HasAPowerOfASymbolicCubicOrMore.
             var combined = Functions.SingleQuotient.Combine(rewritten / (Number.Rational.Create(k) * u));
             var integrand = combined.Vars.Any(symbol => symbol != u)
                 && WithTheFactorsWrittenOnBothSidesCancelled(u, combined, keepTheWrittenBases: true, out var anyCancelled) is var cancelled && anyCancelled
-                ? cancelled : combined.Simplify();
+                ? cancelled : combined.Simplify(HasAPowerOfASymbolicCubicOrMore(combined, u) ? -2 : 2);
             if (integrand is Providedf(var inner, _))
                 integrand = inner;
             integrand = WithLogarithmArgumentsOverOneBar(integrand, u);
@@ -28658,6 +28670,64 @@ namespace AngouriMath.Functions.Algebra
                 if (logarithmOfTheBase != Number.Integer.One)
                     answer /= logarithmOfTheBase;
                 return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+            }
+        }
+
+        /// <summary>
+        /// Whether <paramref name="quotient"/> holds a whole power past the first of a sum that is a
+        /// polynomial in <paramref name="u"/> of the third degree or more with a symbol in one of
+        /// its coefficients: <c>(a (2u)^3 + b (u^2 - 1)^3)^2</c>, which is what the exponential
+        /// substitution makes of <c>(a + b sinh(x)^3)^2</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Such a quotient is simplified without the two forms the simplifier offers after its
+        /// search, the quotient multiplied out and the quotient factored, each simplified again
+        /// before it is ranked; the search itself runs as before. With the symbols in it both are
+        /// polynomials of a high degree with a page of coefficients: Rubi's 6.1.7
+        /// <c>csch(c + d x)^m (a + b sinh(c + d x)^3)^p</c> spent 2.2 to 7.7 GB of its 5.2 to 10.5
+        /// simplifying them -- the common denominator of the expanded terms and the long division
+        /// of the factored quotient, each coefficient simplified on its own -- to rank both behind
+        /// what the search had found, where the search alone takes 12 to 130 MB.
+        /// </para>
+        /// <para>
+        /// Those fourteen rows, <c>m</c> from 1 to 7 and <c>p</c> 2 or 3, are the corpus's 6.1.7
+        /// quotients with such a power. On thirteen the search alone gives what the whole
+        /// simplification gives. On <c>csch^7 (a + b sinh^3)^2</c> the factored form wins: the powers
+        /// of <c>u</c> written apart above the bar and below it are of one degree, seven, and in the
+        /// factored form they cancel to a number. So where they are of one degree the quotient is
+        /// simplified in full; and so it is where the sum has no constant term, so that <c>u</c>
+        /// divides it, as in 6.7.1's <c>(A + B cosh(x) + C sinh(x))/(b cosh(x) + c sinh(x))^2</c>:
+        /// the factored form wins there too, and from the search's form the antiderivative was
+        /// 178,682 characters where it is 3,485. A power of a polynomial with numbers for its
+        /// coefficients is simplified in full as well, as is one of the second degree: there the
+        /// forms after the search win often and cost little.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
+        private static bool HasAPowerOfASymbolicCubicOrMore(Entity quotient, Entity.Variable u)
+        {
+            // With a constant term: a sum that u divides has a factor the factored form takes out.
+            if (!quotient.Nodes.Any(node => node is Powf(var @base, Number.Integer { EInteger: var power })
+                && @base is Sumf or Minusf && power.CompareTo(EInteger.One) > 0
+                && TreeAnalyzer.TryGetPolynomial(@base, u, out var terms)
+                && terms.Keys.All(degree => degree.Sign >= 0) && terms.Keys.Any(degree => degree.CompareTo(EInteger.FromInt32(3)) >= 0)
+                && terms.Values.All(coefficient => !coefficient.ContainsNode(u)) && terms.Values.Any(coefficient => coefficient.Vars.Any())
+                && terms.TryGetValue(EInteger.Zero, out var constant) && !Functions.PartialFractions.IsZeroAsAValue(constant)))
+                return false;
+            // Where the powers of u written apart above the bar and below it are of one degree the
+            // factored form cancels them to a number and wins: kept to the whole simplification.
+            var (top, bottom) = Functions.SingleQuotient.Of(quotient);
+            return !DegreeOfTheMonomials(top).Equals(DegreeOfTheMonomials(bottom));
+
+            EInteger DegreeOfTheMonomials(Entity side)
+            {
+                var degree = EInteger.Zero;
+                foreach (var factor in Mulf.LinearChildren(side))
+                    if (factor.ContainsNode(u) && TreeAnalyzer.TryGetPolynomial(factor, u, out var monomial) && monomial.Count == 1
+                        && monomial.Keys.First() is { Sign: > 0 } power && !monomial.Values.First().ContainsNode(u))
+                        degree += power;
+                return degree;
             }
         }
 
