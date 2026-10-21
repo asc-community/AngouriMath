@@ -720,6 +720,11 @@ namespace AngouriMath.Functions.Algebra
             // `(a + a cos(u))^(3/2)/cos(u)^(5/4)`, and parts integrated `x (b + a sin(x))/(a + b sin(x))^2`'s
             // derivative into a function of tan(x/2) and ran out of time.
             if ((answer = IndefiniteIntegralSolver.SolveAsTheDerivativeOfASineRaisedFromNothingBesidePowersOfTheCosine(expr, x, integrateByParts)) is { }) return answer;
+            // And its hyperbolic twin, where the functions are exponentials: the derivative of a sum of
+            // them over another, read off the integrand over the other's square, alone or beside x by
+            // parts. The split and the exponential substitution answered `(b - a sinh(x))/(a + b sinh(x))^2`
+            // with a piecewise on a discriminant, and parts beside x ran past the budget integrating it.
+            if ((answer = IndefiniteIntegralSolver.SolveAsTheDerivativeOfAQuotientOverASumOfExponentials(expr, x, integrateByParts)) is { }) return answer;
             // A cosine beside a function of the sine with a power off the rationals in it, in the sine:
             // the substitution search declined `cos(x)/(sin(x) + sin(x)^sqrt(2))`.
             if ((answer = IndefiniteIntegralSolver.SolveACosineBesideAFunctionOfTheSineWithAnIrrationalPowerInIt(expr, x, integrateByParts)) is { }) return answer;

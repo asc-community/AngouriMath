@@ -42690,6 +42690,162 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// The derivative of <c>N/D</c>, for <c>D</c> a sum of exponentials of x and constants and
+        /// <c>N</c> a constant plus a constant times each exponential in <c>D</c>, read off the
+        /// integrand over <c>D^2</c>: alone, or beside x by parts. Rubi's
+        /// <c>x (b - a sinh(x))/(a + b sinh(x))^2</c> is <c>x G'</c> for <c>G = -cosh(x)/(a + b sinh(x))</c>,
+        /// so <c>x G - integral G</c>, and the integral of <c>G</c> is <c>-ln(a + b sinh(x))/b</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The exponentials' span is closed under the derivative, so <c>(N/D)' = (N' D - N D')/D^2</c>
+        /// with <c>N' D - N D'</c> linear in N's constants, and matching it to the integrand's
+        /// numerator is a linear system: each exponential a whole power of the first one, <c>w</c>,
+        /// and the identity read at six values of w. The answer is differentiated back at sampled
+        /// points.
+        /// </para>
+        /// <para>
+        /// The split took the numerator's terms apart, and the exponential substitution answered each
+        /// over the square of a quadratic in <c>e^x</c> with a piecewise on its discriminant; beside x,
+        /// parts integrated that piecewise again and ran past the budget, where the trigonometric
+        /// twin is <see cref="SolveAsTheDerivativeOfASineRaisedFromNothingBesidePowersOfTheCosine"/>'s.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveAsTheDerivativeOfAQuotientOverASumOfExponentials(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow || expr is not (Mulf or Divf))
+                return null;
+            // A constant, x at most once, a numerator and the square of one sum below the bar.
+            Entity constant = Number.Integer.One;
+            Entity numerator = Number.Integer.One;
+            Entity? sum = null;
+            var besideX = false;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                    constant = underneath ? constant / factor : constant * factor;
+                else if (factor == x && !underneath && !besideX)
+                    besideX = true;
+                else if (underneath && sum is null && factor is Powf(Sumf or Minusf, Number.Integer { EInteger: var two } ) squared && two.Equals(EInteger.FromInt32(2)))
+                    sum = squared.Base;
+                else if (!underneath)
+                    numerator = numerator == Number.Integer.One ? factor : numerator * factor;
+                else
+                    return null;
+            }
+            bool OnlyThroughTheExponentials(Entity e)
+                => !e.Replace(node => node is Powf(var @base, var exponent) && @base == MathS.e && exponent.ContainsNode(x) ? Number.Integer.One : node).ContainsNode(x);
+            if (sum is null || !OnlyThroughTheExponentials(sum) || !OnlyThroughTheExponentials(numerator))
+                return null;
+            // Each exponential a whole power w^n of the first one, w = e^(m + k x): `e^(-(c + d x))` is
+            // `w^(-1)` beside `e^(c + d x)`, with no `e^c` left to the system.
+            var exponentials = new List<(Entity Node, Entity Exponent, Entity Rate, int Power)>();
+            foreach (var node in expr.Nodes)
+                if (node is Powf(var @base, var exponent) && @base == MathS.e && exponent.ContainsNode(x)
+                    && !exponentials.Any(known => known.Node == node))
+                {
+                    if (!TreeAnalyzer.TryGetPolyLinear(exponent, x, out var rate, out var offset) || rate.ContainsNode(x) || offset.ContainsNode(x)
+                        || Functions.PartialFractions.IsZeroAsAValue(rate))
+                        return null;
+                    var multiple = exponentials.Count == 0 ? Number.Integer.One : Functions.PartialFractions.Bare((exponent / exponentials[0].Exponent).Simplify());
+                    if (multiple is not Number.Integer { EInteger: var power } || !power.CanFitInInt32())
+                        return null;
+                    exponentials.Add((node, exponent, rate, power.ToInt32Unchecked()));
+                }
+            var inTheSum = exponentials.Where(exponential => sum.ContainsNode(exponential.Node)).ToList();
+            if (inTheSum.Count is 0 or > 4)
+                return null;
+            // N = c_0 + sum c_i E_i: N' D - N D' is sum c_i (k_i E_i D - E_i D') - c_0 D'. N and N + c D
+            // have one derivative over D, so the system has a line of solutions; without c_0 first,
+            // which is the one of them with no constant where D has one: `-cosh(x)/(a + b sinh(x))`,
+            // whose integral is a logarithm, and not `-(a/b + e^x)/(a + b sinh(x))`, a constant away.
+            var derivativeOfTheSum = sum.Differentiate(x);
+            var columns = new List<Entity> { -derivativeOfTheSum };
+            foreach (var (node, _, rate, _) in inTheSum)
+                columns.Add(rate * node * sum - node * derivativeOfTheSum);
+            var target = constant * numerator;
+            if ((Above(withoutAConstant: true) ?? Above(withoutAConstant: false)) is not { } above)
+                return null;
+            Entity? At(Entity e, Number.Rational w)
+            {
+                var written = e.Replace(node => node is Powf(var @base, var exponent) && @base == MathS.e && exponent.ContainsNode(x)
+                    && exponentials.FirstOrDefault(known => known.Node == node) is { Node: not null } known
+                        ? MathS.Pow(w, Number.Integer.Create(known.Power))
+                        : node).InnerSimplified;
+                return written.ContainsNode(x) ? null : written;
+            }
+            var g = above / sum;
+            if (!Functions.PartialFractions.DerivativeHoldsAtSampledPoints(g, target / MathS.Pow(sum, 2), x))
+                return null;
+            if (!besideX)
+                return g;
+            // Where N is a constant times D', the integral of G is that constant times ln(D): the
+            // constant read off the first exponential's coefficients, D being linear in them, and
+            // the answer checked. Asked as a question, `-cosh(x)/(a + b sinh(x))` spelled in
+            // exponentials went through the substitution in e^x and came back a piecewise.
+            var (firstNode, _, firstRate, _) = inTheSum[0];
+            Entity WithTheExponentials(Entity e, Entity? one)
+                => e.Replace(node => node is Powf(var @base, var exponent) && @base == MathS.e && exponent.ContainsNode(x)
+                    ? (node == one ? Number.Integer.One : Number.Integer.Zero) : node);
+            var inTheSumOfTheFirst = LowestOverTheSymbols((WithTheExponentials(sum, firstNode) - WithTheExponentials(sum, null)).InnerSimplified);
+            var inTheNumeratorOfTheFirst = LowestOverTheSymbols((WithTheExponentials(above, firstNode) - WithTheExponentials(above, null)).InnerSimplified);
+            Entity? answer = null;
+            if (!Functions.PartialFractions.IsZeroAsAValue(inTheSumOfTheFirst))
+            {
+                var logarithmic = LowestOverTheSymbols(inTheNumeratorOfTheFirst / (firstRate * inTheSumOfTheFirst));
+                var closed = (x * g - logarithmic * MathS.Ln(sum)).InnerSimplified;
+                if (Functions.PartialFractions.DerivativeHoldsAtSampledPoints(closed, expr, x))
+                    answer = closed;
+            }
+            if (answer is null)
+            {
+                if (Integration.ComputeAsAQuestionOfItsOwn(g, x, integrateByParts) is not { } integralOfG
+                    || integralOfG.Nodes.Any(node => node == MathS.NaN || node is Integralf))
+                    return null;
+                var asked = (x * g - integralOfG).InnerSimplified;
+                if (Functions.PartialFractions.DerivativeHoldsAtSampledPoints(asked, expr, x))
+                    answer = asked;
+            }
+            return answer;
+
+            // N, the system read at six values of w, or null where it has no solution.
+            Entity? Above(bool withoutAConstant)
+            {
+                var first = withoutAConstant ? 1 : 0;
+                var samples = new[] { Number.Rational.Create(2), Number.Rational.Create(3), Number.Rational.Create(5),
+                    Number.Rational.Create(1, 2), Number.Rational.Create(1, 3), Number.Rational.Create(7) };
+                var matrix = new Entity[samples.Length][];
+                var rhs = new Entity[samples.Length];
+                for (var j = 0; j < samples.Length; j++)
+                {
+                    matrix[j] = new Entity[columns.Count - first];
+                    for (var k = first; k < columns.Count; k++)
+                        if (At(columns[k], samples[j]) is { } entry)
+                            matrix[j][k - first] = entry;
+                        else
+                            return null;
+                    if (At(target, samples[j]) is not { } value)
+                        return null;
+                    rhs[j] = value;
+                }
+                if (!Functions.PartialFractions.TrySolveLinearWithSymbols(matrix, rhs, out var coefficients))
+                    return null;
+                Entity read = Number.Integer.Zero;
+                for (var k = 0; k < coefficients.Length; k++)
+                {
+                    var coefficient = LowestOverTheSymbols(coefficients[k]);
+                    if (Functions.PartialFractions.IsZeroAsAValue(coefficient))
+                        continue;
+                    var column = k + first;
+                    var term = column == 0 ? coefficient : coefficient == Number.Integer.One ? inTheSum[column - 1].Node : coefficient * inTheSum[column - 1].Node;
+                    read = read == Number.Integer.Zero ? term : read + term;
+                }
+                return read == Number.Integer.Zero ? null : read;
+            }
+        }
+
+        /// <summary>
         /// <c>x^m (a + b atan(c x))^p</c> over a power of <c>d (1 +- i c x)</c>, under <c>x = tan(u)/c</c>, where
         /// <c>1 + i tan(u)</c> is <c>e^(i u)/cos(u)</c>: the integrand in <c>u</c> is
         /// <c>(a + b u)^p (tan(u)/c)^m d^(-k) e^(-+i k u) cos(u)^k/(c cos(u)^2)</c>, a polynomial in <c>u</c> times
