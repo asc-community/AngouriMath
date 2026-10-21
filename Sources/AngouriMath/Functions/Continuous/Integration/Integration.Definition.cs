@@ -1229,6 +1229,11 @@ namespace AngouriMath.Functions.Algebra
             // `cosh(x)^7/(a + b cosh(x)^2)` and `sech(x)^3/(a + b sinh(x))^2` are a second here
             // and past the budget there.
             if ((answer = IndefiniteIntegralSolver.SolveByBiochesOddHyperbolicSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // A rational function of e^L that Osborn's rule makes one of a sine or a cosine over a symbolic
+            // quadratic in it, asked as that before the tangent: under it Rubi's
+            // `sinh(x)^2/(a + b sinh(x) + c sinh(x)^2)` is a quartic with symbols, and its partial
+            // fractions ran past the budget, where the sine's rule answers the question in s at once.
+            if ((answer = IndefiniteIntegralSolver.SolveAHyperbolicIntegrandAsATrigonometricOne(expr, x, integrateByParts, rationalToo: true, overAQuadraticInTheSine: true)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOfTheHyperbolicTangent(expr, x, integrateByParts)) is { }) return answer;
             // A rational function of a sine or a cosine over a quadratic in it with a symbol
             // among the coefficients, split over the quadratic's two roots: under the
