@@ -16569,6 +16569,13 @@ namespace AngouriMath.Functions.Algebra
         private static Entity? WithTheCommonPowersOut(Entity sum, Entity.Variable x)
         {
             var terms = new List<(Entity Constant, Dictionary<Entity, Entity> Powers)>();
+            // A term with no power of x beside a term with a whole one above the bar has x to the
+            // power 0, the least of its exponents, and the powers of x stay in the bracket: Rubi's
+            // `x^2/sqrt(tan(a + b x^2)) + sqrt(tan(a + b x^2))/b + x^2 tan(a + b x^2)^(3/2)` is
+            // `tan(a + b x^2)^(-1/2)` times a bracket with `x^2` in it, which raising x from nothing
+            // reads, and with x in some of the terms only the sum was not read at all.
+            var xToAWholePowerInATerm = Sumf.LinearChildren(sum).Any(term => FactorsOfTheIntegrand(term).Any(pair =>
+                !pair.Underneath && (pair.Factor == x || pair.Factor is Powf(var b, Number.Integer { EInteger.Sign: > 0 }) && b == x)));
             foreach (var term in Sumf.LinearChildren(sum))
             {
                 Entity constant = Number.Integer.One;
@@ -16587,6 +16594,8 @@ namespace AngouriMath.Functions.Algebra
                         exponent = -exponent;
                     powers[@base] = powers.TryGetValue(@base, out var before) ? (before + exponent).InnerSimplified : exponent.InnerSimplified;
                 }
+                if (xToAWholePowerInATerm && !powers.ContainsKey(x))
+                    powers[x] = Number.Integer.Zero;
                 terms.Add((constant, powers));
             }
             if (terms.Count < 2)
@@ -17470,6 +17479,14 @@ namespace AngouriMath.Functions.Algebra
         private static bool TryReadTheRatioOfBrackets(Entity left, Entity right, Entity.Variable x, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity? k)
         {
             k = null;
+            // A tangent's derivative is written over the square of the cosine, which beside the
+            // tangent reads as a polynomial in neither: `1/cos(u)^2` is `1 + tan(u)^2` where the
+            // tangent is in a bracket, and `1/sin(u)^2` is `1 + cot(u)^2` beside the cotangent.
+            // Rubi's `-4 x/(b sqrt(tan(a + b x))) + x^2 sqrt(tan(a + b x)) + x^2/tan(a + b x)^(3/2)`
+            // is `(-2 x^2/(b sqrt(tan(a + b x))))'`, and the quotient of the brackets did not simplify.
+            var both = left + right;
+            left = WithTheReciprocalSquaresInTheTangent(left, both);
+            right = WithTheReciprocalSquaresInTheTangent(right, both);
             if (!TryReadInAtoms(left, right, x, out var leftRead, out var rightRead, out _))
                 return false;
             // A monomial whose coefficient on the right is a number first, so that the
@@ -17518,6 +17535,28 @@ namespace AngouriMath.Functions.Algebra
             variables.AddRange(found.Select(pair => pair.Symbol));
             rightRead = new Dictionary<int[], Entity>();
             return TryReadInAll(leftInAtoms, variables, out leftRead) && TryReadInAll(rightInAtoms, variables, out rightRead);
+        }
+
+        /// <summary>
+        /// <paramref name="entry"/> with <c>1/cos(u)^2</c> written as <c>1 + tan(u)^2</c> where
+        /// <paramref name="both"/> holds <c>tan(u)</c>, and <c>1/sin(u)^2</c> as <c>1 + cot(u)^2</c>
+        /// where it holds <c>cot(u)</c>.
+        /// </summary>
+        private static Entity WithTheReciprocalSquaresInTheTangent(Entity entry, Entity both)
+        {
+            static bool Squared(EInteger power, int sign) => power.Equals(EInteger.FromInt32(2 * sign));
+            return entry.Replace(node => node switch
+            {
+                Divf(var above, Powf(Cosf(var u), Number.Integer { EInteger: var p })) when Squared(p, 1) && both.ContainsNode(MathS.Tan(u))
+                    => above * (1 + MathS.Pow(MathS.Tan(u), 2)),
+                Divf(var above, Powf(Sinf(var u), Number.Integer { EInteger: var p })) when Squared(p, 1) && both.ContainsNode(MathS.Cotan(u))
+                    => above * (1 + MathS.Pow(MathS.Cotan(u), 2)),
+                Powf(Cosf(var u), Number.Integer { EInteger: var p }) when Squared(p, -1) && both.ContainsNode(MathS.Tan(u))
+                    => 1 + MathS.Pow(MathS.Tan(u), 2),
+                Powf(Sinf(var u), Number.Integer { EInteger: var p }) when Squared(p, -1) && both.ContainsNode(MathS.Cotan(u))
+                    => 1 + MathS.Pow(MathS.Cotan(u), 2),
+                _ => node
+            });
         }
 
         /// <summary>
