@@ -7,6 +7,7 @@
 
 using System;
 using AngouriMath.Core.Budgets;
+using AngouriMath.Core.Multithreading;
 using AngouriMath.Core.Transformations;
 using PeterO.Numbers;
 using static AngouriMath.Entity;
@@ -229,6 +230,7 @@ namespace AngouriMath.Functions
             Entity at = expr;
             for (var v = 0; v < variables.Count; v++)
                 at = at.Substitute(variables[v], Real.Create(PerfectSquareSamplePoints[v % PerfectSquareSamplePoints.Length]));
+            MultithreadingFunctional.ExitIfCancelled();
             return at.Evaled is Complex;
         }
 
@@ -238,11 +240,20 @@ namespace AngouriMath.Functions
         /// symbolic test costs anything.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// The asymmetry with <see cref="AgreesNumerically"/> is deliberate and is what makes
         /// this safe to put in front of the symbolic test: that one answers "may I keep this",
         /// so it refuses whatever it cannot evaluate; this one answers "may I drop this", so it
         /// refuses to drop whatever it cannot evaluate. A point it cannot reach is not evidence
         /// of difference, and a rule may not decline on evidence it does not have.
+        /// </para>
+        /// <para>
+        /// Each evaluation checks for cancellation before it starts, as the other steps that can
+        /// run long do. An evaluation is exact, and over coefficients like <c>b^335</c> one point
+        /// is seconds of rational arithmetic: Rubi's <c>x^(7/2)/((a + b x^2)^2 (c + d x^2)^3)</c>
+        /// spent a minute here after its budget had cancelled it.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
         /// </remarks>
         private static bool DiffersNumerically(Entity left, Entity right)
         {
@@ -256,7 +267,11 @@ namespace AngouriMath.Functions
                     a = a.Substitute(variables[v], Real.Create(point));
                     b = b.Substitute(variables[v], Real.Create(point));
                 }
-                if (a.Evaled is not Complex left1 || b.Evaled is not Complex right1)
+                MultithreadingFunctional.ExitIfCancelled();
+                if (a.Evaled is not Complex left1)
+                    return false;
+                MultithreadingFunctional.ExitIfCancelled();
+                if (b.Evaled is not Complex right1)
                     return false;
                 var difference = (left1 - right1).Abs();
                 if (difference is Real real && real.EDecimal.Abs()
@@ -280,7 +295,12 @@ namespace AngouriMath.Functions
                     before = before.Substitute(variables[v], Real.Create(point));
                     after = after.Substitute(variables[v], Real.Create(point));
                 }
-                if (before.Evaled is not Complex left || after.Evaled is not Complex right)
+                // Checked before each evaluation, as in DiffersNumerically.
+                MultithreadingFunctional.ExitIfCancelled();
+                if (before.Evaled is not Complex left)
+                    return false;
+                MultithreadingFunctional.ExitIfCancelled();
+                if (after.Evaled is not Complex right)
                     return false;
                 var difference = (left - right).Abs();
                 if (difference is not Real real || real.EDecimal.Abs()
