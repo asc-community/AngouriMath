@@ -796,6 +796,11 @@ namespace AngouriMath.Functions.Algebra
             // A half-odd power of a ± a sin(y) beside powers of other linears in the sine, by the half
             // angle, before the polynomial term: beneath it the substitution search ran out of time.
             if ((answer = IndefiniteIntegralSolver.SolveAHalfOddPowerOfOnePlusMinusASineBesidePowersOfLinearsInIt(expr, x, integrateByParts)) is { }) return answer;
+            // And a half-odd power of the cosine itself beside sqrt(a - a cos(y)) or its reciprocal,
+            // rational in sin(y)/(sqrt(a - a cos(y)) sqrt(cos(y))), the sine's the same: the polynomial
+            // term hands the reciprocal of the product down a level, and the sign of the complement
+            // wrote it there with sgn(sqrt(cos(y)) - 1), owing cos(y) >= 0.
+            if ((answer = IndefiniteIntegralSolver.SolveAHalfOddPowerOfACosineBesideTheRootOfAMinusACosine(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x, integrateByParts)) is { }) return answer;
             // A product of powers of the variable with a power of a constant multiple of it
             // among them, `(c x)^m x^n`, by the power rule with the written power kept as

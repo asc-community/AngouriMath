@@ -5586,6 +5586,196 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A half-odd power of <c>f = cos(y)</c> beside <c>sqrt(a - a f)</c> or its reciprocal,
+        /// <c>y</c> linear in <c>x</c>, in closed form, and the sine's the same. With <c>g</c> the
+        /// other function and <c>Q = a - a f</c>, Rubi's substitution
+        /// <c>v = g/(sqrt(Q) sqrt(f))</c> makes it rational: <c>a f v^2 = 1 + f</c>, so
+        /// <c>f = -1/(1 - a v^2)</c> and <c>Q = a (2 - a v^2)/(1 - a v^2)</c>, and
+        /// <c>dv/dy = ± sqrt(Q)/(2a f^(3/2))</c>, plus for the cosine, so that
+        /// <c>f^p Q^q dy = ± 2a f^(p + 3/2) Q^(q - 1/2) dv</c> is a whole power of
+        /// <c>1 - a v^2</c> over one of <c>2 - a v^2</c> or none. Its integral, back in <c>y</c>,
+        /// is a sum of <c>g f^k/sqrt(Q)</c> for half-odd <c>k</c> and of <c>artanh(1/z)/sqrt(a)</c>
+        /// and <c>artanh(sqrt(2)/z)/sqrt(2a)</c>, <c>z = sqrt(a) v</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Rubi's <c>cos(c + d x)^(5/2)/sqrt(a - a cos(c + d x))</c> and the ten beside it in 4.2.2.1,
+        /// and <c>1/(sqrt(sin(x)) sqrt(a - a sin(x)))</c> in 4.1.2.1, were answered by the sign of the
+        /// complement, <c>u = cos(y)</c> with <c>sin(y) = sgn(sin(y)) sqrt(1 - u^2)</c>: right, but
+        /// 489 to 1,567 characters with a <c>sgn(sqrt(cos(y)) - 1)</c> in them whose derivative is left
+        /// unevaluated, so that the corpus could not check them, owing <c>a &gt; 0</c> and
+        /// <c>cos(y) &gt;= 0</c>, and up to 25 GB to build.
+        /// </para>
+        /// <para>
+        /// Exact for any <c>a</c> of either sign, at every real <c>y</c> where the integrand is
+        /// defined, a negative cosine included: the step uses only <c>v^2 = (1 + f)/(a f)</c>, a
+        /// quotient of squares, and the chain rule for principal roots of real quantities. Rubi
+        /// writes <c>artanh(z)</c>, whose argument's square <c>(1 + f)/f</c> exceeds one where the
+        /// integrand is real for a positive <c>a</c>, a value on the cut and complex by a constant
+        /// there. <c>artanh(1/z)</c> has the same derivative and is <c>ln(f (1 + z)^2)/2</c>, since
+        /// <c>z^2 - 1 = 1/f</c>, and <c>artanh(sqrt(2)/z)</c> is <c>ln(f (sqrt(2) + z)^2/(1 - f))/2</c>;
+        /// each is written with <c>ln(f)</c> apart, because for a negative <c>a</c> the product
+        /// meets the cut where <c>g</c> changes sign inside the real domain. <c>z</c> is real or
+        /// imaginary, so <c>(1 + z)^2</c> and <c>(sqrt(2) + z)^2</c> are never negative numbers, and
+        /// <c>f</c> keeps its sign between the zeros of the cosine: the answer is continuous on each
+        /// interval between the zeros of <c>f</c> and of <c>Q</c>, and real where the integrand is.
+        /// </para>
+        /// <para>
+        /// Not for <c>a + a f</c>, whose arguments are real beyond one for a negative <c>a</c> and
+        /// which the rules after this answer. At the question asked, the two powers alone, before
+        /// the polynomial term, which hands the reciprocal of their product down a level, and
+        /// <c>q = ±1/2</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveAHalfOddPowerOfACosineBesideTheRootOfAMinusACosine(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            if (!TryReadAsQuotient(expr, out var above, out var below))
+                (above, below) = (expr, Number.Integer.One);
+            Entity constant = Number.Integer.One;
+            Entity? function = null, radicand = null;
+            ERational? p = null, q = null;
+            foreach (var (side, sign) in new[] { (above, 1), (below, -1) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (!factor.ContainsNode(x))
+                    {
+                        constant = sign > 0 ? constant * factor : constant / factor;
+                        continue;
+                    }
+                    if (factor is not Powf(var @base, var power) || power.Evaled is not Number.Rational rational
+                        || !rational.ERational.Denominator.Equals(EInteger.FromInt32(2)))
+                        return null;
+                    var exponent = sign > 0 ? rational.ERational : rational.ERational.Negate();
+                    if (@base is Sinf or Cosf)
+                    {
+                        if (function is not null)
+                            return null;
+                        (function, p) = (@base, exponent);
+                    }
+                    else
+                    {
+                        if (radicand is not null)
+                            return null;
+                        (radicand, q) = (@base, exponent);
+                    }
+                }
+            if (function is null || radicand is null || p is null || q is null
+                || q.Abs().CompareTo(ERational.Create(1, 2)) != 0 || p.Abs().CompareTo(ERational.FromInt32(11)) > 0)
+                return null;
+            var argument = function.DirectChildren.First();
+            if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _) || rate.ContainsNode(x)
+                || rate.Evaled is Number.Complex { IsZero: true })
+                return null;
+            var (sine, cosine) = (MathS.Sin(argument), MathS.Cos(argument));
+            if (ReadAsOnePlusMinusAFunction(radicand, sine, cosine) is not var (a, plus, isSine)
+                || plus || isSine != (function is Sinf) || a.ContainsNode(x))
+                return null;
+
+            // In v, with W = 1 - a v^2 and 1 + W = 2 - a v^2: the integrand is
+            // 2 s (-1)^n a^(m + 1) (1 + W)^m / W^r, r = n + m, n = p + 3/2, m = q - 1/2, s = 1 for the
+            // cosine. Its integral is v times a sum of powers of W, kept as their coefficients,
+            // and t1 int dv/W + t2 int dv/(1 + W).
+            var n = p.Add(ERational.Create(3, 2)).ToEInteger().ToInt32Checked();
+            var m = q.Sign > 0 ? 0 : -1;
+            var powersOfW = new Dictionary<int, ERational>();
+            ERational t1 = ERational.Zero, t2 = ERational.Zero;
+            static ERational Sign(int power) => power % 2 == 0 ? ERational.One : ERational.FromInt32(-1);
+            static ERational Binomial(int whole, int chosen)
+            {
+                var result = EInteger.One;
+                for (var i = 0; i < chosen; i++)
+                    result = result.Multiply(EInteger.FromInt32(whole - i)).Divide(EInteger.FromInt32(i + 1));
+                return ERational.FromEInteger(result);
+            }
+            void Add(int power, ERational coefficient)
+                => powersOfW[power] = powersOfW.TryGetValue(power, out var before) ? before.Add(coefficient) : coefficient;
+            // int dv/W^j = v/(2 (j - 1) W^(j - 1)) + (2j - 3)/(2 (j - 1)) int dv/W^(j - 1).
+            void OverAPowerOfW(int j, ERational coefficient)
+            {
+                for (; j > 1; j--)
+                {
+                    Add(1 - j, coefficient.Divide(ERational.FromInt32(2 * (j - 1))));
+                    coefficient = coefficient.Multiply(ERational.Create(2 * j - 3, 2 * (j - 1)));
+                }
+                t1 = t1.Add(coefficient);
+            }
+            // int W^i dv = v sum_k C(i, k) (W - 1)^k/(2k + 1), since (W - 1) = -a v^2.
+            void APowerOfW(int i, ERational coefficient)
+            {
+                for (var k = 0; k <= i; k++)
+                    for (var l = 0; l <= k; l++)
+                        Add(l, coefficient.Multiply(Binomial(i, k)).Multiply(Binomial(k, l)).Multiply(Sign(k - l))
+                            .Divide(ERational.FromInt32(2 * k + 1)));
+            }
+            var r = n + m;
+            if (m == 0 && r >= 1)
+                OverAPowerOfW(r, ERational.One);
+            else if (m == 0)
+                APowerOfW(-r, ERational.One);
+            // 1/((1 + W) W^r) over its partial fractions.
+            else if (r >= 1)
+            {
+                for (var j = 1; j <= r; j++)
+                    OverAPowerOfW(j, Sign(r - j));
+                t2 = Sign(r);
+            }
+            else
+            {
+                for (var i = 0; i < -r; i++)
+                    APowerOfW(i, Sign(-r - 1 - i));
+                t2 = Sign(-r);
+            }
+
+            // Back in y: W = -1/f, so v W^l = (-1)^l g f^(-l - 1/2)/sqrt(Q).
+            var complement = isSine ? cosine : sine;
+            var scale = ERational.FromInt32(isSine ? -2 : 2).Multiply(Sign(n));
+            var root = MathS.Sqrt(radicand);
+            Entity? algebraic = null;
+            foreach (var pair in powersOfW.OrderBy(pair => pair.Key))
+            {
+                var coefficient = scale.Multiply(pair.Value).Multiply(Sign(pair.Key));
+                if (coefficient.IsZero)
+                    continue;
+                var term = Number.Rational.Create(coefficient) * complement
+                    * MathS.Pow(function, Number.Rational.Create(ERational.Create(-2 * pair.Key - 1, 2))) / root;
+                algebraic = algebraic is null ? term : algebraic + term;
+            }
+            // The hyperbolic arctangents as logarithms: with z = sqrt(a) v, z^2 - 1 = 1/f and
+            // z^2 - 2 = (1 - f)/f, so artanh(1/z) = ln(f (1 + z)^2)/2 and artanh(sqrt(2)/z) =
+            // ln(f (sqrt(2) + z)^2/(1 - f))/2, each written as two logarithms with ln(f) apart: a
+            // negative a puts f (1 + z)^2 on the cut where g changes sign inside the real domain,
+            // and neither of the two meets it.
+            var rootOfA = MathS.Sqrt(a).InnerSimplified;
+            var z = rootOfA * complement / (root * MathS.Sqrt(function));
+            Entity? logarithmic = null;
+            Entity ofTheFunction = Number.Integer.Zero;
+            if (!t1.IsZero)
+            {
+                var half = Number.Rational.Create(scale.Multiply(t1).Divide(ERational.FromInt32(2)));
+                logarithmic = half * MathS.Ln(MathS.Sqr(1 + z));
+                ofTheFunction = half;
+            }
+            if (!t2.IsZero)
+            {
+                var quarter = Number.Rational.Create(scale.Multiply(t2).Divide(ERational.FromInt32(4))) * MathS.Sqrt(2);
+                var term = quarter * MathS.Ln(MathS.Sqr(MathS.Sqrt(2) + z) / (1 - function));
+                logarithmic = logarithmic is null ? term : logarithmic + term;
+                ofTheFunction = ofTheFunction == Number.Integer.Zero ? quarter : ofTheFunction + quarter;
+            }
+            if (logarithmic is not null)
+                logarithmic = logarithmic + ofTheFunction.InnerSimplified * MathS.Ln(function);
+            if (logarithmic is not null && rootOfA != Number.Integer.One)
+                logarithmic = m == 0 ? rootOfA * logarithmic : logarithmic / rootOfA;
+            if (algebraic is not null && m == 0)
+                algebraic = a * algebraic;
+            var whole = algebraic is null ? logarithmic! : logarithmic is null ? algebraic : algebraic + logarithmic;
+            return (constant * whole / rate).InnerSimplified;
+        }
+
+        /// <summary>
         /// A half-odd power of <c>a ± a sin(y)</c> times whole or half-odd powers of other linears
         /// in the same sine, <c>c + d sin(y)</c>, and nothing else of <c>x</c>: by
         /// <see cref="SolveByTheHalfAngleWhereOnePlusASineIsASquare"/>, asked first. The cosine's
