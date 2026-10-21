@@ -72,6 +72,14 @@ namespace AngouriMath.Functions.Algebra
             // parts on what it hands down was a two-minute search.
             if (integrateByParts && IsAnInverseFunctionTimesARationalFunction(expr, x) && SolveIntegratingByParts(expr, x) is { } byParts)
                 return byParts;
+            // And a hyperbolic sine or cosine integral of a linear u beside a sum of e^u and e^(-u),
+            // which is how a hyperbolic function of u beside it is written, over a polynomial: parts
+            // against the whole pair the integral's derivative, sinh(u)/u, with the whole hyperbolic
+            // function, where expanded each exponential leaves `Ei(u) e^(-u)/u` or the like, which
+            // has no closed form, and `cosh(b x) Shi(b x)/x^2` spent thirteen gigabytes declining its
+            // two terms before parts answered it whole in a quarter of one.
+            if (integrateByParts && IsAHyperbolicIntegralBesideItsExponentialsOverAPolynomial(expr, x) && SolveIntegratingByParts(expr, x) is { } byPartsWhole)
+                return byPartsWhole;
             var splitted = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(expr, e => e.ContainsNode(x));
             if (splitted is null || splitted.Count < 2) return null; // nothing to do, let other solvers do the work
             // Each expanded term with a factor written on both sides of its bar cancelled:
@@ -427,6 +435,44 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>The largest term a sum is split over as written, before the expanding gather.</summary>
         private const int LargestTermTakenAsWritten = 60;
+
+        /// <summary>
+        /// Whether <paramref name="expr"/> is <c>Shi(u)</c> or <c>Chi(u)</c> for a linear <c>u</c>
+        /// times sums of constant multiples of <c>e^u</c> and <c>e^(-u)</c>, over a polynomial in
+        /// <paramref name="x"/> that is not a constant, with nothing else in <paramref name="x"/>.
+        /// </summary>
+        private static bool IsAHyperbolicIntegralBesideItsExponentialsOverAPolynomial(Entity expr, Entity.Variable x)
+        {
+            if (expr is Sumf or Minusf)
+                return false;
+            var (above, below) = Functions.SingleQuotient.Of(expr);
+            if (!below.ContainsNode(x) || !TreeAnalyzer.TryGetPolynomial(below, x, out _))
+                return false;
+            var factors = Mulf.LinearChildren(above).Where(factor => factor.ContainsNode(x)).ToList();
+            if (factors.Count(factor => factor is Shif or Chif) != 1)
+                return false;
+            var argument = factors.First(factor => factor is Shif or Chif).DirectChildren.First();
+            if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out var offset))
+                return false;
+            bool AnExponentialOfTheArgument(Entity node)
+                => node is Powf(var @base, var exponent) && @base == MathS.e
+                   && TreeAnalyzer.TryGetPolyLinear(exponent, x, out var rate, out var shift)
+                   && (VanishesIdentically(rate - slope) && VanishesIdentically(shift - offset)
+                       || VanishesIdentically(rate + slope) && VanishesIdentically(shift + offset));
+            bool ATermInTheExponentials(Entity term)
+                => Mulf.LinearChildren(term).Count(factor => factor.ContainsNode(x)) == 1
+                   && Mulf.LinearChildren(term).Where(factor => factor.ContainsNode(x)).All(AnExponentialOfTheArgument);
+            var sums = 0;
+            foreach (var factor in factors)
+            {
+                if (factor is Shif or Chif)
+                    continue;
+                if (factor is not (Sumf or Minusf) || !Sumf.LinearChildren(factor).All(term => !term.ContainsNode(x) || ATermInTheExponentials(term)))
+                    return false;
+                sums++;
+            }
+            return sums > 0;
+        }
 
         /// <summary>
         /// Whether the integrand is one logarithm or inverse trigonometric function of
@@ -13735,7 +13781,11 @@ namespace AngouriMath.Functions.Algebra
                 : Functions.SingleQuotient.Combine(inU / (1 + MathS.Sqr(uSub))) is var overOneBar
                   && IsAQuotientOfDistinctSumsOfSymbolsInLowestTerms(overOneBar, uSub)
                     ? WithNeighboursToOnePowerGathered(overOneBar)
-                    : overOneBar.Simplify();
+                    // And so beside a power of u below the bar, what a power of the cotangent leaves
+                    // with its ones above: see AQuotientOfDistinctSumsOverAPowerOfTheVariable.
+                    : AQuotientOfDistinctSumsOverAPowerOfTheVariable(overOneBar, uSub) is { } overThePower
+                      ? overThePower
+                      : overOneBar.Simplify();
             if (integrand is Providedf(var withoutCondition, _))
                 integrand = withoutCondition;
             // Asked as the same question: the rewrite renames the variable and adds no step of
@@ -13825,6 +13875,57 @@ namespace AngouriMath.Functions.Algebra
                 }
             }
             return holdsASymbol && ReferenceEquals(WithNeighboursToOnePowerGathered(top), top);
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/>, a quotient of sums as <see cref="IsAQuotientOfDistinctSumsOfSymbolsInLowestTerms"/>
+        /// reads them beside one positive whole power of <paramref name="u"/> below the bar, with the
+        /// ones above it -- <c>1</c> or a power of it -- left out, as the simplifier hands it back;
+        /// null where it is not such a quotient.
+        /// </summary>
+        /// <remarks>
+        /// A power of the cotangent is <c>(1/u)^k</c> under the tangent, and over one bar it is
+        /// <c>1^k</c> above and <c>u^k</c> below: Rubi's 4.3.3.1
+        /// <c>cot(c + d x)^7 (a + b tan(c + d x))^4 (A + B tan(c + d x))</c> is
+        /// <c>1^7 (a + b u)^4 (A + B u)/(u^7 (1 + u^2))</c>, which the simplifier spent 4.8 of the
+        /// integral's 5 GB on to hand back without the <c>1^7</c>. The sums have constant terms, so
+        /// the power of u divides none of them and the quotient is in lowest terms as before. Only
+        /// with an exponent no other power below the bar has, since the gathering of neighbours to
+        /// one power was measured for sums alone.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        private static Entity? AQuotientOfDistinctSumsOverAPowerOfTheVariable(Entity expr, Entity.Variable u)
+        {
+            if (expr is not Divf(var top, var bottom))
+                return null;
+            static bool IsOne(Entity factor) => factor == Number.Integer.One || factor is Powf(var one, Number.Integer) && one == Number.Integer.One;
+            var above = Mulf.LinearChildren(top).Where(factor => !IsOne(factor)).ToList();
+            var below = Mulf.LinearChildren(bottom);
+            if (above.Count == 0)
+                return null;
+            Entity? power = null;
+            var exponent = EInteger.One;
+            var others = new List<Entity>();
+            foreach (var factor in below)
+            {
+                if (factor == u || factor is Powf(var @base, Number.Integer { EInteger.Sign: > 0 }) && @base == u)
+                {
+                    if (power is not null)
+                        return null;
+                    power = factor;
+                    exponent = factor is Powf(_, Number.Integer { EInteger: var whole }) ? whole : EInteger.One;
+                    continue;
+                }
+                others.Add(factor);
+            }
+            if (power is null || others.Count == 0
+                || others.Any(factor => factor is Powf(_, Number.Integer { EInteger: var whole }) && whole.Equals(exponent)))
+                return null;
+            static Entity Product(IEnumerable<Entity> factors) => factors.Aggregate((left, right) => left * right);
+            var withoutThePower = Product(above) / Product(others);
+            return IsAQuotientOfDistinctSumsOfSymbolsInLowestTerms(withoutThePower, u)
+                ? WithNeighboursToOnePowerGathered(Product(above) / bottom)
+                : null;
         }
 
         /// <summary>
@@ -30616,6 +30717,45 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Whether <paramref name="expr"/> under <c>x = c t</c>, for <c>c</c> the
+        /// <paramref name="scale"/>, is shown by its values not to be a function of the scale times
+        /// one of <c>t</c>: where a function that is not algebraic has an argument holding the
+        /// variable, the quotient of the scaled integrand's values at two points of <c>t</c> is taken
+        /// at two values of the scale, and the two quotients differ. False wherever a value cannot be
+        /// had, the values agree, or no such function is written.
+        /// </summary>
+        private static bool TheScaleStaysInsideAFunction(Entity expr, Entity.Variable x, Entity.Variable scale)
+        {
+            if (!expr.Nodes.Any(node => node switch
+                {
+                    Sumf or Minusf or Mulf or Divf or Number or Variable => false,
+                    Powf(_, var exponent) => exponent.ContainsNode(x),
+                    _ => node.DirectChildren.Any(child => child.ContainsNode(x)),
+                })
+                || PowerOfXAsWritten(expr, x) > LargestPowerEvaluatedForARepeat)
+                return false;
+            // In decimals: downcast, every value is folded exactly.
+            using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+            Number.Complex? At(string scaleValue, string point)
+            {
+                var c = Number.Real.Create(EDecimal.FromString(scaleValue));
+                var value = (expr.Substitute(x, c * Number.Real.Create(EDecimal.FromString(point))).Substitute(scale, c) * c).Evaled;
+                return value is Number.Complex { IsNaN: false } number && number.IsFinite && !number.IsZero ? number : null;
+            }
+            if (At("1", "0.83") is not { } oneFirst || At("1", "1.29") is not { } oneSecond
+                || At("1.37", "0.83") is not { } scaledFirst || At("1.37", "1.29") is not { } scaledSecond)
+                return false;
+            var first = ToComplex(scaledFirst) / ToComplex(oneFirst);
+            var second = ToComplex(scaledSecond) / ToComplex(oneSecond);
+            var magnitude = System.Math.Max(1.0, System.Numerics.Complex.Abs(first));
+            var difference = System.Numerics.Complex.Abs(first - second);
+            return !double.IsNaN(difference) && !double.IsInfinity(difference) && !double.IsNaN(magnitude) && !double.IsInfinity(magnitude)
+                && difference > 1e-6 * magnitude;
+            static System.Numerics.Complex ToComplex(Number.Complex number)
+                => new(number.RealPart.EDecimal.ToDouble(), number.ImaginaryPart.EDecimal.ToDouble());
+        }
+
+        /// <summary>
         /// An integrand carrying one symbolic parameter, scaled by it — <c>x = c t</c> — so that
         /// what is left to integrate has the variable alone in it.
         /// </summary>
@@ -30665,6 +30805,14 @@ namespace AngouriMath.Functions.Algebra
                 scale = variable;
             }
             if (scale is null)
+                return null;
+            // A function that is not algebraic, of an argument holding the variable, takes the scale
+            // inside it under x = c t unless the argument divides it out -- `e^(b x)` is `e^(b^2 t)`
+            // and `Shi(x)` is `Shi(b t)` -- and then no power of it comes out, which two values of the
+            // scale say before the three simplifications below: they spent a gigabyte and more on
+            // `(b x e^(b x) + e^(b x)) (b x Shi(b x) - cosh(b x))`, what parts leaves of `x Shi(b x)^2`, to
+            // find it declined. Only a decline is decided so; agreeing values leave it to the check below.
+            if (TheScaleStaysInsideAFunction(expr, x, scale))
                 return null;
 
             // dx = c dt.
@@ -37845,7 +37993,7 @@ namespace AngouriMath.Functions.Algebra
         /// or a numeric power, where a symbol is not pinned, and where a value is not real and
         /// finite. A root of a negative number is not real here, odd or even.
         /// </summary>
-        private static (double Value, double Scale)? AtRealPoint(Entity expr, Dictionary<Variable, double> pins, Entity.Variable x, double at)
+        private static (double Value, double Scale)? AtRealPoint(Entity expr, Dictionary<Variable, double> pins, Entity.Variable x, double at, bool exponentials = false)
         {
             var scale = 0.0;
             double Of(Entity node)
@@ -37866,6 +38014,7 @@ namespace AngouriMath.Functions.Algebra
                         => System.Math.Pow(Of(@base), whole.EInteger.ToInt32Checked()),
                     Powf(var @base, Number.Rational fraction) => Of(@base) is var inner && inner >= 0
                         ? System.Math.Pow(inner, fraction.ERational.ToDouble()) : double.NaN,
+                    Powf(var @base, var exponent) when exponentials && @base == MathS.e => System.Math.Exp(Of(exponent)),
                     _ => double.NaN,
                 };
                 if (System.Math.Abs(value) > scale)
@@ -37932,6 +38081,29 @@ namespace AngouriMath.Functions.Algebra
                 return WithAFactorProportionalToTheDerivative(source, duDx, x) is null;
             }
             return false;
+        }
+
+        /// <summary>
+        /// <see cref="VariesWithTheVariableWhereTheCandidateIsHeld"/> for a quotient by the derivative
+        /// of a special function, with that function written as <paramref name="uSub"/>: in doubles,
+        /// where it is a rational function of x, the symbols and exponentials, of any size.
+        /// </summary>
+        /// <remarks>
+        /// A special function is transcendental over the elementary functions -- it is not one of
+        /// them, and what is algebraic over them is -- so a quotient elementary in x and rational in
+        /// the function is a function of the function alone only where, with it held, no x is left:
+        /// two values at two points then say that no rewriting that keeps the value takes the x out.
+        /// Real values at two positive points only, as there.
+        /// </remarks>
+        private static bool VariesWhereASpecialFunctionIsHeld(Entity expr, Variable uSub, Entity.Variable x)
+        {
+            if (HoldsTheImaginaryUnit(expr) || !expr.ContainsNode(uSub)
+                || !expr.Nodes.All(node => node is Sumf or Minusf or Mulf or Divf or Number or Variable || node is Powf(_, Number) || node is Powf(var @base, _) && @base == MathS.e))
+                return false;
+            var pins = PinsFor(expr.Vars, x);
+            return AtRealPoint(expr, pins, x, 0.29, exponentials: true) is (var first, var scaleFirst)
+                && AtRealPoint(expr, pins, x, 0.53, exponentials: true) is (var second, var scaleSecond)
+                && System.Math.Abs(first - second) > 1e-6 * System.Math.Max(1.0, System.Math.Max(scaleFirst, scaleSecond));
         }
 
         /// <summary>
@@ -41670,6 +41842,14 @@ namespace AngouriMath.Functions.Algebra
                     // `sqrt(b cosh(x) + c sinh(x) - sqrt(b^2 - c^2))` was two to seven gigabytes of
                     // simplification each time it was offered.
                     if (KeepsTheVariableThroughEveryRewriting(inTermsOfU, u, uSub, x, source, duDx))
+                        continue;
+                    // And under a special function, where with it held the quotient takes two values at two
+                    // points of x, refused before it is simplified, for the reason in
+                    // VariesWhereASpecialFunctionIsHeld: `x^2 Chi(a + b x)^2` offered `Chi(a + b x)` to three
+                    // remainders of its parts, and simplifying each quotient to refuse it was a gigabyte.
+                    if (IsASpecialFunction(u) && inTermsOfU.ContainsNode(x)
+                        && !inTermsOfU.Nodes.Any(node => IsASpecialFunction(node) && node.ContainsNode(x))
+                        && VariesWhereASpecialFunctionIsHeld(inTermsOfU, uSub, x))
                         continue;
                     integrandInU = !inTermsOfU.ContainsNode(x)
                         && TreeAnalyzer.TryGetPolyLinear(u, x, out var slope, out var offset) && !slope.ContainsNode(x) && !offset.ContainsNode(x)
