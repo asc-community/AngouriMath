@@ -33318,6 +33318,36 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>q f^2 - p</c> for a sum <c>p - q f^2</c> with <c>f</c> one secant or cosecant of
+        /// <paramref name="x"/> and numbers <c>q &gt; 0</c> and <c>q &gt;= p</c>, which is nowhere
+        /// positive for a real <paramref name="x"/>, since <c>f^2 &gt;= 1</c> wherever it is defined:
+        /// <c>1 - sec(u)^2</c> is <c>-tan(u)^2</c>. Null for any other sum.
+        /// </summary>
+        private static Entity? TheNegationOfANowherePositiveSum(Entity sum, Entity.Variable x)
+        {
+            if (sum is not (Sumf or Minusf))
+                return null;
+            Entity? function = null;
+            foreach (var node in sum.Nodes)
+                if (node is Secantf or Cosecantf && node.ContainsNode(x))
+                {
+                    if (function is null)
+                        function = node;
+                    else if (function != node)
+                        return null;
+                }
+            if (function is null)
+                return null;
+            var f = Variable.CreateUnique(sum, "f_sec");
+            var inF = sum.Replace(node => node == function ? f : node);
+            if (inF.ContainsNode(x) || !TreeAnalyzer.TryGetPolynomial(inF, f, out var terms) || terms.Count != 2
+                || !terms.TryGetValue(EInteger.Zero, out var p) || !terms.TryGetValue(EInteger.FromInt32(2), out var minusQ)
+                || minusQ.Evaled is not Number.Real { IsNegative: true } || (p + minusQ).Evaled is not Number.Real { IsPositive: false })
+                return null;
+            return ((-minusQ).InnerSimplified * MathS.Pow(function, Number.Integer.Create(2)) - p).InnerSimplified;
+        }
+
+        /// <summary>
         /// Whether <paramref name="x"/> occurs in <paramref name="expr"/> at all, and then only
         /// inside a sine, cosine, tangent, cotangent, secant or cosecant: <c>1 + sin(x)</c> and
         /// <c>sec(2x)^3</c> are such, <c>e^x</c>, <c>x sin(x)</c> and a hyperbolic function --
@@ -35654,6 +35684,16 @@ namespace AngouriMath.Functions.Algebra
                 {
                     if (constant.Vars.Any() is false)
                         return node;
+                    // A rest that is nowhere positive, `1 - sec(u)^2`, comes out negated, and the
+                    // constant with it: `(c g)^b` is `(-c)^b (-g)^b` for every real `c`, `-g` being
+                    // a non-negative real, so nothing is assumed. Taken out for `c > 0`,
+                    // `(a - a sec(c + d x)^2)^(7/2)` was answered only where the integrand is the
+                    // root of a negative, and nothing was said for the negative `a` where it is real.
+                    if (constantAlone && TheNegationOfANowherePositiveSum(single!, x) is { } negated)
+                    {
+                        changed = true;
+                        return MathS.Pow((-constant).InnerSimplified, exponent) * MathS.Pow(negated, exponent);
+                    }
                     aSymbolicConstantIsNegated |= Mulf.LinearChildren(constant).Any(factor => factor is Number.Real { IsNegative: true });
                     symbolicConstantsTaken++;
                     if (negativeArm)
