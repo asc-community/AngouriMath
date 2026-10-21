@@ -2488,6 +2488,15 @@ namespace AngouriMath.Functions.Algebra
         /// root are read by Taylor's formula, and the block is left as it is written, for the
         /// rules that read it. Rubi's 1.3.1.
         /// https://github.com/asc-community/AngouriMath/issues/718
+        /// <para>
+        /// Over a power of a block the root is a fresh symbol while the series and the rest are
+        /// computed, every denominator is a written power of the block's bases at it, and the rest
+        /// is summed over one of them, written in powers of the base, and integrated in named
+        /// coefficients: with the root carried as <c>-d/e</c>, <c>1/((d + e x)^2 (a + c x^4)^3)</c>
+        /// came to 203,730 characters after 27 seconds, the lowest terms giving up on coefficients
+        /// of thousands of nodes, and is 11,068 in half a second now. Rubi's 1.3.1:568 and 569.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
         /// </remarks>
         private static Entity? IntegrateOverAPowerOfALinearBesideABlock(Entity numerator, Entity denominator, Entity.Variable x, bool integrateByParts)
         {
@@ -2535,7 +2544,15 @@ namespace AngouriMath.Functions.Algebra
             var degreeAbove = above.Count == 0 ? 0 : above.Keys.Max()!.ToInt32Unchecked();
             if (degreeBelow > MaximumPowerOfXBesideABlock || degreeAbove > MaximumPowerOfXBesideABlock)
                 return null;
-            var root = Functions.PartialFractions.InLowestTermsOverTheSymbols(-g / h);
+            var actualRoot = Functions.PartialFractions.InLowestTermsOverTheSymbols(-g / h);
+            // Over a power of a block, the root is a fresh symbol while the series and the rest are
+            // computed, and is put back in them after: every identity below holds for any value of
+            // it, and `-d/e` carried through the division made coefficients of thousands of nodes.
+            var overAPower = block is Powf(_, Number.Integer { EInteger: var blockPower }) && blockPower.CompareTo(EInteger.FromInt32(2)) >= 0;
+            var namedRoot = overAPower && actualRoot is not (Variable or Number) ? Variable.CreateUnique(numerator + denominator, "r_root") : null;
+            Entity root = namedRoot ?? actualRoot;
+            Entity AtTheRoot(Entity value) => namedRoot is null ? value : value.Substitute(namedRoot, actualRoot);
+            bool VanishesAtTheRoot(Entity value) => VanishesIdentically(value) || namedRoot is not null && VanishesIdentically(AtTheRoot(value));
             // N and B in s = x - r, by Taylor's formula.
             Entity[] InS(Dictionary<EInteger, Entity> polynomial, int degree)
             {
@@ -2552,8 +2569,37 @@ namespace AngouriMath.Functions.Algebra
             }
             // Where s divides B, the block shares the root.
             var b = InS(below, degreeBelow);
-            if (VanishesIdentically(b[0]))
+            if (VanishesAtTheRoot(b[0]))
                 return null;
+            // B at the root as it is written, each base in lowest terms and its power kept, which
+            // every denominator below is a product of: divided out of a numerator that shares one,
+            // and kept as a power, where expanded the gcd ran out of room and the base was lost.
+            var basesAtTheRoot = new List<Entity>();
+            var writtenAtTheRoot = new List<(Entity Above, Entity Below, int Times)>();
+            foreach (var factor in overAPower ? Mulf.LinearChildren(block) : Enumerable.Empty<Entity>())
+            {
+                var (raised, times) = factor is Powf(var repeated, Number.Integer { EInteger.Sign: > 0 } e) && e.EInteger.CanFitInInt32()
+                    ? (repeated, e.EInteger.ToInt32Unchecked()) : (factor, 1);
+                var (baseAbove, baseBelow) = Functions.SingleQuotient.Of(Functions.PartialFractions.InLowestTermsOverTheSymbols(raised.Substitute(x, root)));
+                if (baseAbove.Vars.Any())
+                    basesAtTheRoot.Add(baseAbove);
+                writtenAtTheRoot.Add((baseAbove, baseBelow, times));
+            }
+            // The block at the root to the power given, as a quotient of written powers.
+            Entity BlockAtTheRootTo(int power)
+            {
+                Entity above = Number.Integer.One, below = Number.Integer.One;
+                foreach (var (baseAbove, baseBelow, times) in writtenAtTheRoot)
+                {
+                    if (baseAbove != Number.Integer.One)
+                        above = above == Number.Integer.One ? MathS.Pow(baseAbove, times * power) : above * MathS.Pow(baseAbove, times * power);
+                    if (baseBelow != Number.Integer.One)
+                        below = below == Number.Integer.One ? MathS.Pow(baseBelow, times * power) : below * MathS.Pow(baseBelow, times * power);
+                }
+                return below == Number.Integer.One ? above : above / below;
+            }
+            var blockAtTheRoot = BlockAtTheRootTo(1);
+            Entity Compact(Entity value) => WithTheDenominatorInPowersOf(Functions.PartialFractions.InLowestTermsOverTheSymbols(value), basesAtTheRoot);
             // A block that is a polynomial in a power of the linear, `a + b (c + d x)^3`, makes the
             // whole a function of the linear, which the substitution of it reads. Split here, the
             // rest goes back over that block written in x, which the rules over x search long for:
@@ -2561,14 +2607,14 @@ namespace AngouriMath.Functions.Algebra
             static int Gcd(int p, int q) => q == 0 ? p : Gcd(q, p % q);
             var stride = 0;
             for (var i = 1; i < b.Length; i++)
-                if (!VanishesIdentically(b[i]))
+                if (!VanishesAtTheRoot(b[i]))
                     stride = Gcd(stride, i);
             if (stride > 1)
                 return null;
             // Where s divides N, the part over s^k is nothing and the rest is the question asked
             // again.
             var n = InS(above, degreeAbove);
-            if (VanishesIdentically(n[0]))
+            if (VanishesAtTheRoot(n[0]))
                 return null;
             Entity At(Entity[] polynomial, int power) => power < polynomial.Length ? polynomial[power] : Number.Integer.Zero;
 
@@ -2579,7 +2625,7 @@ namespace AngouriMath.Functions.Algebra
                 var sum = At(n, j);
                 for (var i = 1; i <= j; i++)
                     sum -= At(b, i) * series[j - i];
-                series[j] = Functions.PartialFractions.InLowestTermsOverTheSymbols(sum / b[0]);
+                series[j] = overAPower ? Compact(sum / blockAtTheRoot) : Functions.PartialFractions.InLowestTermsOverTheSymbols(sum / b[0]);
             }
 
             // R = (N - P B)/s^k in s, and then in x.
@@ -2592,32 +2638,79 @@ namespace AngouriMath.Functions.Algebra
                     coefficient -= series[j] * At(b, m - j);
                 inS[m - k] = Functions.PartialFractions.InLowestTermsOverTheSymbols(coefficient);
             }
-            Entity remainder = Number.Integer.Zero;
+
+            // L^k is h^k s^k, and s is L/h: the part over L^k term by term, and the rest over the
+            // block as it is written.
+            Entity OverTheLinear()
+            {
+                Entity overTheLinear = Number.Integer.Zero;
+                for (var j = 0; j < k; j++)
+                    if (!VanishesIdentically(series[j]))
+                        overTheLinear += j == k - 1
+                            ? series[j] * IntegralPatterns.AntiderivativeLog(linear)
+                            : series[j] * MathS.Pow(h, k - 1 - j) * MathS.Pow(linear, j - k + 1) / (j - k + 1);
+                return overTheLinear;
+            }
+            var scale = k == 1 ? h : MathS.Pow(h, k);
+            if (!overAPower)
+            {
+                Entity remainder = Number.Integer.Zero;
+                for (var j = 0; j < inS.Length; j++)
+                {
+                    Entity sum = Number.Integer.Zero;
+                    for (var m = j; m < inS.Length; m++)
+                        if (!VanishesIdentically(inS[m]))
+                            sum += inS[m] * Binomial(m, j) * (m == j ? Number.Integer.One : MathS.Pow(-root, m - j));
+                    var coefficient = Functions.PartialFractions.InLowestTermsOverTheSymbols(sum);
+                    if (!VanishesIdentically(coefficient))
+                        remainder += j == 0 ? coefficient : coefficient * (j == 1 ? x : MathS.Pow(x, j));
+                }
+                if (remainder == Number.Integer.Zero)
+                    return OverTheLinear() / scale;
+                return OverTheRestOfTheBlock(remainder, block, x, integrateByParts) is { } overTheRest
+                    ? (OverTheLinear() + overTheRest) / scale
+                    : null;
+            }
+
+            var rest = new Dictionary<int, Entity>();
+            // Over one denominator, b0^k, which every coefficient in s divides: summed apart, each
+            // term's own denominator multiplied into the others' and the lowest terms gave up.
+            var common = BlockAtTheRootTo(k);
+            var overCommon = inS.Select(value => Functions.PartialFractions.InLowestTermsOverTheSymbols(value * common)).ToArray();
             for (var j = 0; j < inS.Length; j++)
             {
                 Entity sum = Number.Integer.Zero;
                 for (var m = j; m < inS.Length; m++)
-                    if (!VanishesIdentically(inS[m]))
-                        sum += inS[m] * Binomial(m, j) * (m == j ? Number.Integer.One : MathS.Pow(-root, m - j));
-                var coefficient = Functions.PartialFractions.InLowestTermsOverTheSymbols(sum);
-                if (!VanishesIdentically(coefficient))
-                    remainder += j == 0 ? coefficient : coefficient * (j == 1 ? x : MathS.Pow(x, j));
+                    if (!VanishesIdentically(overCommon[m]))
+                        sum += overCommon[m] * Binomial(m, j) * (m == j ? Number.Integer.One : MathS.Pow(-root, m - j));
+                var coefficient = Compact(Functions.PartialFractions.InLowestTermsOverTheSymbols(sum) / common);
+                if (!VanishesAtTheRoot(coefficient))
+                    rest[j] = coefficient;
             }
-
-            // L^k is h^k s^k, and s is L/h: the part over L^k term by term, and the rest over the
-            // block as it is written.
-            Entity overTheLinear = Number.Integer.Zero;
             for (var j = 0; j < k; j++)
-                if (!VanishesIdentically(series[j]))
-                    overTheLinear += j == k - 1
-                        ? series[j] * IntegralPatterns.AntiderivativeLog(linear)
-                        : series[j] * MathS.Pow(h, k - 1 - j) * MathS.Pow(linear, j - k + 1) / (j - k + 1);
-            var scale = k == 1 ? h : MathS.Pow(h, k);
-            if (remainder == Number.Integer.Zero)
-                return overTheLinear / scale;
-            return OverTheRestOfTheBlock(remainder, block, x, integrateByParts) is { } overTheBlock
-                ? (overTheLinear + overTheBlock) / scale
-                : null;
+                series[j] = AtTheRoot(series[j]);
+            if (rest.Count == 0)
+                return OverTheLinear() / scale;
+            // Over a power of one base, `R/P^q` is `Q_q/P^q + ... + Q_1/P` with each `Q_i` below the
+            // degree of P, by dividing by P: integrated as one, the rest of the eleventh degree over
+            // `(a/c + x^4)^3` came back improper, with polynomial terms that cancel.
+            var pieces = InPowersOfItsBase(rest, block, x, Compact)
+                ?? new List<(Entity Over, Dictionary<int, Entity> Piece)> { (block, rest) };
+            // Each piece in named coefficients, which the rest over `(a/c + x^4)^3` took 27 seconds
+            // to integrate without, and the root put back in them.
+            foreach (var (_, piece) in pieces)
+                foreach (var power in piece.Keys.ToList())
+                    piece[power] = AtTheRoot(piece[power]);
+            Entity overTheBlock = Number.Integer.Zero;
+            foreach (var (over, piece) in pieces)
+            {
+                if (piece.Count == 0)
+                    continue;
+                if (OverTheRestOfTheBlock(piece, over, x, integrateByParts) is not { } integrated)
+                    return null;
+                overTheBlock = overTheBlock == Number.Integer.Zero ? integrated : overTheBlock + integrated;
+            }
+            return (OverTheLinear() + overTheBlock) / scale;
 
             static Entity Binomial(int n, int k)
             {
@@ -2626,6 +2719,98 @@ namespace AngouriMath.Functions.Algebra
                     result = result.Multiply(EInteger.FromInt32(n - k + i)).Divide(EInteger.FromInt32(i));
                 return Number.Integer.Create(result);
             }
+        }
+
+        /// <summary>
+        /// <c>R/P^q</c>, for a block that is a power <c>P^q</c> with <c>q &gt;= 2</c> of one
+        /// polynomial in x and a rest <c>R</c> given by its coefficients, as
+        /// <c>Q_q/P^q + ... + Q_1/P</c>, each <c>Q_i</c> below the degree of P and its coefficients
+        /// put through <paramref name="compact"/>; null for any other block.
+        /// </summary>
+        private static List<(Entity Over, Dictionary<int, Entity> Piece)>? InPowersOfItsBase(
+            Dictionary<int, Entity> rest, Entity block, Entity.Variable x, System.Func<Entity, Entity> compact)
+        {
+            if (block is not Powf(var @base, Number.Integer { EInteger: var exponent }) || exponent.CompareTo(EInteger.FromInt32(2)) < 0
+                || !exponent.CanFitInInt32() || !TreeAnalyzer.TryGetPolynomial(@base, x, out var terms))
+                return null;
+            var q = exponent.ToInt32Unchecked();
+            if (terms.Any(term => term.Key.Sign < 0 || !term.Key.CanFitInInt32() || term.Value.ContainsNode(x)))
+                return null;
+            var degree = terms.Keys.Max()!.ToInt32Unchecked();
+            if (degree < 1)
+                return null;
+            var leading = terms[EInteger.FromInt32(degree)];
+            if (VanishesIdentically(leading))
+                return null;
+            Entity Coefficient(int power) => terms.TryGetValue(EInteger.FromInt32(power), out var coefficient) ? coefficient : Number.Integer.Zero;
+            var left = new Dictionary<int, Entity>(rest);
+            var pieces = new List<(Entity Over, Dictionary<int, Entity> Piece)>();
+            for (var i = q; i >= 1; i--)
+            {
+                // left = Q_i + P * quotient, Q_i the remainder of the division by P.
+                var quotient = new Dictionary<int, Entity>();
+                var top = left.Count == 0 ? -1 : left.Keys.Max();
+                for (var power = top; power >= degree; power--)
+                {
+                    if (!left.TryGetValue(power, out var at) || VanishesIdentically(at))
+                        continue;
+                    var factor = compact(at / leading);
+                    quotient[power - degree] = factor;
+                    left.Remove(power);
+                    for (var t = 0; t < degree; t++)
+                        if (!VanishesIdentically(Coefficient(t)))
+                        {
+                            var updated = compact((left.TryGetValue(power - degree + t, out var was) ? was : Number.Integer.Zero) - factor * Coefficient(t));
+                            if (VanishesIdentically(updated))
+                                left.Remove(power - degree + t);
+                            else
+                                left[power - degree + t] = updated;
+                        }
+                }
+                if (i == 1 && quotient.Count > 0)
+                    return null;
+                pieces.Add((i == 1 ? @base : MathS.Pow(@base, i), left));
+                left = quotient;
+            }
+            return pieces;
+        }
+
+        /// <summary>
+        /// <paramref name="value"/> with each of <paramref name="bases"/> that divides its
+        /// denominator written there as a power of it, as many times as it divides exactly;
+        /// unchanged where none does or a side does not read as a polynomial.
+        /// </summary>
+        private static Entity WithTheDenominatorInPowersOf(Entity value, IReadOnlyList<Entity> bases)
+        {
+            var (above, below) = Functions.SingleQuotient.Of(value);
+            if (bases.Count == 0 || below is Number)
+                return value;
+            var variables = below.Vars.Concat(bases.SelectMany(@base => @base.Vars)).Distinct().OrderBy(v => v.Name, System.StringComparer.Ordinal).ToList();
+            if (variables.Count == 0 || variables.Count > MultivariatePolynomial.MaxVariables)
+                return value;
+            var indices = new Dictionary<Variable, int>();
+            for (var i = 0; i < variables.Count; i++)
+                indices[variables[i]] = i;
+            if (MultivariatePolynomial.TryParse(below, indices) is not { } rest)
+                return value;
+            Entity powers = Number.Integer.One;
+            foreach (var @base in bases.Distinct())
+            {
+                if (MultivariatePolynomial.TryParse(@base, indices) is not { IsConstant: false } factor)
+                    continue;
+                var times = 0;
+                while (rest.DivideExact(factor) is { } quotient)
+                {
+                    rest = quotient;
+                    times++;
+                }
+                if (times > 0)
+                    powers = powers == Number.Integer.One ? (times == 1 ? @base : MathS.Pow(@base, times)) : powers * (times == 1 ? @base : MathS.Pow(@base, times));
+            }
+            if (powers == Number.Integer.One)
+                return value;
+            var remaining = rest.ToEntity(variables);
+            return above / (remaining == Number.Integer.One ? powers : remaining * powers);
         }
 
         /// <summary>
@@ -13936,6 +14121,139 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A rational function of <paramref name="t"/>, from the substitution of
+        /// <see cref="SolveByAQuotientOfTwoLinearRadicals"/>, as the powers of t and of the linear
+        /// <c>a - c t^q</c> it holds times a quotient of two polynomials whose coefficients with
+        /// more than a symbol or a number in them are fresh symbols, and those symbols with their
+        /// values; null where, with the powers taken out, the denominator is not past the second
+        /// degree in t or has no such coefficient.
+        /// </summary>
+        private static (Entity Named, List<(Variable Name, Entity Value)> Names)? InNamedCoefficientsBesideTheLinear(
+            Entity integrand, Variable t, Entity a, Entity c, int q)
+        {
+            // The factors free of t stay in front, out of the coefficients: `(e f - d g)^2` below the
+            // bar, multiplied into each, tripled the answer's length.
+            var (writtenAbove, writtenBelow) = Functions.SingleQuotient.Of(integrand);
+            Entity constant = Number.Integer.One, above = Number.Integer.One, below = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(writtenAbove))
+                if (factor.ContainsNode(t))
+                    above = above == Number.Integer.One ? factor : above * factor;
+                else
+                    constant *= factor;
+            foreach (var factor in Mulf.LinearChildren(writtenBelow))
+                if (factor.ContainsNode(t))
+                    below = below == Number.Integer.One ? factor : below * factor;
+                else
+                    constant /= factor;
+            Entity[]? Coefficients(Entity side)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(side, t, out var terms)
+                    || terms.Any(term => term.Key.Sign < 0 || !term.Key.CanFitInInt32() || term.Value.ContainsNode(t)))
+                    return null;
+                var degree = terms.Count == 0 ? 0 : terms.Keys.Max()!.ToInt32Unchecked();
+                if (degree > 24)
+                    return null;
+                var coefficients = new Entity[degree + 1];
+                for (var i = 0; i <= degree; i++)
+                    coefficients[i] = terms.TryGetValue(EInteger.FromInt32(i), out var value)
+                        ? Functions.PartialFractions.InLowestTermsOverTheSymbols(value) : Number.Integer.Zero;
+                return coefficients;
+            }
+            if (Coefficients(above) is not { } top || Coefficients(below) is not { } bottom)
+                return null;
+            // The linear's powers divided out exactly, and t's.
+            var linear = new Entity[q + 1];
+            for (var i = 0; i <= q; i++)
+                linear[i] = i == 0 ? a : i == q ? -c : Number.Integer.Zero;
+            Entity[]? DividedByTheLinear(Entity[] polynomial)
+            {
+                var degree = polynomial.Length - 1;
+                while (degree >= 0 && VanishesIdentically(polynomial[degree]))
+                    degree--;
+                if (degree < q)
+                    return null;
+                var left = polynomial.Take(degree + 1).ToArray();
+                var quotient = new Entity[degree - q + 1];
+                for (var i = degree; i >= q; i--)
+                {
+                    var factor = Functions.PartialFractions.InLowestTermsOverTheSymbols(left[i] / linear[q]);
+                    quotient[i - q] = factor;
+                    for (var j = 0; j <= q; j++)
+                        if (!VanishesIdentically(linear[j]))
+                            left[i - q + j] = Functions.PartialFractions.InLowestTermsOverTheSymbols(left[i - q + j] - factor * linear[j]);
+                }
+                return left.Take(q).All(VanishesIdentically) ? quotient : null;
+            }
+            int Strip(ref Entity[] polynomial)
+            {
+                var times = 0;
+                while (times < 16 && DividedByTheLinear(polynomial) is { } divided)
+                {
+                    polynomial = divided;
+                    times++;
+                }
+                return times;
+            }
+            int Lowest(Entity[] polynomial)
+            {
+                var lowest = 0;
+                while (lowest < polynomial.Length - 1 && VanishesIdentically(polynomial[lowest]))
+                    lowest++;
+                return lowest;
+            }
+            var linearAbove = Strip(ref top);
+            var linearBelow = Strip(ref bottom);
+            var tAbove = Lowest(top);
+            var tBelow = Lowest(bottom);
+            top = top.Skip(tAbove).ToArray();
+            bottom = bottom.Skip(tBelow).ToArray();
+            var degreeBelow = bottom.Length - 1;
+            while (degreeBelow > 0 && VanishesIdentically(bottom[degreeBelow]))
+                degreeBelow--;
+            if (degreeBelow < 3 || !bottom.Any(value => value is not (Variable or Number) && !VanishesIdentically(value)))
+                return null;
+            var names = new List<(Variable Name, Entity Value)>();
+            Entity everything = integrand;
+            Entity Named(Entity[] polynomial)
+            {
+                Entity sum = Number.Integer.Zero;
+                for (var i = polynomial.Length - 1; i >= 0; i--)
+                {
+                    var value = polynomial[i];
+                    if (VanishesIdentically(value))
+                        continue;
+                    if (value is not (Variable or Number))
+                    {
+                        var name = Variable.CreateUnique(everything, "k_t");
+                        everything += name;
+                        names.Add((name, value));
+                        value = name;
+                    }
+                    var term = i == 0 ? value : value * (i == 1 ? t : MathS.Pow(t, i));
+                    sum = sum == Number.Integer.Zero ? term : sum + term;
+                }
+                return sum;
+            }
+            var namedAbove = Named(top);
+            var namedBelow = Named(bottom);
+            var linearInT = a - c * MathS.Pow(t, q);
+            var powerOfT = tAbove - tBelow;
+            var powerOfTheLinear = linearAbove - linearBelow;
+            Entity named = namedAbove / namedBelow;
+            if (constant != Number.Integer.One)
+            {
+                var name = Variable.CreateUnique(everything, "k_t");
+                names.Add((name, constant));
+                named *= name;
+            }
+            if (powerOfT != 0)
+                named *= MathS.Pow(t, powerOfT);
+            if (powerOfTheLinear != 0)
+                named *= MathS.Pow(linearInT, powerOfTheLinear);
+            return (named, names);
+        }
+
+        /// <summary>
         /// Fractional powers of two different linears in the variable, <c>(a x + b)^(p/q)</c>
         /// beside <c>(c x + d)^(r/q)</c>, rationalised by <c>t = ((a x + b)/(c x + d))^(1/q)</c>
         /// where every term of the integrand carries a whole power of the second linear once
@@ -14016,6 +14334,13 @@ namespace AngouriMath.Functions.Algebra
                 || determinant.Vars.Any() && Functions.PartialFractions.Bare(determinant.Simplify()).Evaled is Number.Complex { IsZero: true })
                 return AsOneLinearRadical(expr, x, first, second, Functions.PartialFractions.Bare((c / a).Simplify()), integrateByParts);
 
+            var besideACompletePolynomial = Mulf.LinearChildren(Functions.SingleQuotient.Of(expr).Item2).Any(factor =>
+                (factor is Powf(var raised, Number.Integer { EInteger.Sign: > 0 }) ? raised : factor) is var polynomial
+                && polynomial.ContainsNode(x) && polynomial.Vars.Any(symbol => symbol != x)
+                && TreeAnalyzer.TryGetPolynomial(polynomial, x, out var terms)
+                && terms.Keys.All(power => power.Sign >= 0 && power.CanFitInInt32()) && terms.Values.All(value => !value.ContainsNode(x))
+                && terms.Keys.Max()!.ToInt32Unchecked() is var degree && degree >= 2
+                && Enumerable.Range(0, degree + 1).All(power => terms.TryGetValue(EInteger.FromInt32(power), out var value) && !VanishesIdentically(value)));
             var t = Variable.CreateUnique(expr, "t_rad");
             var w = Variable.CreateUnique(expr, "w_rad");
             var tq = MathS.Pow(t, q);
@@ -14077,6 +14402,23 @@ namespace AngouriMath.Functions.Algebra
                 // t as the quotient of the two principal roots, not the root of the quotient:
                 // then t^p is (a x + b)^(p/q) over (c x + d)^(p/q) for every complex x, and the
                 // identity the rewriting rests on holds off the real line too.
+                // Beside a polynomial below the bar past the linears with every term written and a
+                // symbol in it -- a quadratic of x is a quartic in t -- the coefficients the
+                // substitution wrote are named first: asked as they came, Rubi's
+                // `(d + e x)^(3/2)/((a + b x + c x^2) sqrt(f + g x))` ran past two minutes, and
+                // `sqrt(d + e x)/(...)` took 26 seconds of the 27, where named the question in t is
+                // answered in a quarter of a second. Without the middle term, `a + c x^2`, they are
+                // answered as they come in tens of milliseconds, and named the answers were longer.
+                if (besideACompletePolynomial
+                    && InNamedCoefficientsBesideTheLinear(integrand, t, a, c, q) is var (named, names)
+                    && Integration.ComputeIndefiniteIntegral(named, t, integrateByParts) is { } namedResult)
+                {
+                    foreach (var (name, value) in names)
+                        namedResult = namedResult.Substitute(name, value);
+                    var answer = namedResult.Substitute(t, back);
+                    if (Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x))
+                        return answer;
+                }
                 if (Integration.ComputeIndefiniteIntegral(integrand, t, integrateByParts) is { } result)
                     return result.Substitute(t, back);
             }
@@ -17543,6 +17885,139 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>Set while <see cref="TheDerivativeBesideAFunctionOfTheBracket"/> asks its question.</summary>
         [System.ThreadStatic] private static bool derivativeBesideAFunction;
+
+        /// <summary>
+        /// A sum of powers of x times one power with a symbol in its exponent of a linear in a
+        /// root of x, or of the square of one written out, <c>sum c_i x^(m_i) G</c> with
+        /// <c>G = B^p</c> and <c>B</c> either <c>L = alpha + beta u</c> or <c>gamma L^2</c> in
+        /// <c>u = x^(1/k)</c>: the derivative of <c>G L T</c> for a sum <c>T</c> of powers of u,
+        /// where the sum is elementary.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// With <c>s</c> the power of L in B, <c>(G L u^j)'</c> in u is
+        /// <c>G ((s p + 1 + j) beta u^j + j alpha u^(j - 1))</c>, so the coefficients of T are read
+        /// off the integrand's, in u, from its highest power down, the pivot <c>(s p + 1 + j) beta</c>
+        /// not zero for a symbolic p. Down to the lowest power or 0, whichever is lower, and one
+        /// equation is left over: <c>j alpha t_j = 0</c> at that lowest power, which holds exactly
+        /// where the sum is elementary.
+        /// </para>
+        /// <para>
+        /// Each term on its own is not elementary -- <c>x^m (a + b x^(1/k))^q</c> with q symbolic and
+        /// <c>k m + k</c> at most 0 is a hypergeometric function -- and the sum was split. Rubi's
+        /// 1.2.3.2 <c>Q^p/x^2 - 2/3 b^3 (1 - 2p)(1 - p) p Q^p/(a^3 x)</c> with
+        /// <c>Q = a^2 + 2 a b x^(1/3) + b^2 x^(2/3)</c> is <c>(a + b x^(1/3)) Q^p</c> times three
+        /// powers of x. After the rule for the derivative of a product of powers, which answers the
+        /// sums whose antiderivative is one. The answer is differentiated back at sampled points
+        /// before it is returned.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static Entity? SolveASumOfPowersOfXTimesAPowerOfALinearInARootOfX(Entity expr, Entity.Variable x)
+        {
+            // G, the one power with x in its base and a symbol in its exponent, and the rest, the
+            // integrand with G taken out of every term, as a sum of powers of x: written as a sum,
+            // or as a product with a sum in it, which is how a substitution hands it on.
+            if (expr is not (Sumf or Minusf or Mulf or Divf) || expr.Complexity > 600)
+                return null;
+            var powers = expr.Nodes.Where(node => node is Powf(var @base, var p) && @base != x && @base.ContainsNode(x)
+                && !p.ContainsNode(x) && p is not Number && p.Vars.Any()).Distinct().ToList();
+            if (powers.Count != 1 || powers[0] is not Powf(var radicand, var symbolic))
+                return null;
+            var power = powers[0];
+            var rest = expr.Replace(node => node == power ? Number.Integer.One : node);
+            if (rest.ContainsNode(radicand) || rest.Complexity > 600)
+                return null;
+            var read = new List<(Entity Coefficient, ERational Exponent)>();
+            foreach (var term in Sumf.LinearChildren(Functions.PartialFractions.Bare(rest.Expand())))
+            {
+                var (exponent, coefficient) = (ERational.Zero, term);
+                if (term.ContainsNode(x) && !TryReadAMonomial(term, x, out exponent, out coefficient))
+                    return null;
+                read.Add((coefficient, exponent.ToLowestTerms()));
+            }
+            if (read.Count < 2)
+                return null;
+
+            // B as a polynomial in u = x^(1/k): `A0 + A1 u`, or `A0 + A1 u + A2 u^2` with a double root.
+            var inB = new Dictionary<ERational, Entity>();
+            foreach (var term in Sumf.LinearChildren(radicand))
+            {
+                var (degree, coefficient) = (ERational.Zero, term);
+                if (term.ContainsNode(x) && !TryReadAMonomial(term, x, out degree, out coefficient))
+                    return null;
+                degree = degree.ToLowestTerms();
+                inB[degree] = inB.TryGetValue(degree, out var was) ? was + coefficient : coefficient;
+            }
+            var degrees = inB.Keys.Where(degree => !degree.IsZero).OrderBy(degree => degree).ToList();
+            if (!inB.ContainsKey(ERational.Zero) || degrees.Count is 0 or > 2 || degrees[0].Sign <= 0
+                || !degrees[0].Numerator.Equals(EInteger.One) || !degrees[0].Denominator.CanFitInInt32()
+                || degrees.Count == 2 && degrees[1].CompareTo(degrees[0].Multiply(ERational.FromInt32(2))) != 0)
+                return null;
+            var k = degrees[0].Denominator.ToInt32Unchecked();
+            var s = degrees.Count;
+            Entity alpha, beta;
+            if (s == 1)
+                (alpha, beta) = (inB[ERational.Zero], inB[degrees[0]]);
+            else
+            {
+                var (a0, a1, a2) = (inB[ERational.Zero], inB[degrees[0]], inB[degrees[1]]);
+                if (!VanishesIdentically(a1 * a1 - 4 * a0 * a2))
+                    return null;
+                (alpha, beta) = (Functions.PartialFractions.InLowestTermsOverTheSymbols(a1 / (2 * a2)), Number.Integer.One);
+            }
+            if (VanishesIdentically(alpha) || VanishesIdentically(beta))
+                return null;
+
+            // The integrand in u: x^m dx is k u^(k m + k - 1) du.
+            var inU = new Dictionary<int, Entity>();
+            foreach (var (coefficient, exponent) in read)
+            {
+                var scaled = exponent.Multiply(ERational.FromInt32(k)).Add(ERational.FromInt32(k - 1)).ToLowestTerms();
+                if (!scaled.Denominator.Equals(EInteger.One) || !scaled.Numerator.CanFitInInt32())
+                    return null;
+                var e = scaled.Numerator.ToInt32Unchecked();
+                inU[e] = inU.TryGetValue(e, out var was) ? was + k * coefficient : k * coefficient;
+            }
+            var highest = inU.Keys.Max();
+            var lowest = System.Math.Min(inU.Keys.Min(), 0);
+            // Only where a power below -1 makes the terms apart not elementary; above it they are
+            // a polynomial in u beside G, which the substitution reads.
+            if (inU.Keys.Min() > -2 || highest - lowest > 24)
+                return null;
+            Entity W(int e) => inU.TryGetValue(e, out var w) ? w : Number.Integer.Zero;
+            var t = new Dictionary<int, Entity>();
+            Entity T(int j) => t.TryGetValue(j, out var value) ? value : Number.Integer.Zero;
+            for (var e = highest; e >= lowest; e--)
+            {
+                var pivot = (s * symbolic + 1 + e) * beta;
+                if (VanishesIdentically(pivot))
+                    return null;
+                t[e] = Functions.PartialFractions.InLowestTermsOverTheSymbols((W(e) - (e + 1) * alpha * T(e + 1)) / pivot);
+            }
+            // The equation left over, at u^(lowest - 1).
+            if (lowest != 0 && !VanishesIdentically(T(lowest)))
+                return null;
+
+            // One power of u in T makes the answer a product of powers, `G L u^j`, which the rule for
+            // the derivative of one answers in u, as it did before this rule.
+            if (t.Values.Count(value => !VanishesIdentically(value)) < 2)
+                return null;
+            Entity sum = Number.Integer.Zero;
+            for (var j = highest; j >= lowest; j--)
+                if (!VanishesIdentically(T(j)))
+                {
+                    var exponentOfX = Number.Rational.Create(j, k);
+                    var term = j == 0 ? T(j) : T(j) * (exponentOfX == Number.Integer.One ? x : MathS.Pow(x, exponentOfX));
+                    sum = sum == Number.Integer.Zero ? term : sum + term;
+                }
+            if (sum == Number.Integer.Zero)
+                return null;
+            var root = k == 1 ? (Entity)x : MathS.Pow(x, Number.Rational.Create(1, k));
+            var linear = alpha + (beta == Number.Integer.One ? root : beta * root);
+            var answer = power * linear * sum;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
 
         /// <summary>
         /// A binomial differential <c>x^m (a + b x^n)^p</c> with a symbol in its exponents, in
@@ -23517,6 +23992,85 @@ namespace AngouriMath.Functions.Algebra
                     return constant * joined;
                 }
             return null;
+        }
+
+        /// <summary>
+        /// A polynomial over a power of the cube root of a quadratic beside a power of another
+        /// quadratic about the same axis, <c>P/(Q1^(k/3) Q2^m)</c> with <c>b1/c1 = b2/c2</c>, in
+        /// <c>y = x + b1/(2 c1)</c>: there both quadratics are even, each coefficient in lowest
+        /// terms, and the rules for a linear over the cube root of an even quadratic beside another
+        /// read it.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's 1.2.1.6 pseudo-elliptic <c>(g + h x)/((a + b x + c x^2)^(1/3) (d + e x + f x^2))</c>,
+        /// with <c>c e = b f</c> and the coefficients that make it elementary, was declined, where
+        /// with <c>b = 0</c>, its 231, it is answered: shifted and written over the depressed
+        /// quadratics, 232 is 231 with compound coefficients. Substituted as written the question
+        /// in y ran past a minute. Only with a linear term to take away, so not again in y. The
+        /// answer is differentiated back.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static Entity? SolveOverTheCubeRootOfAQuadraticBesideAnotherAboutOneAxis(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            Entity? rooted = null, other = null;
+            Number.Rational? rootPower = null;
+            var otherPower = 0;
+            Entity constant = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                    constant *= factor;
+                else if (rooted is null && factor is Powf(var @base, Number.Rational r) && r is not Number.Integer
+                    && r.ERational.Denominator.Equals(EInteger.FromInt32(3)) && r.ERational.Sign > 0)
+                    (rooted, rootPower) = (@base, r);
+                else if (other is null && factor is Powf(var repeated, Number.Integer { EInteger: var n }) && n.Sign > 0 && n.CanFitInInt32())
+                    (other, otherPower) = (repeated, n.ToInt32Unchecked());
+                else if (other is null && factor is Sumf or Minusf)
+                    (other, otherPower) = (factor, 1);
+                else
+                    return null;
+            }
+            if (rooted is null || rootPower is null || other is null
+                || !TreeAnalyzer.TryGetPolyQuadratic(rooted, x, out var c1, out var b1, out var a1)
+                || !TreeAnalyzer.TryGetPolyQuadratic(other, x, out var c2, out var b2, out var a2)
+                || !rooted.Vars.Any(symbol => symbol != x)
+                || VanishesIdentically(c1) || VanishesIdentically(c2) || VanishesIdentically(b1)
+                || !VanishesIdentically(b1 * c2 - b2 * c1)
+                || !TreeAnalyzer.TryGetPolynomial(numerator, x, out var above)
+                || above.Any(term => term.Key.Sign < 0 || term.Key.CompareTo(EInteger.FromInt32(3)) > 0 || term.Value.ContainsNode(x)))
+                return null;
+            static Entity Lowest(Entity value) => Functions.PartialFractions.InLowestTermsOverTheSymbols(value);
+            var shift = Lowest(b1 / (2 * c1));
+            var y = Variable.CreateUnique(expr, "y_axis");
+            var rootedInY = Lowest(c1) * MathS.Sqr(y) + Lowest(a1 - b1 * b1 / (4 * c1));
+            var otherInY = Lowest(c2) * MathS.Sqr(y) + Lowest(a2 - b2 * b2 / (4 * c2));
+            // P(y - s), by Taylor's formula at -s.
+            var degree = above.Count == 0 ? 0 : above.Keys.Max()!.ToInt32Unchecked();
+            Entity numeratorInY = Number.Integer.Zero;
+            for (var i = degree; i >= 0; i--)
+            {
+                Entity sum = Number.Integer.Zero;
+                var choose = EInteger.One;
+                for (var j = i; j <= degree; j++)
+                {
+                    if (j > i)
+                        choose = choose.Multiply(EInteger.FromInt32(j)).Divide(EInteger.FromInt32(j - i));
+                    if (above.TryGetValue(EInteger.FromInt32(j), out var coefficient))
+                        sum += coefficient * Number.Integer.Create(choose) * (j == i ? Number.Integer.One : MathS.Pow(-shift, j - i));
+                }
+                var lowest = Lowest(sum);
+                if (!VanishesIdentically(lowest))
+                    numeratorInY += i == 0 ? lowest : lowest * (i == 1 ? y : MathS.Pow(y, i));
+            }
+            if (numeratorInY == Number.Integer.Zero)
+                return null;
+            var inY = numeratorInY / (constant * MathS.Pow(rootedInY, rootPower) * (otherPower == 1 ? otherInY : MathS.Pow(otherInY, otherPower)));
+            if (Integration.ComputeIndefiniteIntegral(inY, y, integrateByParts) is not { } inTheShifted
+                || inTheShifted.Nodes.Any(node => node is Integralf))
+                return null;
+            var answer = inTheShifted.Substitute(y, x + shift);
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
         }
 
         /// <summary>

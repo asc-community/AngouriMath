@@ -910,6 +910,21 @@ whole power of a quotient under a root of a quotient is distributed over its two
 | `"e^(2*i*p*atan(a*x))*(c+a^2*c*x^2)^p".ToEntity().Integrate("x")` | `integral(...)` | 86 characters |
 | `"e^(i*n*atan(a*x))/(c+a^2*c*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 123 characters |
 
+### A sum of powers of x times a power of a linear in a root of x is integrated where the remainders cancel
+
+**Answers where there were none.** `Q^p/x^2 - 2/3 b^3 (1 - 2p)(1 - p) p Q^p/(a^3 x)` with
+`Q = a^2 + 2 a b x^(1/3) + b^2 x^(2/3)` was declined, Rubi's 1.2.3.2:621: each term on its own is a hypergeometric
+function, and the sum was split. A sum `c_1 x^(m_1) G + ... + c_n x^(m_n) G`, with `G` a symbolic power of a linear
+`L` in `u = x^(1/k)` or of its square written out, is read as the derivative of `G L T` for a sum `T` of powers of
+`u`, whose coefficients are solved from the highest power down; it is answered where the one equation left over
+holds, and declined where it does not. Where `T` would be one power the answer is a product of powers, which the
+rule for those gives as before ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a^2+2*a*b*x^(1/3)+b^2*x^(2/3))^p/x^2-2/3*b^3*(1-2*p)*(1-p)*p*(a^2+2*a*b*x^(1/3)+b^2*x^(2/3))^p/(a^3*x)".ToEntity().Integrate("x")` | `integral(...)` | 212 characters |
+| `"(a+b*x)^p/x^4-b^3*p*(p-1)*(p-2)/(6*a^3)*(a+b*x)^p/x".ToEntity().Integrate("x")` | `integral(...)` | 176 characters |
+
 ### A whole power is taken out of a power of a product, in front of a constant
 
 **Answers where there were none.** `(c sin(a + b x)^3)^(1/3)/x` was declined: nothing read a function under a root of
@@ -976,6 +991,25 @@ then cancels before the division of the improper fraction
 | `"(d + e*x)^8/(a*d*e + (c*d^2 + a*e^2)*x + c*d*e*x^2)^2".ToEntity().Integrate("x")` | past a minute | 5,126 characters |
 | `"(a + b*x)^6/(a*c + (b*c + a*d)*x + b*d*x^2)^2".ToEntity().Integrate("x")` | past a minute | 3,592 characters |
 | `"csc(e + f*x)^3/(a + b*tan(e + f*x)^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 7,992 characters |
+
+### A linear beside a power of a block with symbols in it is split at its root named
+
+**Answers where there were none, and shorter ones.** `1/((d + e x)^2 (a + c x^4)^3)` came to 203,730 characters
+after 27 seconds on the unreleased master, and `1/((d + e x)^3 (a + c x^4)^3)` ran past a minute, Rubi's 1.3.1:568
+and 569. The split at the linear's root carried the root as `-d/e` through the series and the division, the lowest
+terms gave up on coefficients of thousands of nodes, and what was left over the block was integrated with them in
+it. Over a power of a block the root is a fresh symbol while the series and the rest are computed now, every
+denominator is a written power of the block's base at it, and the rest is written over the powers of the base and
+integrated in named coefficients. Over the block itself the split is as it was. `1/((d + e x) (a + c x^4)^3)` was
+111,691 characters on the unreleased master and `1/((d + e x)^3 (a + c x^4)^2)` 56,015 ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((d+k*x)^2*(a+c*x^4)^3)".ToEntity().Integrate("x")` | `integral(...)` | 11,108 characters |
+| `"1/((d+k*x)^3*(a+c*x^4)^3)".ToEntity().Integrate("x")` | `integral(...)` | 12,663 characters |
+| `"1/((d+k*x)*(a+c*x^4)^3)".ToEntity().Integrate("x")` | `integral(...)` | 9,467 characters |
+| `"1/((d+k*x)^3*(a+c*x^4)^2)".ToEntity().Integrate("x")` | `integral(...)` | 7,647 characters |
+| `"1/((d+k*x)^2*(a+b*x^3)^3)".ToEntity().Integrate("x")` | `integral(...)` | 6,310 characters |
 
 ### What a reduction leaves over its block is integrated in named coefficients
 
@@ -1220,6 +1254,18 @@ multiplied out are now written as that number before the integral is asked: `2 +
 |---|---|---|
 | `"(2+2*c-2*(1+c))*x^4".ToEntity().Integrate("x")` | `(2 + 2 * c - 2 * (1 + c)) * x ^ 5 / 5 + C` | `0 + C` |
 
+### A linear over the cube root of a quadratic beside another about the same axis is integrated in the shifted variable
+
+**Answers where there were none.** Rubi's pseudo-elliptic 1.2.1.6:232,
+`(g + h x)/((a + b x + c x^2)^(1/3) (d + b f x/c + f x^2))` with the compound `a` and `d` that make it elementary,
+was declined, where its `b = 0` case, 231, is answered. Both quadratics have the axis `x = -b/(2c)`; in
+`y = x + b/(2c)` both are even, each coefficient in lowest terms, and 232 is 231 with compound coefficients. Only
+where the quadratic under the root has a linear term to take away ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(g+h*x)/((1/9*(-c^2*g^2+b*c*g*h+2*b^2*h^2)/(c*h^2)+b*x+c*x^2)^(1/3)*(f*(b^2+1/3*(c^2*g^2-b*c*g*h-2*b^2*h^2)/h^2)/c^2+b*f*x/c+f*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 7,948 characters |
+
 ### Powers of multiples of powers of one linear are gathered into one power of it
 
 **Answers where there were none.** `1/(sqrt(-2 - b x) sqrt(2 + b x))` was declined, and so were four more of Rubi's
@@ -1298,6 +1344,22 @@ root of a linear, the linear radical substitution gets there first
 | `"(c*e + d*e*x)^(1/3)*sin(a + b/(c + d*x)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 1,453 characters |
 | `"sin(a + b/sqrt(c + d*x))/(e + f*x)".ToEntity().Integrate("x")` | `integral(...)` | 1,114 characters |
 | `"sin(a + b/sqrt(c + d*x))/(e + f*x)^2".ToEntity().Integrate("x")` | `integral(...)` | 2,288 characters |
+
+### Roots of two linears over a quadratic with all its terms are integrated in named coefficients
+
+**Answers where there were none, and sooner.** `(d + e x)^(3/2)/((a + b x + c x^2) sqrt(f + g x))` ran past a minute,
+Rubi's 1.2.1.4:1097, and its three neighbours 1098 to 1100 took 16 to 60 seconds on the unreleased master. Under
+`t = sqrt(d + e x)/sqrt(f + g x)` the quadratic is a quartic in `t` whose coefficients carry seven symbols, and the
+rational rules spent the time on them. Those coefficients are fresh symbols while the question in `t` is asked now,
+and are put back after: a quarter of a second each, and the three neighbours a third shorter. Without the middle
+term, `a + c x^2`, the question is answered as it comes, as before ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(d+k*x)^(3/2)/((a+b*x+c*x^2)*sqrt(f+g*x))".ToEntity().Integrate("x")` | `integral(...)` | 3,357 characters |
+| `"(d+k*x)^(1/2)/((a+b*x+c*x^2)*sqrt(f+g*x))".ToEntity().Integrate("x")` | `integral(...)` | 2,075 characters |
+| `"1/((d+k*x)^(1/2)*(a+b*x+c*x^2)*sqrt(f+g*x))".ToEntity().Integrate("x")` | `integral(...)` | 2,119 characters |
+| `"1/((d+k*x)^(3/2)*(a+b*x+c*x^2)*sqrt(f+g*x))".ToEntity().Integrate("x")` | `integral(...)` | 2,822 characters |
 
 ### A symbolic trinomial in x^2 beside a root of a quadratic is split over its factors
 
