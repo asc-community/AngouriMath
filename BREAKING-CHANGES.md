@@ -801,6 +801,22 @@ no numeric root finder applies, and its discriminant vanishes identically. Such 
 | `"1/(x^3-3*b*x+2*b^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | 122 characters |
 | `"1/(-9*b*x+9*x^3+2*b^(3/2)*sqrt(3))".ToEntity().Integrate("x")` | `integral(...)` | 176 characters |
 
+### A power of the tangent beside a power of x is integrated where the sum is the derivative of their product
+
+**Answers where there were none.** `-4 x/(b sqrt(tan(a + b x))) + x^2 sqrt(tan(a + b x)) + x^2/tan(a + b x)^(3/2)`
+ran past the budget, and `x^2/sqrt(tan(a + b x^2)) + sqrt(tan(a + b x^2))/b + x^2 tan(a + b x^2)^(3/2)` was left
+unevaluated, though each is the derivative of a power of x times a root of the tangent. The tangent's derivative is
+written over the square of the cosine, so the candidate's derivative did not read beside a sum written in the
+tangent; `1/cos(u)^2` is now read as `1 + tan(u)^2` there, and `1/sin(u)^2` as `1 + cot(u)^2`. A term with no
+power of x beside terms with one is read with x to the power 0, so that x can be raised from nothing
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"-4*x/(b*sqrt(tan(a+b*x)))+x^2*sqrt(tan(a+b*x))+x^2/tan(a+b*x)^(3/2)".ToEntity().Integrate("x")` | past twenty seconds | 46 characters |
+| `"x^2/sqrt(tan(a+b*x^2))+sqrt(tan(a+b*x^2))/b+x^2*tan(a+b*x^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 42 characters |
+| `"4*x/(b*sqrt(cot(a+b*x)))+x^2*sqrt(cot(a+b*x))+x^2/cot(a+b*x)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 45 characters |
+
 ### An exponential of an arctangent beside a power of its quadratic is answered where it is an exact derivative
 
 **Answers where there were none.** `e^(i n arctan(a x)) x^2 (c + a^2 c x^2)^(-1 - n^2/2)` was left unevaluated: no rule
