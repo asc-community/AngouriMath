@@ -3679,6 +3679,38 @@ of the six functions read inside a power as it is
 | `"(csc(x) - sin(x))^(5/2)".ToEntity().Integrate("x")` | `integral(...)` | powers of `sin(x)` times `(cos(x)^2/sin(x))^(5/2)` |
 | `"1/(sec(x) - cos(x))^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | a root of `cos(x)` with a logarithm and an arctangent, times `(sin(x)^2/cos(x))^(-3/2)` |
 
+### Fractional trigonometric powers two apart, and a sine raised from nothing, are integrated as derivatives
+
+**Answers where there were none.** Rubi's trigonometric integrands of these shapes were declined or ran out of time
+([#233](https://github.com/asc-community/AngouriMath/issues/233)):
+- A sum of powers of one sine, cosine, secant or cosecant of a linear, the powers not whole and two apart, by the
+  reduction formula from the highest down: `(cos sin^(n - 1))' = (n - 1) sin^(n - 2) - n sin^n`, and its kind for the
+  others. Each power alone is elliptic, so split, `(3 + 3 sec(c + d x)^2)/sqrt(sec(c + d x))` was two declined
+  integrals. Beside x, by parts once: `x/csc(c + d x)^(3/2) - x sqrt(csc(c + d x))/3`. The written function is kept.
+- The derivative of a sine raised from nothing times powers of the cosine and sums in it, or of a cosine beside the
+  sine: `(a + a cos(x))^(3/2)/cos(x)^(5/4)` is `(4 a^2 sin(x)/(cos(x)^(1/4) sqrt(a + a cos(x))))'`. Beside x, by parts
+  once: `x (b + a sin(x))/(a + b sin(x))^2` is `x G - integral G` for `G = -cos(x)/(a + b sin(x))`.
+- A cosine beside a function of the sine with a power of it that is not rational, in `s = sin(x)`:
+  `cos(x)/(sin(x) + sin(x)^sqrt(2))` is `1/(s + s^sqrt(2))`.
+- `(c sin(a + b x)^n)^(1/n)` is `K sin(a + b x)` with `K = (c sin(a + b x)^n)^(1/n)/sin(a + b x)`, constant between the
+  zeros of the sine, and so for the cosine.
+- Under the homogeneous substitution, factors written alike on both sides are cancelled where the quotient was
+  simplified: `sin(c + d x)^6/(a + b sin(c + d x)^2)^2`. Under the tangent, a whole power of a product is distributed
+  over its factors: `cot(c + d x)^2/(a + b sec(c + d x)^2)^2`. And beside a root of `1 - cos(x)`, the root of
+  `1 - cos(x)^2` is the product of the roots of `1 - cos(x)` and `1 + cos(x)`: `sqrt(1 - cos(x))/sqrt(a - cos(x))`.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(3+3*sec(c+d*x)^2)/sec(c+d*x)^(1/2)".ToEntity().Integrate("x")` | `integral(...)` | 60 characters |
+| `"x/csc(c+d*x)^(3/2)-1/3*x*sqrt(csc(c+d*x))".ToEntity().Integrate("x")` | `integral(...)` | 131 characters |
+| `"(a+a*cos(c+d*x))^(3/2)/cos(c+d*x)^(5/4)".ToEntity().Integrate("x")` | `integral(...)` | 96 characters |
+| `"x*(b+a*sin(x))/(a+b*sin(x))^2".ToEntity().Integrate("x")` | `integral(...)` | 64 characters |
+| `"cos(x)/(sin(x)+sin(x)^sqrt(2))".ToEntity().Integrate("x")` | `integral(...)` | 86 characters |
+| `"(c*sin(a+b*x)^n)^(1/n)".ToEntity().Integrate("x")` | `integral(...)` | 77 characters |
+| `"sin(c+d*x)^6/(a+b*sin(c+d*x)^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 2,169 characters |
+| `"cot(c+d*x)^2/(a+b*sec(c+d*x)^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 1,963 characters |
+| `"sqrt(1-cos(x))/sqrt(a-cos(x))".ToEntity().Integrate("x")` | `integral(...)` | 70 characters |
+
 ### A product of powers of the trigonometric functions, some not whole, is integrated as sine and cosine powers
 
 **Answers where there were none.** `(a sin(x))^(5/2) sqrt(b sec(x))` was declined, and so were
