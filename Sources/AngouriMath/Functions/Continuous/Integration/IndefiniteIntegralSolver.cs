@@ -8875,6 +8875,7 @@ namespace AngouriMath.Functions.Algebra
             Entity? exponentials = null;
             // The denominator as it is written, each quadratic monic, for the division.
             Entity written = Number.Integer.One;
+            var aDoubleRoot = false;
             void AddALinear(Entity linear, int power)
             {
                 var at = linears.FindIndex(pair => pair.Linear == linear);
@@ -8906,6 +8907,19 @@ namespace AngouriMath.Functions.Algebra
                 // question, and the integrals of the two conjugate arguments add up to a real answer.
                 if (exponent < 0 && TreeAnalyzer.TryGetPolyQuadratic(@base, x, out var leading, out var middle, out var last) && !TreeAnalyzer.IsZero(leading))
                 {
+                    // A double root is one linear twice, as the trigonometric rule reads it: split
+                    // over two roots that coincide, `e^(-t)/(a^2 + 2 a b t + b^2 t^2)` was answered
+                    // with `sqrt((2 a b)^2 - 4 a^2 b^2)` in it, and its derivative had no value.
+                    // https://github.com/asc-community/AngouriMath/issues/1879
+                    if (Functions.PartialFractions.IsZeroAsAValue(middle * middle - 4 * leading * last))
+                    {
+                        var twice = (x + Functions.PartialFractions.InLowestTermsOverTheSymbols(middle / (2 * leading))).InnerSimplified;
+                        constant /= MathS.Pow(leading, -exponent);
+                        AddALinear(twice, -2 * exponent);
+                        written *= MathS.Pow(twice, -2 * exponent);
+                        aDoubleRoot = true;
+                        continue;
+                    }
                     var discriminant = MathS.Sqrt(middle * middle - 4 * leading * last);
                     constant /= MathS.Pow(leading, -exponent);
                     AddALinear(LessTheRoot(((-middle + discriminant) / (2 * leading)).InnerSimplified, x), -exponent);
@@ -8936,16 +8950,22 @@ namespace AngouriMath.Functions.Algebra
                 }
                 return null;
             }
-            if (exponentials is null || linears.Count < 2 || linears.Count > 4 || linears.Sum(pair => pair.Power) > 12)
+            // One linear alone is the one-linear rules' question, unless it is a quadratic's double
+            // root, which they do not read.
+            if (exponentials is null || linears.Count < (aDoubleRoot ? 1 : 2) || linears.Count > 4 || linears.Sum(pair => pair.Power) > 12)
                 return null;
             // Exponentials of linears only, which is what the one-linear rules read: split, a term of
             // `sinh(sqrt((1 - a x)/(1 + a x)))/(1 - a^2 x^2)` goes to the whole integrator, and the
             // substitution that answers the question whole in a tenth of a second is not reached.
             if (!Sumf.LinearChildren(exponentials.Expand()).All(term => ReadAnExponentialTerm(term, x) is not null))
                 return null;
-            // Over each linear by partial fractions, as the trigonometric rule does it.
+            // Over each linear by partial fractions, as the trigonometric rule does it; a double root
+            // alone is one term already, which the split over one factor declines.
             var denominator = linears.Aggregate((Entity)Number.Integer.One, (product, pair) => product * MathS.Pow(pair.Linear, pair.Power));
-            if (OverEachLinear(polynomial ?? Number.Integer.One, written, denominator, linears.Sum(pair => pair.Power), x) is not { } terms)
+            var terms = linears.Count == 1
+                ? new List<Entity> { (polynomial ?? Number.Integer.One) / denominator }
+                : OverEachLinear(polynomial ?? Number.Integer.One, written, denominator, linears.Sum(pair => pair.Power), x);
+            if (terms is null)
                 return null;
             Entity sum = Number.Integer.Zero;
             foreach (var term in terms)
