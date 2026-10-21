@@ -312,6 +312,13 @@ namespace AngouriMath.Functions.Algebra
         [System.ThreadStatic] private static int approachDepth;
 
         /// <summary>
+        /// Whether an approach is being read, and so whether a simplification can answer
+        /// otherwise than it would on its own account: <see cref="MayGatherLogarithmsHere"/> and
+        /// <see cref="MayTakeLogOfPowerHere"/> fire only then.
+        /// </summary>
+        internal static bool IsReadingAnApproach => currentApproach is not null;
+
+        /// <summary>
         /// States that <paramref name="x"/> is being read on its way to <paramref name="dest"/>,
         /// and returns the previous approach for <see cref="LeaveApproach"/> to put back.
         /// </summary>
@@ -1435,6 +1442,23 @@ namespace AngouriMath.Functions.Algebra
             // direction only.
             if (dest.Evaled is Real { IsNegative: true })
                 expr = expr.Substitute(x, -x);
+            // Everything below reads the expression on its way to +oo, which after the
+            // substitution is where it is going -- while the approach in scope is still the one
+            // the limit was asked for. A sign read against -oo of an expression written in -x is
+            // the opposite sign: the simplifier took -x and 1 - x for positive, gathered
+            // ln(-x) + ln(1 - x) into one logarithm, and lim x->-oo ln(x) + ln(x + 1) - ln(x^2 + x)
+            // came back 0 where it is 2 pi i.
+            // https://github.com/asc-community/AngouriMath/issues/2022
+            var outerApproach = EnterApproach(x, Real.PositiveInfinity);
+            try { return SolveByRewritingTowardsInfinity(expr, x); }
+            finally { LeaveApproach(outerApproach); }
+        }
+
+        /// <summary>
+        /// <see cref="SolveByRewriting"/> once the destination is +oo.
+        /// </summary>
+        private static Entity? SolveByRewritingTowardsInfinity(Entity expr, Variable x)
+        {
             var toInfinity = Real.PositiveInfinity;
             var simplified = expr.Simplify();
             if (simplified is Providedf(var body, _))
