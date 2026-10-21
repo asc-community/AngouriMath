@@ -4236,6 +4236,25 @@ in both quadratics, the cube's coefficients grow past what the reduction takes, 
 | `"(7 + 13*x)/((5 + x + 2*x^2)^3*sqrt(2 + x + 3*x^2))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative |
 | `"sqrt(a + a*sec(x))/(c + d*sec(x))^2".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `tan(x/2)` |
 
+### An odd half power of a linear over the second power of `x (b + c x)` is split over its two linears
+
+**Answers where there were none.** `(d + e x)^(7/2)/(b x + c x^2)^2` and the rest of Rubi's 1.2.1.2 and 1.2.1.3
+with a polynomial times an odd half power of a linear over the second power of `b x + c x^2` were declined. Under
+`t = sqrt(d + e x)` the integrand is rational in `s = t^2`, and it is split there: its quotient by the denominator,
+and its partial fractions over `s - d` and `s + (b e - c d)/c`, which are `x` and `b + c x`, with the coefficients
+of the Taylor series at each root. On the way to this release these were answered as one rational function in
+`t`, in 2,900 to 940,000 characters, and the third power and higher of the entry below in 10,000 to 66,000; split,
+each is under 7,000, in megabytes where the second power took up to 11 GB
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(d + k*x)^(7/2)/(b*x + c*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 2,568 characters |
+| `"(A + B*x)*(d + k*x)^(7/2)/(b*x + c*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 3,933 characters |
+| `"(d + k*x)^(1/2)/(b*x + c*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 1,995 characters |
+| `"(d + k*x)^(1/2)/(b*x + c*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 3,519 characters |
+| `"(A + B*x)*(d + k*x)^(9/2)/(b*x + c*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 6,723 characters |
+
 ### Cube roots of two linears beside a power of a third, and an odd half power of a linear over a power of `x (b + c x)`, are integrated
 
 **Answers where there were none.** `(a + b x)^(1/3) (c + d x)^(2/3)/(e + f x)^2` and its kin, Rubi's 1.1.1.3, and
@@ -4255,8 +4274,8 @@ higher. Each declines where its linears share a root, decided as a value
 | `"(a + b*x)^(1/3)*(c + d*x)^(2/3)/(k + f*x)^2".ToEntity().Integrate("x")` | `integral(...)` | 2,243 characters |
 | `"1/((a + b*x)^(1/3)*(c + d*x)^(2/3)*(k + f*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 2,242 characters |
 | `"(a + b*x)^(4/3)/((c + d*x)^(4/3)*(k + f*x)^2)".ToEntity().Integrate("x")` | `integral(...)` | 1,327 characters |
-| `"(d + k*x)^(1/2)/(b*x + c*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 10,875 characters |
-| `"(A + B*x)*(d + k*x)^(1/2)/(b*x + c*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 14,763 characters |
+| `"(d + k*x)^(1/2)/(b*x + c*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 3,519 characters |
+| `"(A + B*x)*(d + k*x)^(1/2)/(b*x + c*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 4,383 characters |
 
 ### Powers of two linears whose exponents sum to a whole number below `-2` are integrated
 
