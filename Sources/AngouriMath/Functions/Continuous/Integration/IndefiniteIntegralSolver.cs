@@ -39246,6 +39246,20 @@ namespace AngouriMath.Functions.Algebra
             if (integrand.Vars.Any(symbol => symbol != t) && WithTheLeadingCoefficientDividedOut(integrand, t) is { } normalized)
                 integrand = normalized;
 
+            // In the first pass, a rational function of t with rational coefficients whose
+            // logarithms want a residue of degree above two, by no factor a closed form reads, is
+            // the second pass's: see RothsteinTrager.WantsASumOverRootsAlone. Asked anyway, every
+            // split and spelling of it was searched before the decline, and Rubi's
+            // `1/(1 + sin(x)^5)` spent thirty seconds there where the second pass answers it in
+            // half of one.
+            if (!Integration.SumsOverRootsAllowed && !integrand.Vars.Any(symbol => symbol != t)
+                && TryReadAsQuotient(integrand, out var aboveInT, out var belowInT)
+                && RothsteinTrager.WantsASumOverRootsAlone(aboveInT, belowInT, t))
+            {
+                Integration.ASumOverRootsWouldAnswer = true;
+                return null;
+            }
+
             return Integration.ComputeIndefiniteIntegral(integrand, t, integrateByParts) is { } result
                 ? result.Substitute(t, MathS.Tan(argument / 2))
                 : null;

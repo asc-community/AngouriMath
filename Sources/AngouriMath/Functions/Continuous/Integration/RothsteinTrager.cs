@@ -182,31 +182,8 @@ namespace AngouriMath.Functions.Algebra
         private static Entity? LogarithmicPart(RationalPolynomial above, RationalPolynomial below, Variable x, bool sumsOverRoots = true)
         {
             var derivative = Derivative(below);
-            // The resultant in t of D and A - t D' has degree at most that of D in t, and is
-            // found by evaluating it at that many rational t and interpolating: each value is
-            // one numeric Sylvester determinant. As a determinant with polynomial entries
-            // eliminated fraction-free it was thirteen seconds for a denominator of degree six
-            // with four-digit coefficients, Timofeev's `(1 + 2x)/((4 + 4x + 3x^2) sqrt(x^2 + 6x - 1))`
-            // under Euler's substitution, asked several times over.
-            if (ResultantInT(below, above, derivative) is not { } resultantPolynomial || resultantPolynomial.IsZero)
+            if (ResidueFields(above, below, derivative, declineOnAFactorPastQuadratic: !sumsOverRoots) is not { } factors)
                 return null;
-            if (!sumsOverRoots && HasAFactorPastQuadraticModuloAPrime(resultantPolynomial))
-                return null;
-            if (SquareFree(resultantPolynomial) is not { } residueParts)
-                return null;
-
-            // Every residue field first, and the residues only then. A residue in a field of degree
-            // above two is written as a sum over roots, below, and where there is one, every
-            // residue that is not rational goes into that sum with it: the conjugate pair of a
-            // quadratic factor beside a quartic one was twelve seconds of gcds over the extension,
-            // and a sum over roots needs no arithmetic in any extension at all.
-            var factors = new List<(IReadOnlyList<SquareFreeDecomposition.SquareFreePart> Factors, int Multiplicity)>();
-            foreach (var part in residueParts)
-            {
-                if (PolynomialFactorization.FactorPrimitive(ToInteger(part.Factor).PrimitivePart()) is not { } irreducibles)
-                    return null;
-                factors.Add((irreducibles, part.Multiplicity));
-            }
             var overRoots = factors.Any(part => part.Factors.Any(irreducible => irreducible.Factor.Degree > 2));
             if (overRoots && !sumsOverRoots)
                 return null;
@@ -289,6 +266,129 @@ namespace AngouriMath.Functions.Algebra
                     break;
             }
             return false;
+        }
+
+        /// <summary>
+        /// The irreducible factors over the rationals of each squarefree part of the resultant whose
+        /// roots are the residues of <paramref name="above"/> over <paramref name="below"/>, with the
+        /// part's multiplicity: every residue field, before any residue is computed in one.
+        /// <see langword="null"/> where the resultant or a factorization declines.
+        /// </summary>
+        private static List<(IReadOnlyList<SquareFreeDecomposition.SquareFreePart> Factors, int Multiplicity)>? ResidueFields(
+            RationalPolynomial above, RationalPolynomial below, RationalPolynomial derivative, bool declineOnAFactorPastQuadratic = false)
+        {
+            // The resultant in t of D and A - t D' has degree at most that of D in t, and is
+            // found by evaluating it at that many rational t and interpolating: each value is
+            // one numeric Sylvester determinant. As a determinant with polynomial entries
+            // eliminated fraction-free it was thirteen seconds for a denominator of degree six
+            // with four-digit coefficients, Timofeev's `(1 + 2x)/((4 + 4x + 3x^2) sqrt(x^2 + 6x - 1))`
+            // under Euler's substitution, asked several times over.
+            if (ResultantInT(below, above, derivative) is not { } resultantPolynomial || resultantPolynomial.IsZero)
+                return null;
+            // Seen modulo a prime before the squarefree decomposition costs anything, where a field
+            // past the second degree is a decline: see HasAFactorPastQuadraticModuloAPrime.
+            if (declineOnAFactorPastQuadratic && HasAFactorPastQuadraticModuloAPrime(resultantPolynomial))
+                return null;
+            if (SquareFree(resultantPolynomial) is not { } residueParts)
+                return null;
+
+            // Every residue field first, and the residues only then. A residue in a field of degree
+            // above two is written as a sum over roots, below, and where there is one, every
+            // residue that is not rational goes into that sum with it: the conjugate pair of a
+            // quadratic factor beside a quartic one was twelve seconds of gcds over the extension,
+            // and a sum over roots needs no arithmetic in any extension at all.
+            var factors = new List<(IReadOnlyList<SquareFreeDecomposition.SquareFreePart> Factors, int Multiplicity)>();
+            foreach (var part in residueParts)
+            {
+                if (PolynomialFactorization.FactorPrimitive(ToInteger(part.Factor).PrimitivePart()) is not { } irreducibles)
+                    return null;
+                factors.Add((irreducibles, part.Multiplicity));
+            }
+            return factors;
+        }
+
+        /// <summary>
+        /// Whether the logarithms of the integral of <paramref name="numerator"/> over
+        /// <paramref name="denominator"/>, a proper fraction of polynomials with rational
+        /// coefficients that <see cref="Integrate"/> reads, have a residue in a field of degree
+        /// above two, so that <see cref="Integrate"/> writes them only as a sum over roots, and
+        /// no product of the denominator's irreducible factors past the second degree is a
+        /// polynomial in <c>(x + s)^k</c> with <c>k</c> at least two.
+        /// </summary>
+        /// <remarks>
+        /// The residues of a rational function are its own, whatever spelling or split it is asked
+        /// in, and every antiderivative has them as the coefficients of its logarithms. The rules
+        /// that write such a residue in closed form read a block of the denominator that is a
+        /// binomial, a biquadratic or a polynomial in a power of <c>x</c>, at its roots of unity or
+        /// in nested square roots, after the shift that takes away its second term where there is
+        /// one; each is a polynomial in <c>(x + s)^k</c>, and no product of the denominator's
+        /// irreducible factors may be one. The integral is then nothing the first pass writes,
+        /// which keeps sums over roots for the second.
+        /// </remarks>
+        internal static bool WantsASumOverRootsAlone(Entity numerator, Entity denominator, Variable x)
+        {
+            if (!PolynomialFactoring.TryGetRationalCoefficients(numerator, x, 1, 0, MaxDegree, out var aboveCoefficients)
+                || !PolynomialFactoring.TryGetRationalCoefficients(denominator, x, 1, 1, MaxDegree, out var belowCoefficients))
+                return false;
+            var above = RationalPolynomial.Create(aboveCoefficients);
+            var below = RationalPolynomial.Create(belowCoefficients);
+            if (above.IsZero || above.Degree >= below.Degree)
+                return false;
+            var scale = ERational.One.Divide(below.Leading);
+            above = above.ScaleBy(scale);
+            below = below.ScaleBy(scale);
+            if (HermiteReduce(above, below, x) is not var (_, logAbove, logBelow) || logAbove.IsZero || logBelow.Degree > MaxDegree
+                || ResidueFields(logAbove, logBelow, Derivative(logBelow)) is not { } fields
+                || !fields.Any(part => part.Factors.Any(irreducible => irreducible.Factor.Degree > 2)))
+                return false;
+            // Every block the splits could hand a closed form: each product of distinct irreducible
+            // factors, the whole denominator's among them. `x^5 + 1` is `(x + 1)` times a quartic
+            // that is no binomial, and is a binomial whole.
+            if (PolynomialFactorization.FactorPrimitive(ToInteger(below).PrimitivePart()) is not { } irreducibles
+                || irreducibles.Count > MostFactorsCombined)
+                return false;
+            for (var subset = 1; subset < 1 << irreducibles.Count; subset++)
+            {
+                IntegerPolynomial? block = IntegerPolynomial.One;
+                for (var i = 0; i < irreducibles.Count && block is not null; i++)
+                    if ((subset & (1 << i)) != 0)
+                        block = block.Multiply(irreducibles[i].Factor);
+                if (block is null || block.Degree > 2 && InAPowerOfAShift(block))
+                    return false;
+            }
+            return true;
+        }
+
+        /// <summary>The most irreducible factors whose products <see cref="WantsASumOverRootsAlone"/> reads.</summary>
+        private const int MostFactorsCombined = 8;
+
+        /// <summary>
+        /// Whether <paramref name="poly"/>, of degree <c>n</c>, is a polynomial in <c>(x + s)^k</c>
+        /// for some <c>k</c> of two or more, with <c>s = a_(n-1)/(n a_n)</c>: written in
+        /// <c>y = x + s</c>, the powers of <c>y</c> it has, past the constant, share a factor.
+        /// </summary>
+        private static bool InAPowerOfAShift(IntegerPolynomial poly)
+        {
+            var n = poly.Degree;
+            var shift = ERational.Create(poly[n - 1], poly[n].Multiply(EInteger.FromInt32(n))).ToLowestTerms();
+            // Horner in y - s: g = g (y - s) + a_i, from the leading coefficient down.
+            var g = new ERational[n + 1];
+            for (var i = 0; i <= n; i++)
+                g[i] = ERational.Zero;
+            g[0] = ERational.FromEInteger(poly[n]);
+            for (var i = n - 1; i >= 0; i--)
+            {
+                for (var j = n - i; j >= 1; j--)
+                    g[j] = g[j - 1].Subtract(g[j].Multiply(shift));
+                g[0] = ERational.FromEInteger(poly[i]).Subtract(g[0].Multiply(shift));
+            }
+            var common = 0;
+            for (var j = 1; j <= n; j++)
+                if (!g[j].IsZero)
+                    common = Gcd(common, j);
+            return common >= 2;
+
+            static int Gcd(int a, int b) => b == 0 ? a : Gcd(b, a % b);
         }
 
         /// <summary>
