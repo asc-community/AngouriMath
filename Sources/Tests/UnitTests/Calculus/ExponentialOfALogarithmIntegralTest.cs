@@ -182,24 +182,30 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
-        /// A fractional or symbolic power of a monomial, distributed: <c>(c x^n)^b</c> is
-        /// <c>c^b x^(n b)</c> on the <c>x &gt; 0</c> where a symbolic <c>n</c> leaves the
-        /// integrand real, for a positive <c>c</c> -- which the answer says.
+        /// A symbolic power of a monomial, distributed: <c>(c x^n)^b</c> is <c>K x^(n b)</c> with
+        /// <c>K = (c x^n)^b/x^(n b)</c> constant wherever the power is continuous, so the answer,
+        /// <c>x (c x^n)^b/(n b + 1)</c>, holds for every <c>c</c> and on both sides of 0. It was
+        /// <c>c^b x^(n b + 1)/(n b + 1)</c> provided <c>c &gt; 0</c>, on the premise that a
+        /// symbolic <c>n</c> leaves the integrand real only for a positive x, which an even
+        /// <c>n</c> does not.
         /// </summary>
         [Fact]
         public void APowerOfAMonomialIsDistributed()
         {
             var integral = "(c*x^n)^b".ToEntity().Integrate("x").Substitute("C", 0);
             Assert.DoesNotContain("integral(", integral.Stringize());
-            Assert.Contains(integral.Nodes, node => node is Entity.Providedf(_, var predicate) && predicate == "c > 0".ToEntity());
-            var pinned = integral.Substitute("c", 1.7).Substitute("n", 2.1).Substitute("b", 0.6);
-            var derivative = pinned.Differentiate("x");
-            var original = "(c*x^n)^b".ToEntity().Substitute("c", 1.7).Substitute("n", 2.1).Substitute("b", 0.6);
-            foreach (var at in new[] { 0.3, 0.7, 1.1, 1.9, 2.6 })
+            Assert.DoesNotContain("provided", integral.Stringize());
+            foreach (var (c, n, b) in new[] { (1.7, 2.1, 0.6), (-1.7, 2.1, 0.6), (1.7, 2.0, 0.5) })
             {
-                var got = derivative.Substitute("x", at).EvalNumerical();
-                var want = original.Substitute("x", at).EvalNumerical();
-                Assert.True(Math.Abs((double)(got - want).RealPart) < 1e-9, $"at x = {at}: {got} for {want}");
+                var derivative = integral.Substitute("c", c).Substitute("n", n).Substitute("b", b).Differentiate("x");
+                var original = "(c*x^n)^b".ToEntity().Substitute("c", c).Substitute("n", n).Substitute("b", b);
+                foreach (var at in new[] { 0.3, 0.7, 1.1, 1.9, 2.6, -0.4, -1.3 })
+                {
+                    var got = derivative.Substitute("x", at).EvalNumerical();
+                    var want = original.Substitute("x", at).EvalNumerical();
+                    Assert.True(Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart) < 1e-9,
+                        $"at x = {at}, c = {c}, n = {n}, b = {b}: {got} for {want}");
+                }
             }
         }
 
