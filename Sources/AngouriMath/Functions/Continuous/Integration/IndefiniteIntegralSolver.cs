@@ -17541,11 +17541,12 @@ namespace AngouriMath.Functions.Algebra
         private const int MaximumTowerDegree = 4;
 
         /// <summary>
-        /// <paramref name="sum"/>, every term of which is a constant times powers of the same
-        /// bases with <paramref name="x"/> in them, as the product of those bases to the least of
-        /// each one's exponents times the sum of what is left. Null where a base is not in every
-        /// term, where no exponent of one is the least, or where the least are all whole, which
-        /// the rational rules read.
+        /// <paramref name="sum"/>, every term of which is a constant times powers of bases with
+        /// <paramref name="x"/> in them, as the product of those bases to the least of each one's
+        /// exponents times the sum of what is left, a base missing from a term counted there to the
+        /// power 0. Null where a base with an exponent that is not whole is not in every term,
+        /// where no exponent of one is the least, or where the least are all whole, which the
+        /// rational rules read.
         /// </summary>
         private static Entity? WithTheCommonPowersOut(Entity sum, Entity.Variable x)
         {
@@ -17581,16 +17582,30 @@ namespace AngouriMath.Functions.Algebra
             }
             if (terms.Count < 2)
                 return null;
-            // The bases in every term; a function in some of them only -- a sine or cosine, an
-            // exponential or a sum of them -- stays in the bracket, where the rule raises it from
-            // nothing: `x^4/(b sqrt(R)) + x^2 cos(a + b x)/sqrt(R) + 4 x sqrt(R)/(3 b)`, for
+            // The bases of every term. A base missing from a term is there to the power 0, where its
+            // exponents elsewhere are whole: `(1 + e^x) x/sqrt(e^x + x) + 2 sqrt(e^x + x)` is
+            // `(e^x + x)^(-1/2) ((1 + e^x) x + 2 (e^x + x))`, the derivative of `2 x sqrt(e^x + x)`,
+            // and with the bases of every term asked to be the same, nothing read it. A function in
+            // some terms only -- a sine or cosine, an exponential or a sum of them -- is so raised
+            // from nothing in the bracket, and the least exponents may then all be whole:
+            // `x^4/(b sqrt(R)) + x^2 cos(a + b x)/sqrt(R) + 4 x sqrt(R)/(3 b)`, for
             // `R = x^3 + 3 sin(a + b x)`, is `x/sqrt(R)` times a bracket with the cosine in it.
-            var bases = terms[0].Powers.Keys.Where(@base => terms.All(term => term.Powers.ContainsKey(@base))).ToList();
+            var bases = terms.SelectMany(term => term.Powers.Keys).Distinct().ToList();
+            var functionsInSomeTerms = bases.Any(@base => !terms.All(term => term.Powers.ContainsKey(@base))
+                && terms.All(term => !term.Powers.TryGetValue(@base, out var exponent) || exponent == Number.Integer.One)
+                && IsAFunctionToRaise(@base, x));
             if (bases.Count == 0)
                 return null;
-            var functionsInSomeTerms = terms.Any(term => term.Powers.Count != bases.Count);
-            if (functionsInSomeTerms && terms.Any(term => term.Powers.Any(pair => !bases.Contains(pair.Key) && (pair.Value != Number.Integer.One || !IsAFunctionToRaise(pair.Key, x)))))
-                return null;
+            foreach (var @base in bases)
+            {
+                if (terms.All(term => term.Powers.ContainsKey(@base)))
+                    continue;
+                if (terms.Any(term => term.Powers.TryGetValue(@base, out var exponent) && exponent is not Number.Integer))
+                    return null;
+                foreach (var (_, powers) in terms)
+                    if (!powers.ContainsKey(@base))
+                        powers[@base] = Number.Integer.Zero;
+            }
             // For each base the least of its exponents, against which every other is more by a
             // whole number or by a sum of symbols with no sign in front: `x^(m - 1)` beside
             // `x^(m + n - 1)` leaves `x^n` in the bracket, as the derivative of `a + b x^n` does.
@@ -17625,14 +17640,12 @@ namespace AngouriMath.Functions.Algebra
                 foreach (var @base in bases)
                     if (Difference(powers[@base], least[@base]) is var raised && raised != Number.Integer.Zero)
                         rest = rest * (raised == Number.Integer.One ? @base : MathS.Pow(@base, raised));
-                foreach (var function in powers.Keys)
-                    if (!bases.Contains(function))
-                        rest = rest * function;
                 bracket = bracket == Number.Integer.Zero ? rest : bracket + rest;
             }
             Entity common = Number.Integer.One;
             foreach (var @base in bases)
-                common = common * MathS.Pow(@base, least[@base]);
+                if (least[@base] != Number.Integer.Zero)
+                    common = common * MathS.Pow(@base, least[@base]);
             return common * bracket;
         }
 
@@ -17850,7 +17863,8 @@ namespace AngouriMath.Functions.Algebra
             // bracket, which is the shape read below: `m x^(m - 1) (a + b x^n)^p + b n p x^(m + n - 1)
             // (a + b x^n)^(p - 1)` is `x^(m - 1) (a + b x^n)^(p - 1) (m (a + b x^n) + b n p x^n)`,
             // the derivative of `x^m (a + b x^n)^p`. As a sum it was split, and neither term is
-            // elementary.
+            // elementary. A base with whole exponents may be missing from some terms: Rubi's
+            // `(1 + e^x) x/sqrt(e^x + x) + 2 sqrt(e^x + x)` is `(2 x sqrt(e^x + x))'`.
             if (expr is Sumf or Minusf)
                 return WithTheCommonPowersOut(expr, x) is { } factored ? SolveAsTheDerivativeOfAProductOfPowers(factored, x, integrateByParts) : null;
             // A bracket that is a polynomial with a power of x in every term has that power taken out, to

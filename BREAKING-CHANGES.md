@@ -1197,6 +1197,21 @@ and split over all `n` roots of the binomial as the reciprocal alone already was
 | `"sinh(c+d*x)^6/(a+b*sinh(c+d*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 1,517 characters |
 | `"sin(x)^2/(a+b*sin(x)^5)".ToEntity().Integrate("x")` | `integral(...)` | 2,475 characters |
 
+### A sum of products of powers is read with a base a term lacks there to the power 0
+
+**Answers where there were none.** A sum of products of powers is read as the bases' common product times a bracket,
+which the derivative of a product answers. A base missing from a term is now counted there to the power 0, where its
+exponents elsewhere are whole: `(1 + e^x) x/sqrt(e^x + x) + 2 sqrt(e^x + x)` is
+`(e^x + x)^(-1/2) ((1 + e^x) x + 2 (e^x + x))`, the derivative of `2 x sqrt(e^x + x)`, and with the bases of every term
+asked to be the same, `x` and `1 + e^x` in the first term only, nothing read it. Rubi's 1.3.2 and 2.3
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(1 + e^x)*x/sqrt(e^x + x) + 2*sqrt(e^x + x)".ToEntity().Integrate("x")` | `integral(...)` | `2 x sqrt(e^x + x)` |
+| `"1/5*x^2*(5*e^x + 3*x^2)/sqrt(5*e^x + x^3) + 4/5*x*sqrt(5*e^x + x^3)".ToEntity().Integrate("x")` | `integral(...)` | `2/5 x^2 sqrt(5 e^x + x^3)` |
+| `"(1 - x^6)^(2/3) + (1 - x^6)^(2/3)/x^6".ToEntity().Integrate("x")` | `integral(...)` | `-1/5 (1 - x^6)^(5/3) x^(-5)` |
+
 ### A rational function times a logarithm of nested powers of linears is integrated by parts
 
 **Answers where there were none.** `ln(e (f (a + b x)^p (c + d x)^q)^r)` was declined, and so were four more of Rubi's
