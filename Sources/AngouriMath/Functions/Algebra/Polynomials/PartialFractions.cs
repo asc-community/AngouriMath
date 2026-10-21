@@ -2190,7 +2190,8 @@ namespace AngouriMath.Functions
                 indices[symbols[i]] = i;
             var rows = rhs.Length;
             var width = matrix[0].Length;
-            if (System.Environment.GetEnvironmentVariable("TSOP_DBG") is not null) System.Console.Error.WriteLine($"tsop rows={rows} width={width} symbols={symbols.Count} maxterms={matrix.SelectMany(r => r).Concat(rhs).Max(e => e.Complexity)}");
+            if (ModularElimination.Declines(matrix, rhs, indices, symbols.Count))
+                return false;
             // The augmented matrix, the right-hand side its last column.
             var augmented = new MultivariatePolynomial[rows][];
             for (var row = 0; row < rows; row++)
@@ -2284,6 +2285,739 @@ namespace AngouriMath.Functions
                 values[column] = Bare(scale * fraction);
             }
             return true;
+        }
+
+        /// <summary>
+        /// <see cref="TrySolveOverPolynomials"/>'s reading and elimination run first on the
+        /// image of the system modulo <see cref="LiftingPrime"/>, to learn whether the ones over
+        /// <c>Q</c> decline: the same readings, pivots, products and exact divisions, in
+        /// residues that cost a machine multiplication each where the rationals of a minor cost
+        /// a greatest common divisor. The Bareiss intermediates are minors, so each is the image
+        /// of the one over <c>Q</c> and has no monomial that one lacks; a product of more than
+        /// <see cref="MultivariatePolynomial.MaxIntermediateTerms"/> terms here, a quotient of
+        /// more, an exponent past <see cref="MultivariatePolynomial.MaxDegree"/>, an entry the
+        /// reading refuses or a row that reduces to <c>0 = c</c> is therefore one there too, and
+        /// the solve over <c>Q</c> refuses it. Anything else -- an image that does not exist, a
+        /// division that does not come out, a remainder too large to hold -- says nothing, and
+        /// the solve over <c>Q</c> runs as it did.
+        /// </summary>
+        /// <remarks>
+        /// The images follow the elimination over <c>Q</c> as long as no nonzero polynomial of
+        /// it vanishes modulo the prime, every one of its coefficients a multiple of
+        /// <c>2^31 - 1</c>; where one did, a pivot could differ and a system be declined that
+        /// would have been solved, and nothing is ever answered on the strength of the images.
+        /// The Hermite reductions of Rubi's <c>1/(a + b cosh(x) + c sinh(x))^n</c> under
+        /// <c>u = e^x</c> are systems of twenty rows in three symbols whose minors pass four
+        /// thousand terms by the sixth pivot: the elimination over <c>Q</c> spent seconds on
+        /// each before declining it, eight of them for <c>n = 3</c>, and the rule the
+        /// integrator reaches after the decline answers in milliseconds.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        private sealed class ModularElimination
+        {
+            private const long Prime = LiftingPrime;
+            private const int MaxTerms = MultivariatePolynomial.MaxIntermediateTerms;
+
+            /// <summary>Past this many monomials held, a product or a remainder is not followed.</summary>
+            private const int MostHeld = 1 << 18;
+
+            /// <summary>Below this many entries the elimination over <c>Q</c> is quick enough as it is.</summary>
+            private const int SmallestSystem = 48;
+
+            private readonly int variableCount;
+            private readonly Residues product = new();
+            private readonly Residues crossed = new();
+            private ulong[] heap = new ulong[256];
+            private ulong[] quotientMonomials = new ulong[64];
+            private long[] quotientCoefficients = new long[64];
+
+            private ModularElimination(int variableCount) => this.variableCount = variableCount;
+
+            /// <summary>
+            /// A polynomial modulo the prime: its first <see cref="Count"/> monomials and their
+            /// residues, and its degree in each variable. An entry the elimination replaces lends
+            /// its arrays to its replacement.
+            /// </summary>
+            private sealed class Image
+            {
+                internal ulong[] Monomials;
+                internal long[] Coefficients;
+                internal int Count;
+                internal readonly int[] Degrees;
+                internal Image(ulong[] monomials, long[] coefficients, int count, int variableCount)
+                {
+                    Monomials = monomials;
+                    Coefficients = coefficients;
+                    Degrees = new int[variableCount];
+                    Hold(count);
+                }
+                internal void Hold(int count)
+                {
+                    Count = count;
+                    System.Array.Clear(Degrees, 0, Degrees.Length);
+                    for (var i = 0; i < count; i++)
+                        for (var variable = 0; variable < Degrees.Length; variable++)
+                        {
+                            var power = MultivariatePolynomial.PowerOf(Monomials[i], variable);
+                            if (power > Degrees[variable])
+                                Degrees[variable] = power;
+                        }
+                }
+                /// <summary>Room for <paramref name="count"/> terms, doubled when it grows: the minors grow at every pivot.</summary>
+                internal void EnsureRoom(int count)
+                {
+                    if (Monomials.Length >= count)
+                        return;
+                    var room = System.Math.Max(count, 2 * Monomials.Length);
+                    Monomials = new ulong[room];
+                    Coefficients = new long[room];
+                }
+                internal bool IsZero => Count == 0;
+                internal bool IsConstant => Count == 1 && Monomials[0] == 0;
+            }
+
+            private enum Outcome { Continues, Declines, Unknown }
+
+            /// <summary>
+            /// Whether the elimination over <c>Q</c> on the system is known to decline, the
+            /// reading of its entries as polynomials included.
+            /// </summary>
+            internal static bool Declines(Entity[][] matrix, Entity[] rhs, IReadOnlyDictionary<Variable, int> indices, int variableCount)
+            {
+                var rows = rhs.Length;
+                var width = matrix[0].Length;
+                if (rows * (width + 1) < SmallestSystem)
+                    return false;
+                var elimination = new ModularElimination(variableCount);
+                var image = new Image[rows][];
+                for (var row = 0; row < rows; row++)
+                {
+                    image[row] = new Image[width + 1];
+                    for (var column = 0; column <= width; column++)
+                        switch (elimination.Read(column < width ? matrix[row][column] : rhs[row], indices, out var read))
+                        {
+                            case Outcome.Declines:
+                                return true;
+                            case Outcome.Unknown:
+                                return false;
+                            default:
+                                image[row][column] = read!;
+                                break;
+                        }
+                }
+                Image? previous = null;
+                var rank = 0;
+                for (var column = 0; column < width && rank < rows; column++)
+                {
+                    var pivot = -1;
+                    for (var row = rank; row < rows; row++)
+                        if (!image[row][column].IsZero)
+                        {
+                            pivot = row;
+                            break;
+                        }
+                    if (pivot < 0)
+                        continue;
+                    if (pivot != rank)
+                        (image[pivot], image[rank]) = (image[rank], image[pivot]);
+                    var pivotValue = image[rank][column];
+                    for (var row = 0; row < rows; row++)
+                    {
+                        if (row == rank)
+                            continue;
+                        Core.Multithreading.MultithreadingFunctional.ExitIfCancelled();
+                        var factor = image[row][column];
+                        for (var k = 0; k <= width; k++)
+                        {
+                            // Not the factor, which the rest of the row still reads, nor the last
+                            // pivot, which the row divides by.
+                            var replaced = image[row][k];
+                            var recycled = k == column || ReferenceEquals(replaced, previous) ? null : replaced;
+                            var outcome = elimination.Step(pivotValue, replaced, factor, image[rank][k], previous, recycled, out var divided);
+                            if (outcome == Outcome.Declines)
+                                return true;
+                            if (outcome == Outcome.Unknown)
+                                return false;
+                            image[row][k] = divided!;
+                        }
+                    }
+                    previous = pivotValue;
+                    rank++;
+                }
+                for (var row = rank; row < rows; row++)
+                    if (!image[row][width].IsZero)
+                        return true;
+                return false;
+            }
+
+            /// <summary>
+            /// The image of what <see cref="MultivariatePolynomial.TryParse"/> reads
+            /// <paramref name="expr"/> as, read the same way: <see cref="Outcome.Declines"/> where
+            /// that refuses it -- a node that is not a polynomial, a product or a power past
+            /// <see cref="MultivariatePolynomial.MaxTerms"/> terms or its degree -- and
+            /// <see cref="Outcome.Unknown"/> where a number it reads has no image.
+            /// </summary>
+            private Outcome Read(Entity expr, IReadOnlyDictionary<Variable, int> indices, out Image? image)
+            {
+                image = null;
+                if (expr is Mulf or Powf && TryReadAMonomial(expr, indices, out var monomial, out var coefficient))
+                {
+                    image = coefficient == 0 ? Constant(0) : new Image(new[] { monomial }, new[] { coefficient }, 1, variableCount);
+                    return Outcome.Continues;
+                }
+                switch (expr)
+                {
+                    case Rational rational:
+                        if (ResidueOf(rational.ERational) is not { } residue)
+                            return Outcome.Unknown;
+                        image = Constant(residue);
+                        return Outcome.Continues;
+                    case Variable variable:
+                        if (!indices.TryGetValue(variable, out var index))
+                            return Outcome.Declines;
+                        image = new Image(new[] { MultivariatePolynomial.MonomialOf(index) }, new long[] { 1 }, 1, variableCount);
+                        return Outcome.Continues;
+                    case Sumf or Minusf:
+                        return Sum(expr, indices, out image);
+                    case Mulf(var multiplier, var multiplicand):
+                        return ReadBoth(multiplier, multiplicand, indices, out var left, out var right) is var factors && factors != Outcome.Continues
+                            ? factors : Product(left!, right!, MultivariatePolynomial.MaxTerms, out image);
+                    case Divf(var dividend, var divisor):
+                    {
+                        // A divisor read as a nonzero number; one whose image is zero may be a number
+                        // that is a multiple of the prime.
+                        var below = Read(divisor, indices, out var bottom);
+                        if (below != Outcome.Continues)
+                            return below;
+                        if (bottom!.IsZero)
+                            return Outcome.Unknown;
+                        if (!bottom.IsConstant)
+                            return Outcome.Declines;
+                        var above = Read(dividend, indices, out var top);
+                        if (above != Outcome.Continues)
+                            return above;
+                        image = Scaled(top!, Inverse(bottom.Coefficients[0]));
+                        return Outcome.Continues;
+                    }
+                    case Powf(var @base, Integer exponent):
+                    {
+                        if (!exponent.EInteger.CanFitInInt32())
+                            return Outcome.Declines;
+                        var power = exponent.EInteger.ToInt32Checked();
+                        if (power > MultivariatePolynomial.MaxDegree || power < -MultivariatePolynomial.MaxDegree)
+                            return Outcome.Declines;
+                        var inner = Read(@base, indices, out var read);
+                        if (inner != Outcome.Continues)
+                            return inner;
+                        if (power >= 0)
+                            return Power(read!, power, out image);
+                        if (read!.IsZero)
+                            return Outcome.Unknown;
+                        if (!read.IsConstant)
+                            return Outcome.Declines;
+                        long inverse = Inverse(read.Coefficients[0]), result = 1;
+                        for (var i = 0; i < -power; i++)
+                            result = Multiply(result, inverse);
+                        image = Constant(result);
+                        return Outcome.Continues;
+                    }
+                    default:
+                        return Outcome.Declines;
+                }
+            }
+
+            private Outcome ReadBoth(Entity first, Entity second, IReadOnlyDictionary<Variable, int> indices, out Image? left, out Image? right)
+            {
+                right = null;
+                var outcome = Read(first, indices, out left);
+                if (outcome == Outcome.Declines)
+                    return outcome;
+                var other = Read(second, indices, out right);
+                return other == Outcome.Declines ? other : outcome == Outcome.Unknown ? outcome : other;
+            }
+
+            /// <summary>As <see cref="MultivariatePolynomial.Power(int, int)"/> takes the powers, by squaring.</summary>
+            private Outcome Power(Image @base, int exponent, out Image? image)
+            {
+                image = null;
+                var result = Constant(1);
+                var square = @base;
+                while (exponent > 0)
+                {
+                    if ((exponent & 1) == 1)
+                    {
+                        if (Product(result, square, MultivariatePolynomial.MaxTerms, out var multiplied) is var multiplying && multiplying != Outcome.Continues)
+                            return multiplying;
+                        result = multiplied!;
+                    }
+                    exponent >>= 1;
+                    if (exponent == 0)
+                        break;
+                    if (Product(square, square, MultivariatePolynomial.MaxTerms, out var squared) is var squaring && squaring != Outcome.Continues)
+                        return squaring;
+                    square = squared!;
+                }
+                image = result;
+                return Outcome.Continues;
+            }
+
+            /// <summary>
+            /// A product as <see cref="MultivariatePolynomial.Multiply"/> forms it, which refuses one
+            /// with an exponent past its byte or more than <paramref name="most"/> terms.
+            /// </summary>
+            private Outcome Product(Image left, Image right, int most, out Image? image)
+            {
+                image = null;
+                if (left.IsZero || right.IsZero)
+                {
+                    image = Constant(0);
+                    return Outcome.Continues;
+                }
+                if (ExceedsTheDegree(left, right))
+                    return Outcome.Declines;
+                product.Clear();
+                if (!product.AddProduct(left, right, negated: false, MostHeld))
+                    return Outcome.Unknown;
+                if (product.NonZero > most)
+                    return Outcome.Declines;
+                image = Held(product, 1, null);
+                return Outcome.Continues;
+            }
+
+            /// <summary>
+            /// A sum read whole, its terms gathered once rather than an image per addition, and a
+            /// term that is a number times powers of symbols read without one.
+            /// </summary>
+            private Outcome Sum(Entity sum, IReadOnlyDictionary<Variable, int> indices, out Image? image)
+            {
+                image = null;
+                var terms = new List<(ulong Monomial, long Coefficient)>();
+                var images = new List<(Image Image, bool Negated)>();
+                var pending = new Stack<(Entity Term, bool Negated)>();
+                pending.Push((sum, false));
+                var outcome = Outcome.Continues;
+                while (pending.Count > 0)
+                {
+                    var (term, negated) = pending.Pop();
+                    switch (term)
+                    {
+                        case Sumf(var augend, var addend):
+                            pending.Push((addend, negated));
+                            pending.Push((augend, negated));
+                            continue;
+                        case Minusf(var subtrahend, var minuend):
+                            pending.Push((minuend, !negated));
+                            pending.Push((subtrahend, negated));
+                            continue;
+                    }
+                    if (TryReadAMonomial(term, indices, out var monomial, out var coefficient))
+                    {
+                        terms.Add((monomial, negated && coefficient != 0 ? Prime - coefficient : coefficient));
+                        continue;
+                    }
+                    var read = Read(term, indices, out var termImage);
+                    if (read == Outcome.Declines)
+                        return read;
+                    if (read == Outcome.Unknown)
+                        outcome = read;
+                    else
+                        images.Add((termImage!, negated));
+                }
+                if (outcome != Outcome.Continues)
+                    return outcome;
+                product.Clear();
+                foreach (var (monomial, coefficient) in terms)
+                    if (!product.Add(monomial, coefficient, MostHeld, out _))
+                        return Outcome.Unknown;
+                foreach (var (termImage, negated) in images)
+                    for (var i = 0; i < termImage.Count; i++)
+                        if (!product.Add(termImage.Monomials[i], negated ? Prime - termImage.Coefficients[i] : termImage.Coefficients[i], MostHeld, out _))
+                            return Outcome.Unknown;
+                image = Held(product, 1, null);
+                return Outcome.Continues;
+            }
+
+            /// <summary>
+            /// A rational times symbols and whole powers of them, with no exponent past
+            /// <see cref="MultivariatePolynomial.MaxDegree"/>: its residue and monomial. Anything
+            /// else, or a rational without a residue, is left to <see cref="Read"/>.
+            /// </summary>
+            private bool TryReadAMonomial(Entity term, IReadOnlyDictionary<Variable, int> indices, out ulong monomial, out long coefficient)
+            {
+                monomial = 0;
+                coefficient = 1;
+                switch (term)
+                {
+                    case Rational rational:
+                        if (ResidueOf(rational.ERational) is not { } residue)
+                            return false;
+                        coefficient = residue;
+                        return true;
+                    case Variable variable when indices.TryGetValue(variable, out var index):
+                        monomial = MultivariatePolynomial.MonomialOf(index);
+                        return true;
+                    case Powf(Variable variable, Integer power) when indices.TryGetValue(variable, out var index)
+                        && power.EInteger.Sign >= 0 && power.EInteger.CompareTo(MultivariatePolynomial.MaxDegree) <= 0:
+                        monomial = MultivariatePolynomial.MonomialOf(index) * (ulong)power.EInteger.ToInt32Checked();
+                        return true;
+                    case Mulf(var multiplier, var multiplicand):
+                        if (!TryReadAMonomial(multiplier, indices, out var left, out var leftCoefficient)
+                            || !TryReadAMonomial(multiplicand, indices, out var right, out var rightCoefficient))
+                            return false;
+                        for (var variable = 0; variable < variableCount; variable++)
+                            if (MultivariatePolynomial.PowerOf(left, variable) + MultivariatePolynomial.PowerOf(right, variable) > MultivariatePolynomial.MaxDegree)
+                                return false;
+                        monomial = left + right;
+                        coefficient = Multiply(leftCoefficient, rightCoefficient);
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+
+            private Image Constant(long residue)
+                => residue == 0
+                    ? new Image(System.Array.Empty<ulong>(), System.Array.Empty<long>(), 0, variableCount)
+                    : new Image(new ulong[] { 0 }, new long[] { residue }, 1, variableCount);
+
+            /// <summary><paramref name="image"/> times <paramref name="factor"/>, in place: it is a reading's own.</summary>
+            private static Image Scaled(Image image, long factor)
+            {
+                for (var i = 0; i < image.Count; i++)
+                    image.Coefficients[i] = Multiply(image.Coefficients[i], factor);
+                return image;
+            }
+
+            /// <summary>
+            /// The nonzero residues <paramref name="table"/> holds, times <paramref name="factor"/>,
+            /// in the arrays of <paramref name="recycled"/> where there is one.
+            /// </summary>
+            private Image Held(Residues table, long factor, Image? recycled)
+            {
+                var image = recycled ?? new Image(new ulong[table.NonZero], new long[table.NonZero], 0, variableCount);
+                image.EnsureRoom(table.NonZero);
+                var count = 0;
+                for (var i = 0; i < table.Held; i++)
+                    if (table.ValueAt(i) is var value && value != 0)
+                    {
+                        image.Monomials[count] = table.KeyAt(i);
+                        image.Coefficients[count++] = factor == 1 ? value : Multiply(value, factor);
+                    }
+                image.Hold(count);
+                return image;
+            }
+
+            /// <summary>The residue of a rational whose denominator the prime does not divide.</summary>
+            private static long? ResidueOf(ERational value)
+            {
+                var modulus = EInteger.FromInt64(Prime);
+                static long Reduced(EInteger integer, EInteger modulus)
+                {
+                    var remainder = integer.Remainder(modulus).ToInt64Checked();
+                    return remainder < 0 ? remainder + Prime : remainder;
+                }
+                var denominator = Reduced(value.Denominator, modulus);
+                if (denominator == 0)
+                    return null;
+                var numerator = Reduced(value.Numerator, modulus);
+                return denominator == 1 ? numerator : Multiply(numerator, Inverse(denominator));
+            }
+
+            /// <summary>
+            /// <c>(pivot entry - factor pivotRowEntry)/previous</c>, as the elimination over <c>Q</c>
+            /// computes it, and whether that one is known to refuse it on the way.
+            /// </summary>
+            private Outcome Step(Image pivot, Image entry, Image factor, Image pivotRowEntry, Image? previous, Image? recycled, out Image? divided)
+            {
+                divided = null;
+                product.Clear();
+                if (!entry.IsZero)
+                {
+                    if (ExceedsTheDegree(pivot, entry))
+                        return Outcome.Declines;
+                    if (!product.AddProduct(pivot, entry, negated: false, MostHeld))
+                        return Outcome.Unknown;
+                    if (product.NonZero > MaxTerms)
+                        return Outcome.Declines;
+                }
+                if (!factor.IsZero && !pivotRowEntry.IsZero)
+                {
+                    if (ExceedsTheDegree(factor, pivotRowEntry))
+                        return Outcome.Declines;
+                    crossed.Clear();
+                    if (!crossed.AddProduct(factor, pivotRowEntry, negated: true, MostHeld))
+                        return Outcome.Unknown;
+                    if (crossed.NonZero > MaxTerms)
+                        return Outcome.Declines;
+                    for (var i = 0; i < crossed.Held; i++)
+                        if (crossed.ValueAt(i) is var value && value != 0
+                            && !product.Add(crossed.KeyAt(i), value, MostHeld, out _))
+                            return Outcome.Unknown;
+                }
+                // Over a number, or over one where there is no pivot yet, the division is a scaling.
+                if (product.NonZero == 0 || previous is null || previous.IsConstant)
+                {
+                    divided = Held(product, previous is null ? 1 : Inverse(previous.Coefficients[0]), recycled);
+                    return Outcome.Continues;
+                }
+                return Divided(previous, recycled, out divided);
+            }
+
+            /// <summary>
+            /// The product held, divided exactly by <paramref name="divisor"/>, the greatest
+            /// remaining monomial first, as <see cref="MultivariatePolynomial.DivideExact(MultivariatePolynomial, int)"/>
+            /// divides: each quotient term is one of the quotient over <c>Q</c>, so more of them
+            /// than that division takes steps is its refusal too.
+            /// </summary>
+            private Outcome Divided(Image divisor, Image? recycled, out Image? divided)
+            {
+                divided = null;
+                var lead = 0;
+                for (var i = 1; i < divisor.Count; i++)
+                    if (divisor.Monomials[i] > divisor.Monomials[lead])
+                        lead = i;
+                var leadMonomial = divisor.Monomials[lead];
+                var leadInverse = Inverse(divisor.Coefficients[lead]);
+                var heapCount = 0;
+                for (var i = 0; i < product.Held; i++)
+                    if (product.ValueAt(i) != 0)
+                        Push(ref heapCount, product.KeyAt(i));
+                var count = 0;
+                while (heapCount > 0)
+                {
+                    var monomial = Pop(ref heapCount);
+                    var value = product.Get(monomial);
+                    if (value == 0)
+                        continue;
+                    // A leading monomial the divisor's does not divide, or a quotient term whose
+                    // product with the divisor leaves its byte, is not a step the images can follow.
+                    if (!TryDivideMonomials(monomial, leadMonomial, out var quotient))
+                        return Outcome.Unknown;
+                    for (var variable = 0; variable < variableCount; variable++)
+                        if (MultivariatePolynomial.PowerOf(quotient, variable) + divisor.Degrees[variable] > MultivariatePolynomial.MaxDegree)
+                            return Outcome.Unknown;
+                    var scale = Multiply(value, leadInverse);
+                    if (count == MaxTerms)
+                        return Outcome.Declines;
+                    if (count == quotientMonomials.Length)
+                    {
+                        System.Array.Resize(ref quotientMonomials, 2 * count);
+                        System.Array.Resize(ref quotientCoefficients, 2 * count);
+                    }
+                    quotientMonomials[count] = quotient;
+                    quotientCoefficients[count++] = scale;
+                    for (var i = 0; i < divisor.Count; i++)
+                    {
+                        if (!product.Add(quotient + divisor.Monomials[i], Prime - Multiply(scale, divisor.Coefficients[i]), MostHeld, out var becameNonZero))
+                            return Outcome.Unknown;
+                        if (becameNonZero)
+                            Push(ref heapCount, quotient + divisor.Monomials[i]);
+                    }
+                }
+                var image = recycled ?? new Image(new ulong[count], new long[count], 0, variableCount);
+                image.EnsureRoom(count);
+                System.Array.Copy(quotientMonomials, image.Monomials, count);
+                System.Array.Copy(quotientCoefficients, image.Coefficients, count);
+                image.Hold(count);
+                divided = image;
+                return Outcome.Continues;
+            }
+
+            private bool ExceedsTheDegree(Image left, Image right)
+            {
+                for (var variable = 0; variable < variableCount; variable++)
+                    if (left.Degrees[variable] + right.Degrees[variable] > MultivariatePolynomial.MaxDegree)
+                        return true;
+                return false;
+            }
+
+            private bool TryDivideMonomials(ulong dividend, ulong divisor, out ulong quotient)
+            {
+                quotient = 0;
+                for (var variable = 0; variable < variableCount; variable++)
+                    if (MultivariatePolynomial.PowerOf(dividend, variable) < MultivariatePolynomial.PowerOf(divisor, variable))
+                        return false;
+                // No byte borrows from the next, since none is smaller than the divisor's.
+                quotient = dividend - divisor;
+                return true;
+            }
+
+            private void Push(ref int count, ulong monomial)
+            {
+                if (count == heap.Length)
+                    System.Array.Resize(ref heap, heap.Length * 2);
+                var i = count++;
+                while (i > 0 && heap[(i - 1) / 2] < monomial)
+                {
+                    heap[i] = heap[(i - 1) / 2];
+                    i = (i - 1) / 2;
+                }
+                heap[i] = monomial;
+            }
+
+            private ulong Pop(ref int count)
+            {
+                var top = heap[0];
+                var last = heap[--count];
+                var i = 0;
+                while (true)
+                {
+                    var child = 2 * i + 1;
+                    if (child >= count)
+                        break;
+                    if (child + 1 < count && heap[child + 1] > heap[child])
+                        child++;
+                    if (heap[child] <= last)
+                        break;
+                    heap[i] = heap[child];
+                    i = child;
+                }
+                if (count > 0)
+                    heap[i] = last;
+                return top;
+            }
+
+            /// <summary>Modulo <c>2^31 - 1</c> a product folds its high bits onto its low ones.</summary>
+            private static long Multiply(long left, long right)
+            {
+                var product = left * right;
+                product = (product & Prime) + (product >> 31);
+                product = (product & Prime) + (product >> 31);
+                return product >= Prime ? product - Prime : product;
+            }
+
+            private static long Inverse(long value)
+            {
+                long result = 1, power = value;
+                for (var exponent = Prime - 2; exponent > 0; exponent >>= 1)
+                {
+                    if ((exponent & 1) == 1)
+                        result = Multiply(result, power);
+                    power = Multiply(power, power);
+                }
+                return result;
+            }
+
+            /// <summary>
+            /// Monomials to residues, open-addressed, emptied by a generation stamp rather than
+            /// cleared, with the slots in the order they were taken.
+            /// </summary>
+            private sealed class Residues
+            {
+                private ulong[] keys = new ulong[256];
+                private long[] values = new long[256];
+                private int[] stamps = new int[256];
+                private int[] taken = new int[256];
+                private int stamp = 1;
+                private int shift = 64 - 8;
+
+                /// <summary>The slots taken, zero or not.</summary>
+                internal int Held { get; private set; }
+
+                /// <summary>The monomials whose residue is not zero.</summary>
+                internal int NonZero { get; private set; }
+
+                internal ulong KeyAt(int i) => keys[taken[i]];
+                internal long ValueAt(int i) => values[taken[i]];
+
+                internal void Clear()
+                {
+                    stamp++;
+                    Held = 0;
+                    NonZero = 0;
+                }
+
+                private int SlotOf(ulong key)
+                {
+                    var mask = keys.Length - 1;
+                    var slot = (int)((key * 0x9E3779B97F4A7C15UL) >> shift);
+                    while (stamps[slot] == stamp && keys[slot] != key)
+                        slot = (slot + 1) & mask;
+                    return slot;
+                }
+
+                internal long Get(ulong key)
+                {
+                    var slot = SlotOf(key);
+                    return stamps[slot] == stamp ? values[slot] : 0;
+                }
+
+                /// <summary>Adds a residue; false where that would hold more than <paramref name="most"/> monomials.</summary>
+                internal bool Add(ulong key, long value, int most, out bool becameNonZero)
+                {
+                    becameNonZero = false;
+                    if (value == 0)
+                        return true;
+                    var slot = SlotOf(key);
+                    if (stamps[slot] != stamp)
+                    {
+                        if (Held >= most)
+                            return false;
+                        stamps[slot] = stamp;
+                        keys[slot] = key;
+                        values[slot] = value;
+                        taken[Held++] = slot;
+                        NonZero++;
+                        becameNonZero = true;
+                        if (2 * Held > keys.Length)
+                            Grow();
+                        return true;
+                    }
+                    var old = values[slot];
+                    var sum = old + value;
+                    if (sum >= Prime)
+                        sum -= Prime;
+                    values[slot] = sum;
+                    if (old == 0)
+                    {
+                        NonZero++;
+                        becameNonZero = true;
+                    }
+                    else if (sum == 0)
+                        NonZero--;
+                    return true;
+                }
+
+                /// <summary>Adds the product of two images, or its negation; false where it would hold more than <paramref name="most"/>.</summary>
+                internal bool AddProduct(Image left, Image right, bool negated, int most)
+                {
+                    for (var i = 0; i < left.Count; i++)
+                    {
+                        var monomial = left.Monomials[i];
+                        var coefficient = left.Coefficients[i];
+                        for (var j = 0; j < right.Count; j++)
+                        {
+                            var value = Multiply(coefficient, right.Coefficients[j]);
+                            if (!Add(monomial + right.Monomials[j], negated && value != 0 ? Prime - value : value, most, out _))
+                                return false;
+                        }
+                    }
+                    return true;
+                }
+
+                private void Grow()
+                {
+                    var oldKeys = keys;
+                    var oldValues = values;
+                    var oldTaken = taken;
+                    var held = Held;
+                    keys = new ulong[oldKeys.Length * 2];
+                    values = new long[oldKeys.Length * 2];
+                    stamps = new int[oldKeys.Length * 2];
+                    taken = new int[oldKeys.Length * 2];
+                    shift--;
+                    stamp = 1;
+                    Held = 0;
+                    for (var i = 0; i < held; i++)
+                    {
+                        var slot = SlotOf(oldKeys[oldTaken[i]]);
+                        stamps[slot] = stamp;
+                        keys[slot] = oldKeys[oldTaken[i]];
+                        values[slot] = oldValues[oldTaken[i]];
+                        taken[Held++] = slot;
+                    }
+                }
+            }
         }
 
         /// <summary>
