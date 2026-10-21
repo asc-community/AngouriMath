@@ -27419,6 +27419,67 @@ namespace AngouriMath.Functions.Algebra
                 && power != Number.Integer.One && @base.ContainsNode(x) && @base.Vars.Any(v => v != x));
 
         /// <summary>
+        /// A polynomial over a polynomial times a power of something else, divided as
+        /// <see cref="SolveByPartialFractions"/> divides it, with the part over the denominator
+        /// asked without the condition the division writes on it, that the other factor is not
+        /// zero -- which holds wherever the integrand is defined.
+        /// </summary>
+        /// <remarks>
+        /// The division of <c>x^2</c> by <c>(1 + x^2) Q^(3/2)</c> leaves
+        /// <c>(-1 provided Q != 0)/((1 + x^2) Q^(3/2))</c>, which nothing reads, where the same
+        /// without the condition is answered, and so is the quotient <c>1/Q^(3/2)</c>: Rubi's 4.3.9
+        /// <c>tan^2/(a + b tan + c tan^2)^(3/2)</c>, under the tangent, was declined while
+        /// <c>tan</c> and <c>tan^3</c> over the same were answered. Last, where everything else has
+        /// declined, and at the question asked or the one below it, where the tangent's
+        /// substitution asks it: asked inside the division, the parts answered first and four
+        /// solved rows of 4.3.9 and 4.4.9 came back longer. Only a condition that a factor of the
+        /// denominator with x in it is not zero is dropped; one on the symbols alone keeps it out.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static Entity? SolveByDividingWithoutTheConditionsOfTheDenominator(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow
+                || !TryReadAsQuotient(expr, out var numerator, out var denominator)
+                || !TreeAnalyzer.TryGetPolynomial(numerator, x, out _)
+                || IsProperByDegree(numerator, denominator, x)
+                || TreeAnalyzer.PolynomialLongDivision(numerator, denominator, genericCase: true, inTermsOf: x) is not var (quotient, properPart)
+                || quotient.Evaled == Entity.Number.Integer.Create(0)
+                || WithoutTheConditionsOfItsDenominator(properPart, denominator, x) is not { } unconditioned
+                || Integration.ComputeIndefiniteIntegral(quotient, x, integrateByParts) is not { } wholePart
+                || Integration.ComputeIndefiniteIntegral(unconditioned, x, integrateByParts) is not { } fractionPart)
+                return null;
+            return wholePart + fractionPart;
+        }
+
+        /// <summary>
+        /// <paramref name="part"/> with every condition in it that a factor of
+        /// <paramref name="denominator"/> holding <paramref name="x"/>, or the base of a positive
+        /// power among them, is not zero dropped, as it
+        /// holds wherever the integrand is defined; null where it has no condition, or one of
+        /// another kind.
+        /// </summary>
+        private static Entity? WithoutTheConditionsOfItsDenominator(Entity part, Entity denominator, Entity.Variable x)
+        {
+            var dropped = false;
+            var other = false;
+            var written = part.Replace(node =>
+            {
+                if (node is not Providedf(var inner, var condition))
+                    return node;
+                if (condition is Notf(Equalsf(var factor, var zero)) && zero.Evaled is Number.Complex { IsZero: true }
+                    && factor.ContainsNode(x) && Mulf.LinearChildren(denominator).Any(written =>
+                        written == factor || written is Powf(var @base, Number.Real { IsPositive: true }) && @base == factor))
+                {
+                    dropped = true;
+                    return inner;
+                }
+                other = true;
+                return node;
+            });
+            return dropped && !other ? written.InnerSimplified : null;
+        }
+
+        /// <summary>
         /// Whether both read as polynomials in <paramref name="x"/> with the numerator's
         /// degree below the denominator's; false where either does not read.
         /// </summary>

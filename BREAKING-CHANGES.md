@@ -4125,6 +4125,21 @@ a binomial ran out of time too. Rubi's 1.2.1.2
 | `"(a+b*x+c*x^2)^(1/2)/(b*d+2*c*d*x)^7".Integrate("x")` | `integral(...)` | the antiderivative |
 | `"(b*d+2*c*d*x)^(5/2)/(a+b*x+c*x^2)^3".Integrate("x")` | `integral(...)` | the antiderivative |
 
+### A polynomial over a polynomial beside a power of a quadratic is divided without the quadratic's condition
+
+**Answers where there were none.** `x^2/((1 + x^2) (a + b x + c x^2)^(3/2))` was left unevaluated, and so was Rubi's
+4.3.9 `tan^2/(a + b tan + c tan^2)^(3/2)`, which the tangent writes so, while the tangent and its cube over the same
+were answered. The division of the numerator leaves `1/Q^(3/2)` and `-1/((1 + x^2) Q^(3/2))`, both answered, but wrote
+on the second the condition that `Q` is not zero, which nothing read. That condition holds wherever the integrand is
+defined, and where every other rule has declined the second part is asked without it; a condition on the symbols
+alone is kept ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"tan(d+f*x)^2/(a+b*tan(d+f*x)+c*tan(d+f*x)^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 3,162 characters |
+| `"x^2/((1+x^2)*(a+b*x+c*x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | 2,966 characters |
+| `"x^2/((2+x^2)*(a+b*x+c*x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | 3,416 characters |
+
 ### A polynomial over a power of a quadratic beside the root of another is integrated
 
 `P/(A^k sqrt(B))`, `A` and `B` two different quadratics and `k` at least two, was left

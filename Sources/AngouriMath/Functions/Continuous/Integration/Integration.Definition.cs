@@ -1511,6 +1511,10 @@ namespace AngouriMath.Functions.Algebra
             // A hyperbolic integrand that is not rational in its exponential, asked as a trigonometric
             // one: last, since the question in s can take long where a rule above answers in x at once.
             if ((answer = IndefiniteIntegralSolver.SolveAHyperbolicIntegrandAsATrigonometricOne(expr, x, integrateByParts, rationalToo: false)) is { }) return answer;
+            // A polynomial over a polynomial beside a power, divided, the part over the denominator
+            // asked without the division's condition that the power is not zero: last, where nothing
+            // has answered it with the condition, `x^2/((1 + x^2) (a + b x + c x^2)^(3/2))`.
+            if ((answer = IndefiniteIntegralSolver.SolveByDividingWithoutTheConditionsOfTheDenominator(expr, x, integrateByParts)) is { }) return answer;
             return null;
         }
         /// <summary>
