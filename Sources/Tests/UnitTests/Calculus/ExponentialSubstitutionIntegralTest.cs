@@ -227,10 +227,15 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x^2*sech(x)^2")]
         public void ADilogarithmIsDeclinedAtOnce(string integrand)
         {
-            var watch = System.Diagnostics.Stopwatch.StartNew();
+            // Bounded by what the decline allocates, not by a wall clock, which measures the runner:
+            // on a loaded machine `x^2 sech(x)^2` took 26-58 s against a 20 s bound with its
+            // allocation unchanged. Measured cold, the four allocate 0.03, 0.04, 0.11 and 1.0 GB;
+            // the search this guards against ran for twenty-five seconds.
+            var before = GC.GetAllocatedBytesForCurrentThread();
             var integral = integrand.ToEntity().Integrate("x");
+            var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
             Assert.Contains("integral(", integral.Stringize());
-            Assert.True(watch.ElapsedMilliseconds < 20_000, $"{integrand} took {watch.ElapsedMilliseconds} ms to decline");
+            Assert.True(allocated < 3_000_000_000L, $"{integrand} allocated {allocated / 1e9:F2} GB to decline");
         }
 
         /// <summary>
