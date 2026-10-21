@@ -730,6 +730,26 @@ back after. Each answer is in three cases by the sign of `4 a/c - (b/c)^2`
 | `"x^5/(a + b*x + c*x^2)^5".ToEntity().Integrate("x")` | `integral(...)` | 4,066 characters |
 | `"x^7/(a + b*x + c*x^2)^5".ToEntity().Integrate("x")` | `integral(...)` | 5,602 characters |
 
+### A power of x below -1 beside a power of a binomial is raised by the reduction that takes out its pole
+
+**Answers where there were none.** `1/(x^3 (1 - x^3)^(2/3) (1 + x^3))`, Rubi's 1.1.3.4, was declined: split over
+`1 + x^3` its terms are not elementary apart. So were `1/(x^6 (a + b x^2)^10)` and `1/(x^7 (a + b x^2)^10)`, Rubi's
+1.1.2.2, which since 2.5.0 have run out of time in the partial fractions instead. The derivative of
+`x^(m + 1) (a + b x^n)^(p + 1)` is `x^m (a + b x^n)^p ((m + 1) a + b (m + 1 + n (p + 1)) x^n)`, so a multiple of it
+takes the pole at zero out of `x^m (a + b x^n)^p R(x^n)` and raises the power of x by n; what is left at `x^(-1)` or
+above is asked on its own. Beside a root it is asked last, at the question asked only; over a whole power, with a
+symbol in the binomial and past the twenty-fourth degree below the bar only, where it answers
+`1/(x^5 (a + b x^2)^10)` in 1,860 characters and the partial fractions have since given 67,808
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(x^3*(1-x^3)^(2/3)*(1+x^3))".ToEntity().Integrate("x")` | `integral(...)` | 715 characters |
+| `"1/(x^3*(1+x^3)^(2/3)*(1-x^3))".ToEntity().Integrate("x")` | `integral(...)` | 577 characters |
+| `"1/(x^6*(a+b*x^2)^10)".ToEntity().Integrate("x")` | `integral(...)` | 2,286 characters |
+| `"1/(x^7*(a+b*x^2)^10)".ToEntity().Integrate("x")` | `integral(...)` | 1,892 characters |
+| `"1/(x^5*(a+b*x^2)^10)".ToEntity().Integrate("x")` | `integral(...)` | 1,860 characters |
+
 ### A power of x below the bar beside a root of a binomial is rationalised by dividing by the root
 
 **Answers where there were none.** `(a + b x^3)^(1/3)/(x^2 (c + d x^3))` was declined, and so were sixteen more of Rubi's
@@ -2991,6 +3011,21 @@ Rubi's `x^m (a + b x^n)^p` and `(a + b x^n)^p (c + d x^n)^q`
 | `"1/(2+3/x^2)^3".Integrate("x")`, `1/(a + b/x^3)` | left unevaluated | an antiderivative |
 | `"(a+b*x^n)*(c+d*x^n)^3".Integrate("x")` | left unevaluated | written out, eight powers of `x` integrated: `a c^3 x + ... + b d^3 x^(4 n + 1)/(4 n + 1)` |
 
+### A product of powers with symbolic exponents is integrated where it is a derivative whose constant the brackets hide
+
+**Answers where there were none.** `(a - b x^(n/2))^p (a + b x^(n/2))^p (c + d x^n)^q` with
+`c = -a^2 d n (p + 1)/(b^2 (1 + n + n p))` and `q = -(1 + 2 n + n p)/n`, Rubi's 1.1.3.3, was declined. It is
+`-b^2 (1 + n + n p)/(a^4 d n (p + 1))` times the derivative of `x (a - b x^(n/2))^(p + 1) (a + b x^(n/2))^(p + 1) (c + d x^n)^(q + 1)`,
+and the rule that reads such derivatives found the two brackets proportional at sampled points but could not show their
+quotient free of x, which takes `x x^(n - 1) = x^n` and the symbolic coefficients of `x^n` and `x^(2 n)` cancelling.
+Asked once more last in the chain, at the question asked only, it reads the constant at `x = 1`
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a - b*x^(n/2))^p*(a + b*x^(n/2))^p*(a^2*d*(1 + p)/(b^2*(1 + (-1 - 2*n - n*p)/n)) + d*x^n)^((-1 - 2*n - n*p)/n)".ToEntity().Integrate("x")` | `integral(...)` | 247 characters |
+| `"(a^2 - b^2*x^n)^p*(-a^2*d*n*(1 + p)/(b^2*(1 + n + n*p)) + d*x^n)^((-1 - 2*n - n*p)/n)".ToEntity().Integrate("x")` | `integral(...)` | 200 characters |
+
 ### The derivative of a power of `x` over a binomial is integrated as an arctangent over one plus a multiple of its square
 
 **Answers where there were none.** `(k - 4 f x^3)/(k^2 + 4 d f x^2 + 4 k f x^3 + 4 f^2 x^6)` is
@@ -3513,6 +3548,23 @@ improper fraction is declined before the first division rather than after the la
 | `"x^4/(d*x^2 + b*c - a*d)^5".ToEntity().Integrate("x")`, and `x^6` over the fourth power | `integral(...)` | the antiderivative |
 | `"(1 - b*x^2)^3/(c*(1 - b*x^2) + a*d*x^2)^3".ToEntity().Integrate("x")` | no answer within a minute | the antiderivative |
 | `"(a + b*x)^(5/2)/(c + d*x)^4".ToEntity().Integrate("x")` | `integral(...)` | the antiderivative |
+
+### A root over the root of a quadratic, or over two roots of linears with one slope, is integrated in the variable that rationalises them
+
+**Answers where there were none.** `sqrt(1 - x^2 + x sqrt(x^2 - 1))` and `sqrt(-x + sqrt(x) sqrt(1 + x))/sqrt(1 + x)`,
+Rubi's 1.3.2, were declined, and Rubi gives no answer for either. Euler's substitution `t = x + sqrt(x^2 - 1)` makes
+the root inside rational and the radicand outside the rational function `(t^2 - 1)/(2 t^2)`; for two roots of linears
+with one slope `v = sqrt(x) + sqrt(1 + x)` does the same, and the integrand in the new variable is answered. The
+answer is checked where the integrand is real: for the first that is `x >= 1`, and where `x <= -1`, where the
+integrand is imaginary, its derivative is the integrand's negative
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(1 - x^2 + x*sqrt(x^2 - 1))".ToEntity().Integrate("x")` | `integral(...)` | 199 characters |
+| `"sqrt(-x + sqrt(x)*sqrt(1 + x))/sqrt(1 + x)".ToEntity().Integrate("x")` | `integral(...)` | 197 characters |
+| `"sqrt(1 + x^2 + x*sqrt(1 + x^2))".ToEntity().Integrate("x")` | `integral(...)` | 230 characters |
+| `"sqrt(x^2 + x*sqrt(x^2 - 1))".ToEntity().Integrate("x")` | `integral(...)` | 228 characters |
 
 ### Four nested roots with a closed form are integrated
 

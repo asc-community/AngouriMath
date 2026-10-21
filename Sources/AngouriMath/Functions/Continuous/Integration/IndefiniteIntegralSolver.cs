@@ -9019,6 +9019,227 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A whole power of x below -1 beside a power of a binomial <c>B = a + b x^n</c> that is
+        /// not whole and a rational function <c>R</c> of <c>x^n</c> with a value at zero, its pole
+        /// at zero taken out by the reduction that raises the power of x by n:
+        /// <code>
+        /// int x^m B^p R(x^n) = C x^(m + 1) B^(p + 1) + int x^(m + n) B^p S(x^n),
+        /// C = R(0)/(a (m + 1)),   S(t) = (R(t) - C ((m + 1) a + b (m + 1 + n (p + 1)) t))/t,
+        /// </code>
+        /// repeated until the power of x is -1 or more, and the rest asked on its own.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The derivative of <c>x^(m + 1) B^(p + 1)</c> is <c>x^m B^p ((m + 1) a + b (m + 1 + n (p + 1)) x^n)</c>
+        /// on every branch, so the step is exact, and <c>S</c> is a rational function since what
+        /// it divides by t vanishes at zero. Rubi's 1.1.3.4 <c>1/(x^3 (1 - x^3)^(2/3) (1 + x^3))</c>
+        /// was declined: split over <c>1 + x^3</c> its terms are not elementary apart, and the
+        /// cube-root ansatz stops short of the ninth degree its denominator has. One step leaves
+        /// <c>-(1 - x^3)^(1/3)/(2 (1 + x^3))</c>, which is answered.
+        /// </para>
+        /// <para>
+        /// Last in the chain, and at the question asked only: asked before the scaling of the
+        /// variable and by parts, or below them, it answered six solved rows of Rubi's 1.1.3.4,
+        /// <c>1/(x^6 (a + b x^3)^(1/3) (c + d x^3))</c> among them, in other spellings, three far
+        /// shorter and one twice as long. Not for the binomial alone, which Chebyshev's
+        /// theorem decides. A factor <c>B</c> left in the rest is taken into the power. The answer
+        /// is differentiated back at sampled points.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveANegativePowerOfXBesideARootOfABinomialByRaisingThePowerOfX(Entity expr, Entity.Variable x, bool integrateByParts)
+            => SolveANegativePowerOfXBesideAPowerOfABinomialByRaisingThePowerOfX(expr, x, integrateByParts, wholePower: false);
+
+        /// <summary>
+        /// The reduction of <see cref="SolveANegativePowerOfXBesideARootOfABinomialByRaisingThePowerOfX"/>
+        /// for <c>x^m B^p</c> alone with a whole <c>p &lt;= -2</c> and a symbol in <c>B</c>: Rubi's
+        /// 1.1.2.2 <c>1/(x^6 (a + b x^2)^10)</c> is three steps from <c>1/(a + b x^2)^10</c>.
+        /// </summary>
+        /// <remarks>
+        /// The partial fractions take the binomial apart over its symbolic roots, and past the
+        /// twenty-fourth degree below the bar they ran out the budget: <c>1/(x^4 (a + b x^2)^10)</c>
+        /// took a second, <c>1/(x^6 (a + b x^2)^10)</c> and <c>1/(x^7 (a + b x^2)^10)</c> more than
+        /// twenty, and <c>1/(x^5 (a + b x^2)^10)</c> about two, for 67,808 characters where this gives
+        /// 1,860. Asked before the reduction over a power of a symbolic quadratic, which reads x as
+        /// a linear beside it, and past the twenty-fourth degree only, so that what the partial
+        /// fractions answered in time is answered as before.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static Entity? SolveANegativePowerOfXOverAWholePowerOfABinomialByRaisingThePowerOfX(Entity expr, Entity.Variable x, bool integrateByParts)
+            => SolveANegativePowerOfXBesideAPowerOfABinomialByRaisingThePowerOfX(expr, x, integrateByParts, wholePower: true);
+
+        private static Entity? SolveANegativePowerOfXBesideAPowerOfABinomialByRaisingThePowerOfX(Entity expr, Entity.Variable x, bool integrateByParts, bool wholePower)
+        {
+            if (!wholePower && !Integration.AnsweringTheQuestionAsked)
+                return null;
+            Entity constant = Number.Integer.One;
+            var m = 0;
+            Entity? binomial = null;
+            var p = ERational.Zero;
+            var above = new List<Entity>();
+            var below = new List<Entity>();
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                var (@base, exponent) = factor is Powf(var raised, Number.Rational power) ? (raised, power.ERational) : (factor, ERational.One);
+                if (underneath)
+                    exponent = exponent.Negate();
+                if (@base == x)
+                {
+                    if (!exponent.Denominator.Equals(EInteger.One) || !exponent.Numerator.CanFitInInt32())
+                        return null;
+                    m += exponent.Numerator.ToInt32Checked();
+                    continue;
+                }
+                if (!exponent.Denominator.Equals(EInteger.One) || wholePower && @base is Sumf or Minusf)
+                {
+                    if (binomial is not null && binomial != @base)
+                        return null;
+                    binomial = @base;
+                    p = p.Add(exponent);
+                    continue;
+                }
+                if (wholePower || !exponent.Numerator.CanFitInInt32() || exponent.Numerator.Abs().CompareTo(EInteger.FromInt32(MostWrittenFactorsRaised)) > 0)
+                    return null;
+                var times = exponent.Numerator.ToInt32Checked();
+                for (var i = 0; i < System.Math.Abs(times); i++)
+                    (times > 0 ? above : below).Add(@base);
+            }
+            if (binomial is null || m > -2 || p.Denominator.Equals(EInteger.One) != wholePower
+                || !wholePower && above.Count + below.Count == 0
+                || wholePower && (p.CompareTo(ERational.FromInt32(-2)) > 0 || !binomial.Vars.Any(symbol => symbol != x))
+                || !TryReadAsABinomialIn(binomial, x, out var a, out var b, out var n)
+                || wholePower && -m + n * p.Numerator.Negate().ToInt32Checked() <= MostDegreeThePartialFractionsTake
+                || VanishesIdentically(a) || VanishesIdentically(b)
+                || (-1 - m + n - 1) / n > MostPowersOfXRaised)
+                return null;
+            // Beside a root, a power of x one less than a multiple of n is `x^(n - 1)` times a function
+            // of `t = x^n`, and the root a root of a linear in t, which the substitutions read whole:
+            // raised, Rubi's `1/(x^5 (1 - x^2)^(1/3) (3 + x^2)^2)` asked what was left as a question of
+            // its own, declined it in twelve seconds and twenty-two gigabytes, and was answered as before.
+            if (!wholePower && (m + 1) % n == 0)
+                return null;
+
+            // The rest in t = x^n: each written factor a polynomial in it.
+            Dictionary<int, Entity>? InT(Entity polynomial)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, x, out var monomials))
+                    return null;
+                var read = new Dictionary<int, Entity>();
+                foreach (var pair in monomials)
+                {
+                    if (pair.Value.ContainsNode(x) || pair.Key.Sign < 0 || !pair.Key.CanFitInInt32() || pair.Key.ToInt32Checked() % n != 0)
+                        return null;
+                    read[pair.Key.ToInt32Checked() / n] = pair.Value;
+                }
+                return read;
+            }
+            Dictionary<int, Entity>? Product(List<Entity> factors)
+            {
+                var product = new Dictionary<int, Entity> { [0] = Number.Integer.One };
+                foreach (var factor in factors)
+                {
+                    if (InT(factor) is not { } read)
+                        return null;
+                    product = Multiplied(product, read);
+                    if (product.Keys.Max() > MostDegreeInThePower)
+                        return null;
+                }
+                return product;
+            }
+            if (Product(above) is not { } numerator || Product(below) is not { } denominator
+                || VanishesIdentically(At(numerator, 0)) || VanishesIdentically(At(denominator, 0)))
+                return null;
+
+            Entity raisedPower = Exponent(p.Add(ERational.One));
+            Entity sum = Number.Integer.Zero;
+            while (m <= -2)
+            {
+                // C = R(0)/(a (m + 1)), and the numerator of R - C L over the denominator of R
+                // divided by t, for L = (m + 1) a + b (m + 1 + n (p + 1)) t.
+                var coefficient = LowestOverTheSymbols(At(numerator, 0) / (At(denominator, 0) * Number.Integer.Create(m + 1) * a));
+                var linear = new Dictionary<int, Entity>
+                {
+                    [0] = Number.Integer.Create(m + 1) * a,
+                    [1] = b * Number.Rational.Create(ERational.FromInt32(m + 1).Add(ERational.FromInt32(n).Multiply(p.Add(ERational.One)))),
+                };
+                var taken = Multiplied(denominator, linear);
+                var next = new Dictionary<int, Entity>();
+                foreach (var degree in numerator.Keys.Union(taken.Keys))
+                    next[degree] = LowestOverTheSymbols(At(numerator, degree) - coefficient * At(taken, degree));
+                if (!VanishesIdentically(At(next, 0)))
+                    return null;
+                numerator = next.Where(pair => pair.Key > 0).ToDictionary(pair => pair.Key - 1, pair => pair.Value);
+                if (!VanishesIdentically(coefficient))
+                    sum += coefficient * (m + 1 == -1 ? Number.Integer.One / x : MathS.Pow(x, Number.Integer.Create(m + 1))) * MathS.Pow(binomial, raisedPower);
+                m += n;
+            }
+
+            // A factor B of what is left above is taken into its power.
+            var restPower = p;
+            for (var divided = 0; divided < MostWrittenFactorsRaised && numerator.Count > 0 && numerator.Keys.Max() >= 1; divided++)
+            {
+                var top = numerator.Keys.Max();
+                var quotient = new Dictionary<int, Entity>();
+                for (var k = top; k >= 1; k--)
+                    quotient[k - 1] = LowestOverTheSymbols((At(numerator, k) - a * At(quotient, k)) / b);
+                if (!VanishesIdentically(At(numerator, 0) - a * At(quotient, 0)))
+                    break;
+                numerator = quotient;
+                restPower = restPower.Add(ERational.One);
+            }
+            Entity above0 = Number.Integer.Zero;
+            foreach (var pair in numerator.OrderBy(pair => pair.Key))
+                if (!VanishesIdentically(pair.Value))
+                    above0 += pair.Key == 0 ? pair.Value : pair.Value * MathS.Pow(x, Number.Integer.Create(pair.Key * n));
+            // Nothing left where the integrand is the derivative of the terms.
+            Entity integral = Number.Integer.Zero;
+            if (above0 != Number.Integer.Zero)
+            {
+                Entity rest = constant * above0 * MathS.Pow(binomial, Exponent(restPower));
+                if (m != 0)
+                    rest *= MathS.Pow(x, Number.Integer.Create(m));
+                foreach (var factor in below)
+                    rest /= factor;
+                if (Integration.ComputeAsAQuestionOfItsOwn(Functions.PartialFractions.Bare(rest), x, integrateByParts) is not { } asked)
+                    return null;
+                integral = asked;
+            }
+            var answer = (constant * sum + integral).InnerSimplified;
+            return answer.Nodes.Any(node => node == MathS.NaN) || !Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x)
+                ? null : answer;
+
+            static Entity At(Dictionary<int, Entity> polynomial, int degree)
+                => polynomial.TryGetValue(degree, out var coefficient) ? coefficient : Number.Integer.Zero;
+            static Entity Exponent(ERational power)
+                => power.Denominator.Equals(EInteger.One) ? Number.Integer.Create(power.Numerator) : Number.Rational.Create(power);
+            static Dictionary<int, Entity> Multiplied(Dictionary<int, Entity> left, Dictionary<int, Entity> right)
+            {
+                var product = new Dictionary<int, Entity>();
+                foreach (var l in left)
+                    foreach (var r in right)
+                        product[l.Key + r.Key] = At(product, l.Key + r.Key) + l.Value * r.Value;
+                return product.ToDictionary(pair => pair.Key, pair => LowestOverTheSymbols(pair.Value));
+            }
+        }
+
+        /// <summary>The most steps <see cref="SolveANegativePowerOfXBesideARootOfABinomialByRaisingThePowerOfX"/> takes.</summary>
+        private const int MostPowersOfXRaised = 8;
+
+        /// <summary>The most times one written factor stands in what <see cref="SolveANegativePowerOfXBesideARootOfABinomialByRaisingThePowerOfX"/> reads, and the most factors <c>B</c> it takes into the power.</summary>
+        private const int MostWrittenFactorsRaised = 6;
+
+        /// <summary>The largest degree in <c>x^n</c> of the rational function <see cref="SolveANegativePowerOfXBesideARootOfABinomialByRaisingThePowerOfX"/> reads.</summary>
+        private const int MostDegreeInThePower = 12;
+
+        /// <summary>The degree below the bar up to which <see cref="SolveANegativePowerOfXOverAWholePowerOfABinomialByRaisingThePowerOfX"/> leaves <c>x^m B^p</c> to the partial fractions.</summary>
+        private const int MostDegreeThePartialFractionsTake = 24;
+
+        /// <summary>
         /// Reads <paramref name="expr"/> as a multiple of <c>x^m (a + b x^n)^(p/q)</c>, with
         /// <c>m</c> and <c>n</c> rational, <c>q</c> above one, <c>n</c> neither zero nor one, and
         /// the multiple, <c>a</c> and <c>b</c> free of the variable -- or the multiple
@@ -18720,6 +18941,30 @@ namespace AngouriMath.Functions.Algebra
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveAsTheDerivativeOfAProductOfPowers(Entity expr, Entity.Variable x, bool integrateByParts)
+            => AsTheDerivativeOfAProductOfPowers(expr, x, integrateByParts, readTheRatioAtAPoint: false);
+
+        /// <summary>
+        /// <see cref="SolveAsTheDerivativeOfAProductOfPowers"/> with the
+        /// constant read at a point where the brackets are proportional at the sampled points and
+        /// their quotient is not read free of x: Rubi's 1.1.3.3
+        /// <c>(a - b x^(n/2))^p (a + b x^(n/2))^p (c + d x^n)^q</c> at <c>c = -a^2 d n (p + 1)/(b^2 (1 + n + n p))</c>
+        /// and <c>q = -(1 + 2 n + n p)/n</c> is the derivative of
+        /// <c>x (a - b x^(n/2))^(p + 1) (a + b x^(n/2))^(p + 1) (c + d x^n)^(q + 1)</c> times
+        /// <c>-b^2 (1 + n + n p)/(a^4 d n (p + 1))</c>, and was declined.
+        /// </summary>
+        /// <remarks>
+        /// Its bracket is a constant only once <c>x x^(n - 1)</c> is <c>x^n</c> and the symbolic
+        /// coefficients of <c>x^n</c> and <c>x^(2 n)</c> cancel, which neither the reading off one
+        /// monomial nor the simplification of the quotient sees; at <c>x = 1</c> the quotient is the
+        /// constant. Last in the chain and at the question asked only, so that what another rule
+        /// answers is answered as before; the answer is differentiated back at sampled points, as
+        /// the first's is.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static Entity? SolveAsTheDerivativeOfAProductOfPowersReadAtAPoint(Entity expr, Entity.Variable x, bool integrateByParts)
+            => Integration.AnsweringTheQuestionAsked ? AsTheDerivativeOfAProductOfPowers(expr, x, integrateByParts, readTheRatioAtAPoint: true) : null;
+
+        private static Entity? AsTheDerivativeOfAProductOfPowers(Entity expr, Entity.Variable x, bool integrateByParts, bool readTheRatioAtAPoint)
         {
             if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
                 return null;
@@ -18730,13 +18975,13 @@ namespace AngouriMath.Functions.Algebra
             // elementary. A base with whole exponents may be missing from some terms: Rubi's
             // `(1 + e^x) x/sqrt(e^x + x) + 2 sqrt(e^x + x)` is `(2 x sqrt(e^x + x))'`.
             if (expr is Sumf or Minusf)
-                return WithTheCommonPowersOut(expr, x) is { } factored ? SolveAsTheDerivativeOfAProductOfPowers(factored, x, integrateByParts) : null;
+                return WithTheCommonPowersOut(expr, x) is { } factored ? AsTheDerivativeOfAProductOfPowers(factored, x, integrateByParts, readTheRatioAtAPoint) : null;
             // A bracket that is a polynomial with a power of x in every term has that power taken out, to
             // join the powers it multiplies: `x^(2n) (c + d x)^n (2 c x + 3 d x^2)` is
             // `x^(2n + 1) (c + d x)^n (2 c + 3 d x)`, the derivative of `x^(2n + 2) (c + d x)^(n + 1)/(n + 1)`,
             // and with the x in the bracket nothing raised x by enough.
             if (WithAPowerOfXOutOfTheBracket(expr, x) is { } outOfTheBracket)
-                return SolveAsTheDerivativeOfAProductOfPowers(outOfTheBracket, x, integrateByParts);
+                return AsTheDerivativeOfAProductOfPowers(outOfTheBracket, x, integrateByParts, readTheRatioAtAPoint);
             Entity constant = Number.Integer.One;
             Entity? bracket = null;
             var raisable = new List<(Entity Base, Entity Exponent)>();
@@ -18909,6 +19154,10 @@ namespace AngouriMath.Functions.Algebra
                 if (k.ContainsNode(x) && ASmallRationalRatioAtAPoint(bracket, bracketOfTheDerivative, x) is { } ratio)
                     k = ratio;
                 k = Functions.PartialFractions.Bare((constant * k).InnerSimplified);
+                // Proportional at the sampled points, and the quotient not read free of x: the
+                // constant is then the quotient at a point, asked for last in the chain.
+                if (readTheRatioAtAPoint && k.ContainsNode(x) && TheRatioOfProportionalBracketsAtAPoint(bracket, bracketOfTheDerivative, x) is { } atAPoint)
+                    k = Functions.PartialFractions.Bare((constant * atAPoint).InnerSimplified);
                 if (k.ContainsNode(x) || k.Nodes.Any(node => node == MathS.NaN))
                     continue;
                 var answer = (k * candidate).InnerSimplified;
@@ -19656,6 +19905,27 @@ namespace AngouriMath.Functions.Algebra
         /// it writes has <c>k - 1</c> terms, each a product of powers summing to <c>k</c>.
         /// </summary>
         private const int MaximumLinearPowerSum = 12;
+
+        /// <summary>
+        /// The constant <paramref name="left"/> over <paramref name="right"/> is, for two brackets
+        /// already shown proportional at sampled points, read at <c>x = 1</c>, or at <c>x = 2</c>
+        /// where the right one vanishes at the first; null where it has no value at either.
+        /// </summary>
+        private static Entity? TheRatioOfProportionalBracketsAtAPoint(Entity left, Entity right, Entity.Variable x)
+        {
+            foreach (var at in new[] { 1, 2 })
+            {
+                var below = right.Substitute(x, at).InnerSimplified;
+                if (VanishesIdentically(below))
+                    continue;
+                var ratio = Functions.PartialFractions.Bare((left.Substitute(x, at) / below).InnerSimplified);
+                if (ratio.ContainsNode(x) || ratio.Nodes.Any(node => node == MathS.NaN))
+                    continue;
+                var simplified = Functions.PartialFractions.Bare(Functions.SingleQuotient.Combine(ratio).Simplify());
+                return simplified.Complexity < ratio.Complexity && !simplified.Nodes.Any(node => node == MathS.NaN) ? simplified : ratio;
+            }
+            return null;
+        }
 
         /// <summary>
         /// The constant <c>k</c> with <paramref name="left"/> equal to <c>k</c> times
@@ -28642,6 +28912,226 @@ namespace AngouriMath.Functions.Algebra
             answer = (d / MathS.Sqrt(2) * answer).InnerSimplified;
             return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
         }
+
+        /// <summary>
+        /// A root whose radicand holds roots one substitution rationalises -- the root of a
+        /// quadratic, by Euler's, or the roots of two linears with one slope, by their sum --
+        /// integrated in the substitution's variable, where the radicand is a rational function:
+        /// <c>sqrt(1 - x^2 + x sqrt(x^2 - 1))</c> is <c>sqrt((t^2 - 1)/(2 t^2)) (t^2 - 1)/(2 t^2)</c> at
+        /// <c>t = x + sqrt(x^2 - 1)</c>, and <c>sqrt(-x + sqrt(x) sqrt(1 + x))/sqrt(1 + x)</c> is
+        /// <c>sqrt((v^2 - 1)/(2 v^2)) (v^2 - 1)/v^2</c> at <c>v = sqrt(x) + sqrt(1 + x)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// For <c>Q = a x^2 + b x + c</c>, Euler's first substitution <c>t = sqrt(Q) + sqrt(a) x</c> has
+        /// <c>x = (t^2 - c)/(2 sqrt(a) t + b)</c> and <c>sqrt(Q) = t - sqrt(a) x</c>, and his second,
+        /// <c>t = (sqrt(Q) - sqrt(c))/x</c>, has <c>x = (2 sqrt(c) t - b)/(a - t^2)</c> and
+        /// <c>sqrt(Q) = x t + sqrt(c)</c>. For <c>L1 - L2 = k</c> with one slope <c>m</c>,
+        /// <c>v = sqrt(L1) + sqrt(L2)</c> has <c>sqrt(L1) = (v + k/v)/2</c>, <c>sqrt(L2) = (v - k/v)/2</c>
+        /// and <c>dx = (v^4 - k^2)/(2 m v^3) dv</c>. Each is an identity in the values of the roots
+        /// wherever they are defined, whatever their branches, so the radicand written in the new
+        /// variable is the radicand, and the integrand there a rational function beside roots of
+        /// rational functions, which the chain is asked.
+        /// </para>
+        /// <para>
+        /// Rubi's 1.3.2 has both above without an answer; the Euler substitution and the sum of two
+        /// roots read only a rational function of the roots, and declined. Numbers only, roots
+        /// nested two deep, at the question asked or one below it, and late; the answer is
+        /// differentiated back at the sampled points where the integrand is real.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveANestedRootByRationalisingTheRootsInIt(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow || expr.Vars.Any(symbol => symbol != x))
+                return null;
+            static bool IsARootOf(Entity node, Entity.Variable x)
+                => node is Powf(var @base, Number.Rational power) && power is not Number.Integer && @base.ContainsNode(x);
+            // The roots inside, of x alone, and at least one root over them.
+            var radicands = new List<Entity>();
+            var nested = false;
+            foreach (var node in expr.Nodes)
+            {
+                if (!node.ContainsNode(x) || node is Entity.Variable or Sumf or Minusf or Mulf or Divf or Powf(_, Number.Integer))
+                    continue;
+                if (!IsARootOf(node, x))
+                    return null;
+                var radical = (Powf)node;
+                var @base = radical.Base;
+                var power = ((Number.Rational)radical.Exponent).ERational;
+                if (@base.Nodes.Any(inner => IsARootOf(inner, x)))
+                {
+                    if (@base.Nodes.Any(inner => IsARootOf(inner, x) && ((Powf)inner).Base.Nodes.Any(deeper => IsARootOf(deeper, x))))
+                        return null;
+                    // A radicand that is a polynomial in x and the roots, as Rubi's are: the tangent's
+                    // substitution writes `(1 + coth(x))^(7/2)` as a power of `(u + 1)/u + sqrt(1 - u^2)/u`,
+                    // which this rationalised in u at ten times the allocation and declined, or answered
+                    // a level down in 1,661 characters where the rules after it give 287.
+                    if (@base.Nodes.Any(inner => inner.ContainsNode(x) && (inner is Divf || inner is Powf(_, Number.Rational { IsNegative: true }))))
+                        return null;
+                    nested = true;
+                    continue;
+                }
+                if (!power.Denominator.Equals(EInteger.FromInt32(2)) || !power.Numerator.CanFitInInt32())
+                    return null;
+                if (!radicands.Contains(@base))
+                    radicands.Add(@base);
+            }
+            if (!nested)
+                return null;
+            // Roots and nothing else of x, as Rubi's are: beside a rational factor, the tangent's
+            // substitution of `1/sqrt(1 - coth(x)^2)` was rationalised in u to be declined, at three
+            // times the allocation of the rules after it.
+            if (FactorsOfTheIntegrand(expr).Any(pair => pair.Factor.ContainsNode(x) && !IsARootOf(pair.Factor, x)))
+                return null;
+
+            var t = Variable.CreateUnique(expr, "t_nested");
+            Entity xInT, dxdt, back;
+            Entity[] rootsInT;
+            if (radicands.Count == 1 && TryReadAQuadraticOverAConstant(radicands[0], x, out var a, out var b, out var c))
+            {
+                if (a.Evaled is not Number.Real { IsZero: false } aValue || b.Evaled is not Number.Real || c.Evaled is not Number.Real cValue
+                    || IsAPerfectSquareDiscriminant(a, b, c))
+                    return null;
+                var root = MathS.Sqrt(radicands[0]);
+                if (aValue.IsPositive)
+                {
+                    var sqrtA = MathS.Sqrt(a).InnerSimplified;
+                    xInT = (MathS.Sqr(t) - c) / (2 * sqrtA * t + b);
+                    rootsInT = new[] { t - sqrtA * xInT };
+                    back = root + sqrtA * x;
+                }
+                else if (cValue.IsPositive)
+                {
+                    var sqrtC = MathS.Sqrt(c).InnerSimplified;
+                    xInT = (2 * sqrtC * t - b) / (a - MathS.Sqr(t));
+                    rootsInT = new[] { xInT * t + sqrtC };
+                    back = (root - sqrtC) / x;
+                }
+                else
+                    return null;
+                dxdt = xInT.Differentiate(t);
+            }
+            else if (radicands.Count == 2
+                && TreeAnalyzer.TryGetPolyLinear(radicands[0], x, out var m1, out var n1)
+                && TreeAnalyzer.TryGetPolyLinear(radicands[1], x, out var m2, out var n2)
+                && !VanishesIdentically(m1) && VanishesIdentically(m1 - m2) && !VanishesIdentically(n1 - n2))
+            {
+                var k = (n1 - n2).InnerSimplified;
+                rootsInT = new[] { (t + k / t) / 2, (t - k / t) / 2 };
+                xInT = (MathS.Sqr(rootsInT[1]) - n2) / m1;
+                dxdt = (MathS.Pow(t, 4) - MathS.Sqr(k)) / (2 * m1 * MathS.Pow(t, 3));
+                back = MathS.Sqrt(radicands[0]) + MathS.Sqrt(radicands[1]);
+            }
+            else
+                return null;
+
+            // The roots inside in t, x in t, and every radicand left a rational function in
+            // lowest terms, as is the rest.
+            var inT = expr.Replace(node => IsARootOf(node, x) && radicands.IndexOf(((Powf)node).Base) is var index and >= 0
+                    ? MathS.Pow(rootsInT[index], Number.Integer.Create(((Number.Rational)((Powf)node).Exponent).ERational.Numerator))
+                    : node)
+                .Substitute(x, xInT) * dxdt;
+            Entity roots = Number.Integer.One;
+            Entity rational = Number.Integer.One;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(inT))
+            {
+                var piece = factor;
+                if (IsARootOf(factor, t))
+                {
+                    var power = (Number.Rational)((Powf)factor).Exponent;
+                    if (InLowestTerms(((Powf)factor).Base, t) is not { } radicand)
+                        return null;
+                    piece = MathS.Pow(radicand, power);
+                    roots = underneath ? roots / piece : roots * piece;
+                }
+                else
+                    rational = underneath ? rational / piece : rational * piece;
+            }
+            if (InLowestTerms(rational, t) is not { } rest)
+                return null;
+            inT = rest * roots;
+            if (inT.ContainsNode(x) || inT.Nodes.Any(node => node == MathS.NaN)
+                || inT.Nodes.Any(node => IsARootOf(node, t) && ((Powf)node).Base.Nodes.Any(inner => IsARootOf(inner, t))))
+                return null;
+            if (Integration.ComputeAsAQuestionOfItsOwn(inT, t, integrateByParts) is not { } inTermsOfT)
+                return null;
+
+            // Checked where the integrand is real, at two points at least, with the sign of t
+            // held constant in the derivative, as it is between the zeros of t: the derivative
+            // of `sgn(sqrt(x) + sqrt(1 + x))` is not answered, since its argument is not shown real.
+            // First with that sign one and `|t|` as t, as they are where the roots inside are real
+            // and t positive, which is the integrand's real domain for both above.
+            using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+            var real = NestedRootSamplePoints.Where(point =>
+                expr.Substitute(x, Number.Real.Create(EDecimal.FromString(point))).Evaled is Number.Complex value && !value.IsNaN
+                && value.ImaginaryPart.EDecimal.Abs().CompareTo(EDecimal.FromString("1e-12")) <= 0).ToArray();
+            if (real.Length < 2)
+                return null;
+            var sign = Variable.CreateUnique(expr * inTermsOfT, "s_nested");
+            var signed = inTermsOfT.Replace(node => node switch
+            {
+                Signumf(var argument) when argument == t => sign,
+                Absf(var argument) when argument == t => sign * t,
+                _ => node,
+            });
+            foreach (var value in new Entity[] { Number.Integer.One, MathS.Signum(back) })
+            {
+                var answer = signed.Substitute(sign, value).Substitute(t, back).InnerSimplified;
+                if (answer.Nodes.Any(node => node == MathS.NaN))
+                    return null;
+                var derivative = Functions.PartialFractions.Bare(signed.Substitute(t, back)).Differentiate(x).Substitute(sign, value);
+                if (Functions.PartialFractions.HoldsAtSampledPoints(derivative, expr, x, real))
+                    return answer;
+            }
+            return null;
+
+            // A rational function of t as one quotient of polynomials, cancelled, the content of
+            // numbers taken out of the two sides.
+            static Entity? InLowestTerms(Entity e, Entity.Variable t)
+            {
+                var (above, below) = Functions.SingleQuotient.Of(e.InnerSimplified);
+                if (!TreeAnalyzer.TryGetPolynomial(above, t, out var top) || !TreeAnalyzer.TryGetPolynomial(below, t, out var bottom)
+                    || top.Keys.Concat(bottom.Keys).Any(degree => degree.Sign < 0 || degree.CompareTo(EInteger.FromInt32(MostNestedRootDegree)) > 0))
+                    return null;
+                var coefficients = top.Values.Concat(bottom.Values).Select(value => value.InnerSimplified.Evaled).ToList();
+                var content = ERational.One;
+                if (coefficients.All(value => value is Number.Rational))
+                {
+                    var rationals = coefficients.Select(value => ((Number.Rational)value).ERational).Where(value => !value.IsZero).ToList();
+                    var numerators = rationals.Aggregate(EInteger.Zero, (gcd, value) => gcd.Gcd(value.Numerator.Abs()));
+                    var denominators = rationals.Aggregate(EInteger.One, (lcm, value) => lcm * value.Denominator / lcm.Gcd(value.Denominator));
+                    if (!numerators.IsZero)
+                        content = ERational.Create(numerators, denominators);
+                }
+                Entity Rebuilt(Dictionary<EInteger, Entity> read)
+                {
+                    Entity built = Number.Integer.Zero;
+                    foreach (var pair in read.OrderBy(pair => pair.Key))
+                    {
+                        var coefficient = (pair.Value / Number.Rational.Create(content)).InnerSimplified;
+                        if (coefficient.Evaled is Number.Complex { IsZero: true })
+                            continue;
+                        built += pair.Key.IsZero ? coefficient : coefficient * (pair.Key.Equals(EInteger.One) ? t : MathS.Pow(t, Number.Integer.Create(pair.Key)));
+                    }
+                    return built.InnerSimplified;
+                }
+                var numerator = Rebuilt(top);
+                var denominator = Rebuilt(bottom);
+                if (denominator == Number.Integer.Zero)
+                    return null;
+                return Functions.PolynomialGcd.TryCancel(numerator, denominator, out var cancelled)
+                    ? Functions.PartialFractions.Bare(cancelled)
+                    : (numerator / denominator).InnerSimplified;
+            }
+        }
+
+        /// <summary>The largest degree a radicand or the rest of <see cref="SolveANestedRootByRationalisingTheRootsInIt"/> has in t.</summary>
+        private const int MostNestedRootDegree = 16;
+
+        /// <summary>Where <see cref="SolveANestedRootByRationalisingTheRootsInIt"/> looks for the integrand to be real: both sides of zero and of one.</summary>
+        [ConstantField]
+        private static readonly string[] NestedRootSamplePoints = { "-3.17", "-1.43", "-0.61", "0.29", "0.83", "1.43", "2.3", "3.17" };
 
         /// <summary>
         /// A square root of a perfect square in <paramref name="x"/> is the modulus:
