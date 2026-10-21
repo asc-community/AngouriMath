@@ -1942,8 +1942,13 @@ namespace AngouriMath.Functions.Algebra
             // logarithm of the denominator, whatever the denominator is: Welz's
             // `(3 - 3x + 30x^2 + 160x^3)/(9 + 24x - 12x^2 + 80x^3 + 320x^4)` is `ln(D)/8`, and
             // the substitution rule found it as `u = D` while sums were still its candidates.
+            // Read coefficient by coefficient first, at a point: a long division with symbols in
+            // the coefficients is a page of simplification, and most numerators are no multiple.
+            // The derivative of a constant carried a condition that declined the division at once.
             if (denominator.ContainsNode(x)
-                && TreeAnalyzer.PolynomialLongDivision(numerator, denominator.Differentiate(x).InnerSimplified, genericCase: true, inTermsOf: x)
+                && denominator.Differentiate(x).InnerSimplified is var derivative
+                && MayBeAConstantMultiple(numerator, derivative, x)
+                && TreeAnalyzer.PolynomialLongDivision(numerator, derivative, genericCase: true, inTermsOf: x)
                     is var (multiple, leftover)
                 && !multiple.ContainsNode(x)
                 && (leftover is Divf(var leftoverTop, _) ? leftoverTop : leftover).InnerSimplified.Evaled is Number.Complex { IsZero: true })
@@ -24974,8 +24979,8 @@ namespace AngouriMath.Functions.Algebra
         /// <para>
         /// Each makes <c>x</c>, <c>sqrt(Q)</c> and <c>dx/dt</c> rational in <c>t</c>, so the
         /// integrand becomes a rational function of <c>t</c>; whichever applies with its radical
-        /// a rational number is taken first, and a symbol in <c>a</c> or <c>c</c> takes the first
-        /// in the generic case. The result goes to the rational integrator <b>directly</b> --
+        /// a rational number is taken first. A root of a symbol is not taken, except through the
+        /// sum the integrand writes, below. The result goes to the rational integrator <b>directly</b> --
         /// long division, the splits, the Hermite reduction, the binomial rule -- and not back
         /// into the chain: an earlier Euler rule rewrote and handed on, and its cost was in the
         /// open search below it and in a <c>Simplify</c> it ran before it could tell whether it
@@ -25060,8 +25065,9 @@ namespace AngouriMath.Functions.Algebra
             // A perfect square under the root is no radical: `sqrt(u^2)` is `|u|`, which
             // `SolveByTakingARootOfAPerfectSquare` writes as `sgn(u) u`, and the substitution
             // written for it -- `t = sqrt(u^2) - u`, which is zero on half the line -- is
-            // declined rather than made.
-            if ((b * b - Number.Integer.Create(4) * a * c).InnerSimplified.Evaled is Number.Complex { IsZero: true })
+            // declined rather than made. Decided by value: the normalisation does not see that
+            // `(2 a b)^2 - 4 b^2 a^2` is zero, and the substitution was made for Rubi's square.
+            if (IsAPerfectSquareDiscriminant(a, b, c))
                 return null;
 
             var t = Variable.CreateUnique(expr, "t_euler");
@@ -25224,6 +25230,13 @@ namespace AngouriMath.Functions.Algebra
                 expr = expr.Replace(node => node == sum ? t : node);
             }
             if (onlyBySumItWrites && writtenSum is null)
+                return null;
+            // A root of a symbol in x(t), `sqrt(a)` or `sqrt(c)`, is not taken. The rational
+            // function it makes is a search past any budget: `sqrt(-b^2)`, from what by parts
+            // leaves of `acos(a + b x)/x^4`. It was never taken before, since x(t)'s derivative
+            // carried the condition the chain rule wrote for the root's, which no reader below
+            // takes; the derivative of a constant has no condition now.
+            if (writtenSum is null && (which == 1 ? sqrtA : which == 2 ? sqrtC : null) is { } rootTaken && rootTaken.Vars.Count > 0)
                 return null;
 
             var powered = false;
@@ -29565,6 +29578,32 @@ namespace AngouriMath.Functions.Algebra
         /// Whether both read as polynomials in <paramref name="x"/> with the numerator's
         /// degree below the denominator's; false where either does not read.
         /// </summary>
+        /// <summary>
+        /// False where <paramref name="numerator"/> is shown not to be a constant multiple of
+        /// <paramref name="derivative"/>, both read as polynomials in <paramref name="x"/>: their
+        /// leading terms are of different degrees, or a coefficient is not the ratio of the
+        /// leading ones times the other's, at a point. True where either is not read, or a
+        /// leading coefficient may be zero, for the long division to decide.
+        /// </summary>
+        private static bool MayBeAConstantMultiple(Entity numerator, Entity derivative, Entity.Variable x)
+        {
+            if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var above) || !TreeAnalyzer.TryGetPolynomial(derivative, x, out var below)
+                || above.Count == 0 || below.Count == 0)
+                return true;
+            var degree = above.Keys.Max()!;
+            var belowDegree = below.Keys.Max()!;
+            if (VanishesIdentically(above[degree]) || VanishesIdentically(below[belowDegree]))
+                return true;
+            if (!degree.Equals(belowDegree))
+                return false;
+            var ratio = above[degree] / below[degree];
+            foreach (var power in above.Keys.Union(below.Keys))
+                if (!VanishesIdentically((above.TryGetValue(power, out var top) ? top : Number.Integer.Zero)
+                        - ratio * (below.TryGetValue(power, out var bottom) ? bottom : Number.Integer.Zero)))
+                    return false;
+            return true;
+        }
+
         private static bool IsProperByDegree(Entity numerator, Entity denominator, Entity.Variable x)
             => TreeAnalyzer.TryGetPolynomial(numerator, x, out var above) && above.Count > 0
                && TreeAnalyzer.TryGetPolynomial(denominator, x, out var below) && below.Count > 0
@@ -37575,9 +37614,9 @@ namespace AngouriMath.Functions.Algebra
         /// value it takes at <paramref name="first"/>, or null. A function of one sine, cosine,
         /// tangent, cotangent, secant or cosecant of a linear, with <paramref name="x"/> nowhere
         /// else, repeats where that function does: a sine at <c>pi - theta</c>, a cosine at
-        /// <c>-theta</c>, a tangent a period on. A quadratic repeats across its vertex, and a
-        /// constant times an even power of a quotient of linears, or of one linear, where the
-        /// quotient takes the opposite value.
+        /// <c>-theta</c>, a tangent a period on. A quadratic repeats across its vertex, a rational
+        /// function of <c>x^2</c> at <c>-x</c>, and a constant times an even power of a quotient of
+        /// linears, or of one linear, where the quotient takes the opposite value.
         /// </summary>
         /// <remarks>
         /// The trigonometric function alone was read, and a multiple of one was not:
@@ -37613,6 +37652,11 @@ namespace AngouriMath.Functions.Algebra
             if (candidate is Sumf or Minusf && TreeAnalyzer.TryGetPolyQuadratic(candidate, x, out var leading, out var linear, out _)
                 && leading.Evaled is not Number.Complex { IsZero: true })
                 return -linear / leading - first;
+            // A rational function of x^2 as written takes one value at x and -x: `c/d + x^4`, which
+            // the partial fractions of Rubi's 1.1.2.4 `sqrt(x)/((a + b x^2)(c + d x^2)^3)` offer
+            // beside an odd quotient, was two gigabytes of simplification to be refused.
+            if (IsEvenAsWritten(candidate, x))
+                return -first;
             // k ((p + q x)/(r + s x))^n for an even n, or k (p + q x)^n: the quotient R takes -R(first) at
             // -(p + R(first) r)/(q + R(first) s).
             Entity? above = null, below = null;
@@ -37759,6 +37803,61 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>See <see cref="IsWorthEvaluatingAtRealPoints"/>.</summary>
         private const int SmallestQuotientWorthEvaluating = 25;
+
+        /// <summary>
+        /// Whether the quotient of an integrand by a candidate's derivative, written in the
+        /// candidate's name <paramref name="uSub"/>, keeps <paramref name="x"/> through every
+        /// rewriting <see cref="SolveBySubstitution"/> tries after it. It takes two values at two
+        /// points of x where the name is held, and a simplification keeps a value; and the steps
+        /// that write what is left of x in the candidate do not apply: the candidate is no
+        /// polynomial of a degree past one, no special function, no sine or cosine, the quotient is
+        /// no constant times its power from -2 to 2 at three points, and no factor of the integrand
+        /// is a constant times its derivative. False wherever a value cannot be had.
+        /// </summary>
+        private static bool KeepsTheVariableThroughEveryRewriting(Entity inTermsOfU, Entity u, Variable uSub, Entity.Variable x, Entity source, Entity duDx)
+        {
+            if (u is Sinf or Cosf || IsASpecialFunction(u) || !IsWorthEvaluatingAtRealPoints(inTermsOfU)
+                || u is Sumf or Minusf && TreeAnalyzer.TryGetPolynomial(u, x, out var monomials) && monomials.Count > 0
+                    && monomials.Keys.Max()!.CompareTo(EInteger.FromInt32(2)) >= 0)
+                return false;
+            // Pinned a few ways, since a root of `b^2 - c^2` has no real value at half of them.
+            var symbols = inTermsOfU.Vars.Concat(u.Vars).Distinct().Where(symbol => symbol != x).ToList();
+            var values = new[] { 1.37, 0.61, 2.23, 1.91, 0.83, 1.13, 1.71 };
+            var points = new[] { 0.29, 0.53, 0.71 };
+            for (var shift = 0; shift < 4; shift++)
+            {
+                var pins = new Dictionary<Variable, double>();
+                for (var i = 0; i < symbols.Count; i++)
+                    if (symbols[i] != MathS.pi && symbols[i] != MathS.e)
+                        pins[symbols[i]] = values[(i + shift) % values.Length];
+                var quotients = new double[points.Length];
+                var candidates = new double[points.Length];
+                var real = true;
+                for (var k = 0; k < points.Length && real; k++)
+                    if (AtRealPoint(inTermsOfU, pins, x, points[k]) is (var quotient, _) && AtRealPoint(u, pins, x, points[k]) is (var candidate, _)
+                        && quotient != 0 && candidate != 0)
+                        (quotients[k], candidates[k]) = (quotient, candidate);
+                    else
+                        real = false;
+                if (!real)
+                    continue;
+                bool Constant(System.Func<int, double> of)
+                {
+                    for (var k = 1; k < points.Length; k++)
+                        if (System.Math.Abs(of(k) - of(0)) > 1e-6 * System.Math.Max(1.0, System.Math.Abs(of(0))))
+                            return false;
+                    return true;
+                }
+                // Held, the name takes the quotient to one value at every point of x, or it is a
+                // constant times a power of the candidate: either way something below may answer.
+                if (Constant(k => quotients[k])
+                    || Constant(k => quotients[k] * candidates[k]) || Constant(k => quotients[k] / candidates[k])
+                    || Constant(k => quotients[k] * candidates[k] * candidates[k]) || Constant(k => quotients[k] / (candidates[k] * candidates[k])))
+                    return false;
+                return WithAFactorProportionalToTheDerivative(source, duDx, x) is null;
+            }
+            return false;
+        }
 
         /// <summary>
         /// Whether <paramref name="expr"/>, written in <paramref name="x"/> and a candidate's variable
@@ -41310,6 +41409,12 @@ namespace AngouriMath.Functions.Algebra
                     // what the tangent makes of Rubi's 4.3.4.2, spent five seconds being simplified
                     // to be refused.
                     var inTermsOfU = InTermsOf(quotient, u, uSub, x);
+                    // Refused before it is simplified where nothing below can take the x out of it:
+                    // the radicand the hyperbolic tangent makes of Rubi's 6.7.1
+                    // `sqrt(b cosh(x) + c sinh(x) - sqrt(b^2 - c^2))` was two to seven gigabytes of
+                    // simplification each time it was offered.
+                    if (KeepsTheVariableThroughEveryRewriting(inTermsOfU, u, uSub, x, source, duDx))
+                        continue;
                     integrandInU = !inTermsOfU.ContainsNode(x)
                         && TreeAnalyzer.TryGetPolyLinear(u, x, out var slope, out var offset) && !slope.ContainsNode(x) && !offset.ContainsNode(x)
                         && IsAFunctionOfTheTangentAlone(inTermsOfU, uSub) && !HoldsTheImaginaryUnit(inTermsOfU)

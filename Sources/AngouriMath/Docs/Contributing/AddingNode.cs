@@ -52,7 +52,8 @@
 ///     
 /// Now, you might be required to complete the following steps as well:
 /// 
-/// 6. Derivation (if applicable) (<see cref="AngouriMath.Entity.Sinf.InnerDifferentiate"/>)
+/// 6. Derivation (if applicable) (<see cref="AngouriMath.Entity.Sinf.InnerDifferentiate"/>),
+/// differentiating the node's parts with <c>DerivativeOver</c> rather than with their own rules
 /// (and tests to DerivativeTest.cs)
 /// 7. Compilation (if applicable) (<see cref="AngouriMath.Entity.Sinf.CompileNode"/> and <see cref="AngouriMath.Core.FastExpression.Substitute"/>)
 /// (and tests to CompilationTest.cs)

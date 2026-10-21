@@ -5829,6 +5829,36 @@ all. `not x = 0 implies x/x = 1` was left undefined at `0`, where it holds
 | `"not x = 0 implies (y / y = 1)".ToEntity().Simplify()` | `True provided not y = 0` | `True provided not x = 0 implies not y = 0` |
 | `forall x in RR : not x = 0 implies x / x = 1` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
 
+### What does not mention the variable differentiates to `0` in it, whatever its node
+
+**Silent. A value where there was NaN.** A node with a rule of its own differentiated a constant in
+the variable by the chain rule, whose outer factor can have no value where the node has one:
+`sqrt(a)` gave `1/2 a^(-1/2) * 0`, and zero times a factor keeps the condition the factor is defined
+under, so `sqrt(a) x` differentiated to `sqrt(a) provided not a = 0`, NaN at `a = 0` where the
+derivative is `0`. So did `a^(1/3)` at `0`, `arcsin(a)` at `1`, and an antiderivative carrying
+`sqrt(D)` at a discriminant `D = 0`, which then read as having no value anywhere. Every node that
+does not mention the variable differentiates to `0` now, with no condition, as the nodes with no
+rule of their own already did (the entry below); a set or a matrix is still differentiated
+elementwise, a `provided` or a piecewise keeps its own condition, and a written `NaN` stays `NaN`.
+The conditions that go are the chain rule's, and with them the few that said where a constant has
+no value: a derivative is claimed only where the expression has a value, so `ln(c - c)`,
+`1/(a - a)` and `0/0` differentiate to `0` as `c!` does. Two of Euler's substitutions had been
+blocked by those conditions: a symbolic perfect square under the root is decided by value now and
+left to the rule for perfect squares, and a root of a symbol in the substitution is declined, as
+it in effect was.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(a) * x".ToEntity().Differentiate("x")` | `sqrt(a) provided not a = 0` | `sqrt(a)` |
+| the same at `a = 0` | `NaN` | `0` |
+| `"sqrt(b^2 - 4*a*c) * x".ToEntity().Differentiate("x")` | `sqrt(b ^ 2 - 4 * a * c) provided not b ^ 2 - 4 * a * c = 0` | `sqrt(b ^ 2 - 4 * a * c)` |
+| `"arcsin(a) * x".ToEntity().Differentiate("x")` | `arcsin(a) provided not sqrt(1 - a ^ 2) = 0` | `arcsin(a)` |
+| `"(a - a)^(1/2)".ToEntity().Differentiate("x")` | `0 provided not a - a = 0` | `0` |
+| `"ln(c - c)".ToEntity().Differentiate("x")` | `0 provided not c - c = 0 and not c - c = 0` | `0` |
+| `"piecewise(x provided a, 1/x)".ToEntity().Differentiate("y")` | `piecewise(0 provided (a or not x ^ 2 = 0))` | `piecewise(0 provided True)` |
+| `"x^2 + 0/0".ToEntity().Differentiate("x")` | `NaN` | `2 * x` |
+| `"1/(x*sqrt(k^2*x^2 + 2*k*x + 1))".ToEntity().Integrate("x")` | `integral(...)`; on the unreleased master, an answer with no value at any point | 832 characters, through the rule for perfect squares |
+
 ### `acsch(c x)` and `asech(c x)` are integrated with a symbolic `c`, and `|c|` differentiates to `0` in `x`
 
 Three defects behind one symptom: `x acsch(2 x)` was answered and `x acsch(c x)` declined. The
@@ -5844,7 +5874,8 @@ whether the argument mentions the variable — **the modulus, the sign, the floo
 the rounding, a limit, a sum, a product, an applied function and any node with no rule of its
 own differentiate to `0` where they do not mention the variable**, with no condition, which also
 removes the `provided not c in ZZ` that `floor(c) + x` carried. A node with a rule of its own
-keeps it: `d/dy piecewise(x provided a, 1/x)` still says where `1/x` exists. And a negative fractional power is put below the bar before two
+does the same since the entry above, where `d/dy piecewise(x provided a, 1/x)` stops saying where
+`1/x` exists. And a negative fractional power is put below the bar before two
 quotients are cancelled as polynomials in their radicals, so that `q^(-1/2)` above and `sqrt(q)`
 below are one indeterminate. Rubi's 7.5.1 and 7.6.1
 ([#718](https://github.com/asc-community/AngouriMath/issues/718)).

@@ -217,12 +217,13 @@ namespace AngouriMath.Tests.Common
 
         // The two cases carried one expression and merged into a single case guarded
         // by either predicate when #327 landed -- which is what the note that used to
-        // sit here predicted. It does not collapse all the way to 0: that needs
-        // `p or not p` to reduce to true, which is #536 and is a different question.
+        // sit here predicted. The predicate was `a or not x^2 = 0`, the second half the
+        // quotient rule's denominator for 1/x, which does not vary in y: its derivative is
+        // 0 with no condition, so the merged case always holds.
         [Fact] public void PiecewiseDerivative2() {
             var result = "piecewise(x provided a, 1/x)".Differentiate("y");
-            result.ShouldBe("piecewise(0 provided (a or not x^2 = 0))");
-            result.Simplify().ShouldBe("piecewise(0 provided (a or not x = 0))");
+            result.ShouldBe("piecewise(0 provided True)");
+            result.Simplify().ShouldBe("0");
         }
 
         [Fact] public void PiecewiseLimit1() =>
@@ -250,13 +251,14 @@ namespace AngouriMath.Tests.Common
 
         // The two cases carried one expression and merged into a single case guarded
         // by either predicate when #327 landed -- which is what the note that used to
-        // sit here predicted. It does not collapse all the way to 0: that needs
-        // `p or not p` to reduce to true, which is #536 and is a different question.
+        // sit here predicted. The predicate was `a or not x^2 = 0`, the second half the
+        // quotient rule's denominator for 1/x, which does not vary in y: its derivative is
+        // 0 with no condition, so the merged case always holds.
         [Fact] public void PiecewiseDerivative2NodeEvaled()
         {
             var result = "derivative(piecewise(x provided a, 1/x), y)".ToEntity().Evaled;
-            result.ShouldBe("piecewise(0 provided (a or not x^2 = 0))");
-            result.Simplify().ShouldBe("piecewise(0 provided (a or not x = 0))");
+            result.ShouldBe("piecewise(0 provided True)");
+            result.Simplify().ShouldBe("0");
         }
 
         [Fact] public void PiecewiseLimit1NodeEvaled() =>
@@ -284,13 +286,14 @@ namespace AngouriMath.Tests.Common
 
         // The two cases carried one expression and merged into a single case guarded
         // by either predicate when #327 landed -- which is what the note that used to
-        // sit here predicted. It does not collapse all the way to 0: that needs
-        // `p or not p` to reduce to true, which is #536 and is a different question.
+        // sit here predicted. The predicate was `a or not x^2 = 0`, the second half the
+        // quotient rule's denominator for 1/x, which does not vary in y: its derivative is
+        // 0 with no condition, so the merged case always holds.
         [Fact] public void PiecewiseDerivative2NodeInnerSimplified()
         {
             var result = "derivative(piecewise(x provided a, 1/x), y)".ToEntity().InnerSimplified;
-            result.ShouldBe("piecewise(0 provided (a or not x^2 = 0))");
-            result.Simplify().ShouldBe("piecewise(0 provided (a or not x = 0))");
+            result.ShouldBe("piecewise(0 provided True)");
+            result.Simplify().ShouldBe("0");
         }
 
         [Fact] public void PiecewiseLimit1NodeInnerSimplified() =>

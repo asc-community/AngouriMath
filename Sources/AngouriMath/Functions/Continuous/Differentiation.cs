@@ -65,10 +65,46 @@ namespace AngouriMath
         /// through the public method and round again.
         /// </summary>
         internal Entity DifferentiateOnce(Variable variable)
-            => InnerDifferentiate(variable).InnerSimplified;
+            => DerivativeOver(variable).InnerSimplified;
 
         /// <summary>
-        /// Internal differentiation function
+        /// The derivative over <paramref name="variable"/>, unsimplified: zero for a node that is
+        /// a constant in it, and the node's own rule, <see cref="InnerDifferentiate(Variable)"/>,
+        /// for any other. Every rule asks this of its parts rather than asking their rules.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// A rule writes the chain rule, and its outer factor can have no value where the node
+        /// has one: <c>sqrt(c)</c> gave <c>1/2 c^(-1/2) * 0</c>, and <c>arcsin(c)</c> a factor
+        /// with no value at <c>c = 1</c>. Zero times a factor keeps the condition the factor is
+        /// defined under, so <c>sqrt(c) x</c> differentiated to <c>sqrt(c) provided not c = 0</c>,
+        /// with no value at <c>c = 0</c>, where the derivative is <c>sqrt(0) = 0</c>; an
+        /// antiderivative carrying <c>sqrt(D)</c> had no value anywhere at a discriminant
+        /// <c>D = 0</c>. Nothing varies with the variable here, so the answer is zero with no
+        /// condition, as it already was for a node with no rule of its own, the modulus and the
+        /// sign. That holds where the constant has no value too, <c>ln(c - c)</c>: a derivative is
+        /// claimed only where the expression has a value.
+        /// </para>
+        /// <para>
+        /// Not where a zero loses what the node says besides a value. A set or a matrix is
+        /// differentiated elementwise, <c>{ 1, 2 }</c> to <c>{ 0 }</c>. A <c>provided</c> and a
+        /// piecewise keep their own conditions, which their rules write onto the derivative. A
+        /// written NaN stays NaN, as <see cref="Number"/>'s rule keeps it. Their rules reach the
+        /// constants inside them through this method.
+        /// </para>
+        /// </remarks>
+        internal Entity DerivativeOver(Variable variable)
+            => IsConstantIn(variable) && !Nodes.Any(SaysMoreThanAValue) ? Integer.Zero : InnerDifferentiate(variable);
+
+        /// <summary>Whether a zero in place of a derivative in which this node occurs would lose
+        /// something: see <see cref="DerivativeOver(Variable)"/>.</summary>
+        private static bool SaysMoreThanAValue(Entity node)
+            => node is Set or Matrix or Providedf or Piecewise || node.IsNaN;
+
+        /// <summary>
+        /// This node's own rule of differentiation. Parts are differentiated by
+        /// <see cref="DerivativeOver(Variable)"/>, which answers zero for a constant before a rule
+        /// is asked.
         /// </summary>
         /// <param name="variable">To derive over</param>
         /// <returns>
@@ -119,7 +155,7 @@ namespace AngouriMath
         partial record Matrix
         {
             /// <inheritdoc/>
-            protected override Entity InnerDifferentiate(Variable variable) => Elementwise(e => e.InnerDifferentiate(variable));
+            protected override Entity InnerDifferentiate(Variable variable) => Elementwise(e => e.DerivativeOver(variable));
         }
 
         /// <summary>
@@ -141,7 +177,7 @@ namespace AngouriMath
                     ent = ent.Integrate(x);
             else
                 for (var _ = 0; _ < power; _++)
-                    ent = ent.InnerDifferentiate(x);
+                    ent = ent.DerivativeOver(x);
             return ent;
         }
 
@@ -160,7 +196,7 @@ namespace AngouriMath
                     ent = ent.Integrate(x);
             else
                 for (var _ = 0; _ < power; _++)
-                    // DifferentiateOnce, not InnerDifferentiate: the raw chain rule leaves
+                    // DifferentiateOnce, not DerivativeOver: the raw chain rule leaves
                     // every `0 *` and `* 1` it produces in place, and the next pass
                     // differentiates those too, so the expression compounds rather than
                     // reduces. Differentiate(Variable) reaches DifferentiateOnce through the
@@ -183,7 +219,7 @@ namespace AngouriMath
             // (a + b)' = a' + b'
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                Augend.InnerDifferentiate(variable) + Addend.InnerDifferentiate(variable);
+                Augend.DerivativeOver(variable) + Addend.DerivativeOver(variable);
         }
 
         partial record Minusf
@@ -191,7 +227,7 @@ namespace AngouriMath
             // (a - b)' = a' - b'
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                Minuend.InnerDifferentiate(variable) - Subtrahend.InnerDifferentiate(variable);
+                Minuend.DerivativeOver(variable) - Subtrahend.DerivativeOver(variable);
         }
 
         partial record Mulf
@@ -199,7 +235,7 @@ namespace AngouriMath
             // (a * b)' = a' * b + b' * a
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                Multiplier.InnerDifferentiate(variable) * Multiplicand + Multiplicand.InnerDifferentiate(variable) * Multiplier;
+                Multiplier.DerivativeOver(variable) * Multiplicand + Multiplicand.DerivativeOver(variable) * Multiplier;
         }
 
         partial record Divf
@@ -207,7 +243,7 @@ namespace AngouriMath
             // (a / b)' = (a' * b - b' * a) / b^2
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                (Dividend.InnerDifferentiate(variable) * Divisor - Divisor.InnerDifferentiate(variable) * Dividend) / Divisor.Pow(2);
+                (Dividend.DerivativeOver(variable) * Divisor - Divisor.DerivativeOver(variable) * Dividend) / Divisor.Pow(2);
         }
 
         partial record Modf
@@ -222,7 +258,7 @@ namespace AngouriMath
             protected override Entity InnerDifferentiate(Variable variable) =>
                 Divisor.ContainsNode(variable)
                     ? new Derivativef(this, variable, 1)
-                    : Dividend.InnerDifferentiate(variable);
+                    : Dividend.DerivativeOver(variable);
         }
 
         partial record Powf
@@ -233,12 +269,12 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 Exponent == Integer.One
-                ? Base.InnerDifferentiate(variable).Provided(Base.DomainCondition) // don't create x^0 which is undefined for x=0
+                ? Base.DerivativeOver(variable).Provided(Base.DomainCondition) // don't create x^0 which is undefined for x=0
                 : Exponent.Evaled is Number exp
-                ? exp * Base.Pow(exp - 1) * Base.InnerDifferentiate(variable)
+                ? exp * Base.Pow(exp - 1) * Base.DerivativeOver(variable)
                 : Base is Number
-                ? Base.Pow(Exponent) * MathS.Ln(Base) * Exponent.InnerDifferentiate(variable)
-                : Base.Pow(Exponent) * (Base.InnerDifferentiate(variable) * Exponent / Base + MathS.Ln(Base) * Exponent.InnerDifferentiate(variable));
+                ? Base.Pow(Exponent) * MathS.Ln(Base) * Exponent.DerivativeOver(variable)
+                : Base.Pow(Exponent) * (Base.DerivativeOver(variable) * Exponent / Base + MathS.Ln(Base) * Exponent.DerivativeOver(variable));
         }
 
         partial record Sinf
@@ -246,7 +282,7 @@ namespace AngouriMath
             // sin(a)' = cos(a) * a'
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                Argument.Cos() * Argument.InnerDifferentiate(variable);
+                Argument.Cos() * Argument.DerivativeOver(variable);
         }
 
         partial record Erff
@@ -255,7 +291,7 @@ namespace AngouriMath
             // https://github.com/asc-community/AngouriMath/issues/1501
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                2 / MathS.Sqrt(MathS.pi) * MathS.Pow(MathS.e, -MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
+                2 / MathS.Sqrt(MathS.pi) * MathS.Pow(MathS.e, -MathS.Sqr(Argument)) * Argument.DerivativeOver(variable);
         }
 
         partial record Erfcf
@@ -263,7 +299,7 @@ namespace AngouriMath
             // erfc(a)' = -2/sqrt(pi) e^(-a^2) a'
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                -2 / MathS.Sqrt(MathS.pi) * MathS.Pow(MathS.e, -MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
+                -2 / MathS.Sqrt(MathS.pi) * MathS.Pow(MathS.e, -MathS.Sqr(Argument)) * Argument.DerivativeOver(variable);
         }
 
         partial record Erfif
@@ -271,7 +307,7 @@ namespace AngouriMath
             // erfi(a)' = 2/sqrt(pi) e^(a^2) a'
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                2 / MathS.Sqrt(MathS.pi) * MathS.Pow(MathS.e, MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
+                2 / MathS.Sqrt(MathS.pi) * MathS.Pow(MathS.e, MathS.Sqr(Argument)) * Argument.DerivativeOver(variable);
         }
 
         partial record Eif
@@ -280,7 +316,7 @@ namespace AngouriMath
             // https://github.com/asc-community/AngouriMath/issues/1501
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                MathS.Pow(MathS.e, Argument) / Argument * Argument.InnerDifferentiate(variable);
+                MathS.Pow(MathS.e, Argument) / Argument * Argument.DerivativeOver(variable);
         }
 
         partial record Lif
@@ -288,7 +324,7 @@ namespace AngouriMath
             // li(a)' = a'/ln(a)
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                Argument.InnerDifferentiate(variable) / MathS.Ln(Argument);
+                Argument.DerivativeOver(variable) / MathS.Ln(Argument);
         }
 
         partial record Sif
@@ -297,28 +333,28 @@ namespace AngouriMath
             // https://github.com/asc-community/AngouriMath/issues/1501
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                MathS.Sin(Argument) / Argument * Argument.InnerDifferentiate(variable);
+                MathS.Sin(Argument) / Argument * Argument.DerivativeOver(variable);
         }
 
         partial record Cif
         {
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                MathS.Cos(Argument) / Argument * Argument.InnerDifferentiate(variable);
+                MathS.Cos(Argument) / Argument * Argument.DerivativeOver(variable);
         }
 
         partial record Shif
         {
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                MathS.Hyperbolic.Sinh(Argument) / Argument * Argument.InnerDifferentiate(variable);
+                MathS.Hyperbolic.Sinh(Argument) / Argument * Argument.DerivativeOver(variable);
         }
 
         partial record Chif
         {
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                MathS.Hyperbolic.Cosh(Argument) / Argument * Argument.InnerDifferentiate(variable);
+                MathS.Hyperbolic.Cosh(Argument) / Argument * Argument.DerivativeOver(variable);
         }
 
         partial record Cosf
@@ -326,7 +362,7 @@ namespace AngouriMath
             // cos(a)' = -sin(a) * a'
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                -Argument.Sin() * Argument.InnerDifferentiate(variable);
+                -Argument.Sin() * Argument.DerivativeOver(variable);
         }
 
         partial record Tanf
@@ -334,7 +370,7 @@ namespace AngouriMath
             // tan(a)' = 1 / cos(a) ^ 2 * a'
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                1 / Argument.Cos().Pow(2) * Argument.InnerDifferentiate(variable);
+                1 / Argument.Cos().Pow(2) * Argument.DerivativeOver(variable);
         }
 
         partial record Secantf
@@ -374,7 +410,7 @@ namespace AngouriMath
             // cot(a)' = -1 / sin(a) ^ 2 * a'
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                -1 / Argument.Sin().Pow(2) * Argument.InnerDifferentiate(variable);
+                -1 / Argument.Sin().Pow(2) * Argument.DerivativeOver(variable);
         }
 
         partial record Logf
@@ -382,8 +418,8 @@ namespace AngouriMath
             // log_b(a)' = (ln(a) / ln(b))' = (ln(a)' * ln(b) - ln(a) * ln(b)') / ln(b)^2 = (a' / a * ln(b) - ln(a) * b' / b) / ln(b)^2
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                (Antilogarithm.InnerDifferentiate(variable) / Antilogarithm * MathS.Ln(Base)
-                - MathS.Ln(Antilogarithm) * Base.InnerDifferentiate(variable) / Base)
+                (Antilogarithm.DerivativeOver(variable) / Antilogarithm * MathS.Ln(Base)
+                - MathS.Ln(Antilogarithm) * Base.DerivativeOver(variable) / Base)
                 / MathS.Ln(Base).Pow(2);
         }
 
@@ -392,7 +428,7 @@ namespace AngouriMath
             // arcsin(x)' = 1 / sqrt(1 - x^2) * x'
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                1 / MathS.Sqrt(1 - MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
+                1 / MathS.Sqrt(1 - MathS.Sqr(Argument)) * Argument.DerivativeOver(variable);
         }
 
         partial record Arccosf
@@ -400,7 +436,7 @@ namespace AngouriMath
             // arccos(x)' = -1 / sqrt(1 - x^2) * x'
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                -1 / MathS.Sqrt(1 - MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
+                -1 / MathS.Sqrt(1 - MathS.Sqr(Argument)) * Argument.DerivativeOver(variable);
         }
 
         partial record Arctanf
@@ -408,7 +444,7 @@ namespace AngouriMath
             // arctan(x)' = 1 / (1 + x^2) * x'
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                1 / (1 + MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
+                1 / (1 + MathS.Sqr(Argument)) * Argument.DerivativeOver(variable);
         }
 
         partial record Arccotanf
@@ -416,7 +452,7 @@ namespace AngouriMath
             // arccotan(x)' = -1 / (1 + x^2) * x'
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                -1 / (1 + MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
+                -1 / (1 + MathS.Sqr(Argument)) * Argument.DerivativeOver(variable);
         }
 
         partial record Factorialf
@@ -469,8 +505,8 @@ namespace AngouriMath
                 Var == variable
                 ? Range is var (from, to)
                   // https://math.stackexchange.com/a/139191/627798
-                  ? to.InnerDifferentiate(variable) * Expression.Substitute(variable, to) -
-                    from.InnerDifferentiate(variable) * Expression.Substitute(variable, from)
+                  ? to.DerivativeOver(variable) * Expression.Substitute(variable, to) -
+                    from.DerivativeOver(variable) * Expression.Substitute(variable, from)
                   : Expression
                 : base.InnerDifferentiate(variable);
         }
@@ -489,7 +525,7 @@ namespace AngouriMath
             protected override Entity InnerDifferentiate(Variable variable) =>
                 Var == variable ? Integer.Zero
                 : Over.ContainsNode(variable) ? base.InnerDifferentiate(variable)
-                : New(Expression.InnerDifferentiate(variable), Var, Over);
+                : New(Expression.DerivativeOver(variable), Var, Over);
         }
 
         partial record Limitf
@@ -548,13 +584,13 @@ namespace AngouriMath
             protected override Entity InnerDifferentiate(Variable variable)
                 => IsConstantIn(variable) ? Integer.Zero
                     : TreeAnalyzer.TryTakeNumericModulusOut(Argument, out var withoutThePhase)
-                    ? withoutThePhase.InnerDifferentiate(variable)
+                    ? withoutThePhase.DerivativeOver(variable)
                     : TreeAnalyzer.IsRealValued(Argument, variable)
-                    ? MathS.Signum(Argument).Provided(!Argument.EqualTo(Integer.Zero)) * Argument.InnerDifferentiate(variable)
+                    ? MathS.Signum(Argument).Provided(!Argument.EqualTo(Integer.Zero)) * Argument.DerivativeOver(variable)
                     : TreeAnalyzer.WhereRealValued(Argument, variable) is { } real
                     ? MathS.Piecewise(
                         (MathS.Signum(Argument).Provided(!Argument.EqualTo(Integer.Zero))
-                            * TreeAnalyzer.Assuming(real, () => Argument.InnerDifferentiate(variable)), real),
+                            * TreeAnalyzer.Assuming(real, () => Argument.DerivativeOver(variable)), real),
                         (MathS.Derivative(this, variable), Boolean.True))
                     : MathS.Derivative(this, variable);
         }
@@ -571,8 +607,8 @@ namespace AngouriMath
             protected override Entity InnerDifferentiate(Variable variable)
                 => IsConstantIn(variable) ? Integer.Zero
                     : TreeAnalyzer.IsRealValued(Left - Right, variable)
-                    ? ((Left.InnerDifferentiate(variable) + Right.InnerDifferentiate(variable)
-                        + MathS.Signum(Left - Right) * (Left.InnerDifferentiate(variable) - Right.InnerDifferentiate(variable))) / 2)
+                    ? ((Left.DerivativeOver(variable) + Right.DerivativeOver(variable)
+                        + MathS.Signum(Left - Right) * (Left.DerivativeOver(variable) - Right.DerivativeOver(variable))) / 2)
                         .Provided(!(Left - Right).EqualTo(Integer.Zero))
                     : MathS.Derivative(this, variable);
         }
@@ -585,8 +621,8 @@ namespace AngouriMath
             protected override Entity InnerDifferentiate(Variable variable)
                 => IsConstantIn(variable) ? Integer.Zero
                     : TreeAnalyzer.IsRealValued(Left - Right, variable)
-                    ? ((Left.InnerDifferentiate(variable) + Right.InnerDifferentiate(variable)
-                        - MathS.Signum(Left - Right) * (Left.InnerDifferentiate(variable) - Right.InnerDifferentiate(variable))) / 2)
+                    ? ((Left.DerivativeOver(variable) + Right.DerivativeOver(variable)
+                        - MathS.Signum(Left - Right) * (Left.DerivativeOver(variable) - Right.DerivativeOver(variable))) / 2)
                         .Provided(!(Left - Right).EqualTo(Integer.Zero))
                     : MathS.Derivative(this, variable);
         }
@@ -626,7 +662,7 @@ namespace AngouriMath
             // root is complex and nothing about it is.
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
-                => TreeAnalyzer.Assuming(Predicate, () => Expression.InnerDifferentiate(variable)).Provided(Predicate);
+                => TreeAnalyzer.Assuming(Predicate, () => Expression.DerivativeOver(variable)).Provided(Predicate);
         }
 
         partial record Piecewise
@@ -634,7 +670,7 @@ namespace AngouriMath
             // Each case with its own condition known to hold, as a `provided` is.
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
-                => New(Cases.Select(c => c.New(TreeAnalyzer.Assuming(c.Predicate, () => c.Expression.InnerDifferentiate(variable)), c.Predicate)));
+                => New(Cases.Select(c => c.New(TreeAnalyzer.Assuming(c.Predicate, () => c.Expression.DerivativeOver(variable)), c.Predicate)));
         }
 
         partial record Application
