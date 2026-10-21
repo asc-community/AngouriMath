@@ -1089,7 +1089,7 @@ namespace AngouriMath.Functions.Algebra
             var kappa = Functions.PartialFractions.Bare((a2 / (qs * ss)).Simplify());
             if (!VanishesIdentically(b2 - kappa * (ps * ss + qs * rs)) || !VanishesIdentically(c2 - kappa * ps * rs) || VanishesIdentically(c2))
                 return null;
-            var half = quadraticPower.Negate().Subtract(ERational.FromInt32(1).Divide(ERational.FromInt32(2))).ToLowestTerms();
+            var half = quadraticPower.Negate().Subtract(ERational.FromInt32(1).Divide(ERational.FromInt32(2))).InLowestTerms();
             if (!half.Denominator.Equals(EInteger.One) || !half.Numerator.CanFitInInt32() || half.Numerator.Abs().CompareTo(EInteger.FromInt32(12)) > 0)
                 return null;
             var bigK = half.Numerator.ToInt32Checked();
@@ -1178,9 +1178,9 @@ namespace AngouriMath.Functions.Algebra
             }
             // L the largest exponent every one is a whole multiple of: the first times g/d, with d the
             // denominators' least common multiple and g the numerators' greatest common divisor over it.
-            var denominator = ratios.Aggregate(EInteger.One, (lcm, r) => lcm * r.Denominator / lcm.Gcd(r.Denominator));
+            var denominator = ratios.Aggregate(EInteger.One, (lcm, r) => lcm * r.Denominator / lcm.GreatestCommonDivisor(r.Denominator));
             var wholes = ratios.Select(r => r.Numerator * (denominator / r.Denominator)).ToList();
-            var divisor = wholes.Aggregate(EInteger.Zero, (gcd, n) => gcd.Gcd(n.Abs()));
+            var divisor = wholes.Aggregate(EInteger.Zero, (gcd, n) => gcd.GreatestCommonDivisor(n.Abs()));
             if (divisor.IsZero)
                 return null;
             var unit = Number.Rational.Create(divisor, denominator);
@@ -1279,7 +1279,7 @@ namespace AngouriMath.Functions.Algebra
                         if (coefficient.Evaled is not Number.Rational rational || !power.CanFitInInt32() || power.ToInt32Checked() > 2 * IntegerPolynomial.MaxDegree)
                             return false;
                         rationals[halved ? power.ToInt32Checked() / 2 : power.ToInt32Checked()] = rational.ERational;
-                        denominator = denominator * rational.ERational.Denominator / denominator.Gcd(rational.ERational.Denominator);
+                        denominator = denominator * rational.ERational.Denominator / denominator.GreatestCommonDivisor(rational.ERational.Denominator);
                     }
                     var whole = new EInteger[rationals.Keys.Max() + 1];
                     for (var k = 0; k < whole.Length; k++)
@@ -18220,7 +18220,7 @@ namespace AngouriMath.Functions.Algebra
                 var (exponent, coefficient) = (ERational.Zero, term);
                 if (term.ContainsNode(x) && !TryReadAMonomial(term, x, out exponent, out coefficient))
                     return null;
-                read.Add((coefficient, exponent.ToLowestTerms()));
+                read.Add((coefficient, exponent.InLowestTerms()));
             }
             if (read.Count < 2)
                 return null;
@@ -18232,7 +18232,7 @@ namespace AngouriMath.Functions.Algebra
                 var (degree, coefficient) = (ERational.Zero, term);
                 if (term.ContainsNode(x) && !TryReadAMonomial(term, x, out degree, out coefficient))
                     return null;
-                degree = degree.ToLowestTerms();
+                degree = degree.InLowestTerms();
                 inB[degree] = inB.TryGetValue(degree, out var was) ? was + coefficient : coefficient;
             }
             var degrees = inB.Keys.Where(degree => !degree.IsZero).OrderBy(degree => degree).ToList();
@@ -18259,7 +18259,7 @@ namespace AngouriMath.Functions.Algebra
             var inU = new Dictionary<int, Entity>();
             foreach (var (coefficient, exponent) in read)
             {
-                var scaled = exponent.Multiply(ERational.FromInt32(k)).Add(ERational.FromInt32(k - 1)).ToLowestTerms();
+                var scaled = exponent.Multiply(ERational.FromInt32(k)).Add(ERational.FromInt32(k - 1)).InLowestTerms();
                 if (!scaled.Denominator.Equals(EInteger.One) || !scaled.Numerator.CanFitInInt32())
                     return null;
                 var e = scaled.Numerator.ToInt32Unchecked();

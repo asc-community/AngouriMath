@@ -370,7 +370,7 @@ namespace AngouriMath.Functions.Algebra
         private static bool InAPowerOfAShift(IntegerPolynomial poly)
         {
             var n = poly.Degree;
-            var shift = ERational.Create(poly[n - 1], poly[n].Multiply(EInteger.FromInt32(n))).ToLowestTerms();
+            var shift = ERational.Create(poly[n - 1], poly[n].Multiply(EInteger.FromInt32(n))).InLowestTerms();
             // Horner in y - s: g = g (y - s) + a_i, from the leading coefficient down.
             var g = new ERational[n + 1];
             for (var i = 0; i <= n; i++)
