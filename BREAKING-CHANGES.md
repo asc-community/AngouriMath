@@ -1622,6 +1622,73 @@ an arctangent ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 | `"1/((d+k*x)*(c^2*d^2-b*c*d*k+b^2*k^2+3*b*c*k^2*x+3*c^2*k^2*x^2)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 1,934 characters |
 | `"1/((d+k*x)*(-c^2*d^2+b*c*d*k+2*b^2*k^2+9*b*c*k^2*x+9*c^2*k^2*x^2)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 1,274 characters |
 
+### A quotient beside the cube root of a cubic with a linear factor is integrated where it is `T'/(1 - T^3)`
+
+**Answers where there were none.** Welz's `1/(x ((x - 1) (q - 2 q x + x^2))^(1/3))`,
+`(2 - (1 + k) x)/((x (1 - x) (1 - k x))^(1/3) (1 - (1 + k) x))` and
+`(1 - k x)/((1 - (2 - k) x) (x (1 - x) (1 - k x))^(2/3))` were declined. For `P = L Q` with `L` linear, a rational
+function over `P^(1/3)` that is a constant times `W/(Q - mu L^2)`, or over `P^(2/3)` that is one times
+`L W/(L^2 - mu Q)`, `W = 2 Q L' - L Q'`, is a constant times `T'/(1 - T^3)` for `T = m L/P^(1/3)` or `m P^(1/3)/L`,
+`m^3 = mu`, and is answered by two logarithms and an arctangent of `T`. With numbers in `P` the ansatz over
+logarithms of `L - y` answers these, and is asked first ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(x*((-1+x)*(q-2*q*x+x^2))^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 385 characters |
+| `"(2-(1+k)*x)/(((1-x)*x*(1-k*x))^(1/3)*(1-(1+k)*x))".ToEntity().Integrate("x")` | `integral(...)` | 319 characters |
+| `"(1-k*x)/((1+(-2+k)*x)*((1-x)*x*(1-k*x))^(2/3))".ToEntity().Integrate("x")` | `integral(...)` | 424 characters |
+
+### A linear over a linear beside the root of a quartic is integrated where it is a function of the numerator's square over the root
+
+**Answers where there were none.** `(1 + x - sqrt(3))/((1 + x + sqrt(3)) sqrt(x^4 + 4 sqrt(3) x^2 - 4))` and its
+conjugate were declined, in Welz's suite and in Rubi's 1.2.2.3, and so were the two with `1 + 2 x` beside them.
+Where `gamma P - mu M W = L^4` for `W = 4 L' P - L P'` and constants `gamma` and `mu`, `L/(M sqrt(P))` is the
+derivative of `(2 mu/c) artanh(L^2/(c sqrt(P)))` with `c^2 = gamma`, an arctangent where `gamma` is negative. The
+ansatz over logarithms of `A - B y` takes its places at rational poles, and these are at `-1 -+ sqrt(3)` ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(1+x-sqrt(3))/((1+x+sqrt(3))*sqrt(-4+x^4+4*x^2*sqrt(3)))".ToEntity().Integrate("x")` | `integral(...)` | 246 characters |
+| `"(1+x+sqrt(3))/((1+x-sqrt(3))*sqrt(-4+x^4-4*x^2*sqrt(3)))".ToEntity().Integrate("x")` | `integral(...)` | 151 characters |
+| `"(1+2*x-sqrt(3))/((1+2*x+sqrt(3))*sqrt(-1+4*x^4+4*x^2*sqrt(3)))".ToEntity().Integrate("x")` | `integral(...)` | 261 characters |
+| `"(1+2*x+sqrt(3))/((1+2*x-sqrt(3))*sqrt(-1+4*x^4-4*x^2*sqrt(3)))".ToEntity().Integrate("x")` | `integral(...)` | 159 characters |
+
+### An exponential of a rational function beside the derivative of its exponential integral is integrated
+
+**Answers where there were none.** Hebisch's `(2 + 2x + 3x^2 - x^3 + 2x^4) e^(x/(2 + x^2))/(2x + x^3)` was declined.
+It is `((2 + x^2) e^h)' + e^h h'/h` for `h = x/(2 + x^2)`, and the ansatz for `e^h N/D` alone has no solution. The
+multiple of `h'/h` is the residue at a zero of `h`, the rest is asked of the ansatz, and the answer is
+`e^h N/D + c Ei(h)` ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(2+2*x+3*x^2-x^3+2*x^4)*e^(x/(2+x^2))/(2*x+x^3)".ToEntity().Integrate("x")` | `integral(...)` | 61 characters |
+
+### A function of `sqrt(sec(u) + 1)` and `sqrt(sec(u) - 1)` is integrated in their difference
+
+**Answers where there were none.** Charlwood's `sqrt(sqrt(1 + sec(x)) - sqrt(sec(x) - 1))` was declined. Both roots
+and the secant are rational functions of `w = sqrt(sec(u) + 1) - sqrt(sec(u) - 1)`, and `dx` is
+`-8 K w dw/(b (w^4 + 4))` for `u = a + b x` and `K = cot(u) sqrt(sec(u) + 1) sqrt(sec(u) - 1)`, which is 1 or -1. The
+integral in `w` is taken from `sqrt(2)`, where `K` changes sign, so that the answer is continuous wherever the
+integrand is real ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(-sqrt(-1+sec(x))+sqrt(1+sec(x)))".ToEntity().Integrate("x")` | `integral(...)` | 2,635 characters |
+
+### A half-odd power of a linear plus the root of a quadratic is integrated in Euler's substitution where their squares differ by a square
+
+**Answers where there were none.** Bondarenko's `sqrt(1 + sqrt(x) + sqrt(1 + 2 x + 2 sqrt(x)))` and
+`sqrt(sqrt(2) + sqrt(x) + sqrt(2 + 2 x + sqrt(8) sqrt(x)))` were declined. Under `x = t^2` each is a half-odd power of
+`L + sqrt(Q)` with `Q - L^2 = c (t - r)^2`, and in `u = (sqrt(Q) - L)/(t - r)` both `t` and `sqrt(Q)` are rational and
+`L + sqrt(Q)` is a constant over the quadratic `c - 2 b u - u^2`, `b` the slope of `L`: the integrand is rational
+beside a root of a quadratic ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(1+sqrt(x)+sqrt(1+2*x+2*sqrt(x)))".ToEntity().Integrate("x")` | `integral(...)` | 2,261 characters |
+| `"sqrt(sqrt(2)+sqrt(x)+sqrt(2+2*x+sqrt(8)*sqrt(x)))".ToEntity().Integrate("x")` | `integral(...)` | 2,715 characters |
+
 ### A linear and a quadratic to one power are integrated as one binomial
 
 **Answers where there were none.** `1/((1 + x)^(1/3) (1 - x + x^2)^(1/3))` was declined. A linear and a quadratic to

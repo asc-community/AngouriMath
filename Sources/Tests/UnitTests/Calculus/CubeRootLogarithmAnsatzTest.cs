@@ -106,12 +106,19 @@ namespace AngouriMath.Tests.Calculus
         public void WithASymbolInTheRadicand(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
-        /// Declined, quickly, rather than answered wrongly: a constant <c>q^(1/3)</c> the field
-        /// does not hold, and a pole pair over <c>Q(sqrt(3))</c> whose answer needs lines with
-        /// coefficients there.
+        /// A constant <c>q^(1/3)</c> the ansatz's field does not hold, which the ansatz declines and
+        /// the rule for <c>T'/(1 - T^3)</c> answers, <c>T</c> the root over the linear factor
+        /// <c>-1 + x</c> times <c>q^(1/3)</c>.
         /// </summary>
         [Theory]
         [InlineData("1/(x*((-1 + x)*(q - 2*q*x + x^2))^(1/3))")]
+        public void WhereTheFieldIsNotHeldButTheRootOverALinearFactorIs(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// Declined, quickly, rather than answered wrongly: a pole pair over <c>Q(sqrt(3))</c>
+        /// whose answer needs lines with coefficients there.
+        /// </summary>
+        [Theory]
         [InlineData("1/((3 - x^2)*(2 + x^2)^(1/3))")]
         public void DeclinedWhereTheFieldIsNotHeld(string integrand)
             => Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
