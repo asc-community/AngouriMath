@@ -6,6 +6,8 @@
 //
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 
@@ -65,6 +67,76 @@ namespace AngouriMath.Functions
                      or Arctanf or Arccotanf or Signumf or Erff or Erfcf or Erfif or Eif or Sif or Shif:
                     return IsRealValued(expr.DirectChildren[0], x);
                 // A modulus is real whatever it is taken of, and an Iverson bracket is 0 or 1.
+                case Absf or Iversonf:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// Where an expression that is not real everywhere is real on an open set: the
+        /// conjunction of <c>b &gt; 0</c> over the bases <c>b</c> of its powers to a real
+        /// exponent that is not whole, or <see langword="null"/> where it has no such power or
+        /// a shape <see cref="IsRealValued"/> does not list. <c>sqrt(1 + x) + 1/2</c> is real
+        /// where <c>1 + x &gt; 0</c>, and <c>x^(1/3) - 1</c> where <c>x &gt; 0</c>, which is all
+        /// that is claimed: with the downcasting off a cube root of a negative is the principal
+        /// one. Strict for the reason <see cref="IsRealValued"/> reads only a strict bound: a
+        /// derivative needs the expression real on an interval around the point.
+        /// </summary>
+        /// <remarks>
+        /// Asked by differentiation where the sign or the modulus of such an expression is
+        /// differentiated, so that the real-line rule is claimed where the expression is real and
+        /// the derivative is left unevaluated elsewhere. The antiderivatives of
+        /// <c>sqrt(1 + x + sqrt(1 + x))</c> and <c>(x - 4)/((1 + x^(1/3)) sqrt(x))</c> carry
+        /// <c>sgn(sqrt(1 + x) + 1/2)</c> and <c>sgn(x^(1/3))</c>, and could not be checked by
+        /// differentiating them back anywhere.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1186">#1186</a>
+        /// </remarks>
+        internal static Entity? WhereRealValued(Entity expr, Variable x)
+        {
+            var bases = new List<Entity>();
+            if (!GatherTheBasesOfRoots(expr, x, bases) || bases.Count is 0)
+                return null;
+            var condition = (Entity)new Greaterf(bases[0], Integer.Zero);
+            foreach (var @base in bases.Skip(1))
+                condition &= new Greaterf(@base, Integer.Zero);
+            return condition;
+        }
+
+        // The shapes IsRealValued lists, with a power to a real exponent that is not whole read
+        // as real where its base is positive. An inner base is gathered before the one it is in,
+        // so `x > 0` is decided before `sqrt(x) - 1 > 0` is asked of a complex number.
+        private static bool GatherTheBasesOfRoots(Entity expr, Variable x, List<Entity> bases)
+        {
+            if (!expr.ContainsNode(x))
+                return IsARealNumber(expr.Evaled);
+            switch (expr)
+            {
+                case Variable variable:
+                    return variable == x;
+                case Sumf(var augend, var addend):
+                    return GatherTheBasesOfRoots(augend, x, bases) && GatherTheBasesOfRoots(addend, x, bases);
+                case Minusf(var minuend, var subtrahend):
+                    return GatherTheBasesOfRoots(minuend, x, bases) && GatherTheBasesOfRoots(subtrahend, x, bases);
+                case Mulf(var multiplier, var multiplicand):
+                    return GatherTheBasesOfRoots(multiplier, x, bases) && GatherTheBasesOfRoots(multiplicand, x, bases);
+                case Divf(var dividend, var divisor):
+                    return GatherTheBasesOfRoots(dividend, x, bases) && GatherTheBasesOfRoots(divisor, x, bases);
+                case Powf(var @base, Integer):
+                    return GatherTheBasesOfRoots(@base, x, bases);
+                case Powf(var constantBase, var exponent) when !constantBase.ContainsNode(x)
+                        && IsARealNumber(constantBase.Evaled) && ((Complex)constantBase.Evaled).RealPart.IsPositive:
+                    return GatherTheBasesOfRoots(exponent, x, bases);
+                case Powf(var @base, var exponent) when !exponent.ContainsNode(x) && IsARealNumber(exponent.Evaled):
+                    if (!GatherTheBasesOfRoots(@base, x, bases))
+                        return false;
+                    if (!bases.Contains(@base))
+                        bases.Add(@base);
+                    return true;
+                case Sinf or Cosf or Tanf or Cotanf or Secantf or Cosecantf
+                     or Arctanf or Arccotanf or Signumf or Erff or Erfcf or Erfif or Eif or Sif or Shif:
+                    return GatherTheBasesOfRoots(expr.DirectChildren[0], x, bases);
                 case Absf or Iversonf:
                     return true;
                 default:

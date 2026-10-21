@@ -513,12 +513,20 @@ namespace AngouriMath
             // turns with z: sgn(2 + i * x) is (2 + i * x) / sqrt(4 + x^2), and nothing about
             // it is flat. Where the argument is not shown to be real the derivative is left
             // unevaluated rather than answered with the real-line formula.
+            //
+            // An argument real only where the bases of its roots are positive is flat there and
+            // left unevaluated elsewhere, as a piecewise: sgn(sqrt(1 + x) + 1/2) is 0 where
+            // 1 + x > 0. An antiderivative carrying such a sign could not be checked anywhere.
             // https://github.com/asc-community/AngouriMath/issues/1186
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
                 => IsConstantIn(variable) ? Integer.Zero
                     : TreeAnalyzer.IsRealValued(Argument, variable)
                     ? Integer.Zero.Provided(!Argument.EqualTo(Integer.Zero))
+                    : TreeAnalyzer.WhereRealValued(Argument, variable) is { } real
+                    ? MathS.Piecewise(
+                        (Integer.Zero.Provided(!Argument.EqualTo(Integer.Zero)), real),
+                        (MathS.Derivative(this, variable), Boolean.True))
                     : MathS.Derivative(this, variable);
         }
 
@@ -532,7 +540,9 @@ namespace AngouriMath
             //
             // A numeric factor off the real line is taken out first, exactly, since |c * g| is
             // |c| * |g| on the whole plane: the derivative of |i * x| is that of |x|. Where the
-            // argument is then not shown to be real the derivative is left unevaluated.
+            // argument is then not shown to be real the derivative is left unevaluated, and
+            // where it is real only while the bases of its roots are positive, it is the
+            // real-line rule there and unevaluated elsewhere, as the sign's is.
             // https://github.com/asc-community/AngouriMath/issues/1186
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
@@ -541,6 +551,11 @@ namespace AngouriMath
                     ? withoutThePhase.InnerDifferentiate(variable)
                     : TreeAnalyzer.IsRealValued(Argument, variable)
                     ? MathS.Signum(Argument).Provided(!Argument.EqualTo(Integer.Zero)) * Argument.InnerDifferentiate(variable)
+                    : TreeAnalyzer.WhereRealValued(Argument, variable) is { } real
+                    ? MathS.Piecewise(
+                        (MathS.Signum(Argument).Provided(!Argument.EqualTo(Integer.Zero))
+                            * TreeAnalyzer.Assuming(real, () => Argument.InnerDifferentiate(variable)), real),
+                        (MathS.Derivative(this, variable), Boolean.True))
                     : MathS.Derivative(this, variable);
         }
 
