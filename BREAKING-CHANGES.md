@@ -7131,6 +7131,28 @@ was declined. They divide by the denominator as it is written now. Rubi's 6.2.2,
 | `"cosh(c + d*x)/(a + b*x^3)".ToEntity().Integrate("x")` | `integral(...)` | `Chi` and `Shi` the same |
 | `"e^x/(a + b*x^4)".ToEntity().Integrate("x")` | `integral(...)` | `Ei` of `x` less each root of `a + b x^4` |
 
+### An exponential over a quadratic with a double root is integrated over that linear twice
+
+**Answers where there were none.** `e^x/(a x^2 + 2 a x + a)` was declined, and so was
+`1/(x^2 (a + b ln(c x))^2)`, which is `c e^(-t)/(a^2 + 2 a b t + b^2 t^2)` under `t = ln(c x)`. The
+rule for an exponential or `sinh` and `cosh` over a quadratic split it over the two roots of the
+quadratic formula, and did not see that a discriminant written `(2 a b)^2 - 4 b^2 a^2` is zero.
+**The unreleased master answered these** with an expression carrying the square root of that zero,
+and the derivative of that expression had no value at any point. A quadratic whose discriminant is
+zero as a value is now one linear twice, as the rule for a sine or a cosine already reads it, and
+the quotient goes onto the exponential integral: `1/(x^2 (a + b ln(c x))^2)` is
+`-c e^(a/b) Ei(-(a + b ln(c x))/b)/b^2 - 1/(b x (a + b ln(c x)))`, which is Rubi's 3.1.2 with
+`n = 1` ([#1879](https://github.com/asc-community/AngouriMath/issues/1879)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(x^2*(a+b*ln(c*x))^2)".ToEntity().Integrate("x")` | `integral(...)` | 133 characters |
+| `"1/(x^3*(a+b*ln(c*x))^2)".ToEntity().Integrate("x")` | `integral(...)` | 168 characters |
+| `"1/(x^2*(a+b*ln(c*x^2))^2)".ToEntity().Integrate("x")` | `integral(...)` | 189 characters |
+| `"e^x/(a*x^2+2*a*x+a)".ToEntity().Integrate("x")` | `integral(...)` | 60 characters |
+| `"cosh(x)/(a*x^2+2*a*x+a)".ToEntity().Integrate("x")` | `integral(...)` | 140 characters |
+| `"e^x/(x*(a*x^2+2*a*x+a))".ToEntity().Integrate("x")` | `integral(...)` | 76 characters |
+
 ### An inverse trigonometric function below the bar is integrated to the sine and cosine integrals
 
 `1/arcsin(x)` was left unintegrated. Under the substitution that undoes the inverse function,
