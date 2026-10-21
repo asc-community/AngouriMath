@@ -42,6 +42,119 @@ namespace AngouriMath.Functions
         /// <summary>See more details in <see cref="Entity.Simplify(int)"/></summary>
         internal static Entity Simplify(Entity expr, int level)
         {
+            simplifying++;
+            try
+            {
+                // A nested run is looked up in what the runs before it answered; the outermost
+                // one has no runs before it. See simplifications.
+                if (simplifying == 1 || RewriteRecording.Current is not null || !expr.Nodes.All(IsElementary))
+                    return SimplifyAtDepth(expr, level);
+                var kept = simplifications ??= new();
+                if (kept.TryGetValue((expr, level), out var known) && Convenience.SettingsState.StillHolds(known.Under))
+                    return known.Simplified;
+                var under = Convenience.SettingsState.Snapshot();
+                var simplified = SimplifyAtDepth(expr, level);
+                if (kept.Count >= MostKept)
+                    kept.Clear();
+                kept[(expr, level)] = (simplified, under);
+                return simplified;
+            }
+            finally
+            {
+                if (--simplifying == 0)
+                    (expansions, simplifications) = (null, null);
+            }
+        }
+
+        /// <summary>
+        /// How many <see cref="Simplify(Entity, int)"/> calls this thread is inside: what the
+        /// nested runs kept is dropped when the outermost one returns.
+        /// </summary>
+        [ThreadStatic] private static int simplifying;
+
+        /// <summary>
+        /// What the nested runs of the outermost <see cref="Simplify(Entity, int)"/> on this
+        /// thread answered, by the tree and the level asked, each with the settings it was
+        /// answered under.
+        /// </summary>
+        /// <remarks>
+        /// A sum of two fractions simplifies its numerator and the product of its denominators,
+        /// and a candidate's expansion and factorisation are simplified again, each a nested run
+        /// of its own; the passes of every run meet the same sums, so the same trees are asked
+        /// over and over. Under <c>u = sqrt((a x + 1)/(a x - 1))</c> Rubi's 7.4.2
+        /// <c>e^(arcoth(a x)) (c - c/(a^2 x^2))^4</c> leaves a rational function whose
+        /// simplification ran 1232 nested ones, of 214 trees. Kept on the terms
+        /// <see cref="expansions"/> states: elementary trees only, used only under the settings
+        /// they were answered under, and nothing where a derivation is being recorded.
+        /// https://github.com/asc-community/AngouriMath/issues/746
+        /// </remarks>
+        [ThreadStatic] private static Dictionary<(Entity, int), (Entity Simplified, object?[] Under)>? simplifications;
+
+        /// <summary>
+        /// The expansions the polynomial passes made inside the outermost
+        /// <see cref="Simplify(Entity, int)"/> on this thread, by the tree expanded, each with the
+        /// settings it was made under.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <see cref="Alternate"/> expands each candidate and reads the expansion as a polynomial
+        /// in every variable in turn, and then factors it in every variable, which expands it
+        /// again; and nested simplifications meet the same candidate again, since a sum of
+        /// fractions simplifies the product of its denominators afresh at each pass that meets
+        /// it. <c>t^4/((b t^2 + a + a t^2)^2 (1 + t^2))</c>, the tangent's integrand for Rubi's
+        /// 4.1.7 <c>sin(c + d x)^4/(a + b sin(c + d x)^2)^2</c>, expanded one product of 342
+        /// terms 72 times, 24 trees of it three variables each, at 145 MB a time: 11 GB of
+        /// the 12 GB its simplification cost. Under <c>u = sqrt((a x + 1)/(a x - 1))</c> Rubi's
+        /// 7.4.2 <c>e^(arcoth(a x)) (c - c/(a^2 x^2))^4</c> asked to factor 200 polynomials in
+        /// <c>1 - u^2</c> 2145 times, most of them past the degree the factoring takes and
+        /// expanded to be told so: 5.4 GB.
+        /// </para>
+        /// <para>
+        /// The expansion of a tree of numbers, variables, arithmetic and the elementary functions
+        /// is a function of the tree and the settings, so one kept is the one the pass would make
+        /// again: a tree is looked up by its value, and an expansion is used only while every
+        /// setting reads as it did when it was made. Nothing else is kept -- a piecewise, a
+        /// calculus operator or a statement simplifies through scopes of its own, an integral by
+        /// integrating -- and nothing at all where a derivation is being recorded, whose steps the
+        /// expansion writes down each time it runs.
+        /// https://github.com/asc-community/AngouriMath/issues/746
+        /// </para>
+        /// </remarks>
+        [ThreadStatic] private static Dictionary<Entity, (Entity Expanded, object?[] Under)>? expansions;
+
+        /// <summary>
+        /// The most entries <see cref="expansions"/> or <see cref="simplifications"/> holds before
+        /// it is emptied.
+        /// </summary>
+        private const int MostKept = 1024;
+
+        /// <summary>
+        /// <paramref name="expr"/> expanded, as <see cref="Entity.Expand(int)"/> expands it, from
+        /// <see cref="expansions"/> where it is there: inside a simplification the polynomial
+        /// readers it asks expand through this.
+        /// </summary>
+        internal static Entity Expanded(Entity expr)
+        {
+            if (simplifying == 0 || RewriteRecording.Current is not null || !expr.Nodes.All(IsElementary))
+                return expr.Expand();
+            var kept = expansions ??= new();
+            if (kept.TryGetValue(expr, out var known) && Convenience.SettingsState.StillHolds(known.Under))
+                return known.Expanded;
+            var under = Convenience.SettingsState.Snapshot();
+            var expanded = expr.Expand();
+            if (kept.Count >= MostKept)
+                kept.Clear();
+            kept[expr] = (expanded, under);
+            return expanded;
+        }
+
+        /// <summary>A node whose simplification reads nothing but its children and the settings.</summary>
+        private static bool IsElementary(Entity node)
+            => node is Number or Variable or Sumf or Minusf or Mulf or Divf or Powf or Logf
+                or TrigonometricFunction or Absf or Signumf;
+
+        private static Entity SimplifyAtDepth(Entity expr, int level)
+        {
             var recording = RewriteRecording.Current;
             var simplified = Simplified(recording, Alternate(expr, level).First());
             // A condition the answer states on its own -- `not x = 0` on a quotient by x --
@@ -421,10 +534,15 @@ namespace AngouriMath.Functions
                     AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.PhiFunction)));
 
                 Entity? possiblePoly = null;
+                // Expanded once for every variable rather than once a variable: the expansion
+                // does not depend on which one it is then read in.
+                Entity? expanded = null;
                 foreach (var var in res.Vars)
                 {
                     var polyMark = recording?.Mark() ?? 0;
-                    if (TryPolynomial(res, var, out var resPoly)
+                    if ((recording is null
+                            ? TryPolynomialOfExpanded(expanded ??= Expanded(res), var, out var resPoly)
+                            : TryPolynomial(res, var, out resPoly))
                         && (possiblePoly is null || resPoly.Complexity < possiblePoly.Complexity))
                         AddHistory(possiblePoly = Noted(recording, res, resPoly, "AsPolynomial", polyMark));
                 }
@@ -461,7 +579,7 @@ namespace AngouriMath.Functions
             if (level > 0) // if level < 0 we don't check whether expanded version is better
             {
                 var expandMark = recording?.Mark() ?? 0;
-                AddHistory(Noted(recording, res, res.Expand(), nameof(Entity.Expand), expandMark).Simplify(-CandidateLevel(level)));
+                AddHistory(Noted(recording, res, Expanded(res), nameof(Entity.Expand), expandMark).Simplify(-CandidateLevel(level)));
                 var factorizeMark = recording?.Mark() ?? 0;
                 // The **rule-based** factorisation, not `Entity.Factorize` -- which now also asks
                 // the polynomial layer, and whose answers must not become candidates here. The
@@ -494,7 +612,7 @@ namespace AngouriMath.Functions
                     // Expanded, and for the same reason res is expanded above: the
                     // cancellation only shows up once the products are multiplied out.
                     var openedMark = recording?.Mark() ?? 0;
-                    AddHistory(Noted(recording, openedAngles, openedAngles.Expand(), nameof(Entity.Expand), openedMark).Simplify(-CandidateLevel(level)));
+                    AddHistory(Noted(recording, openedAngles, Expanded(openedAngles), nameof(Entity.Expand), openedMark).Simplify(-CandidateLevel(level)));
                 }
             }
 
@@ -508,9 +626,15 @@ namespace AngouriMath.Functions
         internal static bool TryPolynomial(Entity expr, Variable variable,
             [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
             out Entity? dst)
+            => TryPolynomialOfExpanded(expr.Expand(), variable, out dst);
+
+        /// <summary><see cref="TryPolynomial"/> of an expression already expanded.</summary>
+        private static bool TryPolynomialOfExpanded(Entity expanded, Variable variable,
+            [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
+            out Entity? dst)
         {
             dst = null;
-            var children = Sumf.LinearChildren(expr.Expand());
+            var children = Sumf.LinearChildren(expanded);
             var monomialsByPower = Algebra.AnalyticalSolving.PolynomialSolver.GatherMonomialInformation
                 <EInteger, TreeAnalyzer.PrimitiveInteger>(children, variable);
             if (monomialsByPower == null)

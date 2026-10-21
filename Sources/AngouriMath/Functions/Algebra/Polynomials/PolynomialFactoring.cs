@@ -323,8 +323,10 @@ namespace AngouriMath.Functions
             // https://github.com/asc-community/AngouriMath/issues/746
             if (!MayBeAPolynomialWithRationalCoefficients(expr, x))
                 return false;
+            // Through the simplification's expansions: it asks this of every candidate in every
+            // variable, and of the same candidates again in its nested runs.
             var monomials = PolynomialSolver.GatherMonomialInformation<EInteger, TreeAnalyzer.PrimitiveInteger>(
-                Sumf.LinearChildren(expr.Expand()), x);
+                Sumf.LinearChildren(Simplificator.Expanded(expr)), x);
             if (monomials is null || monomials.Count < leastTerms)
                 return false;
 
