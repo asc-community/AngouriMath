@@ -5858,6 +5858,22 @@ below are one indeterminate. Rubi's 7.5.1 and 7.6.1
 | `"x^2 * asech(c * x)".ToEntity().Integrate("x")` | `integral(...)`, the same | an antiderivative |
 | `"x / sqrt(1 + 1/(c*x)^2)".ToEntity().Integrate("x")` | `integral(x / sqrt(1 + 1 / (c * x) ^ 2), x)` | an antiderivative, `provided c^2 > 0` |
 
+### The sign and the modulus of an expression with a logarithm in it are differentiated where the logarithm is real
+
+**Answers where there were none.** The derivative of `sgn(f)` and of `abs(f)` was left unevaluated where `f`
+holds a logarithm, which is not real on the whole line. A logarithm to a positive constant base is real where
+its argument is positive, and is read now as a root's base is (see the entry below): the real-line rule, `0`
+and `sgn(f) f'`, where every such argument and base is positive, and the derivative left as written elsewhere.
+The antiderivative of Rubi's 3.5 `sqrt(ln(a x^n)^2)/x`, `sgn(ln(a x^n)) ln(a x^n)^2/(2 n)`, which is unchanged,
+could not be differentiated back anywhere
+([#1186](https://github.com/asc-community/AngouriMath/issues/1186)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sgn(ln(x))".ToEntity().Differentiate("x")` | `derivative(sgn(ln(x)), x)` | `piecewise(0 provided (x > 0 and not ln(x) = 0), (derivative(sgn(ln(x)), x)) provided True)` |
+| `"abs(ln(x))".ToEntity().Differentiate("x")` | `derivative(abs(ln(x)), x)` | `sgn(ln(x)) * 1 / x` where `x > 0` and `ln(x)` is not `0`, the derivative as written elsewhere |
+| `"abs(ln(x) - 1)".ToEntity().Differentiate("x")` | `derivative(abs(ln(x) - 1), x)` | `sgn(ln(x) - 1) * 1 / x` where `x > 0` and `ln(x) - 1` is not `0`, the derivative as written elsewhere |
+
 ### The sign and the modulus of an expression in roots are differentiated where the roots are real
 
 **Answers where there were none.** The derivative of `sgn(f)` and of `abs(f)` was left unevaluated
