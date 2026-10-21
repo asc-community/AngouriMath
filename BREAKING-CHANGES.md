@@ -634,6 +634,29 @@ of a linear over a linear, which is answered in a second
 | `"1/(sqrt(a + i*a*tan(x))*(c + d*tan(x))^(3/2))".ToEntity().Integrate("x")` | `integral(...)`; past thirty seconds on the unreleased master | 2,217 characters |
 | `"1/((a + i*a*tan(x))^(3/2)*(c + d*tan(x))^(5/2))".ToEntity().Integrate("x")` | `integral(...)`; past thirty seconds on the unreleased master | 3,333 characters |
 
+### A half-odd power of a cosine or a sine beside the root of `a - a` times it is integrated without a sign
+
+**Answers where there were none, and shorter ones.** `cos(c + d x)^(5/2)/sqrt(a - a cos(c + d x))` and the other ten of
+Rubi's 4.2.2.1:312-322 were declined by 2.5.0, and so were their neighbours 298-309, 323 and 324 and
+`1/(sqrt(sin(x)) sqrt(a - a sin(x)))` with its twin in 4.1.2.1. The unreleased master answered them by the sign of the
+complement, in up to 1,567 characters with `sgn(sin(c + d x))` and `sgn(sqrt(cos(c + d x)) - 1)` in them, owing
+`a > 0` and `cos(c + d x) >= 0`, and in up to 25 GB. Under Rubi's `v = sin(y)/(sqrt(a - a cos(y)) sqrt(cos(y)))` the
+integrand is rational, so the answer is a sum of `sin(y) cos(y)^k/sqrt(a - a cos(y))` for half-odd `k` and of up to
+three logarithms. It is right for either sign of `a` and for a negative cosine, real where the integrand is real, and
+continuous between the zeros of `cos(y)` and of `a - a cos(y)` ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"cos(c+d*x)^(5/2)/sqrt(a-a*cos(c+d*x))".ToEntity().Integrate("x")` | `integral(...)`; 1,567 characters owing `a > 0` and `cos(c + d x) >= 0`, in 6.6 GB, on the unreleased master | 467 characters, in 7 MB |
+| `"sqrt(cos(c+d*x))/sqrt(a-a*cos(c+d*x))".ToEntity().Integrate("x")` | `integral(...)`; 594 characters owing the same, on the unreleased master | 301 characters |
+| `"1/(sqrt(cos(c+d*x))*sqrt(a-a*cos(c+d*x)))".ToEntity().Integrate("x")` | `integral(...)`; 509 characters owing the same, on the unreleased master | 198 characters |
+| `"1/(cos(c+d*x)^(7/2)*sqrt(a-a*cos(c+d*x)))".ToEntity().Integrate("x")` | `integral(...)`; 591 characters owing the same, in 25 GB, on the unreleased master | 443 characters, in 5 MB |
+| `"1/(sqrt(1-cos(c+d*x))*sqrt(cos(c+d*x)))".ToEntity().Integrate("x")` | `integral(...)`; 489 characters owing `cos(c + d x) >= 0`, on the unreleased master | 174 characters |
+| `"1/(sqrt(1-cos(c+d*x))*cos(c+d*x)^(5/2))".ToEntity().Integrate("x")` | `integral(...)`; 416 characters owing `cos(c + d x) >= 0`, in 15 GB, on the unreleased master | 326 characters |
+| `"1/(sqrt(sin(x))*sqrt(a-a*sin(x)))".ToEntity().Integrate("x")` | `integral(...)`; 424 characters owing `a > 0` and `sin(x) >= 0`, on the unreleased master | 152 characters |
+| `"cos(c+d*x)^(3/2)*sqrt(a-a*cos(c+d*x))".ToEntity().Integrate("x")` | `integral(...)`; 696 characters owing `a > 0` and `cos(c + d x) >= 0`, on the unreleased master | 314 characters |
+| `"sqrt(a-a*cos(c+d*x))/cos(c+d*x)^(7/2)".ToEntity().Integrate("x")` | `integral(...)`; 459 characters owing `a > 0`, in 11 GB, on the unreleased master | 255 characters, in 1 MB |
+
 ### A power of a cosine over `a + a sin` is cancelled to a polynomial in the sine
 
 **Answers where there were none.** `cos(c + d x)^2/((e + f x) (a + a sin(c + d x)))` was left unevaluated, and so were three
