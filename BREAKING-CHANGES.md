@@ -3068,6 +3068,25 @@ polynomial exponent in `u` now, and the question asked in `u`. Rubi's 2.3
 | `"F^(a + b/(c + d*x))/(c + d*x)".ToEntity().Integrate("x")` | `integral(...)` | an exponential integral |
 | `"F^(a + b/(c + d*x)^3)*(c + d*x)^2".ToEntity().Integrate("x")` | `integral(...)` | an exponential integral of the cube, and the exponential |
 
+### An exponential of the reciprocal of a linear over another linear, and its elementary moments, are integrated under `u = 1/(c + d x)` first
+
+**Answers where there were none, and sooner.** `F^(e + f (a + b x)/(c + d x))/(g + h x)^4` was declined by 2.5.0,
+and the unreleased master answered it in ten seconds and 12 GB, the third power in six; `F^(a + b/(c + d x)^3)/(c + d x)^13`,
+`^16` and `^19` ran past ten seconds there, Rubi's 2.3. The substitution `u = 1/(c + d x)` that answers each in
+hundredths of a second was made only after every other rule had declined. It is made first now where another linear
+stands below the bar, and where the integral is elementary: `F^(a + b/(c + d x)^k)/(c + d x)^n` with `n - 1` a positive
+multiple of `k >= 2`, a polynomial times an exponential under `w = u^k`. A power of `c + d x` below the bar arrives
+written monic, `c/d + x` beside the `c + d x` of the exponent, and is read as a constant multiple of it by value. Two
+answers 2.5.0 gave are respelled, `F^(a + b/(c + d x)^2)/(c + d x)^3` and `F^(a + b/(c + d x)^3)/(c + d x)^4`, from 58
+characters to 74 ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"F^(m + f*(a + b*x)/(c + d*x))/(g + h*x)^4".ToEntity().Integrate("x")` | `integral(...)` | 1,800 characters |
+| `"F^(m + f*(a + b*x)/(c + d*x))/(g + h*x)^3".ToEntity().Integrate("x")` | `integral(...)` | 969 characters |
+| `"F^(a + b/(c + d*x)^3)/(c + d*x)^13".ToEntity().Integrate("x")` | `integral(...)` | 262 characters |
+| `"F^(a + b/(c + d*x)^2)/(c + d*x)^3".ToEntity().Integrate("x")` | 58 characters | 74 characters |
+
 ### A power of a monomial in a symbolic power of `x` is integrated as the power of `x` it is
 
 **Answers where there were none.** `(c x^n)^b` is written `c^b x^(n b)`, and the exponent `n b` was

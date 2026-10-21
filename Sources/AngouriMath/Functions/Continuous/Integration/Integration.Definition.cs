@@ -841,11 +841,17 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAPowerOfAnExponentialAsAMultipleOfOne(expr, x, integrateByParts)) is { }) return answer;
             // An exponential of a quadratic in 1/L beside a power of L, onto the Gaussian under u = 1/L.
             if ((answer = IndefiniteIntegralSolver.SolveAGaussianInAReciprocal(expr, x)) is { }) return answer;
+            // And of the reciprocal of a linear over another linear, the same substitution's, ahead of
+            // its place below: `F^(e + f (a + b x)/(c + d x))/(g + h x)^4` ran past the budget there.
+            if ((answer = IndefiniteIntegralSolver.SolveAnExponentialInTheReciprocalOfALinearOverAnotherLinear(expr, x, integrateByParts)) is { }) return answer;
             // And a trigonometric function of the reciprocal of a linear beside a power of it, under u = 1/L.
             if ((answer = IndefiniteIntegralSolver.SolveAFunctionOfTheReciprocalOfALinear(expr, x, integrateByParts)) is { }) return answer;
             // And one of `a + b/x` beside any rational function, under `x = 1/u`:
             // `sin(c + d/x)/(e + f x)` is `-sin(c + d u)/(u (e u + f)) du`.
             if ((answer = IndefiniteIntegralSolver.SolveByTheReciprocalOfAFunctionOfTheReciprocal(expr, x, integrateByParts)) is { }) return answer;
+            // And a power of the linear alone beside an exponential of a power of its reciprocal, where
+            // that is elementary: `F^(a + b/(c + d x)^3)/(c + d x)^13` ran past the budget below.
+            if ((answer = IndefiniteIntegralSolver.SolveAnElementaryMomentOfAnExponentialInAPowerOfTheReciprocal(expr, x, integrateByParts)) is { }) return answer;
             // An exponential of a multiple of a logarithm is a power of the argument, which is
             // how every inverse hyperbolic function under an exponential arrives.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingAnExponentialOfALogarithm(expr, x, integrateByParts)) is { }) return answer;
