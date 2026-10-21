@@ -42,6 +42,17 @@ namespace AngouriMath.Tests.Calculus
         public void BesideAMultipleOfTheSameLinear(string integrand)
             => DifferentiatesBack(integrand, new[] { -1.2, -0.6, 0.3, 0.8, 1.5, 2.4 });
 
+        /// <summary>
+        /// Past the twelfth power, which the recurrence used to stop at: Rubi's 1.1.4.2
+        /// <c>1/(x^4 (b x^(2/3) + a x)^(3/2))</c> is <c>3/(u^13 (b + a u)^(3/2))</c> under <c>u = x^(1/3)</c>.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/233">#233</a>
+        /// </summary>
+        [Theory]
+        [InlineData("1/(x^13*(c + d*x)^(3/2))")]
+        [InlineData("1/(x^4*(c*x^(2/3) + d*x)^(3/2))")]
+        public void PastTheTwelfthPower(string integrand)
+            => DifferentiatesBack(integrand, new[] { 0.3, 0.8, 1.3, 1.9, 2.6, 3.1 });
+
         private static void DifferentiatesBack(string integrand, double[] points)
         {
             var integral = integrand.ToEntity().Integrate("x");

@@ -741,6 +741,9 @@ namespace AngouriMath.Functions.Algebra
             // And over the cube root of a quadratic beside another about the same axis, in the
             // variable that takes the linear terms away: Rubi's 1.2.1.6 pseudo-elliptic 232 is 231 there.
             if ((answer = IndefiniteIntegralSolver.SolveOverTheCubeRootOfAQuadraticBesideAnotherAboutOneAxis(expr, x, integrateByParts)) is { }) return answer;
+            // And beside the cube roots of two linears whose product is a quadratic, with the two roots
+            // written back for the root of the product.
+            if ((answer = IndefiniteIntegralSolver.SolveALinearBesideCubeRootsOfTwoLinearsAsOneOfAQuadratic(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveTwoLinearsToOnePowerAsOneQuadratic(expr, x, integrateByParts)) is { }) return answer;
             // A linear and a quadratic to one power as one binomial, `(1 + x) (1 - x + x^2)` as
             // `1 + x^3`, which the rules for a power of a binomial answer.
@@ -810,6 +813,16 @@ namespace AngouriMath.Functions.Algebra
             // term hands the reciprocal of the product down a level, and the sign of the complement
             // wrote it there with sgn(sqrt(cos(y)) - 1), owing cos(y) >= 0.
             if ((answer = IndefiniteIntegralSolver.SolveAHalfOddPowerOfACosineBesideTheRootOfAMinusACosine(expr, x)) is { }) return answer;
+            // The same half-odd power of two linears beside a squared quadratic, as one power of their
+            // product: `1/((a + b x + c x^2)^2 sqrt(1 - d x) sqrt(1 + d x))`, before the polynomial term.
+            if ((answer = IndefiniteIntegralSolver.SolveTwoEqualHalfOddPowersOfLinearsAsOneBesideAPowerOfAQuadratic(expr, x, integrateByParts)) is { }) return answer;
+            // A power below -1 of a cube root of a binomial beside a high power of x and another binomial,
+            // divided by the root here, where it is answered: a level down it ran past the budget.
+            if ((answer = IndefiniteIntegralSolver.SolveByDividingByAHighPowerOfARootBesideAnotherBinomialFirst(expr, x)) is { }) return answer;
+            // A power of x that is not whole beside binomials in x^n, split over them in w = x^n first,
+            // before the polynomial term makes them monic and the substitution under the root takes
+            // `u^10/((a + b u^4) (c + d u^4)^2)` apart over fourth roots: `x^(9/2)/((a + b x^2) (c + d x^2)^2)`.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfXBesideBinomialsInAPowerOfItSplitInThatPower(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x, integrateByParts)) is { }) return answer;
             // A product of powers of the variable with a power of a constant multiple of it
             // among them, `(c x)^m x^n`, by the power rule with the written power kept as
@@ -1055,6 +1068,9 @@ namespace AngouriMath.Functions.Algebra
             // `(1 + x + sqrt(3))/((1 + x - sqrt(3)) sqrt(1 + x^3))`. Before the reduction over the
             // linear, which writes it as `1` and `2 sqrt(3)` over the linear, neither elementary.
             if ((answer = IndefiniteIntegralSolver.SolveAPseudoEllipticQuotientOverTheRootOfACubicBinomial(expr, x)) is { }) return answer;
+            // And a linear over a linear beside the root of an even quartic, where it is a function of
+            // the numerator's square over the root: Rubi's `(1 + x - sqrt(3))/((1 + x + sqrt(3)) sqrt(-4 + x^4 + 4 sqrt(3) x^2))`.
+            if ((answer = IndefiniteIntegralSolver.SolveALinearOverALinearBesideTheRootOfAnEvenQuarticAsAFunctionOfTheSquare(expr, x)) is { }) return answer;
             // x over a cubic binomial beside the root of another, at the two ratios where that is
             // elementary: Welz's `x/((4 - x^3) sqrt(1 - x^3))`.
             if ((answer = IndefiniteIntegralSolver.SolveXOverACubicBinomialBesideTheRootOfAnother(expr, x, integrateByParts)) is { }) return answer;
@@ -1368,6 +1384,10 @@ namespace AngouriMath.Functions.Algebra
             // times the length of the one answer.
             if (IndefiniteIntegralSolver.HoldsAPowerOfASumWithARoot(expr, x)
                 && (answer = IndefiniteIntegralSolver.SolveByEulerSubstitution(expr, x, onlyBySumItWrites: true)) is { }) return answer;
+            // A polynomial beside two powers of linears whose exponents add up to -1, reduced to the two
+            // powers alone, before the split writes the polynomial out: each term of
+            // `(e + f x)^3/((a + b x)^(1/3) (c + d x)^(2/3))` took seconds by the quotient of the roots.
+            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialBesideTwoLinearPowersWhoseExponentsAddUpToMinusOne(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x, integrateByParts)) is { }) return answer;
             // A sum whose terms all carry the same power of one linear form, as that power times
             // the sum of the rest: `x cosh(x)^(3/2) - x sqrt(cosh(x))/3` is `x` times a pair
@@ -1456,6 +1476,10 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveALinearOverAQuadraticBesideTheRootOfAnother(expr, x)) is { }) return answer;
             // And over a power of the quadratic, a power at a time down to that one.
             if ((answer = IndefiniteIntegralSolver.SolveAPolynomialOverAPowerOfAQuadraticBesideTheRootOfAnother(expr, x)) is { }) return answer;
+            // A rational function of a quadratic beside a half-odd power of it, under t = Q'/sqrt(Q):
+            // after the reduction over a power of the quadratic, which answers the third and fourth
+            // powers of `1/((d + b x + c x^2)^k sqrt(a + b x + c x^2))` in a third of the characters.
+            if ((answer = IndefiniteIntegralSolver.SolveAFunctionOfAQuadraticBesideItsRootUnderItsDerivativeOverTheRoot(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionBesideTheRootOfAQuadratic(expr, x)) is { }) return answer;
             // A linear below the bar that divides the radicand, written over it: after the two
             // rules above, which read a linear beside the root as a pole and find nothing to take
@@ -1473,6 +1497,10 @@ namespace AngouriMath.Functions.Algebra
             // beside the one with numbers: the rules since then answer what they share with it
             // more shortly, `1/(a - b x^4)^(1/4)` by two arctangents where this gives four terms.
             if ((answer = IndefiniteIntegralSolver.SolveABinomialDifferentialWithSymbols(expr, x)) is { }) return answer;
+            // An algebraic function whose symbols a scaling of x takes out, as a constant times one with
+            // numbers: `1/((c + d x) (2 c^3 + d^3 x^3)^(1/3))` in y = d x/c, which the ansatz below answers;
+            // and before the ansatz, which ran past the budget on `1/((1 + 2^(1/3) x) (1 + x^3)^(2/3))`.
+            if ((answer = IndefiniteIntegralSolver.SolveByScalingTheVariableToNumbers(expr, x, integrateByParts)) is { }) return answer;
             // A rational function of x and one cube root of a polynomial: no substitution
             // rationalises it, and the elementary ones are logarithms of `L - y` for linear L
             // whose cube agrees with the polynomial at the poles, found by an ansatz.
@@ -1571,6 +1599,22 @@ namespace AngouriMath.Functions.Algebra
             // One block quadratic in a power of x, split at its roots, which are complex where its
             // discriminant is negative: as late, so that a rule answering the block whole goes first.
             if ((answer = IndefiniteIntegralSolver.SolveByOneBlockInAPowerOfXAtItsRoots(expr, x, integrateByParts)) is { }) return answer;
+            // A rational function with symbols in it beside a half-odd power of a quadratic, its polynomial
+            // part divided out and the rest split over the factors below the bar first.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionBesideAHalfOddPowerOfAQuadraticSplitFirst(expr, x, integrateByParts)) is { }) return answer;
+            // A power of x that is not whole beside a polynomial in x^n over a whole power below -1 of a
+            // binomial in x^n, each term reduced to the first power: `1/(x^(3/2) (a + c x^4)^2)`.
+            if ((answer = IndefiniteIntegralSolver.SolveAFractionalPowerOfXBesideABinomialToAWholePowerBelowMinusOne(expr, x, integrateByParts)) is { }) return answer;
+            // And beside a trinomial in x^n: `1/(x^(3/2) (a + b x^2 + c x^4)^2)`.
+            if ((answer = IndefiniteIntegralSolver.SolveAFractionalPowerOfXBesideATrinomialToAWholePowerBelowMinusOne(expr, x, integrateByParts)) is { }) return answer;
+            // A sum whose terms share a power that is not whole of one polynomial, as that power times
+            // the rest: `(1 - x^6)^(2/3) + (1 - x^6)^(2/3)/x^6`, whose terms apart are not elementary.
+            if ((answer = IndefiniteIntegralSolver.SolveASumOfTermsSharingAPowerOfAPolynomialAsOneProduct(expr, x, integrateByParts)) is { }) return answer;
+            // A rational function over the root of a palindromic quartic, under u = x + 1/x, the root of
+            // the quartic over x standing for the root of the quadratic in u.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOverTheRootOfAPalindromicQuarticUnderXPlusItsReciprocal(expr, x, integrateByParts)) is { }) return answer;
+            // A root of a product with a root in one of its factors, written out under the root.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingOutAProductUnderANestedRoot(expr, x, integrateByParts)) is { }) return answer;
             // A rational function with symbols in it beside a root of a linear, split into partial
             // fractions first, each term the question of one factor beside the root.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionBesideARootOfALinearSplitFirst(expr, x, integrateByParts)) is { }) return answer;

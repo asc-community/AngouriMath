@@ -2923,6 +2923,55 @@ biquadratic that the rule above makes, and the terms in `1/(x^2 - r)^j` go by th
 | `"sqrt(c + d*tan(x))/(a + b*tan(x))^2".ToEntity().Integrate("x")` | `integral(...)`; 40,540 characters on the unreleased master | 1,465 characters |
 | `"(c + d*tan(x))^(3/2)/(a + b*tan(x))^3".ToEntity().Integrate("x")` | `integral(...)`; 71,293 characters on the unreleased master | 2,786 characters |
 
+### A power of x that is not whole beside binomials in a power of it, and thirteen more algebraic shapes, are integrated
+
+**Answers where there were none.** Rubi's algebraic integrands of these shapes were declined or ran out of time
+([#233](https://github.com/asc-community/AngouriMath/issues/233)):
+- `x^q R(x^n)`, `q` not whole and `R` over whole powers of two binomials in `x^n`, split into partial fractions in
+  `w = x^n` with `x^r` kept beside each term: `x^(9/2)/((a + b x^2)(c + d x^2)^2)` is `sqrt(x)` times
+  `w^2/((a + b w)(c + d w)^2)` written apart, three binomial differentials.
+- `x^q P(x^n) (a + b x^n)^p`, and the same over a trinomial in `x^n`, for a whole `p ≤ -2`, by the reduction that
+  raises `p` to `-1`: `1/(x^(3/2) (a + c x^4)^2)`, `1/(x^(3/2) (a + b x^2 + c x^4)^2)`.
+- `R(Q) Q^(k/2)` for a quadratic `Q`, under `t = Q'/sqrt(Q)`, where `Q = D/(4 c - t^2)` and `dx/sqrt(Q) = 2 dt/(4 c - t^2)`
+  with `D = 4 a c - b^2`, past the fourth power the reduction over a power of the quadratic answers:
+  `1/((d + b x + c x^2)^5 sqrt(a + b x + c x^2))`.
+- A linear below the cube roots of two linears whose product is a quadratic, read as the cube root of the quadratic:
+  `1/((a + b x)(c + d x)^(1/3)(b c + a d + 2 b d x)^(1/3))`. Two equal half-odd powers of linears beside a power of a
+  quadratic, read as one power of their product: `1/((a + b x + c x^2)^2 sqrt(1 - d x) sqrt(1 + d x))`.
+- A linear over a linear beside the reciprocal root of an even quartic, at the coefficients where the integral is an
+  inverse hyperbolic tangent or an arctangent of `N^2/(q sqrt(P))`:
+  `(1 + x - sqrt(3))/((1 + x + sqrt(3)) sqrt(-4 + x^4 + 4 sqrt(3) x^2))`.
+- A rational function beside the reciprocal root of a palindromic quartic, in `u = x + 1/x`:
+  `(k f - k f x^2)/((a d + b d x + a d x^2) sqrt(a + b x + c x^2 + b x^3 + a x^4))`.
+- `P(x) (a + b x)^m (c + d x)^n` with `m + n = -1`, by the reduction that leaves the two powers alone:
+  `(k + f x)^3/((a + b x)^(1/3)(c + d x)^(2/3))`.
+- A rational function with symbols in it beside a half-odd power of a quadratic, split first over the factors below
+  the bar as written: `(a + b x + c x^2)^(3/2)/((d + k x)(f + g x)^2)`.
+- A scaling of the variable that leaves numbers only, `x = (c/d) y`: `1/((c + d x)(2 c^3 + d^3 x^3)^(1/3))`.
+- A power below `-1` of an odd root of a binomial in `x^n`, beside another binomial, divided by the root first:
+  `1/(x^9 (a + b x^3)^(4/3)(c + d x^3))`.
+- A product under a nested root written out: `sqrt(x (a x + b sqrt(-a/b^2 + a^2 x^2/b^2)))/(x sqrt(-a/b^2 + a^2 x^2/b^2))`.
+- A sum whose terms share a power of one polynomial that is not whole, written as that power times the rest:
+  `(1 - x^6)^(2/3) + (1 - x^6)^(2/3)/x^6` is `-(1 - x^6)^(5/3)/(5 x^5)` differentiated.
+
+The depth of nested questions is sixteen where it was twelve. Twenty-three of 1.1.2.4's
+`x^(k/2)/((a + b x^2)^j (c + d x^2)^l)`, which 2.5.0 declined and the unreleased master answered, change form:
+`x^(7/2)/((a + b x^2)(c + d x^2)^2)` is 799 characters there and 1,246 here, and
+`1/(x^(3/2) (a + b x^2)(c + d x^2)^2)` is 1,577 there and 1,367 here.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^(9/2)/((a + b*x^2)*(c + d*x^2)^2)".ToEntity().Integrate("x")` | `integral(...)` | 1,313 characters |
+| `"1/(x^(3/2)*(a + c*x^4)^2)".ToEntity().Integrate("x")` | `integral(...)` | 1,237 characters |
+| `"1/((d + b*x + c*x^2)^5*sqrt(a + b*x + c*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 10,616 characters |
+| `"1/((a + b*x)*(c + d*x)^(1/3)*(b*c + a*d + 2*b*d*x)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 1,120 characters |
+| `"(1 + x - sqrt(3))/((1 + x + sqrt(3))*sqrt(-4 + x^4 + 4*x^2*sqrt(3)))".ToEntity().Integrate("x")` | `integral(...)` | 241 characters |
+| `"(k*f - k*f*x^2)/((a*d + b*d*x + a*d*x^2)*sqrt(a + b*x + c*x^2 + b*x^3 + a*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 1,460 characters |
+| `"(k + f*x)^3/((a + b*x)^(1/3)*(c + d*x)^(2/3))".ToEntity().Integrate("x")` | `integral(...)` | 1,413 characters |
+| `"1/((c + d*x)*(2*c^3 + d^3*x^3)^(1/3))".ToEntity().Integrate("x")` | `integral(...)` | 754 characters |
+| `"1/(x^9*(a + b*x^3)^(4/3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 3,205 characters |
+| `"x^(7/2)/((a+b*x^2)*(c+d*x^2)^2)".ToEntity().Integrate("x")` | `integral(...)` | 1,246 characters, where the unreleased master gives 799 |
+
 ### A quotient in `x^2` over a power of `x` and a biquadratic is split in `x^2`
 
 **Shorter answers, sooner.** `cot(x)^(13/2) (a + b tan(x))^(5/2) (A + B tan(x))` was declined in 2.5.0
