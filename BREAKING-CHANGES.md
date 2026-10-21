@@ -1098,6 +1098,35 @@ in Rubi's 1.1.3.4 come out shorter as well, and those that took two seconds take
 | `"1/(x^8*(a + b*x^3)*(c + d*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,217 characters |
 | `"1/(x^6*(a + b*x^4)*(c + d*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 795 characters |
 
+### A polynomial beside a logarithm of a power of a quotient of linears, and a logarithm over a power of a linear, are integrated shorter
+
+**Answers where there were none, shorter and sooner than on the unreleased master.** `(a g + b g x)^4 (A + B ln(e ((a + b x)/(c + d x))^n))`
+was declined, and so were the other three below, from Rubi's 3.2.1 and 3.2.2, a polynomial beside the same logarithm.
+By parts, `integral P F` is `S F - integral S F'` with `S = integral P`, and `F'` is now read with the power of the
+quotient written apart, `B n (b/(a + b x) - d/(c + d x))`, which is exact since `(Q^n)'/Q^n = n Q'/Q`. Taken whole, the
+derivative was two terms over `(c + d x)^2 (a + b x)`, and the unreleased master divided each remainder by that cubic
+with its coefficients simplified: 4,063 characters in seventeen seconds for the first, where it is 1,560 in two
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+Over a power of a linear, `integral F/(f + g x)^k` by parts leaves partial fractions over `f + g x`, and the one at
+the pole the antiderivative was matched to is a zero over a constant, which the inner simplification writes
+`0 provided c != 0`. Written in `u = f + g x`, that condition stood at the top of the question, the substitution
+search spent seconds declining it, and the fractions were then integrated one by one in x. The question in u is now
+asked without it, the generic case: `(A + B ln(e (a + b x)/(c + d x)))/(f + g x)^5`, declined by 2.5.0, is 10,605
+characters in under a second, where the unreleased master wrote 11,215 in eight. The same holds over powers of a
+linear in Rubi's 3.1.4 and 3.3, which come out shorter too.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a*g+b*g*x)^4*(A+B*ln(k*((a+b*x)/(c+d*x))^n))".ToEntity().Integrate("x")` | `integral(...)` | 1,560 characters |
+| `"(f+g*x)^3*(A+B*ln(k*((a+b*x)/(c+d*x))^n))".ToEntity().Integrate("x")` | `integral(...)` | 1,766 characters |
+| `"(a*g+b*g*x)*(A+B*ln(k*((a+b*x)/(c+d*x))^n))".ToEntity().Integrate("x")` | `integral(...)` | 465 characters |
+| `"(a*g+b*g*x)^3*(c*j+d*j*x)*(A+B*ln(k*((a+b*x)/(c+d*x))^n))".ToEntity().Integrate("x")` | `integral(...)` | 2,292 characters |
+| `"(A+B*ln(k*(a+b*x)/(c+d*x)))/(f+g*x)^5".ToEntity().Integrate("x")` | `integral(...)` | 10,605 characters |
+| `"(A+B*ln(k*(a+b*x)/(c+d*x)))/(f+g*x)^4".ToEntity().Integrate("x")` | `integral(...)` | 6,284 characters |
+| `"(a+b*ln(c*(d+h*x)^n))/(f+g*x)^4".ToEntity().Integrate("x")` | `integral(...)` | 565 characters |
+| `"(a+b*ln(c*x^n))/(d+h*x)^4".ToEntity().Integrate("x")` | `integral(...)` | 266 characters |
+
 ### A secant or cosecant power of a logarithm beside the power two below it is integrated as the derivative of a product
 
 **Answers where there were none.** `-(1 + b^2 n^2) sec(a + b ln(c x^n)) + 2 b^2 n^2 sec(a + b ln(c x^n))^3` was
