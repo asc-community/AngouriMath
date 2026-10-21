@@ -2882,6 +2882,17 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             if (besideAPowerOfX && (powerOfX == 0 || blocks.Count < 2 || powerOfX > MaximumPowerOfXOverABlock))
                 return null;
+            // Beside a power of x with a block to a power, only where the pieces over that power
+            // are read: each is a power of x over one block, asked at this level, and
+            // IntegrateOverAPowerOfXBesideABlock, which reads a block to a power, answers the
+            // question asked or one below it. Deeper, the pieces went round the whole search to be
+            // declined: `1/(x^(3/2) (a + b x^2) (c + d x^2)^2)` reaches this split twice, at the
+            // level where it is answered and a level further down, through the reciprocal
+            // SolveAsPolynomialTerm writes, where it spent six of its seven seconds. Blocks to the
+            // first power are read at any depth, and `1/(x^(5/2) (a + b x^2)(c + d x^2))` is
+            // answered through the deeper split with a thirtieth of the allocation it takes without it.
+            if (besideAPowerOfX && !Integration.AnsweringTheQuestionAskedOrOneBelow && blocks.Any(block => block.Power > 1))
+                return null;
             // n, the greatest common divisor of every power the blocks hold.
             var n = EInteger.Zero;
             foreach (var (polynomial, _) in blocks)
