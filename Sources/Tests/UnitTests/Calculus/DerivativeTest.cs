@@ -365,5 +365,83 @@ namespace AngouriMath.Tests.Calculus
         [Fact] public void ADerivativeThatCannotBeTakenIsStillUnevaluated()
             => Assert.True("derivative(x!, x, 2)".ToEntity().InnerSimplified is Derivativef,
                 $"expected it to stay a Derivativef, got {"derivative(x!, x, 2)".ToEntity().InnerSimplified}");
+
+        /// <summary>
+        /// A node that does not mention the variable is a constant in it, and its derivative is 0,
+        /// with no condition. Its rule's chain-rule factor can have no value where the node has one:
+        /// <c>sqrt(a)</c> gave <c>1/2 a^(-1/2) * 0</c>, so <c>sqrt(a) x</c> differentiated to
+        /// <c>sqrt(a) provided not a = 0</c>, NaN at <c>a = 0</c>, where the derivative is 0.
+        /// Pinned after differentiating, as a check of an antiderivative pins.
+        /// </summary>
+        [Theory]
+        [InlineData("(a - a)^(1/2)", "a", "13/10", "0")]
+        [InlineData("sqrt(b^2 - b^2) * x", "b", "11/10", "0")]
+        [InlineData("sqrt(a) * x", "a", "0", "0")]
+        [InlineData("sqrt(a) * sin(x)", "a", "0", "0")]
+        [InlineData("sqrt(a) / x", "a", "0", "0")]
+        [InlineData("a^(1/3) * x^2", "a", "0", "0")]
+        [InlineData("x^sqrt(a)", "a", "0", "0")]
+        [InlineData("erf(sqrt(a)) * x", "a", "0", "0")]
+        [InlineData("arcsin(a / a)", "a", "13/10", "0")]
+        [InlineData("arcsin(a) * x", "a", "1", "arcsin(1)")]
+        [InlineData("arccos(a) * x", "a", "1", "0")]
+        [InlineData("arcsec(a) * x", "a", "1", "0")]
+        [InlineData("sqrt(a - 1) * x + ln(x)", "a", "1", "10/7")]
+        [InlineData("derivative(sqrt(a) * x, x)", "a", "0", "0")]
+        public void AConstantWhoseChainRuleIsSingularDifferentiatesToZero(string exprRaw, string symbol, string at, string expected)
+        {
+            var derivative = exprRaw.ToEntity().Differentiate(x).Substitute(symbol, at.ToEntity()).Substitute(x, "7/10".ToEntity()).Evaled;
+            Assert.False(derivative.IsNaN, $"{exprRaw} differentiated to NaN at {symbol} = {at}");
+            Assert.Equal(expected.ToEntity().Evaled, derivative);
+        }
+
+        /// <summary>
+        /// The derivative of a constant is 0 with no condition, whatever its value: the condition
+        /// on <c>ln(c - c)</c>'s was <c>1/(c - c)</c>'s, the rule's factor, and the derivative is a
+        /// claim only where the expression has a value, as it is for <c>c!</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(a) * x", "sqrt(a)")]
+        [InlineData("x + sqrt(a)", "1")]
+        [InlineData("arcsin(a) * x", "arcsin(a)")]
+        [InlineData("tan(a) * x", "tan(a)")]
+        [InlineData("ln(a) * x", "ln(a)")]
+        [InlineData("(a - a)^(1/2)", "0")]
+        [InlineData("ln(c - c)", "0")]
+        [InlineData("1 / (a - a)", "0")]
+        public void AConstantDifferentiatesToZeroWithNoCondition(string exprRaw, string expected)
+            => Assert.Equal(expected.ToEntity(), exprRaw.ToEntity().Differentiate(x));
+
+        /// <summary>
+        /// Not where a zero would lose what the node says besides its value. A set or a matrix is
+        /// differentiated elementwise, a <c>provided</c> or a piecewise keeps its own condition,
+        /// and a written NaN stays NaN; the constants inside them are still zero, with no condition.
+        /// </summary>
+        [Theory]
+        [InlineData("{ 1, 2 } + sin(x)", "{ cos(x) }")]
+        [InlineData("[1, 2] * x", "[1, 2]")]
+        [InlineData("[sqrt(a), x]", "[0, 1]")]
+        [InlineData("sqrt(a) provided a > 0", "0 provided a > 0")]
+        [InlineData("x * (sqrt(a) provided a > 0)", "sqrt(a) provided a > 0")]
+        [InlineData("piecewise(sqrt(a) provided b > 0, x)", "piecewise(0 provided b > 0, 1)")]
+        public void AConstantThatSaysMoreThanAValueKeepsIt(string exprRaw, string expected)
+            => Assert.Equal(expected.ToEntity().Simplify(), exprRaw.ToEntity().Differentiate(x).Simplify());
+
+        [Fact] public void AWrittenNaNStaysNaN()
+        {
+            Assert.True((MathS.Sqr(x) + MathS.NaN).Differentiate(x).Evaled.IsNaN);
+            Assert.True((MathS.Sqr(x) + MathS.Var("a") * MathS.NaN).Differentiate(x).Evaled.IsNaN);
+        }
+
+        /// <summary>
+        /// A binder's name is the variable where it is differentiated over, and the factor that
+        /// does not mention it is a constant: <c>arccos(0)</c> is <c>pi / 2</c>, the written constant.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/984">#984</a>
+        /// </summary>
+        [Theory]
+        [InlineData("derivative(arccos(0) * pi, pi)", "pi / 2")]
+        [InlineData("derivative(sqrt(a) * pi, pi)", "sqrt(a)")]
+        public void ABinderStillDifferentiatesOverItsName(string exprRaw, string expected)
+            => Assert.Equal(expected.ToEntity(), exprRaw.ToEntity().Simplify());
     }
 }
