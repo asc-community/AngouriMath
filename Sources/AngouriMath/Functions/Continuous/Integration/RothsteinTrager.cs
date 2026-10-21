@@ -66,11 +66,23 @@ namespace AngouriMath.Functions.Algebra
         /// <summary>
         /// The largest denominator degree read at all: Hermite's reduction is a few Diophantine
         /// solves over the rationals, and what it leaves for the resultant is the squarefree part,
-        /// held to <see cref="MaxDegree"/>. Rubi's 1.3.1 <c>3 (19 x^3 + 120 x^2 + 228 x - 47)/(x^4 + x + 3)^4 + ...</c>
+        /// held to <see cref="MaxDegree"/>, or to <see cref="MaxReducedLogarithmicDegree"/> where no
+        /// sum over roots is written for it. Rubi's 1.3.1 <c>3 (19 x^3 + 120 x^2 + 228 x - 47)/(x^4 + x + 3)^4 + ...</c>
         /// is a derivative over a sixteenth-degree denominator with nothing left for the logarithms,
         /// and was declined after a minute and a half of searching elsewhere.
         /// </summary>
         private const int MaxReducedDegree = 24;
+
+        /// <summary>
+        /// The largest squarefree part past <see cref="MaxDegree"/> whose logarithms are taken, on
+        /// the path for a high degree only, and there only where every residue lies in a field of
+        /// degree at most two, so that no sum over roots is written for it. Hearn's
+        /// <c>(3 + 3x - 4x^2 - ... + 7x^13)/(1 + 2x - ... + x^14)</c> is over <c>P^2 - 2Q^2</c>,
+        /// <c>P = x^7 - x - 1</c> and <c>Q = x + x^2</c>, irreducible over the rationals and the
+        /// product of <c>P -+ sqrt(2) Q</c>, and its residues are the roots of <c>4t^2 - 4t - 1</c>:
+        /// it was declined for its degree alone.
+        /// </summary>
+        private const int MaxReducedLogarithmicDegree = 16;
 
         /// <summary>
         /// The integral of <paramref name="numerator"/> over <paramref name="denominator"/>,
@@ -115,7 +127,8 @@ namespace AngouriMath.Functions.Algebra
             var answer = rationalPart;
             if (!logAbove.IsZero)
             {
-                if (logBelow.Degree > MaxDegree || LogarithmicPart(logAbove, logBelow, x) is not { } logarithmic)
+                if (logBelow.Degree > MaxReducedLogarithmicDegree
+                    || LogarithmicPart(logAbove, logBelow, x, sumsOverRoots: logBelow.Degree <= MaxDegree) is not { } logarithmic)
                     return null;
                 answer = answer + logarithmic;
             }
@@ -163,8 +176,10 @@ namespace AngouriMath.Functions.Algebra
         /// <summary>
         /// The logarithmic part of the integral of <paramref name="above"/> over
         /// <paramref name="below"/>, the latter squarefree and monic and the fraction proper.
+        /// Without <paramref name="sumsOverRoots"/>, <see langword="null"/> where a residue lies in a
+        /// field of degree above two.
         /// </summary>
-        private static Entity? LogarithmicPart(RationalPolynomial above, RationalPolynomial below, Variable x)
+        private static Entity? LogarithmicPart(RationalPolynomial above, RationalPolynomial below, Variable x, bool sumsOverRoots = true)
         {
             var derivative = Derivative(below);
             // The resultant in t of D and A - t D' has degree at most that of D in t, and is
@@ -174,6 +189,8 @@ namespace AngouriMath.Functions.Algebra
             // with four-digit coefficients, Timofeev's `(1 + 2x)/((4 + 4x + 3x^2) sqrt(x^2 + 6x - 1))`
             // under Euler's substitution, asked several times over.
             if (ResultantInT(below, above, derivative) is not { } resultantPolynomial || resultantPolynomial.IsZero)
+                return null;
+            if (!sumsOverRoots && HasAFactorPastQuadraticModuloAPrime(resultantPolynomial))
                 return null;
             if (SquareFree(resultantPolynomial) is not { } residueParts)
                 return null;
@@ -191,6 +208,8 @@ namespace AngouriMath.Functions.Algebra
                 factors.Add((irreducibles, part.Multiplicity));
             }
             var overRoots = factors.Any(part => part.Factors.Any(irreducible => irreducible.Factor.Degree > 2));
+            if (overRoots && !sumsOverRoots)
+                return null;
             // Only once nothing else has answered the question: see
             // Integration.SumsOverRootsAllowed. Until then this declines, as it always did.
             if (overRoots && !Integration.SumsOverRootsAllowed)
@@ -240,6 +259,36 @@ namespace AngouriMath.Functions.Algebra
                 }
             }
             return total;
+        }
+
+        /// <summary>
+        /// Whether the resultant has an irreducible factor of degree above two over the rationals,
+        /// as seen modulo a prime: a factor over the rationals reduces to factors whose degrees add
+        /// up to its own, so one of degree three or more modulo a prime that keeps the degree is one
+        /// over the rationals too. Seen, not decided: a factor that splits into linears and
+        /// quadratics modulo both primes is left to the factorization. The squarefree decomposition
+        /// over the integers is the cost it spares -- a minute for the resultant of
+        /// <c>(x^3 + 1)/(x^15 + 2x^2 + 7)</c>, of the fifteenth degree and irreducible.
+        /// </summary>
+        private static bool HasAFactorPastQuadraticModuloAPrime(RationalPolynomial resultant)
+        {
+            var integer = ToInteger(resultant);
+            var tried = 0;
+            // Each above every degree read, so that no derivative vanishes for its characteristic.
+            foreach (var prime in new long[] { 10007, 10009, 10037, 10039 })
+            {
+                if (integer.ToPrimeField(prime) is not { } reduced)
+                    continue;
+                var monic = reduced.MakeMonic();
+                var radical = monic.Quotient(monic.Gcd(monic.Derivative()));
+                // Every irreducible factor of degree one or two divides t^(p^2) - t, and no other.
+                var t = PrimeFieldPolynomial.Monomial(1, prime);
+                if (!t.PowMod(EInteger.FromInt64(prime * prime), radical).SameAs(t.Remainder(radical)))
+                    return true;
+                if (++tried == 2)
+                    break;
+            }
+            return false;
         }
 
         /// <summary>
