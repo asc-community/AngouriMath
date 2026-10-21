@@ -1134,6 +1134,8 @@ namespace AngouriMath.Functions.Algebra
             // And a power of `a + b cos(y) + c sin(y)` with `a^2 = b^2 + c^2`, the same square
             // turned by a phase, in closed form: the substitution search spent the budget on it.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfACosineAndASinePlusTheirAmplitude(expr, x)) is { }) return answer;
+            // And `a + b cosh(y) + c sinh(y)` with `a^2 = b^2 - c^2`, the hyperbolic one.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfAHyperbolicCosineAndSinePlusTheirAmplitude(expr, x)) is { }) return answer;
             // And symbolic powers of `a ± a sin(y)` beside a power of `g cos(y)`, by u = sin(y), where
             // `(1 + u)(1 - u)` is the cosine's square: the half angle wants numeric powers, and the
             // substitution search spent the budget on these. Numeric ones too beside a fractional
@@ -1158,6 +1160,20 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveAHalfOddPowerOfOnePlusAnImaginaryHyperbolicSine(expr, x, integrateByParts)) is { }) return answer;
             // And the cosecant's: a ± i a csch(y) is a (w ± i)^2/(w^2 - 1) in w = e^y.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfAnImaginaryHyperbolicCosecantSumInTheExponential(expr, x, integrateByParts)) is { }) return answer;
+            // And a polynomial in sinh(y) and cosh(y) over a ± i a sinh(y) beside a power of x,
+            // divided out, cosh(y)^2 being (1 + i sinh(y))(1 - i sinh(y)).
+            if ((answer = IndefiniteIntegralSolver.SolveByDividingOutOnePlusAnImaginaryHyperbolicSine(expr, x, integrateByParts)) is { }) return answer;
+            // A symbolic power of one hyperbolic function beside an odd power of the other, under
+            // u = the first: Bioche's substitution reads whole and rational powers. The first may be
+            // sech(y) or csch(y), and tanh(y) and coth(y) beside it are read as quotients.
+            if ((answer = IndefiniteIntegralSolver.SolveASymbolicPowerOfAHyperbolicFunctionBesideAnOddPowerOfTheOther(expr, x, integrateByParts)) is { }) return answer;
+            // And cosh(y)^2 taken out of a fractional power of a quotient, `cosh(x) coth(x)` being
+            // `cosh(x)^2/sinh(x)`: Bioche's substitution reads the radicands that are polynomials.
+            if ((answer = IndefiniteIntegralSolver.SolveByTakingTheHyperbolicCosineSquaredOutOfAPower(expr, x, integrateByParts)) is { }) return answer;
+            // And cosh(y)^(2m) over (1 ± i sinh(y))^(2m), or the other way up, cancelled through
+            // cosh(y)^2 = (1 + i sinh(y))(1 - i sinh(y)): `1/(sech(x) + i tanh(x))^4` is
+            // `(1 - i sinh(x))^2/(1 + i sinh(x))^2`, where the substitutions spent the budget.
+            if ((answer = IndefiniteIntegralSolver.SolveByCancellingOnePlusAnImaginaryHyperbolicSineAgainstTheCosineSquared(expr, x, integrateByParts)) is { }) return answer;
             // A quotient of linears as a function's argument, written over its denominator: a
             // constant plus a multiple of the reciprocal of a linear, which the rules read.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAQuotientOfLinearsOverItsDenominator(expr, x, integrateByParts)) is { }) return answer;

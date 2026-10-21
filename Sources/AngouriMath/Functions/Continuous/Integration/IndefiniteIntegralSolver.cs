@@ -5650,6 +5650,101 @@ namespace AngouriMath.Functions.Algebra
         private const int MaximumAmplitudePower = 8;
 
         /// <summary>
+        /// <c>(a + b cosh(y) + c sinh(y))^n</c> for <c>a^2 = b^2 - c^2</c>, <c>y</c> linear in
+        /// <c>x</c> and <c>n</c> half-odd, in closed form:
+        /// <see cref="SolveAPowerOfACosineAndASinePlusTheirAmplitude"/>'s recurrence for the
+        /// hyperbolic functions. With <c>S</c> the base and <c>T = b sinh(y) + c cosh(y)</c>,
+        /// <c>T' = S - a</c>, <c>S' = T</c> and <c>T^2 = S (S - 2a)</c>, the last of which is
+        /// <c>a^2 = b^2 - c^2</c>, and from them
+        /// <code>
+        ///     d/dy (T S^(n-1)) = n S^n - a (2n - 1) S^(n-1)
+        /// </code>
+        /// which steps <c>n</c> down to <c>1/2</c>, where the integral is <c>2T/sqrt(S)</c>, or up
+        /// to <c>-1/2</c>, where it is <c>(ln(T - i q sqrt(S)) - ln(T + i q sqrt(S)))/(i q)</c> for
+        /// <c>q = sqrt(2a)</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Rubi's <c>sqrt(b cosh(x) + c sinh(x) + sqrt(b^2 - c^2))</c> and the rest of the twelve in
+        /// its 6.7.1 were declined or past the budget: <c>b cosh(y) + c sinh(y)</c> is
+        /// <c>sqrt(b^2 - c^2) cosh(y + phi)</c>, so the base is a square of the half angle turned by a
+        /// phase, and <see cref="SolveByTheHalfAngleWhereOnePlusAHyperbolicCosineIsASquare"/> reads
+        /// <c>a ± a cosh(y)</c> without one. The recurrence needs no phase.
+        /// </para>
+        /// <para>
+        /// The base case is two logarithms rather than the arctangent of <c>T/(q sqrt(S))</c>: for
+        /// real <c>b &gt; |c|</c>, <c>S</c> is not negative whichever sign <c>a</c> has, and for a
+        /// negative <c>a</c> that argument is imaginary and past <c>i</c>, on the arctangent's cut.
+        /// The two logarithms are of complex conjugates for a positive <c>a</c> and of two numbers of
+        /// one sign for a negative one, real and continuous between the zeros of <c>S</c> either way.
+        /// The derivations use only <c>S^(3/2) = S sqrt(S)</c> and <c>(q sqrt(S))^2 = 2a S</c>, which
+        /// hold for the principal powers. <c>a^2 = b^2 - c^2</c> is decided, not assumed, and all three
+        /// are there: <c>b = 0</c> is <c>a ± i a sinh(y)</c> and <c>c = 0</c> is <c>a ± a cosh(y)</c>,
+        /// which the half-angle rules answer.
+        /// </para>
+        /// <para>
+        /// Half-odd powers only. The whole ones are the exponential substitution's, which answers
+        /// <c>1/S^2</c>, <c>1/S^3</c> and <c>1/S^4</c> in 182, 272 and 416 characters, where the
+        /// same recurrence stepped up to <c>T/(a S)</c> gives 350, 539 and 728.
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveAPowerOfAHyperbolicCosineAndSinePlusTheirAmplitude(Entity expr, Entity.Variable x)
+        {
+            var sh = Variable.CreateUnique(expr, "s_hyp");
+            var ch = Variable.CreateUnique(expr, "c_hyp");
+            if (ReadTheHyperbolicFunctions(expr, x, sh, ch) is not var (read, argument) || read.ContainsNode(x)
+                || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _) || rate.ContainsNode(x) || TreeAnalyzer.IsZero(rate))
+                return null;
+            // A constant times one power of the base, above the bar or below it.
+            Entity constant = Number.Integer.One;
+            Entity? @base = null;
+            ERational? n = null;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(read))
+            {
+                if (!factor.ContainsNode(sh) && !factor.ContainsNode(ch))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (@base is not null || factor is not Powf(var inner, var power) || power.Evaled is not Number.Rational rational)
+                    return null;
+                (@base, n) = (inner, underneath ? rational.ERational.Negate() : rational.ERational);
+            }
+            // Half-odd: the whole powers are answered shorter by the exponential substitution.
+            if (@base is null || n is null || !n.Denominator.Equals(EInteger.FromInt32(2))
+                || n.Abs().CompareTo(ERational.FromInt32(MaximumAmplitudePower)) > 0)
+                return null;
+            // a + b cosh(y) + c sinh(y), each coefficient free of both.
+            if (!TreeAnalyzer.TryGetPolyLinear(@base, ch, out var b, out var rest) || !TreeAnalyzer.TryGetPolyLinear(rest, sh, out var c, out var a)
+                || b.ContainsNode(sh) || b.ContainsNode(ch) || c.ContainsNode(sh) || c.ContainsNode(ch) || a.ContainsNode(sh) || a.ContainsNode(ch))
+                return null;
+            if (VanishesIdentically(a) || VanishesIdentically(b) || VanishesIdentically(c)
+                || !VanishesIdentically(MathS.Sqr(a) - MathS.Sqr(b) + MathS.Sqr(c)))
+                return null;
+
+            var s = a + b * MathS.Hyperbolic.Cosh(argument) + c * MathS.Hyperbolic.Sinh(argument);
+            var t = b * MathS.Hyperbolic.Sinh(argument) + c * MathS.Hyperbolic.Cosh(argument);
+            var half = ERational.Create(1, 2);
+            Entity Integral(ERational power)
+            {
+                if (power.CompareTo(half) == 0)
+                    return 2 * t / MathS.Sqrt(s);
+                if (power.CompareTo(half.Negate()) == 0)
+                {
+                    var q = MathS.Sqrt(2 * a);
+                    return (MathS.Ln(t - MathS.i * q * MathS.Sqrt(s)) - MathS.Ln(t + MathS.i * q * MathS.Sqrt(s))) / (MathS.i * q);
+                }
+                var current = Number.Rational.Create(power);
+                if (power.Sign > 0)
+                    return t * MathS.Pow(s, Number.Rational.Create(power.Subtract(ERational.One))) / current
+                        + a * (2 * current - 1) / current * Integral(power.Subtract(ERational.One));
+                return ((current + 1) * Integral(power.Add(ERational.One)) - t * MathS.Pow(s, current)) / (a * (2 * current + 1));
+            }
+            return (constant * Integral(n) / rate).InnerSimplified;
+        }
+
+        /// <summary>
         /// Fractional powers of <c>a ± a sin(y)</c>, or of <c>a ± a cos(y)</c>, beside anything
         /// rational in the sine and cosine of <c>y</c>, by the half angle at which they are
         /// squares: <c>1 + sin(y)</c> is <c>2 sin(u)^2</c> and <c>1 - sin(y)</c> is
@@ -35050,6 +35145,479 @@ namespace AngouriMath.Functions.Algebra
             if (IsZero(b + MathS.i * a))
                 return (a, false);
             return null;
+        }
+
+        /// <summary>
+        /// A polynomial in <c>sinh(y)</c> and <c>cosh(y)</c> over <c>a ± i a sinh(y)</c>, beside
+        /// anything else in <c>x</c>, divided out: <c>cosh(y)^2 = (1 + i sinh(y))(1 - i sinh(y))</c>,
+        /// so with <c>cosh(y)^2</c> written as <c>1 + sinh(y)^2</c> the numerator is
+        /// <c>N0(sinh) + cosh N1(sinh)</c>, and each part divides by the linear
+        /// <c>a ± i a sinh(y)</c> to a polynomial and a constant. <c>(e + f x) cosh(c + d x)^2/(a + i a sinh(c + d x))</c>
+        /// is <c>(e + f x)(1 - i sinh(c + d x))/a</c>, and <c>(e + f x) sinh(y)^2/(a + i a sinh(y))</c>
+        /// is <c>(e + f x)(1 - i sinh(y))/a - (e + f x)/(a + i a sinh(y))</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// Rubi's <c>(e + f x)^m cosh(c + d x)^k/(a + i a sinh(c + d x))</c> and its <c>sinh^k</c>
+        /// rows were declined or past the budget, where the pieces the division leaves are answered
+        /// in a fraction of a second. Exact wherever the denominator is not zero. Only where the remainder beside
+        /// the cosine vanishes, since <c>cosh(y)/(a ± i a sinh(y))</c> beside a power of <c>x</c> is
+        /// a polylogarithm by parts; where the quotient keeps a hyperbolic function, a constant
+        /// there being one step from the quotient the rules already answer; and where something
+        /// else in <c>x</c> multiplies it, a rational function of the exponential alone being the
+        /// exponential substitution's.
+        /// </remarks>
+        internal static Entity? SolveByDividingOutOnePlusAnImaginaryHyperbolicSine(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var sh = Variable.CreateUnique(expr, "s_hyp");
+            var ch = Variable.CreateUnique(expr, "c_hyp");
+            if (ReadTheHyperbolicFunctions(expr, x, sh, ch) is not var (read, argument))
+                return null;
+            // One linear in the sine below the bar, a polynomial in the two above, the rest beside.
+            Entity? denominator = null;
+            Entity numerator = Number.Integer.One;
+            Entity beside = Number.Integer.One;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(read))
+            {
+                if (!factor.ContainsNode(sh) && !factor.ContainsNode(ch))
+                    beside = underneath ? beside / factor : beside * factor;
+                else if (!underneath)
+                    numerator = numerator == Number.Integer.One ? factor : numerator * factor;
+                else if (denominator is null)
+                    denominator = factor;
+                else
+                    return null;
+            }
+            if (denominator is null || numerator == Number.Integer.One || !beside.ContainsNode(x)
+                || numerator.ContainsNode(x) || denominator.ContainsNode(x) || denominator.ContainsNode(ch)
+                || ReadAsOnePlusMinusAnImaginarySine(denominator, sh) is not var (a, plus))
+                return null;
+            // a (1 + i s) = i a (s - i), a (1 - i s) = -i a (s + i).
+            var root = plus ? MathS.i : -MathS.i;
+            var leading = plus ? MathS.i * a : -MathS.i * a;
+            // N0 + c N1 with c^2 = 1 + s^2.
+            if (!TreeAnalyzer.TryGetPolynomial(numerator, ch, out var byCosine))
+                return null;
+            Entity even = Number.Integer.Zero, odd = Number.Integer.Zero;
+            foreach (var pair in byCosine)
+            {
+                var (power, coefficient) = (pair.Key, pair.Value);
+                if (power.Sign < 0 || power.CompareTo(EInteger.FromInt32(MaximumDividedPower)) > 0 || coefficient.ContainsNode(ch))
+                    return null;
+                var half = power.ToInt32Checked() / 2;
+                var term = half == 0 ? coefficient : coefficient * MathS.Pow(1 + MathS.Sqr(sh), half);
+                if (power.IsEven)
+                    even += term;
+                else
+                    odd += term;
+            }
+            if (Divided(even) is not var (evenQuotient, evenRemainder) || Divided(odd) is not var (oddQuotient, oddRemainder)
+                || !VanishesIdentically(oddRemainder) || evenQuotient.Count + oddQuotient.Count == 0
+                || evenQuotient.Count <= 1 && oddQuotient.Count == 0)
+                return null;
+            var sinh = MathS.Hyperbolic.Sinh(argument);
+            var cosh = MathS.Hyperbolic.Cosh(argument);
+            Entity? rewritten = null;
+            void Add(Entity term) => rewritten = rewritten is null ? term : rewritten + term;
+            foreach (var (part, function) in new[] { (evenQuotient, (Entity)Number.Integer.One), (oddQuotient, cosh) })
+                for (var k = 0; k < part.Count; k++)
+                    if (!VanishesIdentically(part[k]))
+                    {
+                        Entity power = k == 0 ? Number.Integer.One : k == 1 ? sinh : MathS.Pow(sinh, k);
+                        var hyperbolic = function == Number.Integer.One ? power : power == Number.Integer.One ? function : function * power;
+                        // Free of x and small, so simplified: `i/(i a)` is otherwise left as written.
+                        Add(Functions.PartialFractions.Bare((part[k] / leading).Simplify()) * hyperbolic * beside);
+                    }
+            if (!VanishesIdentically(evenRemainder))
+                Add(evenRemainder * beside / denominator.Substitute(sh, sinh));
+            if (rewritten is null || Integration.ComputeAsTheSameQuestion(rewritten, x, integrateByParts) is not { } answer
+                || answer.Nodes.Any(node => node is Integralf || node == MathS.NaN))
+                return null;
+            return answer;
+
+            // p(s) = (s - root) q(s) + r, by synthetic division: q's coefficients from the
+            // constant up, and r.
+            (List<Entity> Quotient, Entity Remainder)? Divided(Entity polynomial)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, sh, out var bySine) || bySine.Keys.Any(k => k.Sign < 0) || bySine.Values.Any(v => v.ContainsNode(sh)))
+                    return null;
+                var highest = bySine.Keys.Aggregate(EInteger.Zero, (most, k) => k.CompareTo(most) > 0 ? k : most);
+                if (highest.CompareTo(EInteger.FromInt32(2 * MaximumDividedPower)) > 0)
+                    return null;
+                var degree = highest.ToInt32Checked();
+                Entity Coefficient(int k) => bySine.TryGetValue(EInteger.FromInt32(k), out var value) ? value : Number.Integer.Zero;
+                var quotient = new Entity[degree];
+                Entity carried = Number.Integer.Zero;
+                for (var k = degree; k >= 1; k--)
+                {
+                    carried = (Coefficient(k) + root * carried).InnerSimplified;
+                    quotient[k - 1] = carried;
+                }
+                return (quotient.ToList(), (Coefficient(0) + root * carried).InnerSimplified);
+            }
+        }
+
+        /// <summary>
+        /// The largest power of the hyperbolic cosine <see cref="SolveByDividingOutOnePlusAnImaginaryHyperbolicSine"/>
+        /// writes in the sine: each is a binomial expanded.
+        /// </summary>
+        private const int MaximumDividedPower = 12;
+
+        /// <summary>
+        /// A symbolic power of <c>sinh(y)</c> beside an odd whole power of <c>cosh(y)</c>, under
+        /// <c>u = sinh(y)</c>, where <c>cosh(y)^(2j + 1) dy</c> is <c>(1 + u^2)^j du</c>; and a
+        /// symbolic power of <c>cosh(y)</c> beside an odd power of <c>sinh(y)</c>, under
+        /// <c>u = cosh(y)</c>, with <c>(u^2 - 1)^j</c>. <c>cosh(a + b x)^3 sinh(a + b x)^n</c> is
+        /// <c>(1 + u^2) u^n/b</c>. A symbolic power of <c>sech(y)</c> or <c>csch(y)</c> the same way
+        /// under <c>u = sech(y)</c> or <c>u = csch(y)</c>, with <c>tanh(y)</c> and <c>coth(y)</c>
+        /// beside it read as quotients: <c>sech(a + b x)^n tanh(a + b x)^3</c> is
+        /// <c>sinh^3 cosh^(-3) sech^n</c>, which is <c>-(1 - u^2) u^(n - 1)/b</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// Rubi's four in 6.7.1 were past the budget:
+        /// <see cref="SolveByBiochesOddHyperbolicSubstitution"/> reads whole and rational powers, and
+        /// a symbolic one is neither. Exact: <c>d/dx F(sinh(y)) = y' cosh(y) F'(sinh(y))</c> wherever
+        /// <c>F</c> is differentiable, whatever the power, and <c>(1 + sinh(y)^2)^j = cosh(y)^(2j)</c>
+        /// for a whole <c>j</c>. Odd powers from three: the first is the derivative of a power beside
+        /// it, which the rules for that answer. So were its <c>sech(a + b x)^n tanh(a + b x)^3</c> and
+        /// <c>coth(a + b x)^3 csch(a + b x)^n</c>. The reciprocal is the variable, not its reciprocal
+        /// to the power negated: <c>csch(y)^n</c> is <c>e^(2 pi i n) sinh(y)^(-n)</c> where the sine is
+        /// negative, and <c>u^n</c> under <c>u = csch(y)</c> is <c>csch(y)^n</c> everywhere.
+        /// </remarks>
+        internal static Entity? SolveASymbolicPowerOfAHyperbolicFunctionBesideAnOddPowerOfTheOther(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var sh = Variable.CreateUnique(expr, "s_hyp");
+            var ch = Variable.CreateUnique(expr, "c_hyp");
+            if (ReadTheHyperbolicFunctions(expr, x, sh, ch) is not var (read, argument) || read.ContainsNode(x)
+                || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _) || rate.ContainsNode(x) || TreeAnalyzer.IsZero(rate))
+                return null;
+            Entity constant = Number.Integer.One;
+            Entity? symbolic = null, exponent = null, odd = null;
+            var oddPower = 0;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(read))
+            {
+                if (!factor.ContainsNode(sh) && !factor.ContainsNode(ch))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (factor is Powf(var function, var power) && (function == sh || function == ch) && power.Evaled is not Number)
+                {
+                    if (symbolic is not null)
+                        return null;
+                    (symbolic, exponent) = (function, underneath ? -power : power);
+                    continue;
+                }
+                var (other, whole) = factor is Powf(var b, Number.Integer k) ? (b, k.EInteger) : (factor, EInteger.One);
+                if (underneath || odd is not null || other != sh && other != ch
+                    || whole.IsEven || whole.Sign <= 0 || whole.CompareTo(EInteger.FromInt32(MaximumDividedPower)) > 0)
+                    return BesideTheReciprocalsAndTheQuotients();
+                (odd, oddPower) = (other, whole.ToInt32Checked());
+            }
+            if (symbolic is null || exponent is null || odd is null || symbolic == odd || oddPower < 3)
+                return null;
+            var u = Variable.CreateUnique(expr, "u_hyp");
+            var ofTheCosine = odd == ch;
+            var square = ofTheCosine ? 1 + MathS.Sqr(u) : MathS.Sqr(u) - 1;
+            var half = (oddPower - 1) / 2;
+            var question = constant * (half == 1 ? square : MathS.Pow(square, half)) * MathS.Pow(u, exponent) / rate;
+            if (Integration.ComputeAsAQuestionOfItsOwn(question, u, integrateByParts) is not { } answer
+                || answer.Nodes.Any(node => node is Integralf || node == MathS.NaN))
+                return null;
+            return answer.Substitute(u, ofTheCosine ? MathS.Hyperbolic.Sinh(argument) : MathS.Hyperbolic.Cosh(argument));
+
+            // The symbolic power of sinh(y), cosh(y), csch(y) or sech(y), beside whole powers of the
+            // two -- tanh(y)^3 is sinh(y)^3 cosh(y)^(-3) -- under u = that function. Of the
+            // reciprocals: du = -cosh(y) sinh(y)^(-2) dy under u = csch(y), where cosh(y)^2 is
+            // (1 + u^2)/u^2, and du = -sinh(y) cosh(y)^(-2) dy under u = sech(y), where sinh(y)^2 is
+            // (1 - u^2)/u^2. The power stays the power of u: csch(y)^n is not sinh(y)^(-n) where
+            // the sine is negative.
+            Entity? BesideTheReciprocalsAndTheQuotients()
+            {
+                Entity coefficient = Number.Integer.One;
+                Entity? function = null, power = null;
+                var (sines, cosines, functionSines, functionCosines) = (0, 0, 0, 0);
+                foreach (var (factor, underneath) in FactorsOfTheIntegrand(read))
+                {
+                    if (factor is Powf(var @base, var p) && p.Evaled is not Number && (@base.ContainsNode(sh) || @base.ContainsNode(ch)))
+                    {
+                        if (function is not null || PowersOfTheTwo(@base) is not var (one, s, c) || one != Number.Integer.One || System.Math.Abs(s) + System.Math.Abs(c) != 1)
+                            return null;
+                        (function, power, functionSines, functionCosines) = (@base, underneath ? -p : p, s, c);
+                        continue;
+                    }
+                    if (PowersOfTheTwo(factor) is not var (k, ks, kc))
+                        return null;
+                    var sign = underneath ? -1 : 1;
+                    (sines, cosines) = (sines + sign * ks, cosines + sign * kc);
+                    if (k != Number.Integer.One)
+                        coefficient = underneath ? coefficient / k : coefficient * k;
+                }
+                // The other's power after du takes one of it, odd, so that what is left is even.
+                var otherPower = functionSines != 0 ? cosines : sines;
+                if (function is null || power is null || otherPower < 3 || otherPower % 2 == 0 || otherPower > MaximumDividedPower)
+                    return null;
+                var j = (otherPower - 1) / 2;
+                var w = Variable.CreateUnique(expr, "u_hyp");
+                Entity Power(Entity of, int n) => n == 0 ? Number.Integer.One : n == 1 ? of : MathS.Pow(of, n);
+                var (inW, back) = (functionSines, functionCosines) switch
+                {
+                    (1, _) => (coefficient * Power(1 + MathS.Sqr(w), j) * Power(w, sines), MathS.Hyperbolic.Sinh(argument)),
+                    (_, 1) => (coefficient * Power(MathS.Sqr(w) - 1, j) * Power(w, cosines), MathS.Hyperbolic.Cosh(argument)),
+                    (-1, _) => (-coefficient * Power(1 + MathS.Sqr(w), j) * Power(w, -sines - 2 - 2 * j), MathS.Hyperbolic.Cosech(argument)),
+                    _ => (-coefficient * Power(1 - MathS.Sqr(w), j) * Power(w, -cosines - 2 - 2 * j), MathS.Hyperbolic.Sech(argument)),
+                };
+                if (Integration.ComputeAsAQuestionOfItsOwn(inW * MathS.Pow(w, power) / rate, w, integrateByParts) is not { } result
+                    || result.Nodes.Any(node => node is Integralf || node == MathS.NaN))
+                    return null;
+                return result.Substitute(w, back);
+            }
+
+            // A product of whole powers of the two and a constant: the constant, and the powers.
+            (Entity Constant, int Sines, int Cosines)? PowersOfTheTwo(Entity node)
+            {
+                if (node == sh)
+                    return (Number.Integer.One, 1, 0);
+                if (node == ch)
+                    return (Number.Integer.One, 0, 1);
+                if (!node.ContainsNode(sh) && !node.ContainsNode(ch))
+                    return (node, 0, 0);
+                switch (node)
+                {
+                    case Mulf(var left, var right) when PowersOfTheTwo(left) is var (k, s, c) && PowersOfTheTwo(right) is var (l, t, d):
+                        return (k == Number.Integer.One ? l : l == Number.Integer.One ? k : k * l, s + t, c + d);
+                    case Divf(var left, var right) when PowersOfTheTwo(left) is var (k, s, c) && PowersOfTheTwo(right) is var (l, t, d):
+                        return (l == Number.Integer.One ? k : k / l, s - t, c - d);
+                    case Powf(var @base, Number.Integer { EInteger: var n }) when n.Abs().CompareTo(EInteger.FromInt32(2 * MaximumDividedPower)) <= 0
+                        && PowersOfTheTwo(@base) is var (k, s, c):
+                        var whole = n.ToInt32Checked();
+                        return (k == Number.Integer.One ? k : MathS.Pow(k, whole), whole * s, whole * c);
+                }
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// A fractional power of a rational function of <c>sinh(y)</c> and <c>cosh(y)</c> whose
+        /// numerator has <c>cosh(y)^2</c> as a factor -- with <c>cosh(y)^2</c> written
+        /// <c>1 + sinh(y)^2</c> -- taken out of the power: <c>(cosh(y)^2 A/B)^p</c> is
+        /// <c>cosh(y)^(2p) A^p B^(-p)</c> times a constant on every interval where both are
+        /// continuous. <c>(cosh(x) coth(x))^(3/2)</c> and <c>(csch(x) + sinh(x))^(3/2)</c> are both
+        /// <c>(cosh(x)^2/sinh(x))^(3/2)</c>, which is <c>cosh(x)^3 sinh(x)^(-3/2)</c> on
+        /// <c>x &gt; 0</c>, odd in the hyperbolic cosine.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// Rubi's six in 6.7.1 were declined: the radicand is a quotient, and
+        /// <see cref="SolveByBiochesOddHyperbolicSubstitution"/> reads the radicands that are
+        /// polynomials. The constant is not written: each power as written over its form apart is a
+        /// quotient whose logarithmic derivative is zero, so it is constant wherever it is
+        /// continuous, and the answer is the antiderivative of the rewritten integrand times their
+        /// product. Only where an odd power of the sine is left beside it.
+        /// </remarks>
+        internal static Entity? SolveByTakingTheHyperbolicCosineSquaredOutOfAPower(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var sh = Variable.CreateUnique(expr, "s_hyp");
+            var ch = Variable.CreateUnique(expr, "c_hyp");
+            if (ReadTheHyperbolicFunctions(expr, x, sh, ch) is not var (read, argument))
+                return null;
+            var sinh = MathS.Hyperbolic.Sinh(argument);
+            var cosh = MathS.Hyperbolic.Cosh(argument);
+            Entity constant = Number.Integer.One;
+            var found = false;
+            var rewritten = read.Replace(node =>
+            {
+                if (node is not Powf(var radicand, Number.Rational exponent) || exponent is Number.Integer
+                    || !radicand.ContainsNode(sh) && !radicand.ContainsNode(ch) || radicand.ContainsNode(x))
+                    return node;
+                var (top, bottom) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(radicand));
+                if (InTheSine(top) is not { } above || InTheSine(bottom) is not { } below)
+                    return node;
+                // cosh(y)^2 above the bar, and an odd degree in the sine left beside it: what is left
+                // is then no square, whose root -- `sqrt(1 + csch(x)^2)` -- is a sign the rules for
+                // the power of a square answer.
+                var squares = TakeTheSquaresOut(above) - TakeTheSquaresOut(below);
+                if (squares <= 0 || (above.Count + below.Count) % 2 != 1)
+                    return node;
+                found = true;
+                Entity written = MathS.Pow(cosh, (2 * squares * exponent).InnerSimplified);
+                if (above.Count > 1 || above[0] != Number.Integer.One)
+                    written *= MathS.Pow(InX(above), exponent);
+                if (below.Count > 1 || below[0] != Number.Integer.One)
+                    written *= MathS.Pow(InX(below), -exponent);
+                constant *= MathS.Pow(radicand.Substitute(ch, cosh).Substitute(sh, sinh), exponent) / written;
+                return written;
+            });
+            if (!found)
+                return null;
+            var inX = rewritten.Substitute(ch, cosh).Substitute(sh, sinh);
+            if (Integration.ComputeAsTheSameQuestion(inX, x, integrateByParts) is not { } result
+                || result.Nodes.Any(node => node is Integralf || node == MathS.NaN))
+                return null;
+            return constant * result;
+
+            // The coefficients of a polynomial in the two, the cosine to even powers only, as one in
+            // the sine, from the constant up.
+            List<Entity>? InTheSine(Entity polynomial)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, ch, out var byCosine))
+                    return null;
+                Entity inSine = Number.Integer.Zero;
+                foreach (var pair in byCosine)
+                {
+                    var (power, coefficient) = (pair.Key, pair.Value);
+                    if (power.Sign < 0 || !power.IsEven || power.CompareTo(EInteger.FromInt32(MaximumDividedPower)) > 0 || coefficient.ContainsNode(ch))
+                        return null;
+                    var half = power.ToInt32Checked() / 2;
+                    inSine += half == 0 ? coefficient : coefficient * MathS.Pow(1 + MathS.Sqr(sh), half);
+                }
+                if (!TreeAnalyzer.TryGetPolynomial(inSine, sh, out var bySine) || bySine.Keys.Any(k => k.Sign < 0) || bySine.Values.Any(v => v.ContainsNode(sh)))
+                    return null;
+                var highest = bySine.Keys.Aggregate(EInteger.Zero, (most, k) => k.CompareTo(most) > 0 ? k : most);
+                if (highest.CompareTo(EInteger.FromInt32(2 * MaximumDividedPower)) > 0)
+                    return null;
+                var coefficients = new List<Entity>();
+                for (var k = 0; k <= highest.ToInt32Checked(); k++)
+                    coefficients.Add(bySine.TryGetValue(EInteger.FromInt32(k), out var value) ? value.InnerSimplified : Number.Integer.Zero);
+                while (coefficients.Count > 1 && VanishesIdentically(coefficients[^1]))
+                    coefficients.RemoveAt(coefficients.Count - 1);
+                return coefficients;
+            }
+
+            // Divides 1 + s^2 out as often as it goes, in place, and says how often.
+            static int TakeTheSquaresOut(List<Entity> coefficients)
+            {
+                var times = 0;
+                while (coefficients.Count > 2)
+                {
+                    var quotient = new List<Entity>(coefficients);
+                    for (var k = quotient.Count - 1; k >= 2; k--)
+                        quotient[k - 2] = (quotient[k - 2] - quotient[k]).InnerSimplified;
+                    if (!VanishesIdentically(quotient[0]) || !VanishesIdentically(quotient[1]))
+                        break;
+                    coefficients.Clear();
+                    coefficients.AddRange(quotient.Skip(2));
+                    times++;
+                }
+                return times;
+            }
+
+            Entity InX(List<Entity> coefficients)
+            {
+                Entity? sum = null;
+                for (var k = 0; k < coefficients.Count; k++)
+                {
+                    if (VanishesIdentically(coefficients[k]))
+                        continue;
+                    var term = k == 0 ? coefficients[k] : coefficients[k] * (k == 1 ? sinh : MathS.Pow(sinh, k));
+                    sum = sum is null ? term : sum + term;
+                }
+                return sum ?? Number.Integer.Zero;
+            }
+        }
+
+        /// <summary>
+        /// <c>cosh(y)^(2m)</c> over <c>(1 ± i sinh(y))^(2m)</c>, or the other way up, times a
+        /// constant, cancelled to <c>((1 ∓ i sinh(y))/(1 ± i sinh(y)))^m</c>:
+        /// <c>cosh(y)^2 = (1 + i sinh(y))(1 - i sinh(y))</c>. <c>1/(sech(y) + i tanh(y))^4</c> is
+        /// <c>cosh(y)^4/(1 + i sinh(y))^4</c>, which is <c>(1 - i sinh(y))^2/(1 + i sinh(y))^2</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// Rubi's <c>1/(sech(x) ± i tanh(x))^4</c> in 6.7.1 were declined: the quotient is even in
+        /// the hyperbolic cosine, so <see cref="SolveByBiochesOddHyperbolicSubstitution"/> does not
+        /// read it, and the substitutions spent the budget on a denominator of degree eight in the
+        /// exponential, where the quotient the cancellation leaves is answered in a fifth of a
+        /// second. Exact on the real line, where <c>1 ± i sinh(y)</c> is not zero, and the points
+        /// off it where it is are removable. Only this shape, read by the multiplicities of
+        /// <c>sinh(y) ∓ i</c> on either side once the squares of the cosine are written in the sine:
+        /// cancelling where a polynomial or another power of <c>1 ± i sinh(y)</c> is left made the
+        /// answers to <c>cosh(x)^8/(i + sinh(x))</c> and <c>cosh(x)^2/(1 + i sinh(x))^3</c> longer,
+        /// and writing the <c>cosh(y)^2</c> a quotient carries on both sides as the two binomials
+        /// made <c>(a sech(x) + b tanh(x))^4</c> a search past the budget.
+        /// </remarks>
+        internal static Entity? SolveByCancellingOnePlusAnImaginaryHyperbolicSineAgainstTheCosineSquared(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var sh = Variable.CreateUnique(expr, "s_hyp");
+            var ch = Variable.CreateUnique(expr, "c_hyp");
+            if (ReadTheHyperbolicFunctions(expr, x, sh, ch) is not var (read, argument) || read.ContainsNode(x))
+                return null;
+            var (top, bottom) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(read));
+            if (bottom == Number.Integer.One || InTheSine(top) is not { } above || InTheSine(bottom) is not { } below)
+                return null;
+            // s - i = -i (1 + i s) and s + i = i (1 - i s): what is left of either side must be a
+            // constant, and the two powers opposite, so that the quotient is ((s - i)/(s + i))^e.
+            var (aboveAtI, belowAtI) = (TakenOut(above, MathS.i), TakenOut(below, MathS.i));
+            var (aboveAtMinusI, belowAtMinusI) = (TakenOut(above, -MathS.i), TakenOut(below, -MathS.i));
+            var e = aboveAtI - belowAtI;
+            if (above.Count != 1 || below.Count != 1 || e == 0 || e != belowAtMinusI - aboveAtMinusI || System.Math.Abs(e) > MaximumDividedPower)
+                return null;
+            // ((s - i)/(s + i))^e = (-1)^e ((1 + i s)/(1 - i s))^e.
+            var constant = ((e % 2 == 0 ? above[0] : -above[0]) / below[0]).InnerSimplified;
+            if (constant.Vars.Any())
+                constant = Functions.PartialFractions.Bare(constant.Simplify());
+            var sinh = MathS.Hyperbolic.Sinh(argument);
+            var (up, down) = e > 0 ? (1 + MathS.i * sinh, 1 - MathS.i * sinh) : (1 - MathS.i * sinh, 1 + MathS.i * sinh);
+            var m = System.Math.Abs(e);
+            Entity rewritten = m == 1 ? up / down : MathS.Pow(up, m) / MathS.Pow(down, m);
+            if (constant != Number.Integer.One)
+                rewritten = constant * rewritten;
+            if (Integration.ComputeAsTheSameQuestion(rewritten, x, integrateByParts) is not { } answer
+                || answer.Nodes.Any(node => node is Integralf || node == MathS.NaN))
+                return null;
+            return answer;
+
+            // A polynomial in the two even in the cosine, as one in the sine from the constant up,
+            // without its zero top coefficients; null where it is odd in the cosine anywhere.
+            List<Entity>? InTheSine(Entity polynomial)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, ch, out var byCosine))
+                    return null;
+                Entity inSine = Number.Integer.Zero;
+                foreach (var pair in byCosine)
+                {
+                    var (power, coefficient) = (pair.Key, pair.Value);
+                    if (power.Sign < 0 || !power.IsEven || power.CompareTo(EInteger.FromInt32(2 * MaximumDividedPower)) > 0 || coefficient.ContainsNode(ch))
+                        return null;
+                    var half = power.ToInt32Checked() / 2;
+                    inSine += half == 0 ? coefficient : coefficient * MathS.Pow(1 + MathS.Sqr(sh), half);
+                }
+                if (!TreeAnalyzer.TryGetPolynomial(inSine, sh, out var bySine) || bySine.Keys.Any(k => k.Sign < 0) || bySine.Values.Any(v => v.ContainsNode(sh)))
+                    return null;
+                var highest = bySine.Keys.Aggregate(EInteger.Zero, (most, k) => k.CompareTo(most) > 0 ? k : most);
+                if (highest.CompareTo(EInteger.FromInt32(4 * MaximumDividedPower)) > 0)
+                    return null;
+                var coefficients = new List<Entity>();
+                for (var k = 0; k <= highest.ToInt32Checked(); k++)
+                    coefficients.Add(bySine.TryGetValue(EInteger.FromInt32(k), out var value) ? value.InnerSimplified : Number.Integer.Zero);
+                while (coefficients.Count > 0 && VanishesIdentically(coefficients[^1]))
+                    coefficients.RemoveAt(coefficients.Count - 1);
+                return coefficients.Count == 0 ? null : coefficients;
+            }
+
+            // Divides s - root out of the polynomial, in place, as often as it goes, by synthetic
+            // division, and says how often.
+            static int TakenOut(List<Entity> polynomial, Entity root)
+            {
+                var times = 0;
+                while (polynomial.Count > 1)
+                {
+                    var quotient = new Entity[polynomial.Count - 1];
+                    var carried = polynomial[^1];
+                    for (var k = polynomial.Count - 2; k >= 0; k--)
+                    {
+                        quotient[k] = carried;
+                        carried = (polynomial[k] + root * carried).InnerSimplified;
+                    }
+                    if (!VanishesIdentically(carried))
+                        break;
+                    polynomial.Clear();
+                    polynomial.AddRange(quotient);
+                    times++;
+                }
+                return times;
+            }
         }
 
         /// <summary>
