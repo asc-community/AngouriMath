@@ -763,6 +763,33 @@ unevaluated are now answered ([#718](https://github.com/asc-community/AngouriMat
 | `"e^(4*atanh(a*x))*(k-a*k*x)^p".ToEntity().Integrate("x")` | `integral(...)` | 434 characters |
 | `"e^atanh(x)*x*(1+x)^2".ToEntity().Integrate("x")` | `integral(...)` | 1,110 characters |
 
+### A rational function of a sine over powers of linears in it is split by the residues at their roots
+
+**Answers where there were none.** `cot(c + d x)^6/(a + b sin(c + d x))^3` was declined, and so were eight more of
+Rubi's 4.1.1.3, 4.1.2.1, 4.1.2.2 and 4.3.1.3 ([#233](https://github.com/asc-community/AngouriMath/issues/233)):
+- In `s = sin(x)` that integrand is `(1 - s^2)^3/(s^6 (a + b s)^3)`, over powers of linears in `s`: the sine, `1 ± s`
+  from an even power of the cosine, and `a + b s`. It is split by the residues at their roots, each block a Taylor
+  series at a root, and every piece is a constant over a power of one linear, which the rules for `csc(x)^n`,
+  `1/(1 ± sin(x))^n` and `1/(a + b sin(x))^n` answer. Under the half-angle tangent, where the unreleased master took
+  them, every linear but the sine is a quadratic, and the cube of a symbolic one ran out of time. Only where the
+  half-angle is that slow: a linear with a symbolic root to the third power or more, and the half-angle's denominator
+  past the eleventh degree. Not for the cosine, whose half-angle answer is the shorter.
+- A repeated quadratic with Gaussian rational roots `r = ρ + σ i` and `r̄` is split by the residues at `r`, one
+  division of series per order, with those at `r̄` their conjugates. `sin(c + d x)^6/(a + b tan(c + d x))^2` is
+  `t^6/((1 + t^2)^4 (a + b t)^2)` in `t = tan(c + d x)`, and was declined.
+
+`csc(c + d x)^2 sec(c + d x)^2/(a + b sin(c + d x))^3` was declined by 2.5.0 too, and the unreleased master answered
+it in eleven seconds and 104,032 characters, which are a third of a second and 7,926 now.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"tan(c + d*x)^4/(a + b*sin(c + d*x))^3".ToEntity().Integrate("x")` | `integral(...)` | 9,096 characters |
+| `"cot(c + d*x)^6/(a + b*sin(c + d*x))^3".ToEntity().Integrate("x")` | `integral(...)` | 9,316 characters |
+| `"1/((a + b*sin(k + f*x))^3*(c + d*sin(k + f*x))^3)".ToEntity().Integrate("x")` | `integral(...)` | 15,245 characters |
+| `"sin(c + d*x)^6/(a + b*tan(c + d*x))^2".ToEntity().Integrate("x")` | `integral(...)` | 1,818 characters |
+| `"sin(c + d*x)^4/(a + b*tan(c + d*x))^4".ToEntity().Integrate("x")` | `integral(...)` | 2,586 characters |
+| `"csc(c + d*x)^2*sec(c + d*x)^2/(a + b*sin(c + d*x))^3".ToEntity().Integrate("x")` | `integral(...)` | 7,926 characters, where the unreleased master gave 104,032 |
+
 ### A sine's binomial cube below the bar is split over the cube's two factors
 
 **Answers where there were none.** `csc(c + d x)/(a + b sin(c + d x)^3)` was declined, and so were the second to fifth

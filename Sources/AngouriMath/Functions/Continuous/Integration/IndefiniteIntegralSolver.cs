@@ -32149,6 +32149,223 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A rational function of a sine whose denominator in it is written as powers of
+        /// linears -- of the sine itself, of <c>1 ± sin(x)</c> from an even power of the
+        /// cosine, and of <c>a + b sin(x)</c> with symbols in it: Rubi's
+        /// <c>cot(x)^6/(a + b sin(x))^3</c> is <c>(1 - s^2)^3/(s^6 (a + b s)^3)</c> in
+        /// <c>s = sin(x)</c>. Split over those factors by the residues at their roots, every
+        /// piece is a constant over a power of one linear in the function, which the rules for
+        /// <c>csc(x)^n</c>, <c>1/(1 ± sin(x))^n</c> and <c>1/(a + b sin(x))^n</c> answer.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Under the half-angle tangent, which took these before, every linear but the function
+        /// itself is a quadratic in <c>t</c> -- <c>a + b s</c> is <c>(a t^2 + 2 b t + a)/(1 + t^2)</c> --
+        /// and the cube of a symbolic one is split by Newton's iteration modulo its powers, with
+        /// the symbols in every round. Rubi's <c>cot(x)^6/(a + b sin(x))^3</c>,
+        /// <c>tan(x)^4/(a + b sin(x))^3</c> and <c>1/((a + b sin(x))^3 (c + d sin(x))^3)</c> ran
+        /// past thirty seconds there. In <c>s</c> each block is a Taylor series at a root.
+        /// </para>
+        /// <para>
+        /// Not of a cosine: <c>a + b cos(x)</c> is <c>((a + b) + (a - b) t^2)/(1 + t^2)</c>, even in
+        /// <c>t</c>, and the half-angle answers <c>tan(x)^6/(a + b cos(x))^3</c> in two seconds and
+        /// ten thousand characters, where the pieces here, each a piecewise of its own, came to
+        /// three hundred thousand.
+        /// </para>
+        /// <para>
+        /// Only where the half-angle is that slow: a linear with a symbolic root to the third power
+        /// or more, and the half-angle's denominator past the eleventh degree, which is <c>2 d - k</c> for a
+        /// denominator of degree <c>d</c> in the function with <c>s^k</c> among its factors.
+        /// <c>cot(x)^4/(a + b sin(x))^3</c>, of the tenth, and <c>cos(x)^6 csc(x)^5/(a + b sin(x))^3</c>,
+        /// of the eleventh, are answered there within a second, and are left to it; past it,
+        /// <c>csc(x)^2 sec(x)^2/(a + b sin(x))^3</c> took seven seconds there and a quarter of one here.
+        /// </para>
+        /// <para>
+        /// The decomposition is checked at sampled points by the split, and the sum of the
+        /// integrated pieces by its derivative before it is returned. A piece is over one linear,
+        /// which this declines, so nothing it asks comes back here.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static Entity? SolveARationalFunctionOfASineOverPowersOfLinearsInIt(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            Entity? argument = null;
+            foreach (var node in expr.Nodes)
+            {
+                if (TrigonometricArgument(node) is not { } thisArgument || !thisArgument.ContainsNode(x))
+                    continue;
+                if (argument is null)
+                    argument = thisArgument;
+                else if (argument != thisArgument)
+                    return null;
+            }
+            if (argument is null || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _)
+                || rate.ContainsNode(x) || TreeAnalyzer.IsZero(rate))
+                return null;
+            if (!expr.Nodes.All(node => !node.ContainsNode(x)
+                    || node is Variable or Sumf or Minusf or Mulf or Divf or Sinf or Cosf or Secantf or Cosecantf or Tanf or Cotanf
+                    || node is Powf(_, Number.Integer)))
+                return null;
+            var sine = MathS.Sin(argument);
+            var cosine = MathS.Cos(argument);
+            var inTheTwo = expr.Replace(node => node switch
+            {
+                Secantf(var a) when a == argument => 1 / cosine,
+                Cosecantf(var a) when a == argument => 1 / sine,
+                Tanf(var a) when a == argument => sine / cosine,
+                Cotanf(var a) when a == argument => cosine / sine,
+                _ => node,
+            });
+            var s = Variable.CreateUnique(inTheTwo, "s_trig");
+            var w = Variable.CreateUnique(inTheTwo + s, "w_trig");
+            var inS = inTheTwo.Substitute(sine, s).Substitute(cosine, w);
+            if (inS.ContainsNode(x))
+                return null;
+            return OverPowersOfLinearsInTheFunction(inS, s, w, sine, x, integrateByParts) is { } answer
+                && Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x)
+                ? answer : null;
+        }
+
+        /// <summary>
+        /// The rule above in <paramref name="s"/>, which stands for <paramref name="function"/>,
+        /// <paramref name="w"/> for the cosine: null where the integrand is not a rational
+        /// function of <paramref name="s"/> once the even powers of <paramref name="w"/> are
+        /// <c>1 - s^2</c>, or its denominator's written factors are not powers of linears in
+        /// <paramref name="s"/> and of <paramref name="w"/>, or it is not past the half-angle's bound.
+        /// </summary>
+        private static Entity? OverPowersOfLinearsInTheFunction(Entity inS, Variable s, Variable w, Entity function, Entity.Variable x, bool integrateByParts)
+        {
+            var combined = Functions.SingleQuotient.Combine(inS).InnerSimplified;
+            if (combined is Providedf(var bare, _))
+                combined = bare;
+            var (numerator, denominator) = Functions.SingleQuotient.Of(combined);
+            // The powers of the function and of its complement the two sides share, cancelled
+            // first: `sec(x)^5 (A + B sec(x))/(a + b sec(x))^3` comes over one bar as
+            // `c^3 (A c + B)/(c^6 (a c + b)^3)` in `c = cos(x)`, and the bound below is on the
+            // degrees of the fraction, not of a spelling of it.
+            if (WithASharedPowerCancelled(numerator, denominator, s, even: false) is var (fewerAbove, fewerBelow))
+                (numerator, denominator) = (fewerAbove, fewerBelow);
+            if (WithASharedPowerCancelled(numerator, denominator, w, even: true) is var (fewerAboveInW, fewerBelowInW))
+                (numerator, denominator) = (fewerAboveInW, fewerBelowInW);
+            if (WithTheComplementSquared(numerator, s, w) is not { } above)
+                return null;
+            Entity constant = Number.Integer.One;
+            Entity written = Number.Integer.One;
+            var degree = 0;
+            var powerOfTheFunction = 0;
+            var blocks = 0;
+            var aSymbolicCube = false;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(s) && !factor.ContainsNode(w))
+                {
+                    constant = constant * factor;
+                    continue;
+                }
+                var (toRead, multiplicity) = factor is Powf(var repeatedBase, Number.Integer { EInteger.Sign: > 0 } repeated) && repeated.EInteger.CanFitInInt32()
+                    ? (repeatedBase, repeated.EInteger.ToInt32Unchecked()) : (factor, 1);
+                // An even power of the complement is `(1 - s)^h (1 + s)^h`.
+                if (toRead == w)
+                {
+                    if (multiplicity % 2 != 0)
+                        return null;
+                    var half = multiplicity / 2;
+                    written = written * (half == 1 ? 1 - s : MathS.Pow(1 - s, half)) * (half == 1 ? 1 + s : MathS.Pow(1 + s, half));
+                    degree += multiplicity;
+                    blocks += 2;
+                    continue;
+                }
+                if (toRead.ContainsNode(w) || !TreeAnalyzer.TryGetPolynomial(toRead, s, out var read) || read.Count == 0
+                    || read.Keys.Any(power => power.Sign < 0) || !read.Keys.Max()!.Equals(EInteger.One)
+                    || read.Values.Any(coefficient => coefficient.ContainsNode(s) || coefficient.ContainsNode(w)))
+                    return null;
+                if (toRead == s)
+                    powerOfTheFunction += multiplicity;
+                // A linear whose root is a symbol's is a symbolic quadratic under the half-angle;
+                // `a + a s` is `a (1 + s)`, a square of a linear there.
+                aSymbolicCube |= multiplicity >= 3
+                    && Functions.PartialFractions.InLowestTermsOverTheSymbols(-(read.TryGetValue(EInteger.Zero, out var free) ? free : Number.Integer.Zero) / read[EInteger.One]).Vars.Any();
+                written = written * factor;
+                degree += multiplicity;
+                blocks++;
+            }
+            if (!aSymbolicCube || blocks < 2 || 2 * degree - powerOfTheFunction < 12)
+                return null;
+
+            // Divided down where the numerator's degree reaches the denominator's; the whole
+            // part is a polynomial in the function, the rules' own.
+            Entity total = Number.Integer.Zero;
+            if (TreeAnalyzer.TryGetPolynomial(above, s, out var aboveRead) && aboveRead.Count > 0 && aboveRead.Keys.Max()!.CompareTo(EInteger.FromInt32(degree)) >= 0)
+            {
+                var expandedBelow = (constant * written).Expand().InnerSimplified;
+                if (TreeAnalyzer.PolynomialLongDivision(above, expandedBelow, genericCase: true, inTermsOf: s) is not var (whole, rest))
+                    return null;
+                if (Integration.ComputeIndefiniteIntegral(whole.InnerSimplified.Substitute(s, function), x, integrateByParts) is not { } wholePart)
+                    return null;
+                total += wholePart;
+                above = (rest is Divf(var top, _) ? top : rest).InnerSimplified;
+                if (above is Providedf(var bareRest, _))
+                    above = bareRest;
+                if (above.Evaled is Number.Complex { IsZero: true })
+                    return total;
+            }
+            if (!Functions.PartialFractions.TrySplitOverWrittenFactors(above, constant == Number.Integer.One ? written : constant * written, s, out var decomposition))
+                return null;
+            var (terms, over) = decomposition is Divf(var sum, var divisor) && !divisor.ContainsNode(s)
+                ? (sum, divisor) : (decomposition, Number.Integer.One as Entity);
+            Entity overTheFactors = Number.Integer.Zero;
+            foreach (var term in Sumf.LinearChildren(terms))
+            {
+                if (term.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                if (Integration.ComputeIndefiniteIntegral(term.Substitute(s, function), x, integrateByParts) is not { } integrated)
+                    return null;
+                overTheFactors += integrated;
+            }
+            return total + (over == Number.Integer.One ? overTheFactors : overTheFactors / over);
+        }
+
+        /// <summary>
+        /// <paramref name="numerator"/> over <paramref name="denominator"/> with the power of
+        /// <paramref name="v"/> written among the denominator's factors and the lowest power of it
+        /// in the numerator cancelled as far as they share it -- an even number of times where
+        /// <paramref name="even"/> is set; null where nothing is shared.
+        /// </summary>
+        private static (Entity Numerator, Entity Denominator)? WithASharedPowerCancelled(Entity numerator, Entity denominator, Variable v, bool even)
+        {
+            var below = 0;
+            var rest = new List<Entity>();
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (factor == v)
+                    below++;
+                else if (factor is Powf(var @base, Number.Integer { EInteger.Sign: > 0 } power) && @base == v && power.EInteger.CanFitInInt32())
+                    below += power.EInteger.ToInt32Unchecked();
+                else
+                    rest.Add(factor);
+            }
+            if (below == 0 || !TreeAnalyzer.TryGetPolynomial(numerator, v, out var read) || read.Count == 0
+                || read.Keys.Any(power => power.Sign < 0 || !power.CanFitInInt32()) || read.Values.Any(coefficient => coefficient.ContainsNode(v)))
+                return null;
+            var taken = System.Math.Min(read.Keys.Min()!.ToInt32Unchecked(), below);
+            if (even)
+                taken -= taken % 2;
+            if (taken == 0)
+                return null;
+            Entity? above = null;
+            foreach (var pair in read)
+            {
+                var power = pair.Key.ToInt32Unchecked() - taken;
+                var term = power == 0 ? pair.Value : power == 1 ? pair.Value * v : pair.Value * MathS.Pow(v, power);
+                above = above is null ? term : above + term;
+            }
+            var left = below - taken;
+            if (left > 0)
+                rest.Add(left == 1 ? v : MathS.Pow(v, left));
+            return (above!, rest.Count == 0 ? Number.Integer.One : rest.Aggregate((product, factor) => product * factor));
+        }
+
+        /// <summary>
         /// <paramref name="expr"/>, a polynomial in <paramref name="s"/> and <paramref name="w"/>,
         /// with every even power of <paramref name="w"/> written as the power of
         /// <c>1 - s^2</c>, expanded; null where an odd power of <paramref name="w"/> is in it
