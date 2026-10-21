@@ -1558,6 +1558,31 @@ by the linear's coefficients, `(b d + 2c d x)^9`, which ran past a minute
 | `"(b + 2*c*x)^9/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | past a minute; 76,153 characters on the unreleased master | 607 characters |
 | `"(b*d + 2*c*d*x)^9/(a + b*x + c*x^2)^3".ToEntity().Integrate("x")` | past a minute | 611 characters |
 
+### A polynomial over a power of a symbolic quadratic beside the root of another is reduced in one solve, and split over the quadratic's roots
+
+**Answers where there were none, and shorter ones.** `(a + b x + c x^2)^(3/2)/(d + k x + f x^2)^3` was declined,
+and so were the third and fourth powers of `d + b x + c x^2` below `sqrt(a + b x + c x^2)`, Rubi's 1.2.1.5. The
+reduction took the power of the quadratic `A` below the bar down one at a time and carried each step's quotients into
+the next as written, past its bound on their size at the second step; what it answered was large on the unreleased
+master, `(a + b x + c x^2)^(3/2)/(d + k x + f x^2)^2` in 140,668 characters. Up to the fourth power, with symbols in
+the coefficients, it is one linear solve over the polynomials in them now, each coefficient over one denominator in
+lowest terms, that denominator written as powers of the discriminant of `A` and of the resultant of the two
+quadratics. And `(g + h x)/(A sqrt(B))`, where the discriminant of `A` has a symbol in it, is split over the two roots
+of `A`, each piece the logarithm Rubi writes as an artanh of a linear over the root of `B`, where it was two
+arctangents with the root of the resultant in every coefficient. Of Rubi's 1.2.1.5, 3 answers are new and 11 shorter;
+of its 1.2.1.6, 80 are shorter; every other answer of the two files, and of 1.2.1.4, is unchanged
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a + b*x + c*x^2)^(3/2)/(d + k*x + f*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 2,160 characters |
+| `"1/((d + b*x + c*x^2)^3*sqrt(a + b*x + c*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 1,379 characters |
+| `"1/((d + b*x + c*x^2)^4*sqrt(a + b*x + c*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 2,734 characters |
+| `"(a + b*x + c*x^2)^(3/2)/(d + k*x + f*x^2)^2".ToEntity().Integrate("x")` | `integral(...)`; 140,668 characters on the unreleased master | 5,686 characters |
+| `"1/((a + b*x + c*x^2)^(1/2)*(d + k*x + f*x^2)^2)".ToEntity().Integrate("x")` | `integral(...)`; 38,378 characters on the unreleased master | 2,158 characters |
+| `"1/((a + b*x + c*x^2)^(1/2)*(d + k*x + f*x^2))".ToEntity().Integrate("x")` | `integral(...)`; 4,982 characters on the unreleased master | 863 characters |
+| `"(A + B*x)/((a*k + b*k*x + b*f*x^2)^2*sqrt(d + k*x + f*x^2))".ToEntity().Integrate("x")` | `integral(...)`; 87,464 characters on the unreleased master | 2,641 characters |
+
 ### A quadratic's half-odd power beside a power of another quadratic is integrated
 
 **Answers where there were none.** `sqrt(3 - x + 2 x^2)/(2 + 3 x + 5 x^2)^2` was declined, and so were
@@ -1574,7 +1599,7 @@ quadratic with numbers in it, although beside the root each piece is a shape the
 | `"1/((3 - x + 2*x^2)^(5/2)*(2 + 3*x + 5*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 1,380 characters |
 | `"1/((3 - x + 2*x^2)^(5/2)*(2 + 3*x + 5*x^2)^3)".ToEntity().Integrate("x")` | `integral(...)` | 1,629 characters |
 | `"(2 + 5*x + x^2)*sqrt(3 + 2*x + 5*x^2)/(1 + 4*x - 7*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 5,242 characters |
-| `"(a + b*x + c*x^2)^(1/2)/(d + e*x + f*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 50,758 characters, six symbols |
+| `"(a + b*x + c*x^2)^(1/2)/(d + e*x + f*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 1,218 characters, six symbols |
 
 ### A power of a perfect square with a symbolic leading coefficient is a power of its root
 

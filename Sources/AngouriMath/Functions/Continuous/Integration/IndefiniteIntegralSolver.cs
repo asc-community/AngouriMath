@@ -21001,6 +21001,16 @@ namespace AngouriMath.Functions.Algebra
             var qSquared = (p * p - e * f).Expand().InnerSimplified;
             if (VanishesIdentically(qSquared))
                 return null;
+            // Over the roots of A where they are symbols, as Rubi writes it: a few hundred
+            // characters where the form below, with q in every coefficient, is thousands.
+            if ((!VanishesIdentically(e) || !VanishesIdentically(f))
+                && OverTheRootsOfTheQuadraticBelow(g, h, a2, a1, a0, b2, b1, b0, p, e, radicand, x, expr) is { } overTheRoots)
+            {
+                var divided = (overTheRoots / constant).InnerSimplified;
+                if (!divided.Nodes.Any(node => node is Number.Complex { IsNaN: true })
+                    && Functions.PartialFractions.DerivativeHoldsAtSampledPoints(divided, expr, x))
+                    return divided;
+            }
             var q = MathS.Sqrt(qSquared).InnerSimplified;
             var roots = !VanishesIdentically(e) ? new[] { (Lambda: p + q, Mu: e), (Lambda: p - q, Mu: e) }
                 : !VanishesIdentically(f) ? new[] { (Lambda: f, Mu: p + q), (Lambda: f, Mu: p - q) }
@@ -21060,6 +21070,92 @@ namespace AngouriMath.Functions.Algebra
             if (answer.Nodes.Any(node => node is Number.Complex { IsNaN: true })
                 || !Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x))
                 return null;
+            return answer;
+        }
+
+        /// <summary>
+        /// <c>(g + h x)/(A sqrt(B))</c> over the two roots of <c>A</c>, where its discriminant is
+        /// not a number: with <c>s = sqrt(A1^2 - 4 A0 A2)</c> and <c>r = (-A1 +- s)/(2 A2)</c>,
+        /// <c>(g + h x)/A</c> is <c>((g + h r1)/(x - r1) - (g + h r2)/(x - r2))/s</c>, and each
+        /// <c>1/((x - r) sqrt(B))</c> is <c>-ln((N + 2 sqrt(B(r)) sqrt(B))/(x - r))/sqrt(B(r))</c>
+        /// with <c>N = 2 B0 + B1 r + (B1 + 2 B2 r) x</c>, Rubi's artanh of <c>N/(2 sqrt(B(r)) sqrt(B))</c>
+        /// written with <c>N</c> once. Null where the discriminant is a number.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// With <c>y = x - r</c>, <c>N</c> is <c>2 B(r) + B'(r) y</c> and <c>y N' - N</c> is
+        /// <c>-2 B(r) - sqrt(B(r)) N/sqrt(B)</c>, so the derivative of the logarithm is
+        /// <c>-sqrt(B(r))/(y sqrt(B))</c> on either branch of <c>sqrt(B(r))</c>, which appears
+        /// twice: the piece holds where <c>B(r)</c> is negative or off the real line, and where
+        /// <c>r</c> is. Where the roots are real, the argument of the logarithm is real and of
+        /// one sign, or off the real line, on the whole of each interval between the roots of
+        /// <c>A</c> and <c>B</c>, since <c>(N + 2 sqrt(B(r)) sqrt(B)) (N - 2 sqrt(B(r)) sqrt(B))</c>
+        /// is <c>(B1^2 - 4 B0 B2) y^2</c>, zero only at the pole: continuous on each. Where they
+        /// are a conjugate pair that is not shown; at four pinnings with <c>B</c> positive
+        /// everywhere, <c>F(b) - F(a)</c> agreed with Simpson's rule on intervals up to
+        /// <c>[-5, 5]</c>. <c>B(r)</c> is written as the
+        /// remainder of <c>B</c> by <c>A</c> at <c>r</c>, <c>(P + E r)/A2</c> with
+        /// <c>P = A2 B0 - A0 B2</c> and <c>E = A2 B1 - A1 B2</c>, as Rubi writes it.
+        /// </para>
+        /// <para>
+        /// The roots, <c>s</c>, <c>B(r)</c> and a compound <c>g</c> or <c>h</c> are symbols of
+        /// their own while the answer is built, written back after. Over the linears for which
+        /// <c>A</c> is a sum of multiples of <c>B</c> and their squares, Rubi's 1.2.1.5
+        /// <c>1/(sqrt(a + b x + c x^2) (d + e x + f x^2))</c> was 4,982 characters, the root of the
+        /// resultant of the two in every coefficient; it is 863.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
+        private static Entity? OverTheRootsOfTheQuadraticBelow(Entity g, Entity h, Entity a2, Entity a1, Entity a0,
+            Entity b2, Entity b1, Entity b0, Entity p, Entity e, Entity radicand, Entity.Variable x, Entity context)
+        {
+            var discriminant = (a1 * a1 - 4 * a0 * a2).Expand().InnerSimplified;
+            if (discriminant.Evaled is Number.Complex || !discriminant.Vars.Any())
+                return null;
+            // Expanded, so that `c^2 b - b c c` is the zero it is.
+            p = p.Expand().InnerSimplified;
+            e = VanishesIdentically(e) ? Number.Integer.Zero : e.Expand().InnerSimplified;
+            var named = context;
+            Variable Fresh(string prefix)
+            {
+                var fresh = Variable.CreateUnique(named, prefix);
+                named = named + fresh;
+                return fresh;
+            }
+            var s = Fresh("s_roots");
+            var written = new List<(Variable Name, Entity Value)>();
+            Entity Named(Entity value, string prefix)
+            {
+                if (value is Number or Variable)
+                    return value;
+                var name = Fresh(prefix);
+                written.Add((name, value));
+                return name;
+            }
+            var (top, slope) = (Named(g, "g_roots"), Named(h, "h_roots"));
+            var root = MathS.Sqrt(radicand);
+            Entity? answer = null;
+            var roots = new List<(Variable Name, Entity Value)>();
+            var atTheRoots = new List<(Variable Name, Entity Value)>();
+            foreach (var (sign, side) in new[] { (-1, 1), (1, -1) })
+            {
+                var r = Fresh("r_roots");
+                var w = Fresh("w_roots");
+                roots.Add((r, (side * s - a1) / (2 * a2)));
+                atTheRoots.Add((w, (p + e * r) / a2));
+                // -ln((N + 2 sqrt(w) sqrt(B))/(x - r))/sqrt(w), over s with g + h r in front.
+                var linear = 2 * b0 + b1 * r + (b1 + 2 * b2 * r) * x;
+                var piece = sign * (top + slope * r) * MathS.Ln((linear + 2 * MathS.Sqrt(w) * root) / (x - r)) / (s * MathS.Sqrt(w));
+                answer = answer is null ? piece : answer + piece;
+            }
+            answer = answer!.InnerSimplified;
+            foreach (var (name, value) in atTheRoots)
+                answer = answer.Substitute(name, value);
+            foreach (var (name, value) in roots)
+                answer = answer.Substitute(name, value);
+            answer = answer.Substitute(s, MathS.Sqrt(discriminant));
+            foreach (var (name, value) in written)
+                answer = answer.Substitute(name, value);
             return answer;
         }
 
@@ -21167,6 +21263,18 @@ namespace AngouriMath.Functions.Algebra
             for (var i = 0; i < coefficients.Length; i++)
                 coefficients[i] = monomials.TryGetValue(EInteger.FromInt32(i), out var monomial) ? WithoutConditions(monomial) : Number.Integer.Zero;
 
+            // With symbols in it, the whole reduction as one solve over the polynomials in them,
+            // every coefficient in lowest terms; step by step, each step's quotients were carried
+            // through the next as written.
+            if (expr.Vars.Any(symbol => symbol != x)
+                && ReducedOverThePolynomialsInItsSymbols(coefficients, power, a2, a1, a0, b2, b1, b0, quadratic, radicand, constant, x, expr) is { } reduced)
+            {
+                var divided = reduced.InnerSimplified;
+                if (!divided.Nodes.Any(node => node is Number.Complex { IsNaN: true })
+                    && Functions.PartialFractions.DerivativeHoldsAtSampledPoints(divided, expr, x))
+                    return divided;
+            }
+
             var root = MathS.Sqrt(radicand);
             Entity answer = Number.Integer.Zero;
             for (var j = power; j >= 1; j--)
@@ -21256,6 +21364,282 @@ namespace AngouriMath.Functions.Algebra
             if (answer.Nodes.Any(node => node is Number.Complex { IsNaN: true })
                 || !Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x))
                 return null;
+            return answer;
+        }
+
+        /// <summary>
+        /// The reduction of <see cref="SolveAPolynomialOverAPowerOfAQuadraticBesideTheRootOfAnother"/>
+        /// as one linear system over the polynomials in the symbols: <c>P/(A^n sqrt(B))</c> is
+        /// <c>(Q sqrt(B)/A^(n - 1))' + (g + h x)/(A sqrt(B)) + sigma/sqrt(B)</c> with <c>Q</c> of
+        /// degree <c>2n - 3</c>, which is
+        /// <c>2 P = 2 Q' A B + Q B' A - 2 (n - 1) Q A' B + 2 (g + h x) A^(n - 1) + 2 sigma A^n</c>,
+        /// one equation for each power of x up to <c>2n</c> in as many unknowns. Null where a
+        /// coefficient is not a polynomial in at most seven symbols, or the solve declines.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The decomposition is the one the reduction a power at a time makes, since it is
+        /// unique where <c>A</c> and <c>B</c> have no root in common; written so, each unknown
+        /// is one quotient of polynomials, where a step at a time carried each step's quotients
+        /// through the next as written. Solved by fraction-free elimination, the values are put
+        /// over their least common denominator in lowest terms, and that is written as the
+        /// powers of the discriminant of <c>A</c>, the resultant of <c>A</c> and <c>B</c> and the
+        /// symbols it is, Rubi's <c>e^2 - 4 d f</c> and
+        /// <c>(c d - a f)^2 - (b d - a e) (c e - b f)</c>. <c>A</c>'s content comes out first: over
+        /// a monic quadratic the integrand arrives over <c>d f + e f x + f^2 x^2</c>. The two
+        /// last pieces are asked with <c>g</c>, <c>h</c> and <c>sigma</c> as symbols of their own.
+        /// </para>
+        /// <para>
+        /// A step at a time, Rubi's 1.2.1.5 <c>(a + b x + c x^2)^(3/2)/(d + e x + f x^2)^3</c> was
+        /// declined past <see cref="LargestReducedCoefficients"/>, and
+        /// <c>(a + b x + c x^2)^(3/2)/(d + e x + f x^2)^2</c> was 140,668 characters; they are 2,160
+        /// and 5,686.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </para>
+        /// </remarks>
+        /// <summary>
+        /// The highest power of the quadratic below the bar that
+        /// <see cref="ReducedOverThePolynomialsInItsSymbols"/> takes: with six symbols the fifth
+        /// ran past twenty seconds in the elimination, where the reduction a power at a time
+        /// declines it in half a second.
+        /// </summary>
+        private const int LargestPowerSolvedAtOnce = 4;
+
+        private static Entity? ReducedOverThePolynomialsInItsSymbols(Entity[] coefficients, int power,
+            Entity a2, Entity a1, Entity a0, Entity b2, Entity b1, Entity b0, Entity quadratic, Entity radicand, Entity constant, Entity.Variable x, Entity expr)
+        {
+            // A named constant, e or pi, is a symbol of its own here and put back at the end: the
+            // polynomials are read in the symbols, and `d + e x + f x^2` was not one.
+            var standIns = new List<(Variable StandIn, Variable Constant)>();
+            var spelled = expr;
+            foreach (var named in new[] { a2, a1, a0, b2, b1, b0, constant }.Concat(coefficients)
+                .SelectMany(coefficient => coefficient.VarsAndConsts).Where(symbol => symbol.IsConstant).Distinct().ToList())
+            {
+                var standIn = Variable.CreateUnique(spelled, "c_named");
+                spelled = spelled + standIn;
+                standIns.Add((standIn, named));
+            }
+            Entity WithStandIns(Entity coefficient)
+            {
+                foreach (var (standIn, named) in standIns)
+                    coefficient = coefficient.Substitute(named, standIn);
+                return coefficient;
+            }
+            if (standIns.Count > 0)
+            {
+                (a2, a1, a0, b2, b1, b0, constant) = (WithStandIns(a2), WithStandIns(a1), WithStandIns(a0), WithStandIns(b2), WithStandIns(b1), WithStandIns(b0), WithStandIns(constant));
+                coefficients = coefficients.Select(WithStandIns).ToArray();
+            }
+            var symbols = new[] { a2, a1, a0, b2, b1, b0 }.Concat(coefficients).SelectMany(coefficient => coefficient.Vars).Distinct()
+                .OrderBy(symbol => symbol.Name, System.StringComparer.Ordinal).ToList();
+            if (symbols.Count == 0 || symbols.Contains(x) || symbols.Count >= Functions.MultivariatePolynomial.MaxVariables
+                || power > LargestPowerSolvedAtOnce)
+                return null;
+            var indices = new Dictionary<Variable, int>(symbols.Count + 1);
+            for (var i = 0; i < symbols.Count; i++)
+                indices[symbols[i]] = i;
+            indices[x] = symbols.Count;
+            var everything = symbols.Append(x).ToList();
+            var order = Enumerable.Range(0, everything.Count).ToList();
+            Functions.MultivariatePolynomial? Read(Entity polynomial) => Functions.MultivariatePolynomial.TryParse(polynomial, indices);
+            Functions.MultivariatePolynomial? Gcd(Functions.MultivariatePolynomial? left, Functions.MultivariatePolynomial? right)
+                => left is null || right is null ? null : Functions.PolynomialGcd.Gcd(left, right, order, 0);
+            if (Read(a2) is not { } p2 || Read(a1) is not { } p1 || Read(a0) is not { } p0
+                || Read(b2) is not { } q2 || Read(b1) is not { } q1 || Read(b0) is not { } q0)
+                return null;
+            // A's content out of it: over a monic quadratic the integrand comes as one over
+            // `d f + k f x + f^2 x^2`, whose roots would be written with sqrt(f^2 (k^2 - 4 d f)).
+            Entity content = Number.Integer.One;
+            if (Gcd(Gcd(p2, p1), p0) is { IsConstant: false } common
+                && p2.DivideExact(common) is { } reduced2 && p1.DivideExact(common) is { } reduced1 && p0.DivideExact(common) is { } reduced0)
+            {
+                (p2, p1, p0) = (reduced2, reduced1, reduced0);
+                (a2, a1, a0) = (p2.ToEntity(everything), p1.ToEntity(everything), p0.ToEntity(everything));
+                quadratic = a2 * MathS.Sqr(x) + a1 * x + a0;
+                content = common.ToEntity(everything);
+            }
+            // A root of A that is one of B's, or a root of A twice, is not the generic case the
+            // solve is for: the system is singular, and a solution of it is not in lowest terms.
+            if (p1.Multiply(p1) is not { } squared || p0.Multiply(p2) is not { } product
+                || squared.Subtract(product.ScaleBy(ERational.FromInt32(4))) is not { IsZero: false } discriminant
+                || p2.Multiply(q0) is not { } r1 || p0.Multiply(q2) is not { } r2 || p2.Multiply(q1) is not { } r3
+                || p1.Multiply(q2) is not { } r4 || p1.Multiply(q0) is not { } r5 || p0.Multiply(q1) is not { } r6
+                || r1.Subtract(r2) is var first && first.Multiply(first) is not { } firstSquared
+                || r3.Subtract(r4).Multiply(r5.Subtract(r6)) is not { } cross
+                || firstSquared.Subtract(cross) is not { IsZero: false } resultant)
+                return null;
+            var a = a2 * MathS.Sqr(x) + a1 * x + a0;
+            var b = b2 * MathS.Sqr(x) + b1 * x + b0;
+            var aSlope = 2 * a2 * x + a1;
+            var bSlope = 2 * b2 * x + b1;
+            var size = 2 * power + 1;
+            var below = power - 1;
+            // The columns: Q's powers of x, then g, h and sigma.
+            var columns = new List<Entity>();
+            for (var i = 0; i < 2 * power - 2; i++)
+            {
+                Entity column = MathS.Pow(x, i) * (bSlope * a - 2 * below * aSlope * b);
+                if (i > 0)
+                    column = column + 2 * i * MathS.Pow(x, i - 1) * a * b;
+                columns.Add(column);
+            }
+            columns.Add(2 * MathS.Pow(a, below));
+            columns.Add(2 * x * MathS.Pow(a, below));
+            columns.Add(2 * MathS.Pow(a, power));
+            Entity[]? ByPowers(Entity polynomial)
+            {
+                if (Read(polynomial) is not { } parsed)
+                    return null;
+                var byPowers = new Entity[size];
+                for (var i = 0; i < size; i++)
+                    byPowers[i] = Number.Integer.Zero;
+                foreach (var pair in parsed.CoefficientsIn(symbols.Count))
+                {
+                    if (pair.Key >= size)
+                        return null;
+                    byPowers[pair.Key] = pair.Value.ToEntity(everything);
+                }
+                return byPowers;
+            }
+            var matrix = new Entity[size][];
+            for (var row = 0; row < size; row++)
+                matrix[row] = new Entity[size];
+            for (var column = 0; column < size; column++)
+            {
+                if (ByPowers(columns[column]) is not { } entries)
+                    return null;
+                for (var row = 0; row < size; row++)
+                    matrix[row][column] = entries[row];
+            }
+            Entity numerator = Number.Integer.Zero;
+            for (var i = 0; i < coefficients.Length; i++)
+                numerator = numerator + 2 * coefficients[i] * MathS.Pow(x, i);
+            if (ByPowers(numerator) is not { } rhs
+                || !Functions.PartialFractions.TrySolveOverPolynomials(matrix, rhs, out var values))
+                return null;
+
+            // Every value over one denominator, the least common multiple of theirs, each in
+            // lowest terms first: the solve cancels a small quotient only, and its last pivot
+            // carries powers of the factors below that the values do not.
+            var tops = new Functions.MultivariatePolynomial[values.Length];
+            var bottom = Functions.MultivariatePolynomial.One(everything.Count);
+            var bottoms = new Functions.MultivariatePolynomial[values.Length];
+            for (var i = 0; i < values.Length; i++)
+            {
+                var (written, writtenBelow) = Functions.SingleQuotient.Of(values[i]);
+                if (Read(written) is not { } top || Read(writtenBelow) is not { IsZero: false } over)
+                    return null;
+                if (!top.IsZero && Gcd(top, over) is { IsConstant: false } shared
+                    && top.DivideExact(shared) is { } lowerTop && over.DivideExact(shared) is { } lowerOver)
+                    (top, over) = (lowerTop, lowerOver);
+                (tops[i], bottoms[i]) = (top, over);
+                if (top.IsZero)
+                    continue;
+                if (Gcd(bottom, over) is not { } both || over.DivideExact(both) is not { } extra || bottom.Multiply(extra) is not { } wider)
+                    return null;
+                bottom = wider;
+            }
+            var numerators = new Functions.MultivariatePolynomial[values.Length];
+            for (var i = 0; i < values.Length; i++)
+                if (tops[i].IsZero)
+                    numerators[i] = tops[i];
+                else if (bottom.DivideExact(bottoms[i]) is not { } scale || tops[i].Multiply(scale) is not { } raised)
+                    return null;
+                else
+                    numerators[i] = raised;
+            // The constant below the bar and A's content to its power go below too, and then out
+            // goes what every numerator shares with it: a power of A's leading coefficient, which
+            // the integrand over a monic quadratic has above as well.
+            if (Read(constant) is not { IsZero: false } constantRead || constantRead.Multiply(bottom) is not { } withTheConstant)
+                return null;
+            bottom = withTheConstant;
+            if (content != Number.Integer.One)
+            {
+                if (Read(content) is not { } contentRead || contentRead.Power(power) is not { } contentPower || bottom.Multiply(contentPower) is not { } withTheContent)
+                    return null;
+                bottom = withTheContent;
+            }
+            var sharedByAll = bottom;
+            foreach (var value in numerators)
+                if (!value.IsZero && Gcd(sharedByAll, value) is { } narrowed)
+                    sharedByAll = narrowed;
+            if (!sharedByAll.IsConstant && bottom.DivideExact(sharedByAll) is { } lowerBottom)
+            {
+                var lowered = new Functions.MultivariatePolynomial[numerators.Length];
+                for (var i = 0; i < numerators.Length; i++)
+                    if (numerators[i].IsZero)
+                        lowered[i] = numerators[i];
+                    else if (numerators[i].DivideExact(sharedByAll) is { } lowerValue)
+                        lowered[i] = lowerValue;
+                    else
+                        return null;
+                (numerators, bottom) = (lowered, lowerBottom);
+            }
+
+            // The denominator as a product of what the reduction divides by: the discriminant
+            // of A, the resultant of A and B, and the symbols, Rubi's `(e^2 - 4 d f)` and
+            // `(c d - a f)^2 - (b d - a e) (c e - b f)`.
+            var candidates = new List<Functions.MultivariatePolynomial> { discriminant, resultant };
+            for (var i = 0; i < symbols.Count; i++)
+                candidates.Add(Functions.MultivariatePolynomial.Monomial(everything.Count, i));
+            Entity denominator = Number.Integer.One;
+            var rest = bottom;
+            foreach (var candidate in candidates)
+            {
+                if (candidate.IsConstant)
+                    continue;
+                var normalized = candidate.Normalized();
+                var multiplicity = 0;
+                while (rest.DivideExact(normalized) is { } divided)
+                {
+                    rest = divided;
+                    multiplicity++;
+                }
+                if (multiplicity > 0)
+                    denominator = denominator * (multiplicity == 1 ? normalized.ToEntity(everything) : MathS.Pow(normalized.ToEntity(everything), multiplicity));
+            }
+            denominator = rest.ToEntity(everything) * denominator;
+
+            static bool IsZero(Functions.MultivariatePolynomial value) => value.IsZero;
+            var root = MathS.Sqrt(radicand);
+            Entity? polynomial = null;
+            for (var i = 0; i < 2 * power - 2; i++)
+                if (!IsZero(numerators[i]))
+                {
+                    var coefficient = numerators[i].ToEntity(everything);
+                    var term = i == 0 ? coefficient : coefficient * MathS.Pow(x, i);
+                    polynomial = polynomial is null ? term : polynomial + term;
+                }
+            var (g, h, sigma) = (numerators[2 * power - 2], numerators[2 * power - 1], numerators[2 * power]);
+            Entity answer = polynomial is null ? Number.Integer.Zero : polynomial * root / MathS.Pow(quadratic, below);
+            Variable Fresh(string prefix)
+            {
+                var fresh = Variable.CreateUnique(spelled, prefix);
+                spelled = spelled + fresh;
+                return fresh;
+            }
+            if (!IsZero(g) || !IsZero(h))
+            {
+                var (top, slope) = (IsZero(g) ? (Entity)Number.Integer.Zero : Fresh("g_reduced"), IsZero(h) ? (Entity)Number.Integer.Zero : Fresh("h_reduced"));
+                if (SolveALinearOverAQuadraticBesideTheRootOfAnother((top + slope * x) / (quadratic * root), x) is not { } closing)
+                    return null;
+                if (top is Variable topName)
+                    closing = closing.Substitute(topName, g.ToEntity(everything));
+                if (slope is Variable slopeName)
+                    closing = closing.Substitute(slopeName, h.ToEntity(everything));
+                answer = answer + closing;
+            }
+            if (!IsZero(sigma))
+            {
+                var over = Fresh("k_reduced");
+                if (Integration.ComputeIndefiniteIntegral(over / root, x, integrateByParts: false) is not { } overTheRoot
+                    || overTheRoot.Nodes.Any(node => node is Integralf))
+                    return null;
+                answer = answer + overTheRoot.Substitute(over, sigma.ToEntity(everything));
+            }
+            answer = answer / denominator;
+            foreach (var (standIn, named) in standIns)
+                answer = answer.Substitute(standIn, named);
             return answer;
         }
 

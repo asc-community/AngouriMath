@@ -1906,7 +1906,7 @@ namespace AngouriMath.Functions
         /// <c>d</c> the last pivot -- one fraction per unknown, no back-substitution to
         /// compound them.
         /// </remarks>
-        private static bool TrySolveOverPolynomials(Entity[][] matrix, Entity[] rhs, [NotNullWhen(true)] out Entity[]? values)
+        internal static bool TrySolveOverPolynomials(Entity[][] matrix, Entity[] rhs, [NotNullWhen(true)] out Entity[]? values)
         {
             values = null;
             var symbols = matrix.SelectMany(row => row).Concat(rhs).SelectMany(entry => entry.Vars).Distinct()
