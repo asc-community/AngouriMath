@@ -63,9 +63,18 @@ namespace AngouriMath.Functions
             // Combinations(2, 6, 3) ->
             // { 4, 3, 2 }, { 5, 3, 2 }, { 6, 3, 2 }, { 5, 4, 2 }, { 6, 4, 2 },
             // { 6, 5, 2 }, { 5, 4, 3 }, { 6, 4, 3 }, { 6, 5, 3 }, { 6, 5, 4 }
+            //
+            // The loop stops where too few values are left above i to fill the remaining
+            // cells, since a branch past that yields nothing. Without the bound every prefix of
+            // every length was visited -- about 2^(itemCount + targetSum - 1) of them for
+            // C(itemCount + targetSum - 1, targetSum) results -- so squaring a sum of thirty
+            // terms, 465 terms and well inside MaxExpansionTermCount, ran past a minute, and two
+            // more terms took four times as long. The bound changes no result and no order.
+            // https://github.com/asc-community/AngouriMath/issues/233
             static IEnumerable<List<EInteger>> Combinations(EInteger min, EInteger max, EInteger cellCount)
             {
-                for (EInteger i = min; i <= max; i++)
+                var last = cellCount.Sign > 0 ? max - cellCount + 1 : max;
+                for (EInteger i = min; i <= last; i++)
                     if (!cellCount.Equals(EInteger.One))
                         foreach (var l in Combinations(i + 1, max, cellCount - 1))
                         {

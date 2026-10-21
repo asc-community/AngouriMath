@@ -247,6 +247,24 @@ out of it ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
 | `"(a*m*x^m+b*n*q*ln(c*x^n)^(q-1))/(x*(a*x^m+b*ln(c*x^n)^q))".ToEntity().Integrate("x")` | `integral(...)` | `ln(a x^m + b ln(c x^n)^q)` |
 | `"(a*(m-1)*x^(m-1)+b*n*q*ln(c*x^n)^(q-1))/(a*x^m+b*x*ln(c*x^n)^q)".ToEntity().Integrate("x")` | `integral(...)` | `ln(a x^(m - 1) + b ln(c x^n)^q)` |
 
+### A power of a long sum is expanded without visiting the combinations it does not return
+
+**Answers where there were none.** Expanding `(t_1 + ... + t_n)^k` enumerates the ways to share `k`
+among the `n` terms, and the enumeration visited every prefix of every length, about
+`2^(n + k - 1)` of them for the `C(n + k - 1, k)` it returns; squaring a sum of thirty terms ran past
+a minute. It now stops a branch where too few values are left to fill it, which changes no term and
+no order. Five integrals whose working squares such a sum were past the budget and are answered
+([#233](https://github.com/asc-community/AngouriMath/issues/233)); this branch's master ran past
+150 s on each.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((a*g+b*g*x)^2*(A+B*ln(k*((a+b*x)/(c+d*x))^n))^2)".ToEntity().Integrate("x")` | `integral(...)` | 412 characters |
+| `"1/((a*g+b*g*x)^2*(A+B*ln(k*(a+b*x)/(c+d*x)))^2)".ToEntity().Integrate("x")` | past 60 s | 358 characters |
+| `"(a+a*sin(k+f*x))^(3/2)*(A+B*sin(k+f*x))/(c+d*sin(k+f*x))^2".ToEntity().Integrate("x")` | `integral(...)` | 5,373 characters |
+| `"sech(x)^2*tanh(x)^2/(2+tanh(x)^3)^2".ToEntity().Integrate("x")` | past 60 s | 117 characters |
+| `"coth(x)^3*csch(x)*sqrt(1+csch(x))".ToEntity().Integrate("x")` | `integral(...)` | 325 characters |
+
 ### A rational evaluated at a higher precision than before has all of its digits
 
 **More digits where there were a hundred.** A rational kept its decimal value in the precision current when it was
