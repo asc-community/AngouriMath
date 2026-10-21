@@ -76,6 +76,19 @@ namespace AngouriMath.Tests.Calculus
             DifferentiatesBack(integrand, ("a", -0.75), ("b", -0.7), ("d", 0.15 * sign));
         }
 
+        // A negative power of the inverse hyperbolic sine of c + d x^2 with c = +-i, complex at every
+        // x, in hyperbolic sine and cosine integrals: cosh(u/2) + c sinh(u/2) is sqrt(2) cosh(u/2 + c pi/4).
+        [Theory]
+        [InlineData("1/(a+b*asinh(i+d*x^2))", 1)]
+        [InlineData("1/(a+b*asinh(i+d*x^2))^2", -1)]
+        [InlineData("1/(a+b*asinh(-i+d*x^2))^3", 1)]
+        [InlineData("1/(a+b*asinh(-i+d*x^2))^4", -1)]
+        public void ANegativePowerOfAnInverseHyperbolicSineIsAnsweredAndDifferentiatesBack(string integrand, int sign)
+        {
+            DifferentiatesBack(integrand, ("a", 0.6), ("b", 1.25), ("d", 0.3 * sign));
+            DifferentiatesBack(integrand, ("a", -0.75), ("b", -0.7), ("d", 0.15 * sign));
+        }
+
         // Half an odd power of the inverse hyperbolic cosine, in the error functions of
         // sqrt(a + b u)/sqrt(2 b).
         [Theory]
