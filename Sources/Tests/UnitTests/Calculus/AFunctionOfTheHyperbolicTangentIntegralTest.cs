@@ -29,7 +29,18 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("cos(tanh(a + b*x))^3")]
         [InlineData("sin(coth(a + b*x))")]
         [InlineData("(b*coth(c + d*x)^4)^(1/3)")]
-        public void UnderTheTangent(string integrand)
+        public void UnderTheTangent(string integrand) => AnsweredAndCheckedBack(integrand);
+
+        // A power of 1 +- coth alone is a binomial differential in e^(2x), which the exponential
+        // substitution writes in a few hundred characters; under u = tanh it was 1,342 to 14,533.
+        [Theory]
+        [InlineData("(1 + coth(x))^(7/2)")]
+        [InlineData("(1 + coth(x))^(1/2)")]
+        [InlineData("1/(1 + coth(x))^(3/2)")]
+        public void LeavesAPowerOfOnePlusCothToTheExponentialSubstitution(string integrand)
+            => Assert.True(AnsweredAndCheckedBack(integrand).Length < 1000, $"{integrand} was answered at length");
+
+        private static string AnsweredAndCheckedBack(string integrand)
         {
             var integral = integrand.ToEntity().Integrate("x");
             var text = integral.Stringize();
@@ -50,6 +61,7 @@ namespace AngouriMath.Tests.Calculus
                     $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
             }
             Assert.True(compared >= 5, $"only {compared} points could be compared for {integrand}");
+            return text;
         }
     }
 }
