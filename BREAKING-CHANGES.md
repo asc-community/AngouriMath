@@ -2760,6 +2760,21 @@ whatever `a` is ([#718](https://github.com/asc-community/AngouriMath/issues/718)
 | `"sqrt(a + i*a*sinh(g + f*x))/x".ToEntity().Integrate("x")` | `integral(...)` | `Shi` and `Chi` of half of `f x` |
 | `"1/sqrt(a + i*a*sinh(g + f*x))".ToEntity().Integrate("x")` | `integral(...)` | arctangents and logarithms of `e^((g + f x)/2)` |
 
+### A quadratic with an even root of a symbol among its coefficients is integrated where the root is imaginary
+
+**Answers where there were none.** `1/(b (c + d x)^2 + sqrt(-a))` was answered by arms on the sign
+of its discriminant `4 sqrt(-a) b d^2`, which is imaginary for every `a > 0` and has no sign there,
+so the answer had a value for no positive `a`. The arm off the real line that a quadratic with `i`
+among its coefficients takes, the arctangent, which uses nothing about its root but
+`sqrt(q)^2 = q`, is taken where an even root of a symbol is among them too. An odd root is real
+here and a root seen only squared leaves the discriminant real, so neither takes it. Rubi's 1.3.1
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(b*(c + d*x)^2 + sqrt(-a))".ToEntity().Integrate("x")` | 920 characters, with no value at a real `x` for `a = 1.07` or `a = -1.3`; 570, with none for `a > 0`, on the unreleased master | 608 characters, the arctangent `provided not D in RR or D > 0` |
+| `"1/(x^2 + sqrt(a))".ToEntity().Integrate("x")` | 297 characters, with no value at a real `x` for `a = 1.07` or `a = -1.3`; 261, with none for `a < 0`, on the unreleased master | 286 characters |
+
 ### The arm for a quadratic off the real line excludes the arms on the sign of its discriminant
 
 **Shorter answers.** An antiderivative over a quadratic with `i` among its coefficients has an arm
