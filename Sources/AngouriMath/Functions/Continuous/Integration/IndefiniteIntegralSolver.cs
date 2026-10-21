@@ -31152,11 +31152,24 @@ namespace AngouriMath.Functions.Algebra
                     // minute of search to be declined, where as written it is five seconds. Past those
                     // nothing reads the sum as written, and the factor below answers both sides:
                     // `x/sqrt(a x + b x^4)`. An even power comes out as its sign, and a fractional one
-                    // is real for a positive x only, as the sum already was.
+                    // beside a power of x that is not whole is real for a positive x only, as the sum
+                    // already was.
                     if (lowest is Number.Integer { EInteger.IsEven: false } odd && odd.EInteger.Abs().Equals(EInteger.One)
                         && !sum.Nodes.Any(node => node is Powf(var @base, var r) && @base == x && r is not Number.Integer)
                         && (Mulf.LinearChildren(rest).Where(part => part.ContainsNode(x)).ToList() is not [Sumf or Minusf]
                             || Sumf.LinearChildren(rest).All(term => PowerOfX(term, x) is (_, Number.Integer { EInteger: var degree }) && degree.CompareTo(1) <= 0 && degree.Sign >= 0)))
+                        continue;
+                    // And x to any other odd power out of a sum of whole powers under a power p that
+                    // leaves `x^(j p)` fractional: the sum is real on both sides of 0 and `x^(j p)` is
+                    // not, and the answer came out for a positive x only. The substitution answers it
+                    // on both: `sqrt(a + b/x^3)/x` is a function of `u = sqrt(a + b/x^3)`, where taking
+                    // out `x^(-3/2)` left Rubi's 1.1.3.2 with no value at a negative x where the
+                    // integrand is real. A whole `j p` is real on both sides, and the factor in front
+                    // is constant on each: `(a x^3 + b x^6)^(5/3)` is `x^5` times a power of
+                    // `a + b x^3`, Rubi's 1.2.3.2.
+                    if (lowest is Number.Integer { EInteger.IsEven: false } oddPast && !oddPast.EInteger.Abs().Equals(EInteger.One)
+                        && (oddPast * power).Evaled is not Number.Integer
+                        && !sum.Nodes.Any(node => node is Powf(var @base, var r) && @base == x && r is not Number.Integer))
                         continue;
                     // The rest of the integrand a constant times the sum's derivative is the plain
                     // substitution's, u = the sum, which answers it as a power of u, where the sum
