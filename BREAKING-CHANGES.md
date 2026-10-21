@@ -311,6 +311,24 @@ tanh keep the answers the exponential substitution gives them ([#233](https://gi
 | `"sin(tanh(a+b*x))".ToEntity().Integrate("x")` | `integral(...)` | `Si` and `Ci` of `1 - tanh(a + b x)` and `1 + tanh(a + b x)` |
 | `"tanh(x)/sqrt(a+b*tanh(x)^2+c*tanh(x)^4)".ToEntity().Integrate("x")` | `integral(...)` | a logarithm of the root, piecewise on the sign of `a + b + c` |
 
+### A hyperbolic function of `a + 2 ln(x)` is integrated with `e^a` as a symbol too
+
+**Answers where there were none.** `tanh(a + 2 ln(x))^2/x^3` was declined, and so were nineteen more of Rubi's 6.3.2,
+6.4.2 and 6.5.3, among them `coth(a + 2 ln(x))^2/x^3` and the odd powers of x beside `tanh(a + 2 ln(x))^k`. The
+unreleased master answered them through the fold of `e^(2 a + 4 ln(x))` to `e^(2 a) x^4`, in up to 8,047 characters: the
+arithmetic of `e^(2 a)` against the `e^(-2 a)` a division writes never cancelled, and `tanh(a + 2 ln(x))^2/x^3` came
+back in six arms on the signs of `4 e^(2 a)` and `4 e^(-2 a)`. Where the folded integrand is a rational function of x,
+`e^a` is now also asked as a symbol and written back, and the shorter answer is kept; where the symbol splits a
+biquadratic into arms on its sign, as for `coth(a + 2 ln(x))/x^2`, the exponential's answer stays
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"tanh(a + 2*ln(x))^2/x^3".ToEntity().Integrate("x")` | `integral(...)` | 181 characters |
+| `"coth(a + 2*ln(x))^2/x^3".ToEntity().Integrate("x")` | `integral(...)` | 202 characters |
+| `"x^3*tanh(a + 2*ln(x))^2".ToEntity().Integrate("x")` | `integral(...)` | 134 characters |
+| `"tanh(a + 2*ln(x))/x^3".ToEntity().Integrate("x")` | `integral(...)` | 178 characters |
+
 ### A constant or an exponential evaluated at a higher precision than before has all of its digits
 
 **More digits where there were a hundred.** `pi`, `e` and an exponential, evaluated once at one precision, went on
@@ -813,8 +831,7 @@ split. It is written `b (s + r)(s^2 - r s + r^2)` now, with `r = (a/b)^(1/3)`, w
 **Answers where there were none.** `1/(a x + b x/log(c x^n))` was left unevaluated. With x taken out of the sum below the
 bar it is `1/(x (a + b/log(c x^n)))`, a function of the logarithm beside its differential, which is answered. The same
 holds for the higher powers of the logarithm and for Rubi's 3.5:37
-([#718](https://github.com/asc-community/AngouriMath/issues/718)). `tanh(a + 2 log(x))^2/x^3`, which 2.5.0 left
-unevaluated, is answered by this route as well.
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
@@ -823,7 +840,6 @@ unevaluated, is answered by this route as well.
 | `"1/(a*x+b*x/ln(c*x^n)^3)".ToEntity().Integrate("x")` | `integral(...)` | 514 characters |
 | `"1/(a*x+b*x/ln(c*x^n)^4)".ToEntity().Integrate("x")` | `integral(...)` | 337 characters |
 | `"(a*x+2*b*n*ln(c*x^n))/(a*x^2+b*x*ln(c*x^n)^2)".ToEntity().Integrate("x")` | `integral(...)` | 37 characters |
-| `"tanh(a+2*ln(x))^2/x^3".ToEntity().Integrate("x")` | `integral(...)` | 7,796 characters |
 
 ### A quotient over a sum of two powers of even quadratics is split over the roots of its binomial
 

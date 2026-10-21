@@ -26340,6 +26340,24 @@ namespace AngouriMath.Functions.Algebra
         /// is a rule here, asked as a question of its own so the closed rules meet it at the top.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </summary>
+        /// <remarks>
+        /// The exponential the fold leaves free of the variable, <c>e^a</c> from
+        /// <c>a + b ln(c x^n)</c>, is asked as a symbol <c>k</c> and written back into the answer,
+        /// conditions and all: <c>d/dx F(x, k) = R(x, k)</c> for every <c>k</c>, so for
+        /// <c>k = e^a</c> too. As an exponential it was arithmetic the rules never finished --
+        /// the division by <c>e^(2 a)</c> writes <c>e^(-2 a)</c>, and the two do not cancel --
+        /// and <c>tanh(a + 2 ln(x))^2/x^3</c> (Rubi's 6.3.2) came back a piecewise of 7,796
+        /// characters, six arms on the signs of <c>4 e^(2 a)</c> and <c>4 e^(-2 a)</c>, with an
+        /// <c>e^(-56 a)</c> in its derivative's condition that a decimal evaluation takes for zero
+        /// at <c>a = 1.07</c>; in <c>k</c> it is 181. The two spellings are asked and the shorter
+        /// answer kept, since in <c>k</c> the factorisation reads the coefficient and splits
+        /// <c>k^2 x^4 - 1</c> into arms on the sign of <c>k</c>: <c>coth(a + 2 ln(x))/x^2</c> is
+        /// 3,577 characters in <c>k</c> and 413 as the exponential. Only where the folded
+        /// integrand is a rational function of x -- beside a symbolic power of x the name cost
+        /// four times the allocation for an answer as long -- and every such exponential is a
+        /// whole power of one of them, so that the relations between them survive the naming.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
         internal static Entity? SolveByFoldingAnExponentialOfALogarithm(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             var folded = expr.Replace(node =>
@@ -26372,7 +26390,53 @@ namespace AngouriMath.Functions.Algebra
                     ? Number.Integer.One / (power.Equals(EInteger.FromInt32(-1)) ? @base : MathS.Pow(@base, Number.Integer.Create(-power)))
                     : inside), exponent)
                 : node);
-            return Integration.ComputeAsAQuestionOfItsOwn(folded, x, integrateByParts);
+            var answer = Integration.ComputeAsAQuestionOfItsOwn(folded, x, integrateByParts);
+            // Both spellings, and the shorter answer: in a name the factorisation reads the
+            // coefficient and can split a biquadratic over it into arms on its sign, which the
+            // exponential, an atom to it, is answered without.
+            if (!IsARationalFunction(folded, x) || AConstantExponentialNamed(folded, x) is not { } named
+                || Integration.ComputeAsAQuestionOfItsOwn(named.Question, x, integrateByParts) is not { } inTheName
+                || inTheName.Nodes.Any(node => node is Integralf))
+                return answer;
+            var writtenBack = inTheName.Substitute(named.Name, named.Value);
+            return answer is null || writtenBack.Complexity < answer.Complexity ? writtenBack : answer;
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> with every exponential free of <paramref name="x"/> that has a
+        /// symbol in its exponent written as a whole power of one name <c>k</c>, and the
+        /// <c>e^E</c> that <c>k</c> stands for; <see langword="null"/> where there is none, or
+        /// where no one of them has all the others as whole powers.
+        /// </summary>
+        private static (Entity Question, Variable Name, Entity Value)? AConstantExponentialNamed(Entity expr, Entity.Variable x)
+        {
+            var exponents = expr.Nodes
+                .Where(node => node is Powf(var @base, var exponent) && @base == MathS.e && !exponent.ContainsNode(x) && exponent.Vars.Any())
+                .Select(node => ((Powf)node).Exponent)
+                .Distinct()
+                .ToList();
+            foreach (var unit in exponents)
+            {
+                var powers = new Dictionary<Entity, Number.Integer>();
+                foreach (var exponent in exponents)
+                {
+                    if (exponent == unit)
+                        powers[exponent] = Number.Integer.One;
+                    else if (Functions.PartialFractions.Bare((exponent / unit).Simplify()).Evaled is Number.Integer k && !k.IsZero && k.EInteger.CanFitInInt32())
+                        powers[exponent] = k;
+                    else
+                        break;
+                }
+                if (powers.Count != exponents.Count)
+                    continue;
+                var name = Variable.CreateUnique(expr, "k_fold");
+                var question = expr.Replace(node =>
+                    node is Powf(var @base, var exponent) && @base == MathS.e && powers.TryGetValue(exponent, out var power)
+                        ? power == Number.Integer.One ? name : MathS.Pow(name, power)
+                        : node);
+                return (question, name, MathS.Pow(MathS.e, unit));
+            }
+            return null;
         }
 
         /// <summary>
