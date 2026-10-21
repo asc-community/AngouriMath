@@ -842,8 +842,9 @@ namespace AngouriMath.Functions.Algebra
             // A power of an exponential with a positive base is the exponential of the product,
             // exactly, and only that spelling is one the exponential rules read.
             if ((answer = IndefiniteIntegralSolver.SolveByFlatteningAPowerOfAnExponential(expr, x, integrateByParts)) is { }) return answer;
-            // And any other power of an exponential beside a polynomial below the bar, as a constant
-            // multiple of an exponential wherever it is differentiable.
+            // And any other power of an exponential beside a polynomial below the bar, or beside
+            // another of the same rate, as a constant multiple of an exponential wherever it is
+            // differentiable.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAPowerOfAnExponentialAsAMultipleOfOne(expr, x, integrateByParts)) is { }) return answer;
             // An exponential of a quadratic in 1/L beside a power of L, onto the Gaussian under u = 1/L.
             if ((answer = IndefiniteIntegralSolver.SolveAGaussianInAReciprocal(expr, x)) is { }) return answer;
@@ -1557,6 +1558,10 @@ namespace AngouriMath.Functions.Algebra
             // is wrong with -- it clears a parameter rather than a shape -- so everything that
             // can answer the problem as written gets to try first.
             if ((answer = IndefiniteIntegralSolver.SolveByScalingTheVariable(expr, x, integrateByParts)) is { }) return answer;
+            // And a linear over the root of a quartic whose symbols are a scale of x, where that
+            // takes them out from under the root, which the simplifier does not: the logarithmic
+            // ansatz answers the numeric quartic that is left.
+            if ((answer = IndefiniteIntegralSolver.SolveALinearOverTheRootOfAQuarticWithItsSymbolsScaledOut(expr, x, integrateByParts)) is { }) return answer;
             // After every rule that can answer a power in its own terms, because expanding one
             // throws away whatever structure it had: (1 + x^2)^2 is answered as a power and only
             // wants writing out if that fails.
