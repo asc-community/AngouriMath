@@ -726,6 +726,9 @@ namespace AngouriMath.Functions.Algebra
             // A whole power of a linear in the inverse sine, cosine or hyperbolic cosine of
             // `c + d x^2` with `c^2 = 1`, by its recurrence, which closes: by parts it went round.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfAnInverseFunctionOfAQuadraticByTheRecurrence(expr, x)) is { }) return answer;
+            // An algebraic function of 1/x alone with a root in it, under x = 1/u, before the linears
+            // are written once: `1/((a + b/x)^(5/2) (c + d/x)^2)` ran past the budget that way.
+            if ((answer = IndefiniteIntegralSolver.SolveAnAlgebraicFunctionOfTheReciprocalOfX(expr, x, integrateByParts)) is { }) return answer;
             // A product of powers of quotients of linears with one linear in two of them, written
             // over each linear once with the constant that takes in front. First, since it answers
             // the question asked only, and the polynomial term below writes `1/u` as `u^(-1)` and
@@ -757,6 +760,9 @@ namespace AngouriMath.Functions.Algebra
             // A rational function with numbers for coefficients over a denominator past the twelfth
             // degree, by Hermite's reduction before anything searches: nothing below answered one.
             if ((answer = IndefiniteIntegralSolver.SolveAHighDegreeRationalFunctionByHermite(expr, x)) is { }) return answer;
+            // And a polynomial over high whole powers of two linears with a symbol in them, under
+            // t = L1/L2, where the partial fractions ran past the budget: `x^2/((1 - a x)^16 (1 + a x)^11)`.
+            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialOverHighWholePowersOfTwoLinears(expr, x)) is { }) return answer;
             // A whole power of the square of a polynomial written out, written over its root: the rules
             // for a power of a binomial read `(a + b x^2)^4` where `(a^2 + 2 a b x^2 + b^2 x^4)^2` ran
             // past the budget.
@@ -1022,6 +1028,11 @@ namespace AngouriMath.Functions.Algebra
             // split, since Hearn's `e^(x^2)/x + 2x e^(x^2) ln(x) + ...` is a sum whose terms are
             // not elementary apart; at the top only, and only for a tower no closed rule reads.
             if ((answer = IndefiniteIntegralSolver.SolveByRischNormanAnsatz(expr, x)) is { }) return answer;
+            // A rational function with numbers beside an odd root of a linear past the square, split over
+            // the rationals first where a linear below meets the root at an irrational value:
+            // `1/(u^2 (1 - u)^(1/3) (3 + u))`, whose substitution is over the cube root of 4, and which the
+            // cancellation below spent five seconds declining.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionBesideAnIrrationalOddRootOfALinearSplitFirst(expr, x, integrateByParts)) is { }) return answer;
             // A quotient of polynomials in x and the functions of x in it, cancelled with those
             // functions as indeterminates and its denominator factored the same way:
             // `(x^2 + 2x sin(x) + sin(x)^2)/(x + sin(x))^2` is `1`, and nothing else reads it.
@@ -1537,6 +1548,20 @@ namespace AngouriMath.Functions.Algebra
             // A half-odd power of a constant over a polynomial of either sign, written apart with
             // its sign in front. After the substitutions, which answer some of these without it.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAHalfOddPowerOfAReciprocalWithItsSign(expr, x, integrateByParts)) is { }) return answer;
+            // A power of x beside a whole power below -1 of a binomial with a symbol in it, by the
+            // reduction that raises the power to -1: `1/(x^2 (a + b x^3)^5)`, which the partial
+            // fractions declined past the first power.
+            if ((answer = IndefiniteIntegralSolver.SolveABinomialToAWholePowerBelowMinusOneByTheRecurrence(expr, x, integrateByParts)) is { }) return answer;
+            // A rational function beside a half-odd power of an even quartic P, as a rational
+            // function of x/sqrt(P) where it is one: Rubi's pseudo-elliptic
+            // `(a - c x^4)/((a d + a e x^2 + c d x^4) sqrt(a + b x^2 + c x^4))`. Late, since it fires
+            // on nothing a rule reading the root as written answers.
+            if ((answer = IndefiniteIntegralSolver.SolveByTheVariableOverTheRootOfAnEvenQuartic(expr, x, integrateByParts)) is { }) return answer;
+            // A factor `(c x)^t` as `x^t`, `(c x)^t x^(-t)` in front, constant on each interval.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingAPowerOfAMultipleOfXAsAPowerOfX(expr, x, integrateByParts)) is { }) return answer;
+            // Two square roots as one, up to a factor whose square is a constant, in front:
+            // `sqrt(b - a/x^2)/sqrt(a - b x^2)` is that factor over x.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingTwoRootsAsOneUpToAConstantFactor(expr, x, integrateByParts)) is { }) return answer;
             // The sign of a real-valued factor is constant between its zeros, and goes in
             // front of the antiderivative of the rest. After every rule that reads the sign
             // where it stands: `cos(x) sgn(sin(x))` is `|sin(x)|` by the substitution, and

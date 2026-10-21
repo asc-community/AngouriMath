@@ -2963,6 +2963,46 @@ without a common factor
 | `"(c + d*tan(x))^(3/2)/(a + i*a*tan(x))^2".ToEntity().Integrate("x")` | `integral(...)`; 470,119 characters on the unreleased master | 77,377 characters |
 | `"(c + d*tan(x))^(1/2)/(a + i*a*tan(x))^2".ToEntity().Integrate("x")` | `integral(...)`; 258,943 characters on the unreleased master | 71,266 characters |
 
+### A rational function of `x/sqrt(P)` for an even quartic `P`, high powers of two linears, and nine more algebraic shapes are integrated
+
+**Answers where there were none, and shorter ones.** Rubi's algebraic integrands of these shapes were declined or ran
+out of time ([#233](https://github.com/asc-community/AngouriMath/issues/233)):
+- A rational function beside a half-odd power of `P = a + b x^2 + c x^4`, where it is a rational function of
+  `t = x/sqrt(P)`: `dt/dx = (a - c x^4)/P^(3/2)`, so `(a - c x^4)/((a d + a e x^2 + c d x^4) sqrt(P))` is
+  `dt/(d + (a e - b d) t^2)`. Which integrands are is read in `y = x^2` modulo `y^2 - w y + a/c`, `w = y + a/(c y)`;
+  an elliptic integral does not pass.
+- `(c x)^t`, `t` not whole, written `x^t` beside `(c x)^t x^(-t)`, whose derivative is zero wherever it is defined:
+  `(c x)^(-1 - 2 n - n p) (a + b x^n)^p`.
+- Two square roots whose radicands have a constant times an even power of x for their quotient are one root, up to a
+  factor whose square is constant: `(g + h x) sqrt(a + b x + c x^2)/(a d + b d x + c d x^2)^(3/2)`.
+- A polynomial over high whole powers of two linears, under `t = L1/L2`: `x^2/((1 - a x)^16 (1 + a x)^11)`.
+- An algebraic function of `1/x` alone, under `x = 1/u`: `1/((a + b/x)^(5/2) (c + d/x)^2)`.
+- `x^m (a + b x^n)^p` for whole `m` and `n` and `p ≤ -2`, by the reduction that raises `p` to `-1`:
+  `1/(x^2 (a + b x^3)^5)`.
+- A power of a sum of powers of x beside a symbolic power of a binomial, multiplied out into binomial differentials:
+  `(a + b x^n)^3 (c + d x^n)^(-4 - 1/n)`.
+- A difference of radicands that is one power of x, written as one: `x^4/(sqrt(a + b x) + sqrt(a + c x))^3`.
+- A rational function beside an odd root of a linear past the square, split first where a linear below meets the root
+  at an irrational value: `1/(x^3 (1 - x^2)^(1/3) (3 + x^2))`.
+- An odd integrand beside a high power of a quadratic is left to `u = x^2`, and a quartic in one shifted linear to
+  `u = d + k x`, where the partial fractions spent the budget or wrote pages.
+
+Answers the unreleased master gave change length: `x^2/((1 - a x)^16 (1 + a x)^11)` was 16,292 characters there,
+after twenty seconds, and is 1,380 in a tenth of a second; `1/((a + b/x)^(5/2) (c + d/x)^2)` was 16,675 and is 4,667.
+One is longer: `1/(x (1 - x^2)^(1/3) (3 + x^2))`, 342 characters there and 495 now.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a - c*x^4)/((a*d + a*k*x^2 + c*d*x^4)*sqrt(a + b*x^2 + c*x^4))".ToEntity().Integrate("x")` | `integral(...)` | 1,949 characters |
+| `"(g + h*x)*sqrt(a + b*x + c*x^2)/(a*d + b*d*x + c*d*x^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 4,376 characters |
+| `"x^2/((1 - a*x)^16*(1 + a*x)^11)".ToEntity().Integrate("x")` | `integral(...)` | 1,380 characters |
+| `"1/((a + b/x)^(5/2)*(c + d/x)^2)".ToEntity().Integrate("x")` | `integral(...)` | 4,667 characters |
+| `"(c*x)^(-1 - 2*n - n*p)*(a + b*x^n)^p".ToEntity().Integrate("x")` | `integral(...)` | 255 characters |
+| `"1/(x^2*(a + b*x^3)^5)".ToEntity().Integrate("x")` | `integral(...)` | 741 characters |
+| `"(d + k*x)^4/(a + b*(d + k*x)^2 + c*(d + k*x)^4)".ToEntity().Integrate("x")` | no answer in twenty seconds | 452 characters |
+| `"1/(x^5*(a + b*x^2)^10)".ToEntity().Integrate("x")` | `integral(...)` | 652 characters, where the unreleased master gave 67,828 |
+| `"1/(x*(1 - x^2)^(1/3)*(3 + x^2))".ToEntity().Integrate("x")` | `integral(...)` | 503 characters, where the unreleased master gave 350 |
+
 ### A polynomial with symbols in it that is a binomial or an even quartic in a shifted variable is integrated in it
 
 **Answers where there were none.** `1/(c^2 x^3 + 3 b c x^2 + 3 b^2 x + 3 a b)` was left unevaluated,
