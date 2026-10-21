@@ -766,6 +766,11 @@ namespace AngouriMath.Functions.Algebra
             // since it fires only where that factor holds x, and the rules before it spent 28 seconds on
             // `atan(e x/sqrt(-a e^2/b - e^2 x^2))/sqrt(a + b x^2)` declining.
             if ((answer = IndefiniteIntegralSolver.SolveAFunctionOfAnInverseTimesItsDerivativeUpToAConstant(expr, x, integrateByParts)) is { }) return answer;
+            // The derivative of a function over a power of a logarithm, an inverse trigonometric
+            // function, or a sum with a logarithm in it, whose terms are not elementary apart: early,
+            // since it reads only a power of one below the bar, and by parts on either term asked the
+            // other's question again.
+            if ((answer = IndefiniteIntegralSolver.SolveAsTheDerivativeOfAFunctionOverAPowerOfALogarithmOrAnInverse(expr, x)) is { }) return answer;
             // A whole power of a linear in the inverse sine, cosine or hyperbolic cosine of
             // `c + d x^2` with `c^2 = 1`, by its recurrence, which closes: by parts it went round.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfAnInverseFunctionOfAQuadraticByTheRecurrence(expr, x)) is { }) return answer;
@@ -849,6 +854,13 @@ namespace AngouriMath.Functions.Algebra
             // the sum and writes what is left out in powers of x, where the linear is gone; and
             // before the substitution search, which reads one function at a time.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAFunctionOfOneShiftedLinear(expr, x, integrateByParts)) is { }) return answer;
+            // And a transcendental function of one shifted linear alone, for the same reason: the
+            // polynomial term writes `(c/d + x)^19` beside `F^(a + b/(c + d x)^3)`, two spellings.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingATranscendentalFunctionOfOneShiftedLinear(expr, x, integrateByParts)) is { }) return answer;
+            // Powers of two linears beside a negative power of a logarithm of their quotient, which in
+            // the quotient are a power of it beside the logarithm alone, onto the exponential integral:
+            // the polynomial term takes the slope out of the linear and asks it again, past the budget.
+            if ((answer = IndefiniteIntegralSolver.SolveByTheQuotientOfTheLogarithmsLinearsOntoTheExponentialIntegral(expr, x)) is { }) return answer;
             // A polynomial beside error functions of one shifted linear, written in it: by parts in
             // x leaves a Gaussian of the shifted linear beside a polynomial, which nothing reads.
             if ((answer = IndefiniteIntegralSolver.SolveAPolynomialBesideErrorFunctionsOfAShiftedLinear(expr, x, integrateByParts)) is { }) return answer;
