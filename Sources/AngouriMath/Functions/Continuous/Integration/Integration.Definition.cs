@@ -290,7 +290,7 @@ namespace AngouriMath.Functions.Algebra
         /// wherever it is asked for.
         /// </para>
         /// </remarks>
-        [System.ThreadStatic] private static Dictionary<(Entity, Entity.Variable, bool, int), Entity?>? answered;
+        [System.ThreadStatic] private static Dictionary<(Entity, Entity.Variable, bool, int), (Entity? Answer, bool ASumOverRootsWould)>? answered;
 
         /// <summary>The settings <see cref="answered"/> was filled under.</summary>
         [System.ThreadStatic] private static object?[]? answeredUnder;
@@ -539,7 +539,7 @@ namespace AngouriMath.Functions.Algebra
             // would otherwise be answered with, without the rule ever being reached to say that a
             // second pass could answer it.
             if (answer is not null && memo is not null && stamp is not null && SettingsState.StillHolds(stamp))
-                memo[(Normalized(expr, x), x, integrateByParts, 1)] = answer;
+                memo[(Normalized(expr, x), x, integrateByParts, 1)] = (answer, false);
             return answer;
         }
 
@@ -553,7 +553,25 @@ namespace AngouriMath.Functions.Algebra
         /// Set where the rational integrator declined only because the residues lie in a field of
         /// degree above two, which a sum over roots would have written.
         /// </summary>
-        [System.ThreadStatic] internal static bool ASumOverRootsWouldAnswer;
+        internal static bool ASumOverRootsWouldAnswer
+        {
+            get => aSumOverRootsWouldAnswer;
+            set
+            {
+                if (value)
+                    sumsOverRootsWanted++;
+                aSumOverRootsWouldAnswer = value;
+            }
+        }
+
+        [System.ThreadStatic] private static bool aSumOverRootsWouldAnswer;
+
+        /// <summary>
+        /// How many times <see cref="ASumOverRootsWouldAnswer"/> was set, which is how a computation
+        /// tells whether it set it itself: the flag is one per question asked, and already set by
+        /// whatever was asked before.
+        /// </summary>
+        [System.ThreadStatic] private static int sumsOverRootsWanted;
 
         /// <summary>
         /// <see cref="ComputeIndefiniteIntegral"/> past its entry check: the cycle guard, the
@@ -606,10 +624,19 @@ namespace AngouriMath.Functions.Algebra
             var depth = ScopeDepth;
             var key = (expr, x, integrateByParts, depth);
             if (into.TryGetValue(key, out var already))
-                return already;
+            {
+                // A decline remembered from a first pass that a sum over roots would have answered says
+                // so again: the memo outlives the question, and without this the one asked next on the
+                // thread was declined where the second pass answers it. Integrating
+                // `(1 + x^4)/(1 - x^4 + x^8)` and then `(1 + (1 + sqrt(3)) x^4)/(1 - x^4 + x^8)` declined
+                // the second, which answered alone.
+                if (already.Answer is null && already.ASumOverRootsWould)
+                    ASumOverRootsWouldAnswer = true;
+                return already.Answer;
+            }
             for (var other = 1; other <= DeepestScope; other++)
-                if (other != depth && into.TryGetValue((expr, x, integrateByParts, other), out var elsewhere) && elsewhere is not null)
-                    return elsewhere;
+                if (other != depth && into.TryGetValue((expr, x, integrateByParts, other), out var elsewhere) && elsewhere.Answer is not null)
+                    return elsewhere.Answer;
 
             // Whether the descent ran out *inside this computation*, which is the only truncation
             // that says anything about this key. The flag is one per thread, so it is cleared
@@ -619,6 +646,7 @@ namespace AngouriMath.Functions.Algebra
             // branch -- a term of a top-level sum re-did its declined sub-integrals for that.
             var truncatedBefore = descentTruncated;
             descentTruncated = false;
+            var wantedBefore = sumsOverRootsWanted;
             Entity? computed;
             bool truncatedHere;
             try
@@ -648,7 +676,7 @@ namespace AngouriMath.Functions.Algebra
                 // again, which needs the recent answers and not all of them.
                 if (into.Count >= MostAnswersKept)
                     into.Clear();
-                into[key] = computed;
+                into[key] = (computed, computed is null && sumsOverRootsWanted != wantedBefore);
             }
             return computed;
         }
