@@ -6514,6 +6514,23 @@ the rules for a root of an even power.
 to 309 of 422 with five fewer timeouts, and family 6 from 377 to 378; no row is lost in families
 1, 4, 5, 6 or 7, and the 1774-problem suite stays at 1707 with no wrong answer.
 
+### A constant comes out of a fractional power of `1 - sec^2` negated, for every real constant
+
+**Answers where there were none.** `(a - a sec(c + d x)^2)^(7/2)` was left unevaluated by 2.5.0, and since the entry
+above it was answered `provided a > 0`: for a positive `a` the base is `-a tan(c + d x)^2`, the root of a negative,
+so the answer held only where the integrand is complex and said nothing for the negative `a` where it is real.
+`1 - sec(u)^2` is nowhere positive, and `(c g)^b` is `(-c)^b (-g)^b` for every real `c` when `-g` is not negative, so
+the constant now comes out negated with the sum, and the answer holds for every `a` with no condition. The same for
+`1 - csc(u)^2`, and for any `p - q sec(u)^2` with numbers `q > 0` and `q >= p`. Rubi's 4.5.7
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a - a*sec(c + d*x)^2)^(7/2)".ToEntity().Integrate("x")` | `integral(...)` | 162 characters |
+| `"(a - a*sec(c + d*x)^2)^(1/2)".ToEntity().Integrate("x")` | `integral(...)` | 77 characters |
+| `"1/(a - a*sec(c + d*x)^2)^(7/2)".ToEntity().Integrate("x")` | `integral(...)` | 187 characters |
+| `"(a - a*csc(c + d*x)^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 129 characters |
+
 ### A power of `a cos + b sin` with symbolic coefficients is integrated under the tangent
 
 `sec(x)^2/(a cos(x) + b sin(x))^4` was left as written after ten minutes, where
