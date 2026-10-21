@@ -684,6 +684,17 @@ namespace AngouriMath.Functions.Algebra
             // A symbolic power of a sine, cosine, secant or cosecant times `alpha + beta f^2`, where it is
             // the derivative of `cos sin^(m + 1)`, `sin cos^(m + 1)`, `tan sec^m` or `cot csc^m`.
             if ((answer = IndefiniteIntegralSolver.SolveASymbolicPowerOfATrigonometricFunctionAsTheDerivativeOfAProduct(expr, x)) is { }) return answer;
+            // And numbers not whole for the exponents, two apart, by the reduction from the highest
+            // down: split, `1/csc(u)^(3/2) - sqrt(csc(u))/3` is two elliptic integrals.
+            if ((answer = IndefiniteIntegralSolver.SolveFractionalPowersOfATrigonometricFunctionTwoApartByTheReduction(expr, x)) is { }) return answer;
+            // And the derivative of a sine raised from nothing times powers of the cosine and sums in it,
+            // or of a cosine beside the sine, alone or beside x by parts: the half angle declined
+            // `(a + a cos(u))^(3/2)/cos(u)^(5/4)`, and parts integrated `x (b + a sin(x))/(a + b sin(x))^2`'s
+            // derivative into a function of tan(x/2) and ran out of time.
+            if ((answer = IndefiniteIntegralSolver.SolveAsTheDerivativeOfASineRaisedFromNothingBesidePowersOfTheCosine(expr, x, integrateByParts)) is { }) return answer;
+            // A cosine beside a function of the sine with a power off the rationals in it, in the sine:
+            // the substitution search declined `cos(x)/(sin(x) + sin(x)^sqrt(2))`.
+            if ((answer = IndefiniteIntegralSolver.SolveACosineBesideAFunctionOfTheSineWithAnIrrationalPowerInIt(expr, x, integrateByParts)) is { }) return answer;
             // A power of a sine, cosine or hyperbolic one over a binomial in a power of it, over the
             // binomial's roots, before the rules that spent the budget on `sinh(y)^4/(a + b sinh(y)^3)`.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOverABinomialInAPowerOfASineOverItsRoots(expr, x)) is { }) return answer;
@@ -1101,6 +1112,9 @@ namespace AngouriMath.Functions.Algebra
             // A fractional power of a constant times an even power of a function, the function
             // taken out with its sign: `(a sin(x)^2)^(5/2)` is `a^(5/2) sgn(sin(x)) sin(x)^5`.
             if ((answer = IndefiniteIntegralSolver.SolveByTakingAFunctionOutOfAPowerOfItsEvenPower(expr, x, integrateByParts)) is { }) return answer;
+            // And a symbolic root of a power, `(c sin(u)^n)^(1/n)`, the function out and the rest a
+            // constant written back.
+            if ((answer = IndefiniteIntegralSolver.SolveByTakingAFunctionOutOfASymbolicRootOfItsPower(expr, x, integrateByParts)) is { }) return answer;
             // A sum of two roots below the bar, multiplied above and below by its conjugate:
             // `1/(sqrt(A) - sqrt(B))` is `(sqrt(A) + sqrt(B))/(A - B)`.
             if ((answer = IndefiniteIntegralSolver.SolveByRationalisingASumOfRoots(expr, x, integrateByParts)) is { }) return answer;
