@@ -225,6 +225,9 @@ namespace AngouriMath.Functions
             return result;
         }
 
+        /// <summary>The packed monomial of <paramref name="variable"/> to the first power.</summary>
+        internal static ulong MonomialOf(int variable) => Pack(variable, 1);
+
         internal MultivariatePolynomial ScaleBy(ERational factor)
         {
             if (factor.IsZero)
