@@ -77,12 +77,14 @@ namespace AngouriMath.Functions
         /// <summary>
         /// Where an expression that is not real everywhere is real on an open set: the
         /// conjunction of <c>b &gt; 0</c> over the bases <c>b</c> of its powers to a real
-        /// exponent that is not whole, or <see langword="null"/> where it has no such power or
+        /// exponent that is not whole and the arguments <c>b</c> of its logarithms to a positive
+        /// constant base, or <see langword="null"/> where it has no such power or logarithm or
         /// a shape <see cref="IsRealValued"/> does not list. <c>sqrt(1 + x) + 1/2</c> is real
-        /// where <c>1 + x &gt; 0</c>, and <c>x^(1/3) - 1</c> where <c>x &gt; 0</c>, which is all
-        /// that is claimed: with the downcasting off a cube root of a negative is the principal
-        /// one. Strict for the reason <see cref="IsRealValued"/> reads only a strict bound: a
-        /// derivative needs the expression real on an interval around the point.
+        /// where <c>1 + x &gt; 0</c>, <c>x^(1/3) - 1</c> where <c>x &gt; 0</c>, and
+        /// <c>ln(2 x^3)</c> where <c>2 x^3 &gt; 0</c>, which is all that is claimed: with the
+        /// downcasting off a cube root of a negative is the principal one. Strict for the reason
+        /// <see cref="IsRealValued"/> reads only a strict bound: a derivative needs the
+        /// expression real on an interval around the point.
         /// </summary>
         /// <remarks>
         /// Asked by differentiation where the sign or the modulus of such an expression is
@@ -133,6 +135,16 @@ namespace AngouriMath.Functions
                         return false;
                     if (!bases.Contains(@base))
                         bases.Add(@base);
+                    return true;
+                // A logarithm to a positive constant base is real where its argument is positive,
+                // and so is gathered as a root's base is: sgn(ln(a x^n)), which the antiderivative
+                // of sqrt(ln(a x^n)^2)/x carries, is flat where a x^n > 0.
+                case Logf(var logBase, var antilogarithm) when !logBase.ContainsNode(x)
+                        && IsARealNumber(logBase.Evaled) && ((Complex)logBase.Evaled).RealPart.IsPositive:
+                    if (!GatherTheBasesOfRoots(antilogarithm, x, bases))
+                        return false;
+                    if (!bases.Contains(antilogarithm))
+                        bases.Add(antilogarithm);
                     return true;
                 case Sinf or Cosf or Tanf or Cotanf or Secantf or Cosecantf
                      or Arctanf or Arccotanf or Signumf or Erff or Erfcf or Erfif or Eif or Sif or Shif:
