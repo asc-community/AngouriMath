@@ -7030,7 +7030,20 @@ namespace AngouriMath.Functions.Algebra
         /// cancelled, power for power; the factors are kept as factors.
         /// </summary>
         private static Entity WithTheFactorsWrittenOnBothSidesCancelled(Entity.Variable u, Entity quotient)
+            => WithTheFactorsWrittenOnBothSidesCancelled(u, quotient, keepTheWrittenBases: false, out _);
+
+        /// <summary>
+        /// <paramref name="quotient"/> with each factor written alike above and below the bar, read
+        /// as its polynomial in <paramref name="u"/>, cancelled, power for power. What is left is
+        /// written over one bar with its bases as polynomials, or, with
+        /// <paramref name="keepTheWrittenBases"/>, with its bases as they were written and the
+        /// factors below the bar as negative powers. <paramref name="anyCancelled"/> says whether a
+        /// sum was on both sides; a power of <paramref name="u"/> alone is not counted, since the
+        /// differential of an exponential's substitution writes one below every integrand.
+        /// </summary>
+        private static Entity WithTheFactorsWrittenOnBothSidesCancelled(Entity.Variable u, Entity quotient, bool keepTheWrittenBases, out bool anyCancelled)
         {
+            anyCancelled = false;
             var (top, bottom) = Functions.SingleQuotient.Of(quotient);
             Entity AsItsPolynomial(Entity @base)
             {
@@ -7049,19 +7062,19 @@ namespace AngouriMath.Functions.Algebra
                 }
                 return written.InnerSimplified;
             }
-            List<(Entity Base, EInteger Power)> Factors(Entity side)
+            List<(Entity Base, Entity Written, EInteger Power)> Factors(Entity side)
             {
-                var factors = new List<(Entity Base, EInteger Power)>();
+                var factors = new List<(Entity Base, Entity Written, EInteger Power)>();
                 foreach (var factor in Mulf.LinearChildren(side))
                 {
-                    var (@base, power) = factor is Powf(var raised, Number.Integer exponent) && exponent.EInteger.Sign > 0
-                        ? (raised, exponent.EInteger) : (factor, EInteger.One);
-                    @base = AsItsPolynomial(@base);
+                    var (raised, power) = factor is Powf(var raisedBase, Number.Integer exponent) && exponent.EInteger.Sign > 0
+                        ? (raisedBase, exponent.EInteger) : (factor, EInteger.One);
+                    var @base = AsItsPolynomial(raised);
                     var at = factors.FindIndex(written => written.Base == @base);
                     if (at < 0)
-                        factors.Add((@base, power));
+                        factors.Add((@base, keepTheWrittenBases ? raised : @base, power));
                     else
-                        factors[at] = (@base, factors[at].Power.Add(power));
+                        factors[at] = (@base, factors[at].Written, factors[at].Power.Add(power));
                 }
                 return factors;
             }
@@ -7075,12 +7088,17 @@ namespace AngouriMath.Functions.Algebra
                 if (j < 0)
                     continue;
                 var common = EInteger.Min(above[i].Power, below[j].Power);
-                above[i] = (above[i].Base, above[i].Power.Subtract(common));
-                below[j] = (below[j].Base, below[j].Power.Subtract(common));
+                if (common.Sign > 0 && above[i].Base is Sumf or Minusf)
+                    anyCancelled = true;
+                above[i] = (above[i].Base, above[i].Written, above[i].Power.Subtract(common));
+                below[j] = (below[j].Base, below[j].Written, below[j].Power.Subtract(common));
             }
-            static Entity Product(List<(Entity Base, EInteger Power)> factors)
+            static Entity Product(List<(Entity Base, Entity Written, EInteger Power)> factors)
                 => factors.Where(written => !written.Power.IsZero).Aggregate((Entity)Number.Integer.One,
-                    (product, written) => product * (written.Power.Equals(EInteger.One) ? written.Base : MathS.Pow(written.Base, Number.Integer.Create(written.Power))));
+                    (product, written) => product * (written.Power.Equals(EInteger.One) ? written.Written : MathS.Pow(written.Written, Number.Integer.Create(written.Power))));
+            if (keepTheWrittenBases)
+                return below.Where(written => !written.Power.IsZero).Aggregate(Product(above),
+                    (product, written) => product * MathS.Pow(written.Written, Number.Integer.Create(written.Power.Negate()))).InnerSimplified;
             return (Product(above) / Product(below)).InnerSimplified;
         }
 
@@ -26609,8 +26627,22 @@ namespace AngouriMath.Functions.Algebra
             // `1/((a + b u)^2 ln F)` is a quadratic below the bar with `ln F` in every
             // coefficient, and the symbolic quadratic rule answers that as a piecewise on
             // whether `b^2 ln F` is zero, where `1/(a + b u)^2` is `-1/(b (a + b u))`.
-            var integrand = Functions.SingleQuotient.Combine(
-                rewritten / (Number.Rational.Create(k) * u)).Simplify();
+            // With symbols in it, a sum the substitution writes on both sides is cancelled as it is
+            // written, in place of the simplification: `csch(x)^2/(a + b coth(x))^2` is
+            // `4 (u^2 - 1)^2 u^2/((u^2 - 1)^2 (a (u^2 - 1) + b (u^2 + 1))^2 u)`, and the search for a
+            // simpler form, which with the factor in it grows with the symbols, ran past twenty
+            // seconds on it -- Rubi's 6.4.2 `x csch(x)^2/(a + b coth(x))^2` timed out on that, by
+            // parts against the whole rational function -- where cancelled it is
+            // `4 u (a (u^2 - 1) + b (u^2 + 1))^(-2)` in seven milliseconds. Left as the product the
+            // cancellation writes, which is what the search wrote for the tangent's
+            // `sech(x)^2/(a + b tanh(x))^2` after three seconds: simplified once more it is a
+            // quotient, which the symbolic quadratic rule answers with the case `a + b = 0` apart,
+            // and a piecewise antiderivative leaves parts a piecewise to integrate. With numbers
+            // alone, or no sum written twice, it is simplified as it was.
+            var combined = Functions.SingleQuotient.Combine(rewritten / (Number.Rational.Create(k) * u));
+            var integrand = combined.Vars.Any(symbol => symbol != u)
+                && WithTheFactorsWrittenOnBothSidesCancelled(u, combined, keepTheWrittenBases: true, out var anyCancelled) is var cancelled && anyCancelled
+                ? cancelled : combined.Simplify();
             if (integrand is Providedf(var inner, _))
                 integrand = inner;
             integrand = WithLogarithmArgumentsOverOneBar(integrand, u);

@@ -6111,6 +6111,22 @@ in front -- the identity `sqrt(a + a sin(y))` already had. Exact for any `a`, th
 | `"cosh(x)/sqrt(a-a*cosh(x))".Integrate("x")` | left unevaluated | the antiderivative, with `sgn(sinh(x/2))` in front |
 | `"(A+B*cosh(x))/(a-a*cosh(x))^(5/2)".Integrate("x")` | left unevaluated | the antiderivative, with `sgn(sinh(x/2))` in front |
 
+### A sum the exponential substitution writes on both sides of the bar is cancelled before the quotient is simplified
+
+**Answers where there were none.** `x csch(x)^2/(a + b coth(x))^2` ran past the time limit, and 2.5.0 left it
+unevaluated. Under `u = e^x` its rational part is `4 (u^2 - 1)^2 u^2/((u^2 - 1)^2 (a (u^2 - 1) + b (u^2 + 1))^2 u)`,
+and the simplification of that quotient, which with symbols in it searches for a factor to cancel, ran past twenty
+seconds. The factor written on both sides is now cancelled as it is written, which leaves
+`4 u (a (u^2 - 1) + b (u^2 + 1))^(-2)`, and one step of parts against it answers. Only where the integrand has a symbol
+and a sum stands on both sides of the bar; otherwise the quotient is simplified as before. At `a = -b` the answer has
+no value, as the answer to the hyperbolic tangent's `x sech(x)^2/(a + b tanh(x))^2` already had none there. Rubi's
+6.4.2 ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x*csch(x)^2/(a + b*coth(x))^2".ToEntity().Integrate("x")` | `integral(...)` | 1,025 characters |
+| `"x/(sinh(x)^2*(a + b*coth(x))^2)".ToEntity().Integrate("x")` | `integral(...)` | 1,025 characters |
+
 ### A rational function of `e^y` with a symbolic denominator is integrated by the hyperbolic half angle
 
 `csch(x)^2/(a + b sinh(x))^2` was a search past eighty seconds: under `u = e^x` its denominator
