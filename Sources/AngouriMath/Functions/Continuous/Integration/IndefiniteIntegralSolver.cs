@@ -26501,7 +26501,10 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         internal static Entity? SolvePowersOfOneLinearAsOnePower(Entity expr, Entity.Variable x, bool integrateByParts)
         {
-            if (!Integration.AnsweringTheQuestionAsked)
+            // Below the top only powers of x itself, with no sum in x to read: `(u^2)^p`, which
+            // `u = ln(x)` makes of Rubi's 3.5 `(ln(x)^2)^p/x`, is `u (u^2)^p/(2 p + 1)` and was
+            // declined there.
+            if (!Integration.AnsweringTheQuestionAsked && expr.Nodes.Any(node => node is Sumf or Minusf && node.ContainsNode(x)))
                 return null;
             // Without a leading `1 *`, which is another spelling to the rules that read the result.
             static Entity Times(Entity a, Entity b) => a == Number.Integer.One ? b : a * b;

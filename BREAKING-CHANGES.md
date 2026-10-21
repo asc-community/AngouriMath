@@ -398,6 +398,20 @@ the working digits, or `MathS.Settings.PrecisionErrorZeroRange` where a caller h
 still that integer, so `e^(-123.456)` is 0 as it was.
 [#1338](https://github.com/asc-community/AngouriMath/issues/1338).
 
+### A power of a power of a logarithm over x is integrated below the question asked too
+
+**Answers where there were none.** Rubi's 3.5 `(ln(a x^n)^2)^p/x` was declined. Under `u = ln(a x^n)` it is
+`(u^2)^p/n`, a symbolic power of a power of the variable, and the rule for powers of one linear answered that only
+where it was the question asked; below it, the rule now reads powers of the variable itself, with no sum in it. Its integral is
+`u (u^2)^p/(2 p + 1)` on both sides of `u = 0`, written as `(u^2)^p/u^(2 p)`, constant on each side, times
+`u^(2 p + 1)/(2 p + 1)` ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(ln(x)^2)^p/x".ToEntity().Integrate("x")` | `integral(...)` | 79 characters |
+| `"(ln(a*x^n)^2)^p/x".ToEntity().Integrate("x")` | `integral(...)` | 107 characters |
+| `"(ln(a*x)^3)^p/x".ToEntity().Integrate("x")` | `integral(...)` | 91 characters |
+
 ### A polynomial over a power of the linear of an artanh is written in powers of the linear
 
 **Answers where there were none.** `x (a + b atanh(c x))^2/(d + c d x)^3`, Rubi's 7.3.4, ran out of time. In powers of
