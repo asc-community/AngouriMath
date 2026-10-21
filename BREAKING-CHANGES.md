@@ -1448,6 +1448,38 @@ with a 107-bit leading coefficient, which needs 2^535. Up to degree six the boun
 | `"x^5/(216+108*x^2+324*x^3+18*x^4+x^6)^2".ToEntity().Integrate("x")` | `integral(...)` | 377 characters |
 | `"x^2/(216+108*x^2+324*x^3+18*x^4+x^6)^2".ToEntity().Integrate("x")` | `integral(...)` | 394 characters |
 
+### Logarithms past the twelfth degree with residues in a quadratic field, and five more shapes from the independent suites, are integrated
+
+**Answers where there were none.** Seven problems of the Bronstein, Hearn, Hebisch, Timofeev and Welz suites were
+declined or ran out of time ([#233](https://github.com/asc-community/AngouriMath/issues/233)):
+- A logarithmic part past the twelfth degree, up to the sixteenth, where every residue lies in a field of degree at most
+  two. Hearn's `(3 + 3 x - ... + 7 x^13)/(1 + 2 x - ... + x^14)` is over `P^2 - 2 Q^2` for `P = x^7 - x - 1` and
+  `Q = x + x^2`, irreducible over the rationals, and its residues are the roots of `4 t^2 - 4 t - 1`: two logarithms of
+  `P ± sqrt(2) Q`. Where a factor of the resultant of degree three or more shows modulo a prime, the path is left
+  before the factorization.
+- `e^(x + e^x)` is kept whole as a substitution's candidate: Hebisch's `(1 + e^x) e^(x + e^x)/(x + e^x)` is `e^u/u`
+  under `u = x + e^x`, which is `Ei(x + e^x)`.
+- The root of a real square beside a constant off the real line, over a power of a real linear. The quadratic keeps the
+  sign of its imaginary part on the real line, so the root and the logarithm of the artanh's argument are continuous
+  there: Welz's `1/((1 + x)^2 sqrt(2) sqrt(x^2 - i)) + 1/((1 + x)^2 sqrt(2) sqrt(x^2 + i))`.
+- A rational function times `sqrt(c x^2 + d sqrt(P))/sqrt(P)`, `P = a + b x^4` with `c^2 = b d^2`. On the real line that
+  is `(d/sqrt(2)) (1/sqrt(c x^2 - i d sqrt(a)) + 1/sqrt(c x^2 + i d sqrt(a)))`, two roots of quadratics: Welz's
+  `sqrt(x^2 + sqrt(1 + x^4))/((1 + x) sqrt(1 + x^4))` and its twin over `(1 + x)^2`.
+- A symbolic power inside a reciprocal of a root: Timofeev's `1/((1 + x^(2n)) sqrt((1 + x^(2n))^(1/n) - x^2))` is
+  `arctan(x/sqrt((1 + x^(2n))^(1/n) - x^2))`.
+- A rational function of `x` and `L = ln(x)` over distinct linears in `L`, split into partial fractions in `L`:
+  Bronstein's `(2 L^2 - L - x^2)/(L^3 - x^2 L)` is `1/L + ((x - 1)/(2 x))/(L - x) + ((x + 1)/(2 x))/(L + x)`, the
+  logarithmic integral and two logarithms. Only for two linears or more, and only where nothing answers it whole.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(3+3*x-4*x^2-4*x^3-7*x^6+4*x^7+10*x^8+7*x^13)/(1+2*x-x^2-4*x^3-2*x^4-2*x^7-2*x^8+x^14)".ToEntity().Integrate("x")` | no answer in twenty seconds | 189 characters |
+| `"(1+e^x)*e^(x+e^x)/(x+e^x)".ToEntity().Integrate("x")` | `integral(...)` | `Ei(x + e^x)` |
+| `"1/((1+x)^2*sqrt(2)*sqrt(-i+x^2))+1/((1+x)^2*sqrt(2)*sqrt(i+x^2))".ToEntity().Integrate("x")` | `integral(...)` | 494 characters |
+| `"sqrt(x^2+sqrt(1+x^4))/((1+x)*sqrt(1+x^4))".ToEntity().Integrate("x")` | `integral(...)` | 333 characters |
+| `"1/((1+x^(2*n))*(-x^2+(1+x^(2*n))^(1/n))^(1/2))".ToEntity().Integrate("x")` | `integral(...)` | 78 characters |
+| `"(-x^2-ln(x)+2*ln(x)^2)/(-x^2*ln(x)+ln(x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 55 characters |
+
 ### A rational function past the twelfth degree is reduced by Hermite's method
 
 **Answers where there were none.** The integrator read a denominator of degree twelve at most, so a derivative over

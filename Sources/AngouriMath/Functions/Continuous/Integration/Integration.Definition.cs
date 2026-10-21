@@ -908,6 +908,9 @@ namespace AngouriMath.Functions.Algebra
             // Four nested roots with a closed form: `sqrt(1 + sqrt(1 - x^2))`,
             // `sqrt(x^2 + sqrt(1 + x^4))/sqrt(1 + x^4)` and the two beside them in Rubi's 1.3.3.
             if ((answer = IndefiniteIntegralSolver.SolveANestedRootByItsClosedForm(expr, x, integrateByParts)) is { }) return answer;
+            // And the second of them beside a rational function, over the two conjugate roots it is
+            // on the real line: `sqrt(x^2 + sqrt(1 + x^4))/((1 + x) sqrt(1 + x^4))`.
+            if ((answer = IndefiniteIntegralSolver.SolveANestedRootOverTheRootInsideItAsTwoConjugateRoots(expr, x, integrateByParts)) is { }) return answer;
             // And any power of a square in any power of x, as the power of its root times a factor
             // constant where the root is not zero: `x^2 (a^2 + 2 a b x^3 + b^2 x^6)^p`.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAPowerOfASquareAsAPowerOfItsRoot(expr, x, integrateByParts)) is { }) return answer;
@@ -1527,6 +1530,9 @@ namespace AngouriMath.Functions.Algebra
             // asked without the division's condition that the power is not zero: last, where nothing
             // has answered it with the condition, `x^2/((1 + x^2) (a + b x + c x^2)^(3/2))`.
             if ((answer = IndefiniteIntegralSolver.SolveByDividingWithoutTheConditionsOfTheDenominator(expr, x, integrateByParts)) is { }) return answer;
+            // A rational function of x and ln(x) over distinct linears in the logarithm, by partial
+            // fractions in it, where nothing has answered it whole: `(2 L^2 - L - x^2)/(L^3 - x^2 L)`.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOfTheLogarithmByPartialFractionsInIt(expr, x, integrateByParts)) is { }) return answer;
             return null;
         }
         /// <summary>
