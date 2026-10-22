@@ -89,26 +89,26 @@ namespace AngouriMath
             /// The value as a <see cref="Real"/>, read as the binary <see langword="float"/> it
             /// is — so <c>0.1f</c> becomes the value that literal holds, not one tenth.
             /// </summary>
-            public static implicit operator Number(float value) => Real.Create(EDecimal.FromSingle(value));
+            public static implicit operator Number(float value) => Real.FromMachineNumber(EDecimal.FromSingle(value));
 
             /// <summary>
             /// The value as a <see cref="Real"/>, read as the binary <see langword="double"/> it
             /// is rather than as the decimal it was written as.
             /// </summary>
-            public static implicit operator Number(double value) => Real.Create(EDecimal.FromDouble(value));
+            public static implicit operator Number(double value) => Real.FromMachineNumber(EDecimal.FromDouble(value));
 
             /// <summary>
             /// The value as a <see cref="Real"/>. A <see langword="decimal"/> is decimal
             /// already, so this one keeps the digits that were written.
             /// </summary>
-            public static implicit operator Number(decimal value) => Real.Create(EDecimal.FromDecimal(value));
+            public static implicit operator Number(decimal value) => Real.FromMachineNumber(EDecimal.FromDecimal(value));
 
             /// <summary>
             /// The .NET complex number as a <see cref="Complex"/>, through its two
             /// <see langword="double"/> parts and their precision.
             /// </summary>
             public static implicit operator Number(System.Numerics.Complex value)
-                => Complex.Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
+                => Complex.FromMachineNumbers(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
             /// <summary>The big integer as an <see cref="Integer"/>, exactly and at any size.</summary>
             /// <remarks>
             /// Read as the two's-complement bytes it is, which is what

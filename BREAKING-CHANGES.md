@@ -105,6 +105,24 @@ solver's check that a limit agrees from both sides goes through the same compari
 | `AreEqualNumerically("2 x (-1/4 + ln(x)/2) + 1/x * 2/4 * x^2", "x ln(x)")` | `false` | `true` |
 | `AreEqualNumerically` of `x ln(x)` and its antiderivative's derivative | `false` | `true` |
 
+### A computed value is a rational only within half the working digits
+
+**Silent: wrong answers.** A number an evaluation produced became the small rational it was near within a fixed
+`1e-16`, whatever the precision, while it became the integer it was near only within half the working digits. So at two
+thousand digits `ln(e^a + sqrt(2) e^(a/2) + 1)` was exactly `a`, where it is `a + 1.2e-67`, and the derivative of a right
+antiderivative of `1/sqrt(a + i a sinh(c + d x))` at a large argument lost its imaginary part, so that a check by
+evaluation read the antiderivative as wrong. A value is now that rational only within half the working digits, as for an
+integer. A number from a `double`, a `float` or a `decimal` carries its type's digits, not the working precision's, and
+is rounded as before: `(Entity)(1m / 3)` is still `1/3` ([#1944](https://github.com/asc-community/AngouriMath/issues/1944)).
+
+| Input, at the default hundred digits unless stated | Was (2.6.0) | Now |
+|---|---|---|
+| `"1/3 + 1e-30".EvalNumerical()` | `1/3` | `0.33333333333333333333333333333433…` |
+| `"0.333333333333333333333".EvalNumerical()` | `1/3` | `0.333333333333333333333` |
+| `"1.000000000000000000001".EvalNumerical()` | `1` | `1.000000000000000000001` |
+| The derivative of the antiderivative of `1/sqrt(a + i*a*sinh(c + d*x))` at `a, c, d, x = 21/10, 19/10, 17/10, 227283/1250`, at 2000 digits | `2.0185464…E-68` | `2.0185464…E-68 - 2.0185464…E-68i` |
+| `"1/3 + 1e-60".EvalNumerical()`, `"sin(pi)".EvalNumerical()`, `(Entity)(1.0 / 3)` | `1/3`, `0`, `1/3` | `1/3`, `0`, `1/3` |
+
 ---
 
 ## 2.6.0 — since 2.5.0
