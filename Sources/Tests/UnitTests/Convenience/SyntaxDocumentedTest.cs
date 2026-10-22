@@ -140,6 +140,9 @@ namespace AngouriMath.Tests.Convenience
         [InlineData("альфа")]
         [InlineData("x_ω")]
         [InlineData("sinx")]
+        // A subscript may have a subscript. https://github.com/asc-community/AngouriMath/issues/524
+        [InlineData("x_1_2")]
+        [InlineData("X_a_beta")]
         public void AName(string written)
         {
             var variable = Assert.IsType<Entity.Variable>(written.ToEntity());
@@ -154,7 +157,7 @@ namespace AngouriMath.Tests.Convenience
         [Theory]
         [InlineData("_x")]
         [InlineData("x_")]
-        [InlineData("x_1_2")]
+        [InlineData("x__1")]
         [InlineData("ﬁ")]
         public void WhatIsNotAName(string written) =>
             Assert.Throws<UnhandledParseException>(() => written.ToEntity());

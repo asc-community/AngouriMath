@@ -42,6 +42,19 @@ A not-equal written `<>` is read as `not (a = b)`, and printed that way.
 
 ## Unreleased — since 2.6.0
 
+### A subscript may have a subscript
+
+**Not silent: what was a parse error is a name.** A name took at most one `_`, so `x_1_2` and `X_a_beta` were lexer
+errors. A subscript may now have one of its own: `X_a_beta` is one variable, `X` with the subscript `a_beta`, printed
+in LaTeX as `X_{a_{\beta}}`. `_` still neither begins nor ends a name, and two do not stand together
+([#524](https://github.com/asc-community/AngouriMath/issues/524)).
+
+| Input | Was (2.6.0) | Now |
+|---|---|---|
+| `"X_a_beta + 10".ToEntity()` | an `UnhandledParseException` | `X_a_beta + 10` |
+| `MathS.Var("X_a_beta").Latexize()` | an `UnhandledParseException` | `X_{a_{\beta}}` |
+| `"x__1".ToEntity()` | an `UnhandledParseException` | an `UnhandledParseException` |
+
 ### A numerical definite integral is Gauss–Legendre, with the digits it knows
 
 **Silent: wrong answers, and values where there was NaN.** `Entity.DefiniteIntegral(x, a, b, steps)` was the mean of
