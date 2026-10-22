@@ -211,6 +211,15 @@ namespace AngouriMath
                 => $@"\operatorname{{li}}\left({Argument.Latexize()}\right)";
         }
 
+        partial record Polygammaf
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => Order is Number.Integer { IsZero: true }
+                ? $@"\psi\left({Argument.Latexize()}\right)"
+                : $@"\psi^{{({Order.Latexize()})}}\left({Argument.Latexize()}\right)";
+        }
+
         partial record Sif
         {
             /// <inheritdoc/>

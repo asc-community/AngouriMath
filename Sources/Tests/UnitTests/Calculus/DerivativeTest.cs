@@ -202,22 +202,22 @@ namespace AngouriMath.Tests.Calculus
         /// <summary>
         /// https://github.com/asc-community/AngouriMath/issues/958 -- differentiating a factorial
         /// answered <c>NaN</c>, which claims the derivative does not exist. It does: <c>x!</c> is
-        /// smooth away from the poles and the library evaluates <c>(1/2)!</c> happily. The honest
-        /// answer is the unevaluated derivative, which is what every other node it cannot
-        /// differentiate already returns.
+        /// smooth away from the poles, and it declined until the library had the digamma function
+        /// to write it with: <c>(x!)' = x! psi(x + 1)</c>.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/171">#171</a>
         /// </summary>
-        [Fact] public void AFactorialDeclinesRatherThanClaimingNoDerivativeExists()
+        [Fact] public void AFactorialDifferentiatesThroughTheDigammaFunction()
         {
             var derivative = MathS.Derivative(MathS.Factorial(x), x).InnerSimplified;
             Assert.NotEqual(MathS.NaN, derivative);
-            Assert.Contains(derivative.Nodes, node => node is Entity.Derivativef);
+            Assert.Equal((MathS.Factorial(x) * MathS.Digamma(x + 1)).InnerSimplified, derivative);
         }
 
         /// <summary>
         /// The reason it mattered: <c>NaN</c> propagates, so one factorial destroyed the whole
-        /// derivative. Declining leaves every other term intact.
+        /// derivative.
         /// </summary>
-        [Fact] public void APartOfADerivativeSurvivesAFactorialItCannotTake()
+        [Fact] public void APartOfADerivativeSurvivesBesideAFactorial()
         {
             var derivative = (MathS.Factorial(x) + x.Pow(2)).Differentiate(x).InnerSimplified;
             Assert.NotEqual(MathS.NaN, derivative);
@@ -347,10 +347,13 @@ namespace AngouriMath.Tests.Calculus
         /// <a href="https://github.com/asc-community/AngouriMath/issues/1002">#1002</a>
         /// </summary>
         [Theory(Timeout = 30000)]
-        // a derivative that cannot be taken at all, so the node survives every pass
-        [InlineData("derivative(x!, x, 2)")]
+        // a derivative that cannot be taken at all, so the node survives every pass: a polygamma
+        // function's order is whole, so an order that varies has no derivative in it
+        [InlineData("derivative(polygamma(x, 2), x, 2)")]
+        [InlineData("derivative(polygamma(x, 2), x, 3)")]
+        [InlineData("derivative(sin(polygamma(x, 2)) + x, x, 2)")]
+        // and the factorial's, which it can take, to every power
         [InlineData("derivative(x!, x, 3)")]
-        [InlineData("derivative(sin(x!) + x, x, 2)")]
         public void ADerivativeThatCannotBeTakenTerminatesAtEveryPower(string exprRaw)
         {
             var expr = exprRaw.ToEntity();
@@ -363,8 +366,8 @@ namespace AngouriMath.Tests.Calculus
         /// <a href="https://github.com/asc-community/AngouriMath/issues/1002">#1002</a>
         /// </summary>
         [Fact] public void ADerivativeThatCannotBeTakenIsStillUnevaluated()
-            => Assert.True("derivative(x!, x, 2)".ToEntity().InnerSimplified is Derivativef,
-                $"expected it to stay a Derivativef, got {"derivative(x!, x, 2)".ToEntity().InnerSimplified}");
+            => Assert.True("derivative(polygamma(x, 2), x, 2)".ToEntity().InnerSimplified is Derivativef,
+                $"expected it to stay a Derivativef, got {"derivative(polygamma(x, 2), x, 2)".ToEntity().InnerSimplified}");
 
         /// <summary>
         /// A node that does not mention the variable is a constant in it, and its derivative is 0,
