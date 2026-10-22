@@ -34421,6 +34421,16 @@ namespace AngouriMath.Functions.Algebra
 
             // dx = c dt.
             var t = Variable.CreateUnique(expr, "u_scale");
+            // Homogeneous or not, read at two points first: the scaled integrand over itself at
+            // c = 1 is c^k wherever it is c^k h(t), the same at every t for a positive c, and
+            // where it is not the same the simplifications below cannot make it so. Each of
+            // them is a simplification of the whole integrand with the symbol in it, and the
+            // third alone, of the quotient, ran past thirty seconds on the rational function the
+            // imaginary tangent's substitution makes of Rubi's `tan(c + d x)^4/(a + i a tan(c + d x))^(4/3)`
+            // before it was declined. https://github.com/asc-community/AngouriMath/issues/718
+            var scaledAsWritten = expr.Substitute(x, scale * t) * scale;
+            if (VariesWith((scaledAsWritten / scaledAsWritten.Substitute(scale, Number.Integer.One)).Substitute(scale, Number.Rational.Create(137, 100)), t))
+                return null;
             // With the imaginary unit in the integrand the simplifier's search beside the symbol
             // does not end within any budget, and inner simplification separates what a whole
             // power of the scale does: `((1 + i a x)/(1 - i a x))^(-5/4)/x^2` under its radical's
@@ -43628,6 +43638,83 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Whether <paramref name="expr"/> takes two clearly different values at two positive
+        /// points of <paramref name="x"/>, every other symbol pinned to the same number at both:
+        /// then it depends on <paramref name="x"/> as a function of all its symbols, and no
+        /// rewriting that keeps its value writes it without <paramref name="x"/>. False wherever
+        /// a value cannot be had, and wherever the two agree.
+        /// </summary>
+        private static bool VariesWith(Entity expr, Entity.Variable x) => TakesTwoValues(expr, x) == true;
+
+        /// <summary>
+        /// <see cref="VariesWith"/>, with <see langword="null"/> where a value cannot be had at
+        /// either point: false is a decision that the two agree.
+        /// </summary>
+        private static bool? TakesTwoValues(Entity expr, Entity.Variable x)
+        {
+            var values = new[] { "1.37", "0.61", "2.23", "1.91", "0.83", "1.13" };
+            var pinned = expr;
+            var index = 0;
+            foreach (var symbol in expr.Vars.Distinct().ToList())
+                if (symbol != x)
+                    pinned = pinned.Substitute(symbol, Number.Real.Create(EDecimal.FromString(values[index++ % values.Length])));
+            Number.Complex? At(string point)
+                => pinned.Substitute(x, Number.Real.Create(EDecimal.FromString(point))).Evaled is Number.Complex { IsNaN: false } number && number.IsFinite
+                    ? number : null;
+            if (At("0.47") is not { } first || At("1.53") is not { } second)
+                return null;
+            var scale = System.Math.Max(1.0, System.Math.Max(((Number.Real)first.Abs()).EDecimal.ToDouble(), ((Number.Real)second.Abs()).EDecimal.ToDouble()));
+            return ((Number.Real)(first - second).Abs()).EDecimal.ToDouble() > 1e-6 * scale;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="candidate"/> is a factor free of <paramref name="x"/> with a
+        /// symbol in it times a function of <paramref name="x"/>, and what it leaves of
+        /// <paramref name="x"/> in <paramref name="integrandInU"/> may be a constant times its power
+        /// from -2 to 2: the quotient by one of those powers does not vary with <paramref name="x"/>,
+        /// read off two points, or cannot be read there. That is what
+        /// <see cref="WithTheCandidatesPowerLeftInX"/> takes from the simplified quotient, where the
+        /// factor stands on both sides of the bar and its cancelling is the condition that it is not
+        /// zero, under which the candidate varies at all. Never beside a linear candidate, which that
+        /// rewriting does not read.
+        /// </summary>
+        private static bool APowerOfACandidateWithASymbolicFactorMayBeLeftIn(Entity integrandInU, Entity candidate, Entity.Variable x)
+        {
+            if (IsALinearCandidate(candidate, x))
+                return false;
+            var (above, below) = Functions.SingleQuotient.Of(candidate);
+            return Mulf.LinearChildren(above).Concat(Mulf.LinearChildren(below)).Any(factor => !factor.ContainsNode(x) && factor.Vars.Any())
+                && APowerOfTheCandidateMayBeLeftIn(integrandInU, candidate, x);
+        }
+
+        /// <summary>Whether <paramref name="candidate"/> is written as a polynomial of degree at most one in <paramref name="x"/>.</summary>
+        private static bool IsALinearCandidate(Entity candidate, Entity.Variable x)
+            => IsWrittenAsAPolynomial(candidate, x) && TreeAnalyzer.TryGetPolynomial(candidate, x, out var asAPolynomial)
+                && asAPolynomial.Keys.Max()!.CompareTo(EInteger.One) <= 0;
+
+        /// <summary>
+        /// Whether what <paramref name="integrandInU"/> leaves of <paramref name="x"/> may be a
+        /// constant times a power of <paramref name="candidate"/> from -2 to 2, the powers
+        /// <see cref="WithTheCandidatesPowerLeftInX"/> reads: the quotient by one of them does not
+        /// vary with <paramref name="x"/>, read off two points, or cannot be read there.
+        /// </summary>
+        private static bool APowerOfTheCandidateMayBeLeftIn(Entity integrandInU, Entity candidate, Entity.Variable x)
+            => APowerOfTheCandidateIsLeftIn(integrandInU, candidate, x, unreadIsLeft: true);
+
+        /// <summary>
+        /// Whether the quotient of <paramref name="integrandInU"/> by a power of
+        /// <paramref name="candidate"/> from -2 to 2 takes one value at two points: or may, where
+        /// <paramref name="unreadIsLeft"/>, for a quotient that cannot be read there.
+        /// </summary>
+        private static bool APowerOfTheCandidateIsLeftIn(Entity integrandInU, Entity candidate, Entity.Variable x, bool unreadIsLeft)
+        {
+            foreach (var power in new[] { -1, 1, -2, 2 })
+                if (TakesTwoValues(integrandInU / MathS.Pow(candidate, power), x) is var takes && (takes is false || unreadIsLeft && takes is null))
+                    return true;
+            return false;
+        }
+
+        /// <summary>
         /// Whether <paramref name="expr"/> over <paramref name="derivative"/> takes two values at
         /// two points where <paramref name="candidate"/> takes one -- every other symbol pinned --
         /// which no function of the candidate does. False for a candidate
@@ -44022,6 +44109,10 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         private static Entity? WithTheCandidatesPowerLeftInX(Entity integrandInU, Entity u, Variable uSub, Entity.Variable x)
         {
+            // A condition on the constants, `provided not e = 0` from a change of scale, is read
+            // past and kept: as one factor it held both x and the candidate's variable.
+            if (integrandInU is Providedf(var provided, var condition) && !condition.ContainsNode(x) && !condition.ContainsNode(uSub))
+                return WithTheCandidatesPowerLeftInX(provided, u, uSub, x) is { } read ? read.Provided(condition) : null;
             // Not for a linear candidate: what is left of x beside `u = f x` is always a power of u,
             // and taking the change of scale here asks the same question again in u, ahead of the
             // rules that answer it. `(c + d x)^2/(a + i a tan(e + f x))^3` is answered in 33 s,
@@ -47399,12 +47490,18 @@ namespace AngouriMath.Functions.Algebra
         /// </summary>
         private static Entity SimplifiedWithoutTheImaginaryUnit(Entity written, Entity integrand)
         {
-            var simplified = written.Simplify(1);
-            if (simplified is Providedf(var inner, _)) simplified = inner; // TODO: singularities ignored but not handled properly
+            var simplified = WithoutItsCondition(written.Simplify(1));
             return HoldsTheImaginaryUnit(simplified) && !HoldsTheImaginaryUnit(written) && !HoldsTheImaginaryUnit(integrand)
                 ? written
                 : simplified;
         }
+
+        /// <summary>
+        /// <paramref name="integrandInU"/> without a condition written over the whole of it, which the
+        /// integral in a candidate's variable does not read.
+        /// </summary>
+        private static Entity WithoutItsCondition(Entity integrandInU)
+            => integrandInU is Providedf(var inner, _) ? inner : integrandInU; // TODO: singularities ignored but not handled properly
 
         /// <summary>
         /// Attempts to solve an integral using u-substitution.
@@ -47685,6 +47782,10 @@ namespace AngouriMath.Functions.Algebra
                     var complemented = WithTheComplementInEvenPowers(firstPass[u], u, uSub);
                     if (complemented == firstPass[u])
                         continue;   // nothing the first pass did not see
+                    // Nothing after the simplification here reads the candidate, so an x the quotient
+                    // varies with, which the simplification cannot take out, refuses it at once.
+                    if (VariesWith(complemented, x))
+                        continue;
                     integrandInU = SimplifiedWithoutTheImaginaryUnit(complemented, expr);
                 }
                 else
@@ -47755,7 +47856,40 @@ namespace AngouriMath.Functions.Algebra
                         && !inTermsOfU.Nodes.Any(node => IsASpecialFunction(node) && node.ContainsNode(x))
                         && VariesWhereASpecialFunctionIsHeld(inTermsOfU, uSub, x))
                         continue;
-                    integrandInU = !inTermsOfU.ContainsNode(x)
+                    // An x left that the quotient in u and x, the two read as independent, varies
+                    // with: the simplification, the cancelling and the gathering below keep the
+                    // value, and none of them can take that x out, so none is tried. Each was a
+                    // simplification of a rational function with symbols in it to be told so, and
+                    // one alone can run past any budget: the remainder the division leaves of
+                    // `t^(11/2)/((a/b + t)^3 (1 + t^2))`, which the tangent makes of Rubi's
+                    // `tan(c + d x)^(11/2)/(a + b tan(c + d x))^3`, took thirty-one seconds to be
+                    // simplified under `u = t^(3/2)` and forty-four for the four powers of t before
+                    // `u = sqrt(t)` answered it. The rewritings after them, which read u = g(x),
+                    // still see the quotient. Not under a sine or a cosine, whose quotient the pass
+                    // in the complement reads simplified.
+                    // And not where the candidate has a symbolic factor free of x and what is left
+                    // in x may be a constant times a power of it, which the rewriting below reads off
+                    // the simplified quotient: under `u = k sqrt(1 - a x)/sqrt(1 + a x)` Rubi's
+                    // `F^u/(1 - a^2 x^2)` over du/dx is `-F^u/(a u)`, and read off the simplified
+                    // quotient it keeps a `k/k` whose cancelling is the answer's `provided not k = 0`,
+                    // where the candidate varies at all. Read off the quotient as written, the answer
+                    // came back without it. Beside a candidate with no such factor the rewriting
+                    // reads either spelling alike, and the simplification is still not tried.
+                    // https://github.com/asc-community/AngouriMath/issues/718
+                    var keepsTheVariable = u is not (Sinf or Cosf) && inTermsOfU.ContainsNode(x) && VariesWith(inTermsOfU, x)
+                        && !APowerOfACandidateWithASymbolicFactorMayBeLeftIn(inTermsOfU, u, x);
+                    // Kept, its sums in x alone have their like terms collected, which the inner
+                    // simplification leaves standing: under `u = t^2`, what Rubi's
+                    // `1/((d + e x) (a + b (d + e x)^2 + c (d + e x)^4)^3)` leaves in `t = d + e x` is
+                    // `1/((d + t - d) 2 t (a + b u + c u^2)^3)`, whose `t^2` is the candidate, and read
+                    // with the `d` in it, it was refused as a power of nothing. And a condition on it is
+                    // taken off, as the simplification below takes its own: the shifted linear writes
+                    // `c + d^0 (t - c)`, inner-simplified to `1 provided not d = 0`, and under `u = t^3`
+                    // Rubi's `1/((c + d x) (a + b (c + d x)^3))` left `1/(3 u (a + b u)) provided not d = 0`,
+                    // whose integral in u was declined.
+                    integrandInU = keepsTheVariable
+                        ? WithoutItsCondition(inTermsOfU.InnerSimplified).Replace(node => node is Sumf or Minusf && node.ContainsNode(x) && !node.ContainsNode(uSub) ? Collected(node) : node)
+                        : !inTermsOfU.ContainsNode(x)
                         && TreeAnalyzer.TryGetPolyLinear(u, x, out var slope, out var offset) && !slope.ContainsNode(x) && !offset.ContainsNode(x)
                         && IsAFunctionOfTheTangentAlone(inTermsOfU, uSub) && !HoldsTheImaginaryUnit(inTermsOfU)
                         ? Functions.PartialFractions.Bare(inTermsOfU.InnerSimplified)
@@ -47770,7 +47904,7 @@ namespace AngouriMath.Functions.Algebra
                     // A factor written on both sides of the bar cancelled, where x survived:
                     // the one-level simplification leaves `u/((a w + b)^2 p u)` as it is, and
                     // the candidate was refused for the u it did not cancel.
-                    if (integrandInU.ContainsNode(x))
+                    if (!keepsTheVariable && integrandInU.ContainsNode(x))
                     {
                         var (top, bottom) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(integrandInU));
                         var cancelled = CancelCommonFactors(top, bottom);
@@ -47799,7 +47933,7 @@ namespace AngouriMath.Functions.Algebra
                     // from: done for every candidate that left an x, it gathered the exponentials of
                     // `1/((c + d x)^3 (a + a tanh(e + f x)))` and simplified them for every one, and
                     // a decline in a third of a second became a timeout.
-                    if (integrandInU.ContainsNode(x) && IsASpecialFunction(u))
+                    if (!keepsTheVariable && integrandInU.ContainsNode(x) && IsASpecialFunction(u))
                     {
                         var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(integrandInU));
                         var spread = above;
@@ -47830,7 +47964,14 @@ namespace AngouriMath.Functions.Algebra
                         // linears on either side of a nested division.
                         var (aboveTheBar, belowTheBar) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(integrandInU));
                         var inTheCandidate = WithPolynomialsInTheCandidate(aboveTheBar, u, uSub, x) / WithPolynomialsInTheCandidate(belowTheBar, u, uSub, x);
-                        if (inTheCandidate.ContainsNode(x) == false || inTheCandidate != aboveTheBar / belowTheBar)
+                        // And not simplified where what is left still varies with x: `t` below the
+                        // bar beside `u = 1 - t^2` is no polynomial in it, and the simplification of
+                        // `u^(9/2)/(2 t (c u + d (2 - u))^2 (2 - u))`, which the half-angle tangent
+                        // leaves of Rubi's `1/((a + a sec(e + f x))^(5/2) (c + d sec(e + f x))^2)`,
+                        // did not return in five minutes.
+                        if (inTheCandidate.ContainsNode(x) && VariesWith(inTheCandidate, x) && !APowerOfACandidateWithASymbolicFactorMayBeLeftIn(inTheCandidate, u, x))
+                            integrandInU = WithoutItsCondition(inTheCandidate.InnerSimplified);
+                        else if (inTheCandidate.ContainsNode(x) == false || inTheCandidate != aboveTheBar / belowTheBar)
                         {
                             integrandInU = SimplifiedWithoutTheImaginaryUnit(inTheCandidate, expr);
                         }
@@ -47843,6 +47984,23 @@ namespace AngouriMath.Functions.Algebra
                     // https://github.com/asc-community/AngouriMath/issues/718
                     if (integrandInU.ContainsNode(x) && WithTheCandidatesPowerLeftInX(integrandInU, u, uSub, x) is { } inPowersOfTheCandidate)
                         integrandInU = inPowersOfTheCandidate;
+                    // Kept, and an x still left that is a power of the candidate, which the kept
+                    // spelling did not let the rewriting read: simplified after all, as it was before
+                    // the gate, and read again. Beside `u = x^x` the kept quotient of Rubi's
+                    // `e^(x^x) x^(2 x) (1 + ln(x))` is `e^u x^(2 x) (1 + ln(x))/(u (x/x + ln(x)))`,
+                    // whose `x/x` the inner simplification leaves standing, and the `u^2` in it was
+                    // not seen. Only where the quotient by the power is read and is one value, and not
+                    // beside a special function of x, whose value in decimals is a series: read four
+                    // times for every candidate kept, `erf(b x)` took Rubi's `x^5 erf(b x)^2` to 4.85 GB
+                    // where it takes 1.63.
+                    if (keepsTheVariable && integrandInU.ContainsNode(x) && !IsALinearCandidate(u, x)
+                        && !inTermsOfU.Nodes.Any(node => IsASpecialFunction(node) && node.ContainsNode(x))
+                        && APowerOfTheCandidateIsLeftIn(inTermsOfU, u, x, unreadIsLeft: false))
+                    {
+                        integrandInU = SimplifiedWithoutTheImaginaryUnit(inTermsOfU, expr);
+                        if (integrandInU.ContainsNode(x) && WithTheCandidatesPowerLeftInX(integrandInU, u, uSub, x) is { } readAgain)
+                            integrandInU = readAgain;
+                    }
                     if (u is Sinf or Cosf && integrandInU.ContainsNode(x))
                         firstPass[u] = integrandInU;
                 }

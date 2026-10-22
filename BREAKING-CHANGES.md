@@ -2463,6 +2463,26 @@ takes the branches of that respelling
 | `"sec(x)*sqrt(cos(x) - sin(x))/sin(x)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 74 characters |
 | `"1/(cos(x)^(3/2)*sqrt(3*cos(x) + sin(x)))".ToEntity().Integrate("x")` | `integral(...)` | `2 * sqrt(tan(x) + 3)` |
 
+### A substitution's quotient that still varies with x is not simplified
+
+**Answers where there were none.** `tan(c + d x)^(11/2)/(a + b tan(c + d x))^3` ran out of time, and six more of
+Rubi's logarithmic, trigonometric and hyperbolic integrands did on the unreleased master. The time went in simplifications
+deep in the substitution search, of a candidate's quotient with symbols in it, where that quotient in `u` and `x`,
+the two read as independent, still varies with `x`: a rewriting that keeps its value cannot take that `x` out. Two
+values at two positive points now say so, and the simplification is not tried; the same in the step that writes the
+integrand as a polynomial in the candidate, in the pass in the complement, and in the scaling of the variable, which
+reads at two points whether the integrand is homogeneous first. A quotient that does not vary is simplified as before,
+and so is one whose candidate has a symbolic factor free of `x` and may leave a power of itself, whose simplification is
+what carries the substitution's own condition, `provided not k = 0` beside `F^(k sqrt(1 - a x)/sqrt(1 + a x))`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"tan(c+d*x)^(11/2)/(a+b*tan(c+d*x))^3".ToEntity().Integrate("x")` | no answer in twenty seconds | 4,909 characters |
+| `"tan(c+d*x)^4/(a+i*a*tan(c+d*x))^(4/3)".ToEntity().Integrate("x")` | `integral(...)` | 3,713 characters |
+| `"1/((c+d*sin(k+f*x))*sqrt(g*sin(k+f*x))*sqrt(a+a*sin(k+f*x)))".ToEntity().Integrate("x")` | `integral(...)` | 1,473 characters |
+| `"x^(7/2)/((a+b*x^2)^2*(c+d*x^2)^3)".ToEntity().Integrate("x")` | `integral(...)` | 2,685 characters |
+
 ### An even rational function with symbols in it is not searched for a substitution
 
 **Answers where there were none.** `(d + e x^2 + f x^4)/(x^4 (a + b x^2 + c x^4)^2)` ran past a minute: the
