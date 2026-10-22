@@ -58,7 +58,24 @@ namespace AngouriMath
                 /// Creates an instance of Real
                 /// (one can do it by implicit conversation)
                 /// </summary>
-                public static Real Create(EDecimal value)
+                /// <remarks>
+                /// A value is the small rational it is near within half the working digits, as it is the integer it
+                /// is near. Within a fixed 1e-16, <c>ln(e^a + sqrt(2) e^(a/2) + 1)</c> was exactly <c>a</c> at two
+                /// thousand digits, where it is <c>a + 1.2e-67</c>, and a derivative built on the difference of two
+                /// such logarithms lost its imaginary part.
+                /// https://github.com/asc-community/AngouriMath/issues/1944
+                /// </remarks>
+                public static Real Create(EDecimal value) => CreateWithRationalTolerance(value, MathS.Settings.DowncastingTolerance);
+
+                /// <summary>
+                /// A number from a <see cref="float"/>, a <see cref="double"/> or a <see cref="decimal"/>, which carries
+                /// that type's digits and not the working precision's: it is the small rational it is near within
+                /// <see cref="MathS.Settings.PrecisionErrorZeroRange"/>, ten to the minus sixteen, so that <c>1m/3</c>
+                /// is <c>1/3</c>. https://github.com/asc-community/AngouriMath/issues/1944
+                /// </summary>
+                internal static Real FromMachineNumber(EDecimal value) => CreateWithRationalTolerance(value, MathS.Settings.PrecisionErrorZeroRange);
+
+                private static Real CreateWithRationalTolerance(EDecimal value, EDecimal rationalTolerance)
                 {
                     if (!MathS.Settings.DowncastingEnabled)
                         return new Real(value);
@@ -79,7 +96,7 @@ namespace AngouriMath
                     if (intRest.GreaterThan(1 - tolerance))
                         return Integer.Create(intPart.Increment());
 
-                    var attempt = Rational.FindRational(value);
+                    var attempt = Rational.FindRationalWithin(value, rationalTolerance);
                     if (attempt is null ||
                         attempt.ERational.Numerator.Abs() > MathS.Settings.MaxAbsNumeratorOrDenominatorValue ||
                         attempt.ERational.Denominator.Abs() > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
@@ -279,19 +296,19 @@ namespace AngouriMath
                 /// The value as a <see cref="Real"/>, read as the binary <see langword="float"/>
                 /// it is — so <c>0.1f</c> becomes the value that literal holds, not one tenth.
                 /// </summary>
-                public static implicit operator Real(float value) => Create(EDecimal.FromSingle(value));
+                public static implicit operator Real(float value) => FromMachineNumber(EDecimal.FromSingle(value));
 
                 /// <summary>
                 /// The value as a <see cref="Real"/>, read as the binary
                 /// <see langword="double"/> it is rather than as the decimal it was written as.
                 /// </summary>
-                public static implicit operator Real(double value) => Create(EDecimal.FromDouble(value));
+                public static implicit operator Real(double value) => FromMachineNumber(EDecimal.FromDouble(value));
 
                 /// <summary>
                 /// The value as a <see cref="Real"/>. A <see langword="decimal"/> is decimal
                 /// already, so this one keeps the digits that were written.
                 /// </summary>
-                public static implicit operator Real(decimal value) => Create(EDecimal.FromDecimal(value));
+                public static implicit operator Real(decimal value) => FromMachineNumber(EDecimal.FromDecimal(value));
             }
         }
     }
