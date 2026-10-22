@@ -188,6 +188,17 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        public partial record Polygammaf
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode()
+                => Order is Number.Integer { IsZero: true }
+                ? $"digamma({Argument.Stringize()})"
+                : $"polygamma({Order.Stringize()}, {Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         public partial record Sif
         {
             /// <inheritdoc/>

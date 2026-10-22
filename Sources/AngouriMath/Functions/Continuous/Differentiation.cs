@@ -327,6 +327,17 @@ namespace AngouriMath
                 Argument.DerivativeOver(variable) / MathS.Ln(Argument);
         }
 
+        partial record Polygammaf
+        {
+            // psi^(n)(a)' = psi^(n + 1)(a) a'. The order is whole, so an order that varies has no derivative
+            // in it, and this declines. https://github.com/asc-community/AngouriMath/issues/171
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable) =>
+                Order.ContainsNode(variable)
+                ? base.InnerDifferentiate(variable)
+                : MathS.Polygamma(Order + 1, Argument) * Argument.DerivativeOver(variable);
+        }
+
         partial record Sif
         {
             // Si(a)' = sin(a)/a a', the integrand of its definition, and so for the other three.
@@ -458,34 +469,18 @@ namespace AngouriMath
         partial record Factorialf
         {
             /// <summary>
-            /// <c>(x!)' = Γ(x + 1) ψ(x + 1)</c>, which needs a symbolic gamma and polygamma the
-            /// library does not have — so this declines rather than answering.
+            /// <c>(a!)' = a! psi(a + 1) a'</c>: <c>x!</c> is <c>Gamma(x + 1)</c>, and the digamma function is
+            /// <c>Gamma'/Gamma</c>.
             /// </summary>
             /// <remarks>
-            /// <para>
-            /// It used to answer <see cref="Number.Real.NaN"/>, which says the derivative <i>does
-            /// not exist</i>. It does: <c>x!</c> is <c>Γ(x + 1)</c> and the library already
-            /// evaluates it away from the integers — <c>(1/2)!</c> is <c>0.886…</c> — so it is
-            /// smooth except at the poles, and <c>d/dx x!</c> at 3 is an ordinary
-            /// <c>Γ'(4) ≈ 3.966</c>. Saying <c>NaN</c> was a wrong answer rather than a missing
-            /// feature, and it propagated: one factorial anywhere turned an otherwise fine
-            /// derivative into <c>NaN</c>.
-            /// https://github.com/asc-community/AngouriMath/issues/958
-            /// </para>
-            /// <para>
-            /// Returning the unevaluated derivative is what every other node the library cannot
-            /// differentiate already does — <c>apply(f, x)</c> among them — and it is what
-            /// <c>AGENTS.md</c> asks for: unevaluated means "I could not settle this", <c>NaN</c>
-            /// means "this does not exist", and only the first is true here.
-            /// </para>
-            /// <para>
-            /// Computing it properly is
-            /// <a href="https://github.com/asc-community/AngouriMath/issues/171">#171</a>, which is
-            /// a separate and larger piece of work; this rule stays correct once that lands.
-            /// </para>
+            /// It declined while the library had no digamma function, and before that answered
+            /// <see cref="Number.Real.NaN"/>, which says the derivative does not exist where it does
+            /// (https://github.com/asc-community/AngouriMath/issues/958): <c>d/dx x!</c> at 3 is
+            /// <c>Gamma'(4) = 6 psi(4)</c>, about <c>7.5367</c>.
+            /// https://github.com/asc-community/AngouriMath/issues/171
             /// </remarks>
             protected override Entity InnerDifferentiate(Variable variable)
-                => base.InnerDifferentiate(variable);
+                => this * MathS.Digamma(Argument + 1) * Argument.DerivativeOver(variable);
         }
 
 #pragma warning disable IDE0054 // Use compound assignment

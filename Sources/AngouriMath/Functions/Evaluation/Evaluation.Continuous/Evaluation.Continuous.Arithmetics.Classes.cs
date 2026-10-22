@@ -590,6 +590,25 @@ namespace AngouriMath
                     (@this, a) => ((Lif)@this).New(a), isExact);
         }
 
+        public partial record Polygammaf
+        {
+            // A whole order n >= 0, and an argument other than the poles 0, -1, -2, ...
+            // https://github.com/asc-community/AngouriMath/issues/171
+            private protected override Entity IntrinsicCondition =>
+                Order.In(MathS.Sets.Z) & Order >= 0 & (!Argument.In(MathS.Sets.Z) | Argument > 0);
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Order, Argument,
+                    (order, argument) => (order, argument) switch
+                    {
+                        (Integer { EInteger: var n }, Complex z) when !isExact && n.Sign >= 0 => Number.Polygamma(n, z),
+                        (Integer { EInteger: var n }, Real r) when n.Sign >= 0 && r.EDecimal.IsPositiveInfinity() => n.IsZero ? Real.PositiveInfinity : Integer.Zero,
+                        _ => null
+                    },
+                    (@this, order, argument) => ((Polygammaf)@this).New(order, argument), isExact);
+        }
+
         public partial record Sif
         {
             // Entire, so defined for every argument. https://github.com/asc-community/AngouriMath/issues/1501

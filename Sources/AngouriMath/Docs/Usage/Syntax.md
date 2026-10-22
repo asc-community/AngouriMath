@@ -328,6 +328,15 @@ differentiated from its definition: the derivative of `Si(x)` is `sin(x) / x`, o
 `cos(x) / x`, and of `Shi(x)` and `Chi(x)` it is `sinh(x) / x` and `cosh(x) / x`. `Ci` and `Chi` are
 undefined at `0`; `Si(+oo)` is `pi / 2` and `Ci(+oo)` is `0`.
 
+**Polygamma functions** — `polygamma(n, z)` `digamma(z)`. The polygamma function `psi^(n)(z)`, the
+`(n + 1)`-th derivative of `ln Gamma(z)` for a whole `n >= 0`, and the digamma function
+`psi(z) = Gamma'(z)/Gamma(z)`, which is `polygamma(0, z)` and prints as `digamma(z)`. Each is evaluated
+to the working precision anywhere in the complex plane but at `0, -1, -2, ...`, its poles, and each
+order is the derivative of the one before: the derivative of `polygamma(n, x)` is
+`polygamma(n + 1, x)`. The derivative of `x!` is `x! * digamma(x + 1)`, and of `gamma(x)` it is
+`(x - 1)! * digamma(x)`. Special values, such as `digamma(1) = -gamma`, stay as written, since the
+library has no symbol for Euler's constant.
+
 **Calculus** — `derivative(expr, var, order)`, `integral(expr, var)`,
 `integral(expr, var, from, to)`, `limit(expr, var, dest)`, `limitleft(...)`, `limitright(...)`;
 `sum(expr, var in set)` for a sum over a set; `max(expr, var in set)` and `min` for the extremum of
