@@ -11150,8 +11150,51 @@ namespace AngouriMath.Functions.Algebra
             if (expr is not (Divf or Mulf or Powf or Sinf or Cosf) || ASineOrCosineArgument(expr, x) is not { } argument)
                 return null;
             if (TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _) && !TreeAnalyzer.IsZero(rate))
-                return OverAPowerOfALinear(expr, x, argument);
+                return OverAPowerOfALinear(expr, x, argument) ?? ByLoweringThePowerOfABinomialBesideX(expr, x, argument);
             return UnderAPowerOfTheVariable(expr, x, argument);
+        }
+
+        /// <summary>
+        /// <c>T/(x (a + b x^n)^k)</c>, for T a polynomial in the sine and cosine of a linear, n three or
+        /// four and k two or more, as <c>T/(a x (a + b x^n)^(k - 1)) - (b/a) x^(n - 1) T/(a + b x^n)^k</c>,
+        /// since <c>a + b x^n - b x^n</c> is a: Rubi's 4.1.11 <c>sin(c + d x)/(x (a + b x^3)^3)</c> was
+        /// declined, the split over x and the binomial's three roots, each to the cube, past the size it
+        /// hands on, where each of the two is a question answered at once. Null where either is not.
+        /// </summary>
+        private static Entity? ByLoweringThePowerOfABinomialBesideX(Entity expr, Entity.Variable x, Entity argument)
+        {
+            if (!TryReadAsQuotient(expr, out var numerator, out var denominator))
+                return null;
+            // x in the numerator only in the sine and cosine of the argument.
+            var (sine, cosine) = (MathS.Sin(argument), MathS.Cos(argument));
+            if (numerator.Replace(node => node == sine || node == cosine ? Number.Integer.One : node).ContainsNode(x))
+                return null;
+            Entity constant = Number.Integer.One;
+            Entity? binomial = null;
+            var power = 0;
+            var xOnce = false;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                    constant *= factor;
+                else if (factor == x && !xOnce)
+                    xOnce = true;
+                else if (binomial is null && factor is Powf(var @base, Number.Integer { EInteger: var k }) && k.CompareTo(EInteger.FromInt32(2)) >= 0
+                         && k.CanFitInInt32() && TheRootsOfABinomial(@base, x) is not null)
+                    (binomial, power) = (@base, k.ToInt32Unchecked());
+                else
+                    return null;
+            }
+            if (!xOnce || binomial is null || !TreeAnalyzer.TryGetPolynomial(binomial, x, out var terms))
+                return null;
+            var free = terms[EInteger.Zero];
+            var top = terms.First(term => !term.Key.IsZero);
+            var lower = numerator / (constant * free * x * (power == 2 ? binomial : MathS.Pow(binomial, power - 1)));
+            var beside = -(top.Value / free) * MathS.Pow(x, Number.Integer.Create(top.Key - 1)) * numerator / (constant * MathS.Pow(binomial, power));
+            if (Integration.ComputeAsAQuestionOfItsOwn(lower, x, integrateByParts: true) is not { } first
+                || Integration.ComputeAsAQuestionOfItsOwn(beside, x, integrateByParts: true) is not { } second)
+                return null;
+            return first + second;
         }
 
         // x - r, written x + |r| where the root is a negative number: x + 1 for the root -1.
