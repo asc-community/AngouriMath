@@ -883,6 +883,87 @@ namespace AngouriMath.Functions
         }
 
         /// <summary>
+        /// <paramref name="numerator"/> over <paramref name="denominator"/>, a product of powers as
+        /// written, with each of <paramref name="candidates"/> divided out of every written factor of
+        /// the denominator as often as it goes exactly and written as a power of its own, and then
+        /// out of the numerator as often as it goes there too. Null where no candidate divides a
+        /// factor it is not already, where none then divides the numerator, or where a side does not
+        /// read as a polynomial over the rationals.
+        /// </summary>
+        /// <remarks>
+        /// A substitution homogenises the parts of an integrand apart, and a factor they share is
+        /// then hidden inside the expanded quartic of one of them: under <c>u = tanh(x/2)</c>,
+        /// <c>sech(x)^2/(a + c sech(x) + b tanh(x))</c> is <c>(1 + u^2)^2</c> over <c>(1 + u^2)^2</c>
+        /// times a quartic that holds <c>1 + u^2</c> once more. Written out, it is <c>1/((1 + u^2) Q(u))</c>
+        /// with Q a quadratic, which the rational rules read.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? WithTheCandidateFactorsWrittenOut(Entity numerator, Entity denominator, IReadOnlyList<Entity> candidates)
+        {
+            var variables = numerator.Vars.Concat(denominator.Vars).Concat(candidates.SelectMany(c => c.Vars)).Distinct()
+                .OrderBy(v => v.Name, System.StringComparer.Ordinal).ToArray();
+            if (variables.Length == 0 || variables.Length > MultivariatePolynomial.MaxVariables)
+                return null;
+            var indices = new Dictionary<Variable, int>(variables.Length);
+            for (var i = 0; i < variables.Length; i++)
+                indices[variables[i]] = i;
+            var parsed = new List<MultivariatePolynomial>();
+            foreach (var candidate in candidates)
+                if (MultivariatePolynomial.TryParse(candidate, indices) is { IsConstant: false } read)
+                    parsed.Add(read);
+                else
+                    return null;
+            var times = new int[parsed.Count];
+            var changed = false;
+            Entity rest = Integer.One;
+            foreach (var written in Mulf.LinearChildren(denominator))
+            {
+                var (@base, power) = written is Powf(var repeated, Integer { EInteger.Sign: > 0 } raised) && raised.EInteger.CanFitInInt32()
+                    ? (repeated, raised.EInteger.ToInt32Unchecked()) : (written, 1);
+                if (!@base.Vars.Any() || MultivariatePolynomial.TryParse(@base, indices) is not { IsConstant: false } factor)
+                {
+                    rest *= written;
+                    continue;
+                }
+                var divided = false;
+                for (var k = 0; k < parsed.Count; k++)
+                    while (factor.DivideExact(parsed[k]) is { } quotient)
+                    {
+                        // A factor that is the candidate itself, to a power, is already written out.
+                        divided |= !quotient.IsConstant;
+                        factor = quotient;
+                        times[k] += power;
+                    }
+                changed |= divided;
+                var remaining = factor.ToEntity(variables);
+                if (remaining != Integer.One)
+                    rest *= power == 1 ? remaining : MathS.Pow(remaining, power);
+            }
+            if (!changed)
+                return null;
+            if (MultivariatePolynomial.TryParse(numerator, indices) is not { } top)
+                return null;
+            // Only where the numerator shares one of them: written out with nothing cancelled, the
+            // tangent's `(c + d x)^3/(a + a tanh(e + f x))^3` ran past the budget it was answered in.
+            var cancelled = false;
+            for (var k = 0; k < parsed.Count; k++)
+                while (times[k] > 0 && top.DivideExact(parsed[k]) is { } quotient)
+                {
+                    top = quotient;
+                    times[k]--;
+                    cancelled = true;
+                }
+            if (!cancelled)
+                return null;
+            Entity below = rest;
+            for (var k = 0; k < parsed.Count; k++)
+                if (times[k] > 0)
+                    below *= times[k] == 1 ? candidates[k] : MathS.Pow(candidates[k], times[k]);
+            var above = top.ToEntity(variables);
+            return below == Integer.One ? above : above / below;
+        }
+
+        /// <summary>
         /// <paramref name="numerator"/> over <paramref name="denominator"/>, a product of
         /// powers as written, with every written factor that divides the numerator exactly
         /// divided out of both; null where none does, or where either side does not read as

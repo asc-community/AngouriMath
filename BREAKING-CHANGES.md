@@ -678,6 +678,21 @@ was declined. Each of its terms alone is not elementary, and the sum is the deri
 |---|---|---|
 | `"e^(a+b*x)*sinh(c+d*x)^(3/2)-3/4*e^(a+b*x)*d^2/((b^2-9/4*d^2)*sqrt(sinh(c+d*x)))".ToEntity().Integrate("x")` | `integral(...)` | 249 characters |
 
+### Under the half tangent, a factor the parts share is written out
+
+**Answers where there were none, shorter than master's.** Rubi's 6.7.1 `sech(x)^2/(a + c sech(x) + b tanh(x))` ran past
+the corpus's budget. Master answered it in 1,383,216 characters after twenty-two seconds. Under `u = tanh(x/2)` the parts
+of the integrand are homogenised apart, and a factor they share stayed hidden inside the expanded quartic of one of them:
+`(1 + u^2)^2` over `(1 + u^2)^2` times a quartic that holds `1 + u^2` once more. The factors `1 + u^2`, `1 - u^2`, `1 - u`, `1 + u`
+and `u`, which the homogenising makes, are now divided out of the written factors of the denominator and out of the
+numerator, and the integrand is `1/((1 + u^2) Q(u))` for a quadratic Q
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sech(x)^2/(a+c*sech(x)+b*tanh(x))".ToEntity().Integrate("x")` | `integral(...)` | 2,931 characters, where before this change master gave 1,383,216 |
+| `"csch(x)^2/(a+c*csch(x)+b*coth(x))".ToEntity().Integrate("x")` | `integral(...)` | 1,766 characters, where before this change master gave 1,690 |
+
 ### A function of the hyperbolic tangent alone is integrated under `u = tanh`
 
 **Answers where there were none.** `tanh(x)/sqrt(a + b tanh(x)^2 + c tanh(x)^4)` was declined, and so were 35 more of

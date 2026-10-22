@@ -34467,6 +34467,15 @@ namespace AngouriMath.Functions.Algebra
                             && Mulf.LinearChildren(below).All(factor => !factor.ContainsNode(t) || factor == t || factor is Powf(var b, Number.Integer) && b == t)))
                         continue;
                     var rationalInT = WithThePowersOfOnePlusMinusTCollected(inT / (1 - MathS.Sqr(t)));
+                    // With the factors the parts were homogenised over written out of the rest: `sech(x)^2`
+                    // and `a + c sech(x) + b tanh(x)` are each over `1 + t^2`, and the one in the quartic
+                    // below was hidden, where the rational integrator wrote 1.38 million characters.
+                    // `1 - t^2` before its two linears, so that an integrand even in t is written so: split
+                    // into them, `sinh(u)^8/(a - b sinh(u)^4)^2` took ten times the memory.
+                    if (Functions.SingleQuotient.Of(rationalInT) is var (aboveT, belowT) && belowT.ContainsNode(t)
+                        && Functions.PartialFractions.WithTheCandidateFactorsWrittenOut(aboveT, belowT,
+                            new Entity[] { 1 + MathS.Sqr(t), 1 - MathS.Sqr(t), 1 - t, 1 + t, t }) is { } writtenOut)
+                        rationalInT = writtenOut;
                     if (rationalInT.ContainsNode(square) || rationalInT.ContainsNode(vt) || rationalInT.Nodes.Any(node => node == MathS.NaN)
                         || Integration.ComputeAsAQuestionOfItsOwn(rationalInT, t, integrateByParts) is not { } evenResult)
                         return null;
