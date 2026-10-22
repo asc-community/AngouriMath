@@ -54,6 +54,40 @@ namespace AngouriMath.Tests.Convenience
             AssertClose(imaginary, value.ImaginaryPart.EDecimal);
         }
 
+        /// <summary>
+        /// On the cut, for an exact order of odd denominator below 10, with the real root the power takes there:
+        /// <c>Gamma(a) - z^a g(a, z)</c> with <c>g(a, z) = sum_k (-z)^k/(k! (a + k))</c> (DLMF 8.7.3) and <c>z^a</c> real. The
+        /// references are that sum at 90 digits; the last is past the continued fraction's threshold.
+        /// </summary>
+        [Theory]
+        [InlineData("gamma(1/3, -2)", "10.212552064243320672871765046103178972863292927441879189946367")]
+        [InlineData("gamma(2/3, -4)", "-36.897696051078160810409733567406007863692044903007209488356707")]
+        [InlineData("gamma(2/5, -17/15)", "-1.6376459092577785167485577680520445343763746015778210809826328")]
+        [InlineData("gamma(-1/3, -300)", "9.71532351293767903599760645811774844613945799010165863950178E+126")]
+        public void OnTheCutItTakesThePowersRealRoot(string expression, string real)
+        {
+            var value = Assert.IsAssignableFrom<Complex>(expression.EvalNumerical());
+            AssertClose(real, value.RealPart.EDecimal);
+            Assert.True(value.ImaginaryPart.EDecimal.IsZero, $"{value}");
+        }
+
+        /// <summary>
+        /// And so its derivative, whose power takes the same root, is the derivative of its value there: with the principal
+        /// branch it was the derivative turned by <c>e^(-2 i pi/3)</c>.
+        /// </summary>
+        [Fact]
+        public void OnTheCutTheDerivativeIsTheDerivativeOfTheValue()
+        {
+            var at = Rational.Create(-2, 1);
+            var h = EDecimal.FromString("1E-30");
+            var above = "gamma(1/3, z)".ToEntity().Substitute("z", Real.Create(EDecimal.FromInt32(-2).Add(h))).EvalNumerical();
+            var below = "gamma(1/3, z)".ToEntity().Substitute("z", Real.Create(EDecimal.FromInt32(-2).Subtract(h))).EvalNumerical();
+            var difference = Assert.IsType<Real>(above - below).EDecimal.Divide(h.Multiply(2), EContext.ForPrecision(100));
+            var derivative = Assert.IsType<Real>("gamma(1/3, z)".ToEntity().Differentiate("z").Substitute("z", at).EvalNumerical()).EDecimal;
+            var error = difference.Subtract(derivative, EContext.ForPrecision(100)).Abs().Divide(derivative.Abs(), EContext.ForPrecision(10));
+            Assert.True(error.LessThan(EDecimal.FromString("1E-25")), $"the value changes at {difference} where the derivative is {derivative}");
+        }
+
         [Theory]
         [InlineData("gamma(1, x)", "e ^ (-x)")]
         [InlineData("gamma(3, x)", "2 * e ^ (-x) * (1 + x + x ^ 2 / 2)")]
