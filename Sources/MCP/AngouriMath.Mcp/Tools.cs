@@ -1166,11 +1166,8 @@ internal static class Tools
             if (!TryParse(eq, "equations", false, out var e, out var w, out var error))
                 return error!;
 
-            // EquationSystem wants each equation in "= 0" form, and handed an equality it
-            // finds no solution, so normalise here: writing 'x + y = 3' is the natural thing
-            // for a caller to do, and it should just work.
-            // https://github.com/asc-community/AngouriMath/issues/1673
-            parsed.Add(e is Equalsf equality ? equality.Left - equality.Right : e);
+            // An equality, 'x + y = 3', is read by the library as 'x + y - 3 = 0'.
+            parsed.Add(e);
             warnings.AddRange(w);
         }
 
