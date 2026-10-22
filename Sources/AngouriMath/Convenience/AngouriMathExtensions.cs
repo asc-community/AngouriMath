@@ -619,7 +619,7 @@ namespace AngouriMath.Extensions
         /// 0.100000001490116119384765625
         /// </code>
         /// </example>
-        public static Real ToNumber(this float value) => Real.Create(EDecimal.FromSingle(value));
+        public static Real ToNumber(this float value) => Real.FromMachineNumber(EDecimal.FromSingle(value));
 
         /// <summary>
         /// Converts an <see cref="double"/> into an AM's understandable <see cref="Real"/>
@@ -639,7 +639,7 @@ namespace AngouriMath.Extensions
         /// 1/2
         /// </code>
         /// </example>
-        public static Real ToNumber(this double value) => Real.Create(EDecimal.FromDouble(value));
+        public static Real ToNumber(this double value) => Real.FromMachineNumber(EDecimal.FromDouble(value));
 
         /// <summary>
         /// Converts an <see cref="decimal"/> into an AM's understandable <see cref="Real"/>
@@ -659,7 +659,7 @@ namespace AngouriMath.Extensions
         /// 0.1000000000000000055511151231257827021181583404541015625
         /// </code>
         /// </example>
-        public static Real ToNumber(this decimal value) => Real.Create(EDecimal.FromDecimal(value));
+        public static Real ToNumber(this decimal value) => Real.FromMachineNumber(EDecimal.FromDecimal(value));
 
         /// <summary>
         /// Converts PeterO's <see cref="EDecimal"/> into an AM's understandable <see cref="Real"/>
@@ -695,7 +695,7 @@ namespace AngouriMath.Extensions
         /// </code>
         /// </example>
         public static Complex ToNumber(this NumericsComplex complex)
-            => Complex.Create(EDecimal.FromDouble(complex.Real), EDecimal.FromDouble(complex.Imaginary));
+            => Complex.FromMachineNumbers(EDecimal.FromDouble(complex.Real), EDecimal.FromDouble(complex.Imaginary));
 
         /// <summary>
         /// Converts an <see cref="bool"/> into an AM's understandable <see cref="Boolean"/>

@@ -162,6 +162,13 @@ namespace AngouriMath
                 /// <see cref="Rational"/> if found, <see langword="null"/> otherwise.
                 /// </returns>
                 public static Rational? FindRational(EDecimal num, int iterCount = int.MinValue)
+                    => FindRationalWithin(num, MathS.Settings.PrecisionErrorZeroRange, iterCount);
+
+                /// <summary>
+                /// <see cref="FindRational(EDecimal, int)"/>, accepting a level of the continued fraction whose
+                /// remainder is below its integer part times <paramref name="tolerance"/>.
+                /// </summary>
+                internal static Rational? FindRationalWithin(EDecimal num, EDecimal tolerance, int iterCount = int.MinValue)
                 {
                     if (iterCount is int.MinValue)
                         iterCount = MathS.Settings.FloatToRationalIterCount;
@@ -179,11 +186,11 @@ namespace AngouriMath
                     // the exact one.
                     if (!MayBeASmallRational(num, iterCount))
                         return null;
-                    return FindRationalExactly(num, iterCount);
+                    return FindRationalExactly(num, iterCount, tolerance);
                 }
 
                 /// <summary>The continued fraction in the decimal's own arithmetic, level by level.</summary>
-                internal static Rational? FindRationalExactly(EDecimal num, int iterCount)
+                internal static Rational? FindRationalExactly(EDecimal num, int iterCount, EDecimal tolerance)
                 {
                     if (iterCount <= 0)
                         return null;
@@ -200,12 +207,12 @@ namespace AngouriMath
                     // 1e-20 came to parse as 0. Below the top, intPart is at least 1 (rest
                     // was inverted to get here), so the test stays as permissive as it was.
                     if (rest.Abs().LessThan(EDecimal.FromEInteger(intPart)
-                            .Multiply(MathS.Settings.PrecisionErrorZeroRange, MathS.Settings.DecimalPrecisionContext)))
+                            .Multiply(tolerance, MathS.Settings.DecimalPrecisionContext)))
                         return Integer.Create(sign * intPart);
                     else
                     {
                         var inv = CtxDivide(EDecimal.One, rest);
-                        var rat = FindRationalExactly(inv, iterCount - 1);
+                        var rat = FindRationalExactly(inv, iterCount - 1, tolerance);
                         if (rat is null)
                             return null;
                         return new Rational((intPart * sign + sign / rat.ERational).InLowestTerms());
@@ -223,8 +230,8 @@ namespace AngouriMath
                 /// <remarks>
                 /// <para>
                 /// The exact search accepts a level whose remainder is below the integer part
-                /// times <see cref="MathS.Settings.PrecisionErrorZeroRange"/>, ten to the minus
-                /// sixteen. In a double the remainder at a level carries an error of the value's
+                /// times its tolerance, at most <see cref="MathS.Settings.PrecisionErrorZeroRange"/>,
+                /// ten to the minus sixteen, unless a caller has set it higher. In a double the remainder at a level carries an error of the value's
                 /// representation error, two to the minus fifty-two, times the square of that
                 /// level's convergent denominator; the tolerance here is the exact one widened by
                 /// that bound, so a value the exact search would accept is never refused, and

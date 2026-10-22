@@ -58,26 +58,26 @@ namespace AngouriMath
         /// and not one tenth. Write <c>0.1m</c>, or a <see cref="ERational"/>, for the exact
         /// number.
         /// </summary>
-        public static implicit operator Entity(float value) => Number.Real.Create(EDecimal.FromSingle(value));
+        public static implicit operator Entity(float value) => Number.Real.FromMachineNumber(EDecimal.FromSingle(value));
 
         /// <summary>
         /// The value as a <see cref="Number.Real"/> literal, read as the binary
         /// <see langword="double"/> it is rather than as the decimal it was written as.
         /// </summary>
-        public static implicit operator Entity(double value) => Number.Real.Create(EDecimal.FromDouble(value));
+        public static implicit operator Entity(double value) => Number.Real.FromMachineNumber(EDecimal.FromDouble(value));
 
         /// <summary>
         /// The value as a <see cref="Number.Real"/> literal. A <see langword="decimal"/> is
         /// decimal already, so this one keeps the digits that were written.
         /// </summary>
-        public static implicit operator Entity(decimal value) => Number.Real.Create(EDecimal.FromDecimal(value));
+        public static implicit operator Entity(decimal value) => Number.Real.FromMachineNumber(EDecimal.FromDecimal(value));
 
         /// <summary>
         /// The .NET complex number as a <see cref="Number.Complex"/> literal, through its two
         /// <see langword="double"/> parts and their precision.
         /// </summary>
         public static implicit operator Entity(System.Numerics.Complex value) =>
-            Number.Complex.Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
+            Number.Complex.FromMachineNumbers(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
 
         /// <summary>The big integer as an <see cref="Number.Integer"/> literal, exactly.</summary>
         public static implicit operator Entity(System.Numerics.BigInteger bigInt)

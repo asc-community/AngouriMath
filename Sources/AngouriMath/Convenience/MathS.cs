@@ -4583,7 +4583,7 @@ namespace AngouriMath
             /// </code>
             /// </example>
             public static Complex Create(NumericsComplex value) =>
-                Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
+                Complex.FromMachineNumbers(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
 
             /// <summary>Creates an instance of <see cref="Integer"/> from a <see cref="long"/></summary>
             /// <param name="value">A value of type <see cref="long"/> (signed 64-bit integer)</param>
@@ -4916,7 +4916,7 @@ namespace AngouriMath
             /// EDecimal i9 = ((Entity.Number.Real)FromString("1 + 5").EvalNumerical()).EDecimal;
             /// </code>
             /// </example>
-            public static Real Create(double value) => Real.Create(EDecimal.FromDouble(value));
+            public static Real Create(double value) => Real.FromMachineNumber(EDecimal.FromDouble(value));
 
             /// <summary>
             /// Creates an instance of <see cref="Complex"/> from two <see cref="EDecimal"/>s

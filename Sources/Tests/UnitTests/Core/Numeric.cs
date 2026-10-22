@@ -433,8 +433,10 @@ namespace AngouriMath.Tests.Core
         /// <summary>
         /// The modulus is made under the downcasting setting in force. It turned the downcasting on
         /// for itself, so with it off <c>|75 + 316.22776601683796i|</c>, which is <c>325 + 2.6e-17</c>,
-        /// came back as 325. With it on, 325 is the setting's own rounding.
+        /// came back as 325. With it on, the setting rounds a value to half the working digits, which
+        /// 2.6e-17 is far above, so it is the same value; a modulus that is 325 to the working digits is 325.
         /// <a href="https://github.com/asc-community/AngouriMath/issues/1615">#1615</a>
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1944">#1944</a>
         /// </summary>
         [Fact]
         public void AModulusIsMadeUnderTheDowncastingInForce()
@@ -449,7 +451,12 @@ namespace AngouriMath.Tests.Core
                 Assert.True(evaluated.RealPart.EDecimal.Subtract(expected).Abs().CompareTo(EDecimal.Create(1, -90)) < 0, $"{evaluated}");
             }
             using (MathS.Settings.DowncastingEnabled.Set(true))
-                Assert.Equal(Integer.Create(325), Complex.Create(EDecimal.FromInt32(75), EDecimal.FromString("316.22776601683796")).Abs());
+            {
+                var modulus = Complex.Create(EDecimal.FromInt32(75), EDecimal.FromString("316.22776601683796")).Abs();
+                Assert.True(modulus.EDecimal.Subtract(expected).Abs().CompareTo(EDecimal.Create(1, -90)) < 0, $"{modulus}");
+                var rootOf100000 = EDecimal.FromInt32(100000).Sqrt(MathS.Settings.DecimalPrecisionContext);
+                Assert.Equal(Integer.Create(325), Complex.Create(EDecimal.FromInt32(75), rootOf100000).Abs());
+            }
         }
     }
 }

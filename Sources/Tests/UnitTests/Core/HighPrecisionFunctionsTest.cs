@@ -153,7 +153,7 @@ namespace AngouriMath.Tests.Core
             var checkedCount = 0;
             void Check(EDecimal value)
             {
-                var exact = Rational.FindRationalExactly(value, iterCount);
+                var exact = Rational.FindRationalExactly(value, iterCount, MathS.Settings.PrecisionErrorZeroRange);
                 var cheap = Rational.MayBeASmallRational(value, iterCount);
                 var found = Rational.FindRational(value);
                 checkedCount++;
@@ -216,7 +216,7 @@ namespace AngouriMath.Tests.Core
                 var denominator = 1 + random.Next(100_000_000);
                 var numerator = random.Next(100_000_000);
                 var value = EDecimal.FromInt32(numerator).Divide(EDecimal.FromInt32(denominator), context);
-                var exact = Rational.FindRationalExactly(value, iterCount);
+                var exact = Rational.FindRationalExactly(value, iterCount, MathS.Settings.PrecisionErrorZeroRange);
                 if (exact is not null)
                     Assert.True(Rational.MayBeASmallRational(value, iterCount));
                 Assert.Equal(exact, Rational.FindRational(value));
