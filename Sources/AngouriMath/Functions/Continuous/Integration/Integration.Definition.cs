@@ -1818,6 +1818,10 @@ namespace AngouriMath.Functions.Algebra
             // And half-odd powers of a hyperbolic sine beside an exponential as the derivative of the same kind,
             // last: each term alone is not elementary, and the split declined them.
             if ((answer = IndefiniteIntegralSolver.SolveHalfOddPowersOfAHyperbolicSineBesideAnExponentialAsADerivative(expr, x)) is { }) return answer;
+            // And a power that is not whole of a function of one exponential beside x, by an ansatz in that
+            // power times a rational function of x and the exponential, last: by parts and the split leave
+            // terms that are not elementary apart.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfAFunctionOfAnExponentialBesideXByAnAnsatz(expr, x)) is { }) return answer;
             return null;
         }
         /// <summary>

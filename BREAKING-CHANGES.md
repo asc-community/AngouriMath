@@ -151,6 +151,21 @@ coefficients are the roots of that quadratic, and the polynomial over it is spli
 | `"1/(4*a*c+4*c^2*x^2+4*c*d*x^3+d^2*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 3,920 characters |
 | `"x/(4*a*c+4*c^2*x^2+4*c*d*x^3+d^2*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 2,315 characters |
 
+### A power of a function of one exponential beside x is integrated by an ansatz in that power
+
+**Answers where there were none.** Rubi's 6.7.1 `sqrt(csch(x)) (x cosh(x) - 4 sech(x) tanh(x))` is the derivative of
+`2 x/sqrt(csch(x)) - 4 sech(x)/csch(x)^(3/2)`. By parts leaves `-2/sqrt(csch(x))`, which is elliptic, and so is the
+other term, so the split declined both. A power that is not whole of a rational function of one exponential,
+`W = B(e^(s x))^p`, beside a polynomial in x whose coefficients are rational in `e^(s x)`, is now integrated by the
+ansatz `W` times a rational function of x and `e^(s x)`, whose coefficients are a linear system. The answer keeps the
+integrand's own power, holds where `sinh(x) < 0` too, and is checked by its derivative
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(csch(x))*(x*cosh(x)-4*sech(x)*tanh(x))".ToEntity().Integrate("x")` | `integral(...)` | 137 characters |
+| `"sqrt(csch(a+x))*((a+x)*cosh(a+x)-4*sech(a+x)*tanh(a+x))".ToEntity().Integrate("x")` | `integral(...)` | 191 characters |
+
 ### An even power of the sine beside the secant is written in the cosine
 
 **Answers where there were none, shorter than master's.** Rubi's 4.5.1.3 `sin(c + d x)^2/(a + b sec(c + d x))` ran
