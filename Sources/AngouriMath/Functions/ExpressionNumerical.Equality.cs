@@ -6,6 +6,7 @@
 //
 
 using AngouriMath.Extensions;
+using PeterO.Numbers;
 using static AngouriMath.Entity;
 
 namespace AngouriMath.Functions
@@ -47,11 +48,29 @@ namespace AngouriMath.Functions
                 var evaled2 = expr2Subs.EvalNumerical();
 
                 // TODO: should we consider NaN = {} to be true?
-                if (evaled1 != evaled2 && evaled1 != MathS.NaN && evaled2 != MathS.NaN)
+                if (evaled1 != evaled2 && evaled1 != MathS.NaN && evaled2 != MathS.NaN && !AgreeToHalfThePrecision(evaled1, evaled2))
                     return false;
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Whether two values differ by no more than half the evaluation's digits, relative to the larger
+        /// of them or to one. Two routes to one value differ in their last digits: the derivative of
+        /// <c>x ln(x)</c>'s antiderivative, <c>2 x (-1/4 + ln(x)/2) + 1/x * 2/4 * x^2</c>, is <c>x ln(x)</c>,
+        /// and compared exactly at -100 and 100 the two read as unequal. A value that is not finite agrees
+        /// only with itself.
+        /// https://github.com/asc-community/AngouriMath/issues/1674
+        /// </summary>
+        private static bool AgreeToHalfThePrecision(Number first, Number second)
+        {
+            if (first is not Number.Complex a || second is not Number.Complex b || !a.IsFinite || !b.IsFinite)
+                return false;
+            var digits = MathS.Settings.DecimalPrecisionContext.Value.Precision;
+            var tolerance = EDecimal.FromString("1E-" + digits.Divide(2));
+            var scale = EDecimal.Max(EDecimal.One, EDecimal.Max(a.Abs().EDecimal, b.Abs().EDecimal));
+            return ((Number.Complex)(a - b)).Abs().EDecimal.CompareTo(scale.Multiply(tolerance)) <= 0;
         }
 
         /// <summary>

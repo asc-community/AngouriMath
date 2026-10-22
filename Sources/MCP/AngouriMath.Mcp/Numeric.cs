@@ -13,16 +13,11 @@ namespace AngouriMath.Mcp;
 /// <summary>
 /// Tolerance-based numeric equality.
 ///
-/// Why not just use MathS.UnsafeAndInternal.AreEqualNumerically? Because despite the name it
-/// compares with EXACT equality — the implementation is `if (evaled1 != evaled2 ...) return
-/// false` over arbitrary-precision decimals, with no tolerance at all. Any expression
-/// involving a transcendental therefore fails: ln(x) computed via two different but
-/// mathematically identical routes disagrees in the last digit and the check reports the
-/// expressions as different.
-///
-/// That is not a hypothetical. `∫ x*ln(x)` returns the correct antiderivative, which
-/// differentiates back to the correct integrand, and AreEqualNumerically still says false.
-/// So this compares with a relative tolerance instead.
+/// Why not MathS.UnsafeAndInternal.AreEqualNumerically? It compares to half the evaluation's
+/// digits since #1674, but at its own check points, negative and complex among them, where a
+/// correct antiderivative with ln(x) or abs(x) in it can disagree with its integrand on a branch,
+/// and it answers only true or false. This samples positive reals and answers null where no
+/// point can be evaluated, which is not evidence either way.
 /// https://github.com/asc-community/AngouriMath/issues/1674
 /// </summary>
 internal static class Numeric

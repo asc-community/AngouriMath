@@ -40,6 +40,24 @@ A not-equal written `<>` is read as `not (a = b)`, and printed that way.
 
 ---
 
+## Unreleased — since 2.6.0
+
+### Numerical equality is to half the evaluation's digits
+
+**Silent: wrong answers.** `MathS.UnsafeAndInternal.AreEqualNumerically` evaluated both sides at its check points and
+compared the values exactly, so two equal expressions computed by different routes, which differ in their last digits,
+read as unequal. Two values now agree when they differ by no more than half the evaluation's digits, relative to the
+larger of them or to one: a difference of `1e-40` is still a difference at the default hundred digits. The limit
+solver's check that a limit agrees from both sides goes through the same comparison
+([#1674](https://github.com/asc-community/AngouriMath/issues/1674)).
+
+| Input | Was (2.6.0) | Now |
+|---|---|---|
+| `AreEqualNumerically("2 x (-1/4 + ln(x)/2) + 1/x * 2/4 * x^2", "x ln(x)")` | `false` | `true` |
+| `AreEqualNumerically` of `x ln(x)` and its antiderivative's derivative | `false` | `true` |
+
+---
+
 ## 2.6.0 — since 2.5.0
 
 ### A high half-odd power of a quadratic beside a power of another is reduced in exact rationals
