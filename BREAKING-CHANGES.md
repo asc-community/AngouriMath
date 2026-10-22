@@ -618,6 +618,19 @@ interval without a case for each. Only where nothing else answers the integrand 
 | `"acoth(x)^2/(1-x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 1,304 characters, with `(ln((x + 1)/(x - 1)) - ln((1 + x)/(1 - x)))/2` for `K` |
 | `"acoth(c*x)^2/(1-c^2*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 1,681 characters |
 
+### Half-odd powers of a hyperbolic sine beside an exponential are read as a derivative
+
+**An answer where there was none.** Rubi's 6.7.1 `e^(a + b x) sinh(c + d x)^(3/2) - 3/4 e^(a + b x) d^2/((b^2 - 9/4 d^2) sqrt(sinh(c + d x)))`
+was declined. Each of its terms alone is not elementary, and the sum is the derivative of
+`e^(a + b x) (4 b sinh^(3/2) - 6 d cosh sinh^(1/2))/(4 b^2 - 9 d^2)`. Such a sum is now read as the derivative of
+`e^(a + b x)` times a sum of `sinh^p cosh^q`, over the integrand's monomials and the ones their derivative reaches, with
+`cosh^2 = 1 + sinh^2`. Its coefficients are a linear system
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(a+b*x)*sinh(c+d*x)^(3/2)-3/4*e^(a+b*x)*d^2/((b^2-9/4*d^2)*sqrt(sinh(c+d*x)))".ToEntity().Integrate("x")` | `integral(...)` | 249 characters |
+
 ### A function of the hyperbolic tangent alone is integrated under `u = tanh`
 
 **Answers where there were none.** `tanh(x)/sqrt(a + b tanh(x)^2 + c tanh(x)^4)` was declined, and so were 35 more of

@@ -1796,6 +1796,9 @@ namespace AngouriMath.Functions.Algebra
             // a sign on. Last, so that every one answered as written keeps that answer: parts answers a
             // polynomial beside it.
             if ((answer = IndefiniteIntegralSolver.SolveByNamingAnInverseSineOfASineLinearOnEachInterval(expr, x, integrateByParts)) is { }) return answer;
+            // And half-odd powers of a hyperbolic sine beside an exponential as the derivative of the same kind,
+            // last: each term alone is not elementary, and the split declined them.
+            if ((answer = IndefiniteIntegralSolver.SolveHalfOddPowersOfAHyperbolicSineBesideAnExponentialAsADerivative(expr, x)) is { }) return answer;
             return null;
         }
         /// <summary>

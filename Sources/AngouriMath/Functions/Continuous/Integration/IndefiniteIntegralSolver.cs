@@ -29769,6 +29769,148 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An exponential of a linear times half-odd powers of a hyperbolic sine of another linear, and the
+        /// cosine to the first power beside them, as the derivative of the same kind of sum: with
+        /// <c>E = e^(a + b x)</c>, <c>S = sinh(u)</c>, <c>C = cosh(u)</c> and <c>u = c + d x</c>,
+        /// <c>(E S^p C^q)' = E (b S^p C^q + d p S^(p - 1) C^(q + 1) + d q S^(p + 1) C^(q - 1))</c>, with
+        /// <c>C^2 = 1 + S^2</c>, so F is a sum of <c>E S^p C^q</c> over the integrand's monomials and their
+        /// partners, and its coefficients a linear system. Rubi's 6.7.1
+        /// <c>e^(a + b x) sinh(c + d x)^(3/2) - 3/4 e^(a + b x) d^2/((b^2 - 9/4 d^2) sqrt(sinh(c + d x)))</c>
+        /// is <c>(e^(a + b x) (b sinh^(3/2) - 3/2 d cosh sinh^(1/2))/(b^2 - 9/4 d^2))'</c>, where each term
+        /// alone is not elementary and the split declined both. Powers of one sine multiply on every
+        /// branch, and no power of a power is taken. Checked by its derivative.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        internal static Entity? SolveHalfOddPowersOfAHyperbolicSineBesideAnExponentialAsADerivative(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var terms = Sumf.LinearChildren(expr);
+            if (terms.Count < 2)
+                return null;
+            // u: the argument of the first e^u - e^(-u) or e^u + e^(-u) in the integrand.
+            Entity? u = null;
+            foreach (var node in expr.Nodes)
+                if (node is Minusf or Sumf && node.DirectChildren.ToList() is [Powf(var e1, var p1), Powf(var e2, var p2)]
+                    && e1 == MathS.e && e2 == MathS.e && TreeAnalyzer.TryGetPolyLinear(p1, x, out var s1, out var c1) && !TreeAnalyzer.IsZero(s1)
+                    && TreeAnalyzer.TryGetPolyLinear(p2, x, out var s2, out var c2)
+                    && Functions.PartialFractions.InLowestTermsOverTheSymbols(s1 + s2) == Number.Integer.Zero
+                    && Functions.PartialFractions.InLowestTermsOverTheSymbols(c1 + c2) == Number.Integer.Zero)
+                {
+                    u = p1;
+                    break;
+                }
+            if (u is null || !TreeAnalyzer.TryGetPolyLinear(u, x, out var d, out _))
+                return null;
+            bool IsPlusMinus(Entity first, Entity second) => first is Powf(var e1, var p1) && e1 == MathS.e && p1 == u
+                && second is Powf(var e2, var p2) && e2 == MathS.e && Functions.PartialFractions.InLowestTermsOverTheSymbols(p2 + u) == Number.Integer.Zero;
+            Entity? exponentOfE = null;
+            // (constant, power of S, power of C), the exponential's exponent kept apart.
+            (Entity K, ERational P, int Q)? Read(Entity node)
+            {
+                if (!node.ContainsNode(x))
+                    return (node, ERational.Zero, 0);
+                switch (node)
+                {
+                    case Minusf(var a, var b) when IsPlusMinus(a, b):
+                        return (Number.Integer.Create(2), ERational.One, 0);
+                    case Sumf(var a, var b) when IsPlusMinus(a, b):
+                        return (Number.Integer.Create(2), ERational.Zero, 1);
+                    case Powf(var e0, var exponent) when e0 == MathS.e && TreeAnalyzer.TryGetPolyLinear(exponent, x, out _, out _):
+                        if (exponentOfE is null)
+                            exponentOfE = exponent;
+                        return exponentOfE == exponent ? (Number.Integer.One, ERational.Zero, 0) : null;
+                    case Mulf(var a, var b):
+                        return Read(a) is var (ka, pa, qa) && Read(b) is var (kb, pb, qb) ? (ka * kb, pa.Add(pb), qa + qb) : null;
+                    case Divf(var a, var b):
+                        return Read(a) is var (ka2, pa2, qa2) && Read(b) is var (kb2, pb2, qb2) ? (ka2 / kb2, pa2.Subtract(pb2), qa2 - qb2) : null;
+                    // A power of the sine alone, or a whole power of anything read.
+                    case Powf(var @base, Number.Integer { EInteger: var whole }) when whole.CanFitInInt32() && Read(@base) is var (k, pw, qw):
+                        return (MathS.Pow(k, Number.Integer.Create(whole)), pw.Multiply(ERational.FromEInteger(whole)), qw * whole.ToInt32Unchecked());
+                    case Powf(var @base, Number.Rational { ERational: var r }) when Read(@base) is var (k2, ps, qs) && qs == 0 && ps.Equals(ERational.One):
+                        return (MathS.Pow(k2, Number.Rational.Create(r)), r, 0);
+                    default:
+                        return null;
+                }
+            }
+            // The integrand's monomials, C^2 written 1 + S^2.
+            var target = new Dictionary<(ERational, int), Entity>();
+            void Add(Dictionary<(ERational, int), Entity> into, ERational p, int q, Entity coefficient)
+            {
+                while (q >= 2)
+                {
+                    Add(into, p.Add(ERational.FromInt32(2)), q - 2, coefficient);
+                    q -= 2;
+                }
+                if (q < 0)
+                    return;
+                into[(p, q)] = into.TryGetValue((p, q), out var already) ? already + coefficient : coefficient;
+            }
+            var halfOdd = false;
+            foreach (var term in terms)
+            {
+                if (Read(term) is not var (k, p, q) || q < 0 || q > 3)
+                    return null;
+                halfOdd |= !p.Denominator.Equals(EInteger.One);
+                Add(target, p, q, k);
+            }
+            if (!halfOdd || exponentOfE is null || !TreeAnalyzer.TryGetPolyLinear(exponentOfE, x, out var b, out _))
+                return null;
+            // The ansatz: every monomial and its partner, which the derivative reaches.
+            var basis = new List<(ERational P, int Q)>();
+            foreach (var (p, q) in target.Keys)
+                foreach (var candidate in q == 0 ? new[] { (p, 0), (p.Subtract(ERational.One), 1) } : new[] { (p, 1), (p.Add(ERational.One), 0) })
+                    if (!basis.Contains(candidate))
+                        basis.Add(candidate);
+            var derivatives = basis.Select(m =>
+            {
+                var into = new Dictionary<(ERational, int), Entity>();
+                Add(into, m.P, m.Q, b);
+                if (!m.P.IsZero)
+                    Add(into, m.P.Subtract(ERational.One), m.Q + 1, d * Number.Rational.Create(m.P));
+                if (m.Q > 0)
+                    Add(into, m.P.Add(ERational.One), m.Q - 1, d * m.Q);
+                return into;
+            }).ToList();
+            // Square, one row for each monomial of the ansatz, which holds every one of the integrand's: the
+            // rows past it, the lowest power the derivative reaches, are zero for a solution, which an
+            // elimination with symbols does not decide; the derivative is checked at the end instead.
+            var keys = basis.Select(m => (m.P, m.Q)).ToList();
+            var matrix = keys.Select(key => derivatives.Select(map => map.TryGetValue(key, out var v) ? v.InnerSimplified : Number.Integer.Zero).ToArray()).ToArray();
+            // Each compound coefficient of the integrand a name while the system is solved: the elimination
+            // with symbols reduces a row to `0 = c` with c zero only as a value, `-3/4 d^2/(b^2 - 9/4 d^2)`
+            // less `d/2` times the second unknown, and declines.
+            var named = new List<(Variable Name, Entity Value)>();
+            Entity Named(Entity value)
+            {
+                if (value is Number or Variable)
+                    return value;
+                var name = Variable.CreateUnique(expr + named.Aggregate((Entity)Number.Integer.Zero, (all, pair) => all + pair.Name), "k_es");
+                named.Add((name, value));
+                return name;
+            }
+            var rhs = keys.Select(key => target.TryGetValue(key, out var v) ? Named(v.InnerSimplified) : Number.Integer.Zero).ToArray();
+            if (!Functions.PartialFractions.TrySolveLinearWithSymbols(matrix, rhs, out var values))
+                return null;
+            var sine = (MathS.Pow(MathS.e, u) - MathS.Pow(MathS.e, -u)) / 2;
+            var cosine = (MathS.Pow(MathS.e, u) + MathS.Pow(MathS.e, -u)) / 2;
+            Entity sum = Number.Integer.Zero;
+            for (var j = 0; j < basis.Count; j++)
+            {
+                var value = Functions.PartialFractions.InLowestTermsOverTheSymbols(named.Aggregate(values[j], (all, pair) => all.Substitute(pair.Name, pair.Value)));
+                if (value == Number.Integer.Zero)
+                    continue;
+                var (p, q) = basis[j];
+                Entity monomial = p.IsZero ? Number.Integer.One : MathS.Pow(sine, Number.Rational.Create(p));
+                if (q == 1)
+                    monomial *= cosine;
+                sum += value * monomial;
+            }
+            var answer = MathS.Pow(MathS.e, exponentOfE) * sum;
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
+
+        /// <summary>
         /// The sign of a real-valued function of <paramref name="x"/> among the factors of the
         /// integrand is constant on every interval between its zeros, and goes in front of the
         /// antiderivative of the rest: <c>sgn(x) f(x)</c> is <c>sgn(x) F(x)</c> on each half-line,
