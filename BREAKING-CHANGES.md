@@ -207,6 +207,18 @@ quotient of two sums with a root in each, which the search never brought down to
 | `"atanh(x*sqrt(k)/sqrt(d+k*x^2))".ToEntity().Integrate("x")` | `integral(...)` | `x atanh(...) - sqrt(d + k x^2)/sqrt(k)`, written in the logarithm |
 | `"atanh(x*sqrt(k)/sqrt(d+k*x^2))/x^5".ToEntity().Integrate("x")` | `integral(...)` | by parts onto `1/(x^4 sqrt(d + k x^2))` |
 
+### A sine over x and a power of a binomial has the power lowered first
+
+**Answers where there were none.** Rubi's 4.1.11 `sin(c + d x)/(x (a + b x^3)^3)` was declined. The split over x and the
+cube's three roots, each to the third power, came out past the size it hands on. Since `a + b x^3 - b x^3` is `a`,
+`1/(x Q^k)` is `1/(a x Q^(k - 1)) - (b/a) x^2/Q^k`, and each of the two is answered as it stands
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sin(c+d*x)/(x*(a+b*x^3)^3)".ToEntity().Integrate("x")` | `integral(...)` | 13,110 characters |
+| `"cos(c+d*x)/(x*(a+b*x^3)^3)".ToEntity().Integrate("x")` | `integral(...)` | 13,132 characters |
+
 ### A power of x times the arsech or arcsch of `sqrt(x)` is integrated by parts
 
 **Answers where there were none.** Every power from `x^0` to `x^3` times `asech(sqrt(x))` or `acsch(sqrt(x))`, Rubi's
