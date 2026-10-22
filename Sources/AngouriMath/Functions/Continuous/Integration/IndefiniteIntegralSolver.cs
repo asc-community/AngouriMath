@@ -43287,6 +43287,170 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// x times a rational function of an exponential whose exponent has a constant Euler
+        /// derivative, <c>x g'(x) = c</c>, read off the integrand: Rubi's 6.5.3
+        /// <c>(1 - b^2 n^2) sech(u) + 2 b^2 n^2 sech(u)^3</c> for <c>u = a + b ln(c x^n)</c> is
+        /// <c>(x (-sech(u) - b n tanh(u) sech(u)))'</c>, and was declined.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// With <c>w = e^g</c>, <c>x w' = c w</c>, so <c>(x G(w))' = G + c w G'(w)</c>: the integrand
+        /// <c>P/Q</c> in w is that for <c>G = N/Q</c> exactly where
+        /// <c>N Q + c w (N' Q - N Q') = P Q</c>, linear in N's coefficients and read at sampled values
+        /// of w. A symbolic c makes the solution unique, the homogeneous one being <c>w^(-1/c)</c>. Only
+        /// where x stands in the exponentials alone, the others whole powers of the first, and checked.
+        /// </remarks>
+        internal static Entity? SolveAsXTimesARationalFunctionOfAnExponentialOfALogarithm(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            static bool IsAnExponential(Entity node, Entity.Variable x) => node is Powf(var @base, var exponent) && @base == MathS.e && exponent.ContainsNode(x);
+            if (expr.Replace(node => IsAnExponential(node, x) ? Number.Integer.One : node).ContainsNode(x))
+                return null;
+            var exponentials = expr.Nodes.Where(node => IsAnExponential(node, x)).Distinct().ToList();
+            if (exponentials.Count is 0 or > 4)
+                return null;
+            var first = ((Powf)exponentials[0]).Exponent;
+            // Only an exponent of a logarithm: a linear one is the exponential substitution's.
+            if (TreeAnalyzer.TryGetPolyLinear(first, x, out _, out _) || !first.Nodes.Any(node => node is Logf))
+                return null;
+            var rate = Functions.PartialFractions.Bare((x * first.Differentiate(x)).Simplify());
+            if (rate.ContainsNode(x) || Functions.PartialFractions.IsZeroAsAValue(rate))
+                return null;
+            var powers = new Dictionary<Entity, int>();
+            foreach (var exponential in exponentials)
+                if (Functions.PartialFractions.Bare((((Powf)exponential).Exponent / first).Simplify()) is Number.Integer { EInteger: var whole } && whole.CanFitInInt32())
+                    powers[exponential] = whole.ToInt32Unchecked();
+                else
+                    return null;
+            var w = Variable.CreateUnique(expr, "w_euler");
+            var inW = expr.Replace(node => powers.TryGetValue(node, out var k) ? MathS.Pow(w, Number.Integer.Create(k)) : node);
+            var exponentialOfTheFirst = exponentials.First(e => powers[e] == 1);
+            // A symbolic power of one function of w, `K B^p`: x K B^(p - 2) H(w) for a rational H, since
+            // (x B^(p - 2) H)' is B^(p - 2) (H + c w H' + (p - 2) c (w B'/B) H), and H solves the system
+            // below with that term beside. Rubi's 6.5.3 `sech(a - ln(c x^n)/(n (p - 2)))^p` has
+            // c = -1/(p - 2), and is `x (p - 2)/(p - 1) sech(u)^(p - 2) (1 - tanh(u))`.
+            Entity? symbolicPower = null, ofIt = null;
+            Entity constantFactor = Number.Integer.One;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(inW))
+            {
+                if (!factor.ContainsNode(w))
+                {
+                    constantFactor = underneath ? constantFactor / factor : constantFactor * factor;
+                    continue;
+                }
+                if (underneath || symbolicPower is not null || factor is not Powf(var b, var power) || power.ContainsNode(w) || power is Number)
+                {
+                    symbolicPower = null;
+                    ofIt = null;
+                    break;
+                }
+                (ofIt, symbolicPower) = (b, power);
+            }
+            if (symbolicPower is not null && ofIt is not null)
+            {
+                var squared = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(MathS.Sqr(ofIt)));
+                var logarithmic = (w * ofIt.Differentiate(w) / ofIt).InnerSimplified;
+                if (!TreeAnalyzer.TryGetPolynomial(Functions.PartialFractions.Bare(squared.Denominator.Expand()), w, out var ofTheSquare)
+                    || ofTheSquare.Keys.Any(k => k.Sign < 0) || ofTheSquare.Keys.Max()! is not { } top || !top.CanFitInInt32() || top.ToInt32Unchecked() is < 1 or > 12)
+                    return null;
+                var denominatorOfH = squared.Denominator;
+                var count = top.ToInt32Unchecked() + 1;
+                var derivativeOfTheDenominator = denominatorOfH.Differentiate(w);
+                // `(p - 2) c` once and simplified, which is -1 for the rows this is for: inside each entry
+                // `(p - 2) (-1)/(p - 2)` was left standing, and the elimination did not resolve it.
+                var scaledRate = Functions.PartialFractions.Bare(((symbolicPower - 2) * rate).Simplify());
+                // And every row times the rate's denominator, so that the entries are polynomials in the
+                // symbols: over `p - 2` the elimination did not settle the system.
+                var (rateAbove, rateBelow) = Functions.SingleQuotient.Of(rate);
+                // Square: with p in the entries the elimination is symbolic, and the rows past the
+                // unknowns are rational functions of p it cannot decide are zero; the answer is checked.
+                var points = Enumerable.Range(0, count).Select(k => (Entity)Number.Rational.Create(EInteger.FromInt32(2 + 3 * k), EInteger.FromInt32(1 + k % 3))).ToList();
+                var rows = new Entity[points.Count][];
+                var wanted = new Entity[points.Count];
+                for (var r = 0; r < points.Count; r++)
+                {
+                    var at = points[r];
+                    var qAt = denominatorOfH.Substitute(w, at).InnerSimplified;
+                    var qPrimeAt = derivativeOfTheDenominator.Substitute(w, at).InnerSimplified;
+                    var lAt = logarithmic.Substitute(w, at).InnerSimplified;
+                    rows[r] = new Entity[count];
+                    // w^j (Q + c j Q - c w Q' + (p - 2) c L Q).
+                    for (var j = 0; j < count; j++)
+                        // Bare: `(p - 2) c` is `-1 provided not p - 2 = 0` inner-simplified, and the elimination
+                        // does not read a condition.
+                        rows[r][j] = Functions.PartialFractions.Bare((MathS.Pow(at, Number.Integer.Create(j)) * (rateBelow * qAt + rateAbove * j * qAt - rateAbove * at * qPrimeAt + rateBelow * scaledRate * lAt * qAt)).Expand().InnerSimplified);
+                    wanted[r] = Functions.PartialFractions.Bare((rateBelow * MathS.Sqr(ofIt).Substitute(w, at) * qAt * qAt).Expand().InnerSimplified);
+                }
+                if (!Functions.PartialFractions.TrySolveLinearWithSymbols(rows, wanted, out var ofH))
+                    return null;
+                Entity aboveH = Number.Integer.Zero;
+                for (var j = 0; j < count; j++)
+                {
+                    var coefficient = LowestOverTheSymbols(ofH[j]);
+                    if (!Functions.PartialFractions.IsZeroAsAValue(coefficient))
+                        aboveH += coefficient * MathS.Pow(w, Number.Integer.Create(j));
+                }
+                if (aboveH == Number.Integer.Zero)
+                    return null;
+                var h = Functions.PartialFractions.Bare((aboveH / denominatorOfH).Simplify());
+                var withThePower = Functions.PartialFractions.Bare((x * constantFactor * MathS.Pow(ofIt, symbolicPower - 2) * h).Substitute(w, exponentialOfTheFirst).InnerSimplified);
+                return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(withThePower, expr, x) ? withThePower : null;
+            }
+            var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(inW));
+            if (!TreeAnalyzer.TryGetPolynomial(Functions.PartialFractions.Bare(above.Expand()), w, out var p) || !TreeAnalyzer.TryGetPolynomial(Functions.PartialFractions.Bare(below.Expand()), w, out var q))
+                return null;
+            // Negative powers of w cleared from both.
+            var lowest = p.Keys.Concat(q.Keys).Min()!;
+            Entity Written(Dictionary<EInteger, Entity> read)
+            {
+                Entity sum = Number.Integer.Zero;
+                foreach (var pair in read)
+                    sum += pair.Value * MathS.Pow(w, Number.Integer.Create(pair.Key - lowest));
+                return sum.InnerSimplified;
+            }
+            var bigP = Written(p);
+            var bigQ = Written(q);
+            var degreeOfQ = q.Keys.Max()! - lowest;
+            if (!degreeOfQ.CanFitInInt32() || degreeOfQ.ToInt32Unchecked() is < 1 or > 12)
+                return null;
+            var size = degreeOfQ.ToInt32Unchecked() + 1;
+            var derivativeOfQ = bigQ.Differentiate(w);
+            var samples = Enumerable.Range(0, size + 3).Select(k => (Entity)Number.Rational.Create(EInteger.FromInt32(2 + 3 * k), EInteger.FromInt32(1 + k % 3))).ToList();
+            var matrix = new Entity[samples.Count][];
+            var rhs = new Entity[samples.Count];
+            for (var r = 0; r < samples.Count; r++)
+            {
+                var at = samples[r];
+                var qAt = bigQ.Substitute(w, at).InnerSimplified;
+                var qPrimeAt = derivativeOfQ.Substitute(w, at).InnerSimplified;
+                matrix[r] = new Entity[size];
+                // w^j (Q + c j Q - c w Q').
+                for (var j = 0; j < size; j++)
+                    matrix[r][j] = Functions.PartialFractions.Bare((MathS.Pow(at, Number.Integer.Create(j)) * (qAt + rate * j * qAt - rate * at * qPrimeAt)).InnerSimplified);
+                rhs[r] = Functions.PartialFractions.Bare((bigP.Substitute(w, at) * qAt).InnerSimplified);
+            }
+            if (!Functions.PartialFractions.TrySolveLinearWithSymbols(matrix, rhs, out var coefficients))
+                return null;
+            Entity numerator = Number.Integer.Zero;
+            for (var j = 0; j < size; j++)
+            {
+                var coefficient = LowestOverTheSymbols(coefficients[j]);
+                if (!Functions.PartialFractions.IsZeroAsAValue(coefficient))
+                    numerator += coefficient * MathS.Pow(w, Number.Integer.Create(j));
+            }
+            if (numerator == Number.Integer.Zero)
+                return null;
+            // In lowest terms: N is found over the whole of Q, of which the antiderivative needs only a
+            // power the less of each repeated factor -- simplified in w, a quotient of polynomials of
+            // degree twelve at most, since the cancellation over the rationals does not take the
+            // symbols in N: for the sech row, 385 characters, and 235 simplified.
+            var quotient = Functions.PartialFractions.Bare((numerator / bigQ).Simplify());
+            var answer = Functions.PartialFractions.Bare((x * quotient).Substitute(w, exponentialOfTheFirst).InnerSimplified);
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
+
+        /// <summary>
         /// <c>x^m (a + b atan(c x))^p</c> over a power of <c>d (1 +- i c x)</c>, under <c>x = tan(u)/c</c>, where
         /// <c>1 + i tan(u)</c> is <c>e^(i u)/cos(u)</c>: the integrand in <c>u</c> is
         /// <c>(a + b u)^p (tan(u)/c)^m d^(-k) e^(-+i k u) cos(u)^k/(c cos(u)^2)</c>, a polynomial in <c>u</c> times

@@ -588,6 +588,23 @@ integrand over `D^2` as `(N/D)'`, with `N` a constant times each exponential in 
 | `"(b+a*cosh(x))/(a+b*cosh(x))^2".ToEntity().Integrate("x")` | `integral(...)` | 70 characters, where before this change master gave 7,631 |
 | `"sech(x)^2*tanh(x)^2/(2+tanh(x)^3)^2".ToEntity().Integrate("x")` | no answer in thirty seconds | 60 characters, `-1/3/(2 + tanh(x)^3)`, in 55 ms; master gave 117 in 16 s and 9.7 GB |
 
+### x times a rational function of an exponential of a logarithm is read off the integrand
+
+**Answers where there were none.** Rubi's 6.5.3 `(1 - b^2 n^2) sech(u) + 2 b^2 n^2 sech(u)^3` for `u = a + b ln(c x^n)` is
+`(x (-sech(u) - b n tanh(u) sech(u)))'`, and its 6.6.3 twin in the cosecant the same way. Both were declined. With
+`w = e^u`, the Euler derivative `x w' = b n w` makes `(x G(w))'` equal `G + b n w G'(w)`. Where x stands in the
+exponentials alone, a rational G is now solved for by sampling w: a linear system, with the symbolic `b n` making
+its solution unique. A symbolic power `B^p` of one function of w goes through `x B^(p - 2) H(w)` the same way, which
+answers 6.5.3's `sech(a - ln(c x^n)/(n (p - 2)))^p` and its cosecant twin
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(1-b^2*n^2)*sech(a+b*ln(c*x^n))+2*b^2*n^2*sech(a+b*ln(c*x^n))^3".ToEntity().Integrate("x")` | `integral(...)` | 235 characters |
+| `"-(1-b^2*n^2)*csch(a+b*ln(c*x^n))+2*b^2*n^2*csch(a+b*ln(c*x^n))^3".ToEntity().Integrate("x")` | `integral(...)` | 247 characters |
+| `"sech(a-ln(c*x^n)/(n*(-2+p)))^p".ToEntity().Integrate("x")` | `integral(...)` | 311 characters, x times `sech(u)^(p - 2)` |
+| `"csch(a-ln(c*x^n)/(n*(-2+p)))^p".ToEntity().Integrate("x")` | `integral(...)` | 354 characters |
+
 ### A hyperbolic function of `a + 2 ln(x)` is integrated with `e^a` as a symbol too
 
 **Answers where there were none.** `tanh(a + 2 ln(x))^2/x^3` was declined, and so were nineteen more of Rubi's 6.3.2,

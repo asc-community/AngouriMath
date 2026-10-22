@@ -725,6 +725,9 @@ namespace AngouriMath.Functions.Algebra
             // parts. The split and the exponential substitution answered `(b - a sinh(x))/(a + b sinh(x))^2`
             // with a piecewise on a discriminant, and parts beside x ran past the budget integrating it.
             if ((answer = IndefiniteIntegralSolver.SolveAsTheDerivativeOfAQuotientOverASumOfExponentials(expr, x, integrateByParts)) is { }) return answer;
+            // And x times a rational function of an exponential of a logarithm, read off the integrand by
+            // the Euler derivative: `(1 - b^2 n^2) sech(u) + 2 b^2 n^2 sech(u)^3` for `u = a + b ln(c x^n)`.
+            if ((answer = IndefiniteIntegralSolver.SolveAsXTimesARationalFunctionOfAnExponentialOfALogarithm(expr, x)) is { }) return answer;
             // A cosine beside a function of the sine with a power off the rationals in it, in the sine:
             // the substitution search declined `cos(x)/(sin(x) + sin(x)^sqrt(2))`.
             if ((answer = IndefiniteIntegralSolver.SolveACosineBesideAFunctionOfTheSineWithAnIrrationalPowerInIt(expr, x, integrateByParts)) is { }) return answer;
