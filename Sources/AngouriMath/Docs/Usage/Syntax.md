@@ -332,8 +332,11 @@ undefined at `0`; `Si(+oo)` is `pi / 2` and `Ci(+oo)` is `0`.
 to the working precision anywhere in the complex plane but at `0, -1, -2, ...`, its poles, and each
 order is the derivative of the one before: the derivative of `polygamma(n, x)` is
 `polygamma(n + 1, x)`. The derivative of `x!` is `x! * digamma(x + 1)`, and of `gamma(x)` it is
-`(x - 1)! * digamma(x)`. Special values, such as `digamma(1) = -gamma`, stay as written, since the
-library has no symbol for Euler's constant.
+`(x - 1)! * digamma(x)`. Integrating goes the other way: `polygamma(n, x)` integrates to
+`polygamma(n - 1, x)`, and `digamma(x)` to `ln((x - 1)!)`. An odd order at a whole or half-whole
+argument is exact, a rational times a power of `pi` plus a rational: `polygamma(1, 1)` is
+`1/6 * pi ^ 2` and `polygamma(1, 3)` is `1/6 * pi ^ 2 - 5/4`. Other special values, such as
+`digamma(1) = -gamma`, stay as written, since the library has no symbol for Euler's constant.
 
 **Calculus** — `derivative(expr, var, order)`, `integral(expr, var)`,
 `integral(expr, var, from, to)`, `limit(expr, var, dest)`, `limitleft(...)`, `limitright(...)`;
