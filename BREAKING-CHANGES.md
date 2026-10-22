@@ -103,6 +103,8 @@ as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` wa
 - **New functions.** `polygamma(n, z)` and `digamma(z)` are the polygamma functions `psi^(n)(z)`, the `(n + 1)`-th derivatives of `ln Gamma(z)`, and the digamma function, which is `polygamma(0, z)`. Neither name was recognised, so each was read as a product with an undeclared variable.
 - **Evaluation.** Each is evaluated to the working precision anywhere in the complex plane but at `0, -1, -2, ...`, its poles, where it is `NaN`.
 - **Derivatives.** Each order differentiates to the next. The derivative of `x!`, which was left unevaluated, is `x! * digamma(x + 1)` ([#171](https://github.com/asc-community/AngouriMath/issues/171)).
+- **Integrals.** Each order integrates to the one before, and `digamma(x)` to `ln((x - 1)!)`.
+- **Exact values.** An odd order at a whole or half-whole argument is a rational times a power of `pi` plus a rational: `polygamma(1, 1)` is `1/6 * pi ^ 2`.
 
 | Input | Was (2.6.0) | Now |
 |---|---|---|
@@ -111,6 +113,8 @@ as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` wa
 | `"polygamma(1, 1)".ToEntity()` | an `UnhandledParseException` | `polygamma(1, 1)`, which evaluates to `1.6449340668482264…` |
 | `"x!".ToEntity().Differentiate("x")` | `derivative(x!, x)`, unevaluated | `x! * digamma(x + 1)` |
 | `"gamma(x)".ToEntity().Differentiate("x")` | `derivative((x - 1)!, x)` | `(x - 1)! * digamma(x - 1 + 1)` |
+| `"polygamma(1, 3)".ToEntity().InnerSimplified` | an `UnhandledParseException` | `1/6 * pi ^ 2 - 5/4` |
+| `"digamma(x)".ToEntity().Integrate("x")` | `digamma * x ^ 2 / 2 + C`, of the product | `ln((x - 1)!) + C` |
 
 ### Numerical equality is to half the evaluation's digits
 

@@ -67,6 +67,7 @@ namespace AngouriMath.Functions.Algebra
             Entity.Cif(var arg) => arg,
             Entity.Shif(var arg) => arg,
             Entity.Chif(var arg) => arg,
+            Entity.Polygammaf(var order, var arg) when !order.ContainsNode(x) => arg,
             Entity.Arcsinf(var arg) => arg,
             Entity.Arccosf(var arg) => arg,
             Entity.Arctanf(var arg) => arg,
@@ -383,6 +384,18 @@ namespace AngouriMath.Functions.Algebra
             Entity.Chif(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
                     (arg * MathS.Chi(arg) - MathS.Hyperbolic.Sinh(arg)) / a,
+
+            // The polygamma functions, each the derivative of the one before: int psi^(n)(u) =
+            // psi^(n - 1)(u) for n >= 1, and int psi(u) = ln Gamma(u) = ln((u - 1)!), whose value is
+            // i pi more where Gamma is negative, a constant on each interval between the poles.
+            // https://github.com/asc-community/AngouriMath/issues/171
+            Entity.Polygammaf(Entity.Number.Integer { EInteger: var order }, var arg) when order.Sign > 0 &&
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    MathS.Polygamma(Entity.Number.Integer.Create(order - 1), arg) / a,
+
+            Entity.Polygammaf(Entity.Number.Integer { IsZero: true }, var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    MathS.Ln(MathS.Factorial(arg - 1)) / a,
 
             Entity.Absf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) => // ∫ |ax + b| dx = sgn(ax + b) * (ax + b)^2 / (2a)
