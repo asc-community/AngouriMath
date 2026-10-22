@@ -365,7 +365,8 @@ namespace AngouriMath
                         rounded = Complex.Create(root.RealPart, root.ImaginaryPart);
                     if (rounded is Rational rational && IsZero(Pow(rational, power) - @base))  // To keep user's desired precision
                         return rational;
-                    switch (Complex.Create(root.RealPart, root.ImaginaryPart))
+                    // The root as GetAllRoots made it, at the working precision.
+                    switch (root)
                     {
                         case Real r when r > 0:
                             positive ??= r;
