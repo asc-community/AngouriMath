@@ -30091,6 +30091,69 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A logarithm of constants and nested powers of one linear <c>L</c>, <c>ln(c (d L^p)^q)</c>, is
+        /// <c>p q ln(L) + K</c> with <c>K</c> constant wherever it is continuous, since its derivative is
+        /// <c>p q L'/L</c> by the chain rule on any branch: named so, Rubi's 3.3
+        /// <c>(g + h x)^2 (a + b ln(c (d (e + f x)^p)^q))^3</c> is a polynomial times a power of
+        /// <c>ln(e + f x)</c>, answered in a quarter of a second, where as written it was declined after
+        /// eleven and twelve gigabytes. The answer is the generic case's, as
+        /// <see cref="SolveByNamingALogarithmLinearInTheVariable"/>'s is. Only a nested power, which the
+        /// rules for <c>ln(c L^n)</c> do not read. Asked as a question of its own.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        internal static Entity? SolveByNamingALogarithmOfNestedPowersOfALinear(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            Logf? named = null;
+            Entity? linear = null;
+            Entity? times = null;
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not Logf(var logBase, var argument) log || logBase != MathS.e || !argument.ContainsNode(x)
+                    || !argument.Nodes.Any(inner => inner is Powf(var raised, _) && raised.ContainsNode(x) && raised.Nodes.Any(deeper => deeper != raised && deeper is Powf(var b, _) && b.ContainsNode(x))))
+                    continue;
+                Entity? found = null;
+                Entity? Exponent(Entity part)
+                {
+                    if (!part.ContainsNode(x))
+                        return Number.Integer.Zero;
+                    if (TreeAnalyzer.TryGetPolyLinear(part, x, out var slope, out _) && !TreeAnalyzer.IsZero(slope))
+                    {
+                        if (found is null)
+                            found = part;
+                        return found == part ? Number.Integer.One : null;
+                    }
+                    switch (part)
+                    {
+                        case Mulf(var left, var right):
+                            return Exponent(left) is { } l && Exponent(right) is { } r ? l + r : null;
+                        case Divf(var above, var below):
+                            return Exponent(above) is { } a && Exponent(below) is { } b ? a - b : null;
+                        case Powf(var @base, var power) when !power.ContainsNode(x):
+                            return Exponent(@base) is { } e ? power * e : null;
+                        default:
+                            return null;
+                    }
+                }
+                if (Exponent(argument) is not { } exponent || found is null)
+                    continue;
+                (named, linear, times) = (log, found, exponent.InnerSimplified);
+                break;
+            }
+            if (named is null || linear is null || times is null || TreeAnalyzer.IsZero(times))
+                return null;
+            var constant = Variable.CreateUnique(expr, "K");
+            var inTheLinear = times * MathS.Ln(linear) + constant;
+            var rewritten = expr.Substitute(named, inTheLinear);
+            if (rewritten == expr || rewritten.ContainsNode(named))
+                return null;
+            if (Integration.ComputeAsAQuestionOfItsOwn(rewritten, x, integrateByParts) is not { } answer)
+                return null;
+            // The sum as it was written stands for the logarithm again, where term by term it would be
+            // `p q ln(L) + (ln(c (d L^p)^q) - p q ln(L))`; K anywhere else is the difference.
+            return answer.Replace(node => node == inTheLinear ? named : node).Substitute(constant, named - times * MathS.Ln(linear));
+        }
+
+        /// <summary>
         /// The sign of a real-valued function of <paramref name="x"/> among the factors of the
         /// integrand is constant on every interval between its zeros, and goes in front of the
         /// antiderivative of the rest: <c>sgn(x) f(x)</c> is <c>sgn(x) F(x)</c> on each half-line,

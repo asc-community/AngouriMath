@@ -565,6 +565,22 @@ the working digits, or `MathS.Settings.PrecisionErrorZeroRange` where a caller h
 still that integer, so `e^(-123.456)` is 0 as it was.
 [#1338](https://github.com/asc-community/AngouriMath/issues/1338).
 
+### A logarithm of nested powers of one linear is named as a multiple of the linear's logarithm
+
+**Answers where there were none, and shorter ones.** Rubi's 3.3 `(g + h x)^2 (a + b ln(c (d (e + f x)^p)^q))^3` was declined
+after eleven seconds and twelve gigabytes. The logarithm's derivative is `p q f/(e + f x)` on any branch, so it is
+`p q ln(e + f x) + K`, with `K` constant wherever it is continuous. Named so, the integrand is a polynomial times a power
+of `ln(e + f x)`, and the answer writes the logarithm back as it was. The square and the cube beside a linear come out
+shorter. The first power beside a quadratic comes out a little longer
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(g+h*x)^2*(a+b*ln(c*(d*(k+f*x)^p)^q))^3".ToEntity().Integrate("x")` | `integral(...)` | 1,660 characters, where before this change master declined it after 11 s and 12 GB |
+| `"(g+h*x)^2*(a+b*ln(c*(d*(k+f*x)^p)^q))^2".ToEntity().Integrate("x")` | `integral(...)` | 1,051 characters, where before this change master gave 2,048 |
+| `"(g+h*x)*(a+b*ln(c*(d*(k+f*x)^p)^q))^3".ToEntity().Integrate("x")` | `integral(...)` | 702 characters, where before this change master gave 2,569 |
+| `"(g+h*x)^2*(a+b*ln(c*(d*(k+f*x)^p)^q))".ToEntity().Integrate("x")` | `integral(...)` | 631 characters, where before this change master gave 527 |
+
 ### A power of a power of a logarithm over x is integrated below the question asked too
 
 **Answers where there were none.** Rubi's 3.5 `(ln(a x^n)^2)^p/x` was declined. Under `u = ln(a x^n)` it is
