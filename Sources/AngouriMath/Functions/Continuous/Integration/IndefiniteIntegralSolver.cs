@@ -4820,9 +4820,20 @@ namespace AngouriMath.Functions.Algebra
         /// </summary>
         private static Entity ArctangentsOverABiquadratic(Entity total, Entity d, Entity e, Entity a, Entity b, Entity c, Entity discriminant, Entity.Variable x)
         {
-            var q = MathS.Sqrt(discriminant);
-            var firstRoot = (-b + q) / (2 * c);
-            var secondRoot = (-b - q) / (2 * c);
+            // Real only over real coefficients: Rubi's 1.1.1.2 `1/((a - i a x)^(3/4) (a + i a x)^(1/4))` comes to a
+            // biquadratic with the imaginary unit in it and a positive discriminant, whose roots are complex,
+            // and the piecewise on their signs had no arm that held -- NaN.
+            var realRoots = SignOfANumberTimesEvenPowers(discriminant) is > 0
+                && !new[] { a, b, c }.Any(coefficient => HoldsTheImaginaryUnit(coefficient.InnerSimplified));
+            // Any square root of the discriminant serves, the other swapping the two roots: of a number times
+            // even powers, the powers halved, since `sqrt(4 b^2)` is `2 |b|`, past which neither root's sign
+            // can be read, where with `2 b` one of `cosh(x)^2/(a + b sech(x))`'s roots is -1.
+            var rootOfTheDiscriminant = realRoots ? ARootOfANumberTimesEvenPowers(discriminant) : null;
+            var q = rootOfTheDiscriminant ?? MathS.Sqrt(discriminant);
+            Entity Root(Entity root) => rootOfTheDiscriminant is not null && !rootOfTheDiscriminant.Nodes.Any(node => node is Powf(_, Number.Rational and not Number.Integer))
+                ? LowestOverTheSymbols(root) : root;
+            var firstRoot = Root((-b + q) / (2 * c));
+            var secondRoot = Root((-b - q) / (2 * c));
             // `1/(x^2 - r)` is `atan(x/s)/s` with `s = sqrt(-r)` for every complex `r` but zero:
             // `d/dx atan(x/s)/s` is `1/(s^2 + x^2)` whatever `s` is, and for a positive `r` the
             // arctangent of an imaginary argument is the hyperbolic one, `-atanh(x/sqrt(r))/sqrt(r)`,
@@ -4831,6 +4842,19 @@ namespace AngouriMath.Functions.Algebra
             // case with real coefficients -- and the two terms then sum to a real function; a
             // piecewise on the sign of a root, as the quadratic rule would write, has no
             // value there at all.
+            // Where the discriminant is a positive number times even powers, both roots are real,
+            // and each term is written by the sign of its root, as the quadratic rule writes
+            // `1/(x^2 - r)`: for a positive `r` and `x^2 > r` the arctangent's argument is on its
+            // cut, the imaginary axis past `i`, where only the sign of a rounding residue decides
+            // its value. Rubi's 7.4.2 `e^(3 acoth(a x)) sqrt(c - c/(a x))/x` comes to
+            // `u^4/((a - u^2)(2 a - u^2))` under `u = sqrt((a x + 1)/x)`, whose discriminant is
+            // `a^2`, and between 0 and `1/a` both arctangents were on their cuts throughout.
+            // And where their product `a/c` is a positive number times even powers too, the two
+            // roots have one sign, that of their sum `-b/c`, and one piecewise on it holds both
+            // terms, where two would combine into four arms, two of which never hold.
+            // https://github.com/asc-community/AngouriMath/issues/718
+            var oneSign = realRoots && SignOfANumberTimesEvenPowers(a / c) is > 0;
+            Entity? arctangents = null, logarithms = null;
             foreach (var (root, sign) in new[] { (firstRoot, 1), (secondRoot, -1) })
             {
                 var coefficient = ((d + e * root) / q).InnerSimplified;
@@ -4838,9 +4862,23 @@ namespace AngouriMath.Functions.Algebra
                     continue;
                 var s = MathS.Sqrt(-root);
                 var part = MathS.Arctan(x / s) / s;
-                total += sign == 1 ? coefficient * part : -coefficient * part;
+                if (!realRoots)
+                {
+                    total += sign == 1 ? coefficient * part : -coefficient * part;
+                    continue;
+                }
+                var t = MathS.Sqrt(root);
+                var logarithm = MathS.Ln((x - t) / (x + t)) / (2 * t);
+                var signed = sign == 1 ? coefficient : -coefficient;
+                if (oneSign)
+                {
+                    arctangents = arctangents is null ? signed * part : arctangents + signed * part;
+                    logarithms = logarithms is null ? signed * logarithm : logarithms + signed * logarithm;
+                }
+                else
+                    total += signed * BySign(-root, part, logarithm);
             }
-            return total;
+            return arctangents is not null && logarithms is not null ? total + BySign((b / c).InnerSimplified, arctangents, logarithms) : total;
         }
 
         /// <summary>
@@ -17561,6 +17599,26 @@ namespace AngouriMath.Functions.Algebra
                 (wherePositiveAndPositive, new Andf(positive, new Greaterf(second, Number.Integer.Zero))),
                 (wherePositiveAndNegative, new Andf(positive, new Lessf(second, Number.Integer.Zero))),
                 (whereNegative, new Lessf(first, Number.Integer.Zero)));
+        }
+
+        // A square root of a positive number times even powers of symbols, `sqrt(k)` times each symbol to half
+        // its power; null where the quantity is anything else.
+        private static Entity? ARootOfANumberTimesEvenPowers(Entity quantity)
+        {
+            Entity root = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(quantity.InnerSimplified))
+                switch (factor)
+                {
+                    case Number.Real { IsZero: false, IsNegative: false } number:
+                        root *= MathS.Sqrt(number);
+                        break;
+                    case Powf(Variable symbol, Number.Integer power) when power.EInteger.IsEven && power.EInteger.Sign > 0 && power.EInteger.CanFitInInt32():
+                        root *= WholePower(symbol, power.EInteger.ToInt32Unchecked() / 2);
+                        break;
+                    default:
+                        return null;
+                }
+            return root.InnerSimplified;
         }
 
         private static int? SignOfANumberTimesEvenPowers(Entity quantity)
