@@ -4658,6 +4658,117 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An even rational function with a symbol in it, over a power past the first of a biquadratic of
+        /// three terms beside another factor in <c>x^2</c>, split over its written factors in <c>w = x^2</c> and each
+        /// term asked in x. <c>1/((x^2 - 1)(c + d x^2 + f x^4)^2)</c> is
+        /// <c>A/(w - 1) + (B + C w)/Q(w) + (D + E w)/Q(w)^2</c>, and every term is a shape the rules
+        /// answer at once; split in x, the series at the roots of <c>x^2 - 1</c> ran to coefficients
+        /// of a hundred thousand nodes, with powers like <c>c^40 f^58</c>, and past the budget. That
+        /// is Rubi's 6.1.7 <c>csch(u)/(a - b sinh(u)^4)^2</c> under <c>w = cosh(u)</c>. Checked by
+        /// its derivative.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        internal static Entity? SolveAnEvenQuotientOverAPowerOfABiquadraticBesideAnotherFactorInTheSquare(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!TryReadAsQuotient(expr, out var numerator, out var denominator) || !(numerator + denominator).Vars.Any(v => v != x))
+                return null;
+            var w = Variable.CreateUnique(expr, "w");
+            // Each coefficient that is more than a symbol or a number a fresh symbol while the split is
+            // solved and the terms integrated, and put back after: in `a - b (x^2 - 1)^2` they are
+            // `a - b`, `2 b` and `-b`, and the split took 3 s and 1.4 GB where with three symbols it takes 0.1.
+            var named = new List<(Variable Name, Entity Value)>();
+            Entity everything = expr + w;
+            Entity Named(Entity coefficient)
+            {
+                if (coefficient is Variable or Number)
+                    return coefficient;
+                foreach (var (already, value) in named)
+                    if (value == coefficient)
+                        return already;
+                var name = Variable.CreateUnique(everything, "k_q");
+                everything += name;
+                named.Add((name, coefficient));
+                return name;
+            }
+            // A polynomial in x with only even powers, written in w, its degree in w, how many terms it
+            // has and its leading coefficient; monic, where asked, with that coefficient out in front and
+            // the others over it in lowest terms, so that the names come back as `(b - a)/b`.
+            (Entity InW, int Degree, int Terms, Entity Leading)? InTheSquare(Entity polynomial, bool monic)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, x, out var read) || read.Count == 0)
+                    return null;
+                foreach (var pair in read)
+                    if (pair.Key.Sign < 0 || !pair.Key.IsEven || !pair.Key.CanFitInInt32() || pair.Value.ContainsNode(x))
+                        return null;
+                var top = read.Keys.Max()!;
+                var leading = monic ? read[top] : Number.Integer.One;
+                Entity inW = Number.Integer.Zero;
+                foreach (var (power, coefficient) in read.OrderBy(pair => pair.Key).Select(pair => (pair.Key, pair.Value)))
+                {
+                    var half = power.ToInt32Unchecked() / 2;
+                    // Folded first, so that a number the reading left as `3 (-2)` is not a name.
+                    var inNames = power == top && monic ? Number.Integer.One
+                        : Named(monic ? Functions.PartialFractions.InLowestTermsOverTheSymbols(coefficient / leading) : coefficient.InnerSimplified);
+                    inW += half == 0 ? inNames : inNames * (half == 1 ? w : MathS.Pow(w, half));
+                }
+                return (inW, top.ToInt32Unchecked() / 2, read.Count, leading);
+            }
+            Entity denominatorInW = Number.Integer.One;
+            Entity leadingOfTheDenominator = Number.Integer.One;
+            var linearsInW = new List<Entity>();
+            var factorsInX = 0;
+            var aRepeatedBiquadratic = false;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    denominatorInW *= factor;
+                    continue;
+                }
+                var (@base, power) = factor is Powf(var raised, Number.Integer { EInteger: var n }) && n.Sign > 0 && n.CanFitInInt32()
+                    ? (raised, n.ToInt32Unchecked()) : (factor, 1);
+                if (InTheSquare(@base, monic: true) is not { } read || read.Degree is not (1 or 2))
+                    return null;
+                factorsInX++;
+                // With the middle term: over a power of `a + b x^4` the split in x answers at once.
+                var repeated = read.Degree == 2 && read.Terms == 3 && power >= 2;
+                aRepeatedBiquadratic |= repeated;
+                // Every other factor once: under the tangent Rubi's `sinh(u)^4/(a - b sinh(u)^4)^2` is
+                // `w^2 (w - 1)^4/((1 - w)^3 Q^2)`, which shares the power of `1 - w` with its numerator,
+                // and split as written it was 1.46 million nodes after twenty-two seconds.
+                if (!repeated && power != 1)
+                    return null;
+                if (read.Degree == 1)
+                    linearsInW.Add(read.InW);
+                denominatorInW *= power == 1 ? read.InW : MathS.Pow(read.InW, power);
+                leadingOfTheDenominator *= power == 1 ? read.Leading : MathS.Pow(read.Leading, power);
+            }
+            if (factorsInX < 2 || !aRepeatedBiquadratic || InTheSquare(numerator, monic: false) is not { } above)
+                return null;
+            // Nor where the numerator vanishes at the root of one of the linears, which it then shares.
+            foreach (var linear in linearsInW)
+                if (TreeAnalyzer.TryGetPolyLinear(linear, w, out var slope, out var intercept)
+                    && Functions.PartialFractions.IsZeroAsAValue(above.InW.Substitute(w, -intercept / slope)))
+                    return null;
+            if (!Functions.PartialFractions.TrySplitOverWrittenFactors(above.InW, denominatorInW, w, out var decomposition, aRepeatedQuadraticIsRead: true)
+                || decomposition.Complexity > 20_000)
+                return null;
+            // The split is a sum over a constant: each term of the sum asked in x, as a question of its own.
+            var (terms, overAll) = decomposition is Divf(var sum, var by) && !by.ContainsNode(w) ? (sum, by) : (decomposition, Number.Integer.One);
+            Entity total = Number.Integer.Zero;
+            foreach (var term in Sumf.LinearChildren(terms))
+            {
+                if (Integration.ComputeAsAQuestionOfItsOwn(term.Substitute(w, MathS.Pow(x, 2)), x, integrateByParts) is not { } part)
+                    return null;
+                total += part;
+            }
+            total /= overAll * leadingOfTheDenominator;
+            foreach (var (name, value) in named)
+                total = total.Substitute(name, value);
+            return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(total, expr, x) ? total : null;
+        }
+
+        /// <summary>
         /// <c>N(s)/(s^k (a + b s + c s^2))</c>, the coefficients of <c>N</c> in <paramref name="above"/>,
         /// as a polynomial in <c>s</c>, the terms in <c>s^(m - k)</c> for <c>m</c> below <c>k</c>, and
         /// <c>(d + e s)/(a + b s + c s^2)</c>: <c>N</c> divided down by <c>s^k</c> times the quadratic first,

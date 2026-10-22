@@ -101,6 +101,25 @@ with the slope in another place, `F^(a + b/(c + d x)^2)/(c + d x)^2` in 15 ms wh
 | `"(k*g+f*g*x)^(p-1)/ln(d*(k+f*x)^p)".ToEntity().Integrate("x")` | `integral(...)` | 150 characters, `Ei(ln(d (k + f x)^p))` |
 | `"F^(a+b/(c+d*x)^2)/(c+d*x)^2".ToEntity().Integrate("x")` | `integral(...)` | `-F^a sqrt(pi) erf(sqrt(-b ln F)/(c + d x))/(2 d sqrt(-b ln F))` |
 
+### An even quotient over a power of a biquadratic beside another factor is split in `x^2`
+
+**Answers where there were none.** `1/((x^2 - 1)(c + d x^2 + f x^4)^2)` ran past the budget, and so did Rubi's 6.1.7
+`csch(c + d x)/(a - b sinh(c + d x)^4)^2`, which is that shape under `w = cosh(c + d x)`, and 1.2.2.3's
+`1/((d + e x^2)(a + b x^2 + c x^4)^2)` took eleven seconds and 10.8 GB. Split in x, the series at the
+roots of `x^2 - 1` came to coefficients of a hundred thousand nodes. An even rational function with a symbol in it, over a
+power of a biquadratic of three terms beside another factor in `x^2`, is now split in `w = x^2`, and each term is asked in
+x. While the split is solved, each factor is made monic and its compound coefficients are named. Every other factor
+stands once, and not where the numerator vanishes at a linear's root: under the tangent `sinh(u)^4/(a - b sinh(u)^4)^2`
+shares a power of `1 - w` with its numerator, and is left to the rules that answered it. Checked by its derivative
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((x^2-1)*(c+d*x^2+f*x^4)^2)".ToEntity().Integrate("x")` | `integral(...)` | 2,164 characters |
+| `"x^2/((x^2+1)*(c+d*x^2+f*x^4)^2)".ToEntity().Integrate("x")` | `integral(...)` | 2,062 characters, where before this change master gave 13,714 in 3.8 s |
+| `"csch(c+d*x)/(a-b*sinh(c+d*x)^4)^2".ToEntity().Integrate("x")` | `integral(...)` | 2,511 characters |
+| `"1/((d+k*x^2)*(a+b*x^2+c*x^4)^2)".ToEntity().Integrate("x")` | `integral(...)` | 9,968 characters, in 0.9 s, where before this change master gave 18,154 in 11 s and 10.8 GB |
+
 ### A polynomial over a symbolic quartic that is two quadratics in a hidden variable is split over them
 
 **Answers where there were none.** `1/(a + b x + c x^2 + b x^3 + a x^4)` was declined, and so were Rubi's 1.3.1

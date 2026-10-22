@@ -1429,6 +1429,8 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveAnEvenPolynomialOverASymbolicBiquadratic(expr, x, integrateByParts)) is { }) return answer;
             // And over a power of a linear in x^2 beside the biquadratic, split in x^2 minus its root.
             if ((answer = IndefiniteIntegralSolver.SolveAnEvenQuotientOverAPowerOfALinearInTheSquareAndABiquadratic(expr, x, integrateByParts)) is { }) return answer;
+            // And over a power of a biquadratic beside another factor in x^2, split in x^2 itself.
+            if ((answer = IndefiniteIntegralSolver.SolveAnEvenQuotientOverAPowerOfABiquadraticBesideAnotherFactorInTheSquare(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByPartialFractions(expr, x, integrateByParts)) is { }) return answer;
             // A whole negative power of a polynomial of several terms among the factors,
             // written below the bar and asked again: the gathering on the way in writes
