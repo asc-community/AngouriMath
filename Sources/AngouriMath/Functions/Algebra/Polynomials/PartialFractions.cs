@@ -438,6 +438,8 @@ namespace AngouriMath.Functions
             // coefficients free of x; a factor free of x is a constant and comes out in front.
             var factors = new List<(Entity Factor, int Degree)>();
             Entity constant = Integer.One;
+            var binomialsPastTheSecondDegree = 0;
+            var aPowerOfXAlone = false;
             foreach (var part in Mulf.LinearChildren(denominator))
             {
                 if (!part.ContainsNode(x))
@@ -464,8 +466,16 @@ namespace AngouriMath.Functions
                 if (!TreeAnalyzer.TryGetPolynomial(toRead, x, out var read) || read.Count == 0)
                     return false;
                 var degree = read.Keys.Max()!;
-                if (!degree.CanFitInInt32() || degree.ToInt32Unchecked() is not (1 or 2))
+                // And a binomial of degree three or four written once, `a + b x^3`: the system below
+                // reads any degree, and the rules for a polynomial over a binomial answer each
+                // piece -- `1/((a + b u^3) (1 + u^2))`, which the tangent makes of Rubi's
+                // `1/(a + b tan(c + d x)^3)`, was declined for want of a split.
+                var aBinomialOnce = read.Count == 2 && multiplicity == 1 && degree.CanFitInInt32() && degree.ToInt32Unchecked() is 3 or 4;
+                if (!degree.CanFitInInt32() || degree.ToInt32Unchecked() is not (1 or 2) && !aBinomialOnce)
                     return false;
+                if (aBinomialOnce)
+                    binomialsPastTheSecondDegree++;
+                aPowerOfXAlone |= read.Count == 1;
                 // A repeated quadratic has a rule to land on only with a symbol somewhere,
                 // the split by residues below; over the rationals the system would hand it a
                 // cubic over the square, which no rule reads.
@@ -476,6 +486,15 @@ namespace AngouriMath.Functions
                         return false;
                 factors.Add((part.InnerSimplified, degree.ToInt32Unchecked() * multiplicity));
             }
+            // Not beside a power of x alone, which is the rules' for `x^m` over a binomial, term by
+            // term: the cube root's substitution makes Rubi's 1.1.3.4 `(a + b x^3)^(1/3)/(x^5 (c + d x^3))`
+            // a polynomial over `u^3 (c + (a d - b c) u^3)` with `a^9 c^36 d^9` in it, and split over
+            // the two, it came back in 12,377 characters where those rules write 1,964. Nor beside a
+            // second such binomial: `x^7 (a + b x^3)^(1/3)/(c + d x^3)` is one over `(b u^3 - 1)` and
+            // `(c + (a d - b c) u^3)`, whose system with symbols in it came back with `a^17 b^16 c^43`
+            // and a wrong answer, where the rules for the cube root answer it in 2,861 characters.
+            if (binomialsPastTheSecondDegree > 1 || binomialsPastTheSecondDegree == 1 && aPowerOfXAlone)
+                return false;
             // Two linear factors with one root are one factor: `(a + b x)(a + x b)^2` is
             // written so by the rules that make a factor monic and gather its powers, and
             // as two distinct factors the decomposition has no answer -- its coefficients
