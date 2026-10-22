@@ -299,6 +299,21 @@ discriminant is zero is now one linear twice ([#233](https://github.com/asc-comm
 | `"1/((a*g+b*g*x)^3*(A+B*ln(k*(a+b*x)/(c+d*x)))^2)".ToEntity().Integrate("x")` | no answer in twenty seconds | 644 characters, two powers of t |
 | `"1/(x^2*(A+B*ln(k*x))^2)".ToEntity().Integrate("x")` | `integral(...)` | 133 characters, `Ei(-(A/B + ln(k x)))`, where before this change master gave an answer with no value at any point |
 
+### A power of x beside a binomial in an odd negative power of x is integrated on both sides of 0
+
+**Answers where there were none.** `sqrt(a + b/x^3)/x` and thirteen more of Rubi's 1.1.3.2,
+`x^m (a + b/x^3)^(k/2)`, were declined. `a + b/x^3` is real on both sides of 0, and they are answered
+there in the variable under the root, where taking `x^(-3/2)` out of it would leave an answer for a
+positive x only ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(a+b/x^3)/x".ToEntity().Integrate("x")` | `integral(...)` | 455 characters |
+| `"sqrt(a+b/x^3)/x^7".ToEntity().Integrate("x")` | `integral(...)` | 101 characters |
+| `"(a+b/x^3)^(3/2)*x^2".ToEntity().Integrate("x")` | `integral(...)` | 842 characters |
+| `"x^5/sqrt(a+b/x^3)".ToEntity().Integrate("x")` | `integral(...)` | 831 characters |
+| `"x^2/(a+b/x^3)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 911 characters |
+
 ### The last digits of an evaluated sine, cosine, tangent, arcsine or arctangent
 
 **Silent, and in the hundredth digit.** `EvalNumerical` at the default hundred digits gives the
