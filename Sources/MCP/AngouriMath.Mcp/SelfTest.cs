@@ -75,22 +75,6 @@ internal static class SelfTest
     [
         ("Simplify(sqrt(x^2))", () => Value("sqrt(x^2)") != "abs(x)",
             "left as written rather than reduced to abs(x)"),
-        ("MathS.Equations does not solve a system written as equalities", () =>
-        {
-            // x + y = 3 and x - y = 1 meet at (2, 1), which the same system written in '= 0'
-            // form is solved to. A check for an exception alone would read a system that comes
-            // back with no solution as fixed. https://github.com/asc-community/AngouriMath/issues/1673
-            try
-            {
-                var solutions = MathS.Equations("x + y = 3".ToEntity(), "x - y = 1".ToEntity()).Solve("x", "y");
-                return solutions is null || solutions.RowCount != 1
-                    || solutions[0, 0].Evaled != 2 || solutions[0, 1].Evaled != 1;
-            }
-            catch (Exception)
-            {
-                return true;
-            }
-        }, "x + y = 3, x - y = 1 has no solution when written as equalities; each equation must be given in '= 0' form"),
     ];
 
     /// <summary>Runs every check, writes what it found, and returns the exit code: 1 when an identity fails.</summary>

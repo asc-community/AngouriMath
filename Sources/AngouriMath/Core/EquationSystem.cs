@@ -22,7 +22,8 @@ namespace AngouriMath.Core
         private readonly IEnumerable<Entity> equations;
 
         /// <summary>
-        /// The equations you pass should not have an <see cref="MathS.Equality"/> node.
+        /// Each equation is an expression equal to zero, or an equality <c>a = b</c>, which is read as
+        /// <c>a - b = 0</c>, as <see cref="MathS.SolveEquation"/> reads one in a single variable.
         /// After having created a system of equations, you may solve or latexize it.
         /// </summary>
         /// <param name="equations">
@@ -36,10 +37,11 @@ namespace AngouriMath.Core
         /// });
         /// </code>
         /// </example>
-        public EquationSystem(IEnumerable<Entity> equations) => this.equations = equations;
+        public EquationSystem(IEnumerable<Entity> equations) => this.equations = equations.Select(AsAnExpressionEqualToZero).ToList();
 
         /// <summary>
-        /// The equations you pass should not have an <see cref="MathS.Equality"/> node.
+        /// Each equation is an expression equal to zero, or an equality <c>a = b</c>, which is read as
+        /// <c>a - b = 0</c>, as <see cref="MathS.SolveEquation"/> reads one in a single variable.
         /// After having created a system of equations, you may solve or latexize it.
         /// </summary>
         /// <param name="equations">
@@ -53,7 +55,13 @@ namespace AngouriMath.Core
         /// );
         /// </code>
         /// </example>
-        public EquationSystem(params Entity[] equations) => this.equations = equations;
+        public EquationSystem(params Entity[] equations) => this.equations = equations.Select(AsAnExpressionEqualToZero).ToList();
+
+        // An equality was passed on as it stood and the system answered that it had no solution:
+        // `x + y = 3` and `x - y = 1` gave null, where `x + y - 3` and `x - y - 1` give `[[2, 1]]`.
+        // https://github.com/asc-community/AngouriMath/issues/1673
+        private static Entity AsAnExpressionEqualToZero(Entity equation)
+            => equation is Equalsf(var left, var right) ? left - right : equation;
 
         /// <summary>
         /// Solves a system of equations, if possible.
