@@ -335,6 +335,24 @@ and the complex arcsine's real part moved two units away. A caller comparing a h
 result to a pinned string will see the last digits differ; a caller comparing to a tolerance
 will not. [#1338](https://github.com/asc-community/AngouriMath/issues/1338).
 
+### Whole powers of a root are written as powers of its radicand, and hold on both sides of 0
+
+**Answers where there were none.** Rubi's 1.1.3.2 `1/(x^(7/2) sqrt(a + b x^5))` and three like it, and 1.3.2's
+`sqrt(a x^23)/sqrt(1 + x^5)` and `sqrt(a x^13)/sqrt(1 + x^5)`, and 1.1.1.2's `1/(sqrt(x) sqrt(2 x - 3))`, were answered
+`provided x >= 0`. The integrand is real
+beyond `-(a/b)^(1/5)` as a product of two imaginary roots, and the answer holds there. But it spelled `x^5` as
+`((x^(1/2))^5)^2`, whose value at a negative x has a zero imaginary part, and the measurement of where the answer holds
+could not evaluate the outer root on its cut. Under `u = sqrt(x)` a whole power of `u` that is a multiple of the
+root's order is now a power of the radicand, which it is on every branch, and the condition is gone
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(x^(7/2)*sqrt(a+b*x^5))".ToEntity().Integrate("x")` | `integral(...)` | 60 characters, where before this change master gave 92 for a positive x only |
+| `"1/(x^(7/2)*sqrt(1+x^5))".ToEntity().Integrate("x")` | `integral(...)` | 50 characters |
+| `"sqrt(a*x^23)/sqrt(1+x^5)".ToEntity().Integrate("x")` | `integral(...)` | 426 characters |
+| `"1/(sqrt(x)*sqrt(-3+2*x))".ToEntity().Integrate("x")` | `integral(...)` | 141 characters, where before this change master gave an answer for a positive x only |
+
 ### A function of an inverse sine of `sqrt(1 + b x^2)` beside its derivative keeps the sign of x
 
 **A wrong answer, and answers where there were none.** `1/(asin(sqrt(1 + b x^2)) sqrt(1 + b x^2))` was
