@@ -80,27 +80,36 @@ namespace AngouriMath
                 /// <summary>
                 /// Creates an instance of Complex
                 /// </summary>
-                public static Complex Create(EDecimal real, EDecimal imaginary) => Create(real, imaginary, fromMachineNumbers: false);
+                public static Complex Create(EDecimal real, EDecimal imaginary) => Create(real, imaginary, EDecimal.One, EDecimal.One, fromMachineNumbers: false);
+
+                /// <summary>
+                /// A number an arithmetic operation produced, each part zero only as a residual of the cancellation that
+                /// produced it, as <see cref="Real.CreateAtScale(EDecimal, EDecimal)"/> reads one.
+                /// https://github.com/asc-community/AngouriMath/issues/1944
+                /// </summary>
+                internal static Complex CreateAtScales(EDecimal real, EDecimal imaginary, EDecimal realScale, EDecimal imaginaryScale)
+                    => Create(real, imaginary, realScale, imaginaryScale, fromMachineNumbers: false);
 
                 /// <summary>
                 /// A number from a pair of <see cref="double"/>s, each part rounded as
                 /// <see cref="Real.FromMachineNumber(EDecimal)"/> rounds it.
                 /// </summary>
-                internal static Complex FromMachineNumbers(EDecimal real, EDecimal imaginary) => Create(real, imaginary, fromMachineNumbers: true);
+                internal static Complex FromMachineNumbers(EDecimal real, EDecimal imaginary) => Create(real, imaginary, EDecimal.One, EDecimal.One, fromMachineNumbers: true);
 
-                private static Complex Create(EDecimal real, EDecimal imaginary, bool fromMachineNumbers)
+                private static Complex Create(EDecimal real, EDecimal imaginary, EDecimal realScale, EDecimal imaginaryScale, bool fromMachineNumbers)
                 {
                     if (!MathS.Settings.DowncastingEnabled)
                         return new Complex(real, imaginary);
-                    Real Part(EDecimal part) => fromMachineNumbers ? Real.FromMachineNumber(part) : Real.Create(part);
+                    Real Part(EDecimal part, EDecimal scale) => fromMachineNumbers ? Real.FromMachineNumber(part) : Real.CreateAtScale(part, scale);
                     if (imaginary.IsZero)
-                        return Part(real);
+                        return Part(real, realScale);
                     if (real.IsNaN() || imaginary.IsNaN())
                         return Real.NaN;
-                    if (imaginary.IsFinite && imaginary.Abs().LessThan(MathS.Settings.DowncastingTolerance))
-                        return Part(real);
+                    if (imaginary.IsFinite && !imaginaryScale.IsZero && imaginary.Abs().LessThan(
+                        ReferenceEquals(imaginaryScale, EDecimal.One) ? MathS.Settings.DowncastingTolerance : MathS.Settings.DowncastingTolerance.Multiply(imaginaryScale.Abs())))
+                        return Part(real, realScale);
                     else
-                        return new Complex(Part(real), Part(imaginary));
+                        return new Complex(Part(real, realScale), Part(imaginary, imaginaryScale));
                 }
 
                 /// <summary>
@@ -122,8 +131,10 @@ namespace AngouriMath
                 /// https://github.com/asc-community/AngouriMath/issues/1615
                 /// </remarks>
                 public new virtual Real Abs()
-                    => Real.Create((RealPart.EDecimal * RealPart.EDecimal + ImaginaryPart.EDecimal * ImaginaryPart.EDecimal)
-                        .SqrtByIntegerRoot(MathS.Settings.DecimalPrecisionContext));
+                    // A modulus is never a residual of cancellation: the sum of two squares cancels nothing.
+                    // https://github.com/asc-community/AngouriMath/issues/1944
+                    => Real.CreateAtScale((RealPart.EDecimal * RealPart.EDecimal + ImaginaryPart.EDecimal * ImaginaryPart.EDecimal)
+                        .SqrtByIntegerRoot(MathS.Settings.DecimalPrecisionContext), EDecimal.Zero);
 
                 /// <summary>
                 /// The phase of a complex number (aka angle)
@@ -136,7 +147,9 @@ namespace AngouriMath
                 public static Complex CreatePolar(EDecimal magnitude, EDecimal phase)
                 {
                     var context = MathS.Settings.DecimalPrecisionContext;
-                    return Create(magnitude.Multiply(phase.Cos(context), context), magnitude.Multiply(phase.Sin(context), context));
+                    // The residual of a cosine or a sine is the magnitude's: cos(pi/2) leaves 1e-100 of it.
+                    var scale = magnitude.Abs();
+                    return CreateAtScales(magnitude.Multiply(phase.Cos(context), context), magnitude.Multiply(phase.Sin(context), context), scale, scale);
                 }
 
                 /// <summary>-oo + -ooi</summary>

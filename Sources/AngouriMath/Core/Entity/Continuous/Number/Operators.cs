@@ -34,13 +34,41 @@ namespace AngouriMath
                 => a.Subtract(b, MathS.Settings.DecimalPrecisionContext);
             internal static EDecimal CtxMultiply(EDecimal a, EDecimal b)
                 => a.Multiply(b, MathS.Settings.DecimalPrecisionContext);
+            // To the working precision's number of decimal places, which is the precision's digits for a quotient
+            // near one and cheaper than dividing to digits; a quotient that has visibly lost digits that way is
+            // divided again to them: to places, 3.5e-68 kept thirty-three digits at a hundred, and a quotient below
+            // 1e-100 was zero. https://github.com/asc-community/AngouriMath/issues/1944
             internal static EDecimal CtxDivide(EDecimal a, EDecimal b)
-                => b.IsZero ? EDecimal.NaN : a.DivideToExponent(b, -MathS.Settings.DecimalPrecisionContext.Value.Precision);
+            {
+                if (b.IsZero)
+                    return EDecimal.NaN;
+                var context = MathS.Settings.DecimalPrecisionContext.Value;
+                var quotient = a.DivideToExponent(b, -context.Precision);
+                // 3.3 bits a digit, and five digits to spare; an unlimited context keeps the division to places.
+                if (!context.Precision.IsZero && quotient.IsFinite && !a.IsZero
+                    && quotient.UnsignedMantissa.GetUnsignedBitLengthAsInt64() < (context.Precision.ToInt64Checked() - 5) * 3)
+                    return a.Divide(b, context);
+                return quotient;
+            }
             internal static EDecimal CtxMod(EDecimal a, EDecimal b)
                 => a.Remainder(b, MathS.Settings.DecimalPrecisionContext);
             internal static EDecimal CtxPow(EDecimal a, EDecimal b)
                 => a.Pow(b, MathS.Settings.DecimalPrecisionContext);
             internal static T Min<T>(T a, T b) where T : Real => a < b ? a : b;
+
+            /// <summary>
+            /// The scale of what cancels in <c>a + b</c>: a term where their signs differ, and zero where they cannot
+            /// cancel, so that a sum of like signs is never a residual.
+            /// https://github.com/asc-community/AngouriMath/issues/1944
+            /// </summary>
+            internal static EDecimal CancelledScale(EDecimal a, EDecimal b)
+                // Either term: where they nearly cancel they are alike, and where they do not the sum is near the
+                // larger and no residual of either. Comparing them rescaled a mantissa, 500 bytes at a hundred digits.
+                => a.Sign * b.Sign < 0 ? a : EDecimal.Zero;
+
+            /// <summary>The scale of what cancels in <c>a - b</c>, as <see cref="CancelledScale"/>.</summary>
+            internal static EDecimal CancelledScaleOfADifference(EDecimal a, EDecimal b)
+                => a.Sign * b.Sign > 0 ? a : EDecimal.Zero;
             internal static T Max<T>(T a, T b) where T : Real => a > b ? a : b;
 
             /// <summary>
@@ -86,25 +114,29 @@ namespace AngouriMath
                 SuperSwitch<T>(a, b,
                     (a, b) => Integer.Create(CtxAdd(a.EInteger, b.EInteger)),
                     (a, b) => Rational.Create(CtxAdd(a.ERational, b.ERational)),
-                    (a, b) => Real.Create(CtxAdd(a.EDecimal, b.EDecimal)),
-                    (a, b) => Complex.Create(CtxAdd(a.RealPart.EDecimal, b.RealPart.EDecimal),
-                                             CtxAdd(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal))
+                    (a, b) => Real.CreateAtScale(CtxAdd(a.EDecimal, b.EDecimal), CancelledScale(a.EDecimal, b.EDecimal)),
+                    (a, b) => Complex.CreateAtScales(CtxAdd(a.RealPart.EDecimal, b.RealPart.EDecimal),
+                                             CtxAdd(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal),
+                                             CancelledScale(a.RealPart.EDecimal, b.RealPart.EDecimal),
+                                             CancelledScale(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal))
                     );
 
             internal static T OpSub<T>(T a, T b) where T : Number =>
                 SuperSwitch<T>(a, b,
                     (a, b) => Integer.Create(CtxSubtract(a.EInteger, b.EInteger)),
                     (a, b) => Rational.Create(CtxSubtract(a.ERational, b.ERational)),
-                    (a, b) => Real.Create(CtxSubtract(a.EDecimal, b.EDecimal)),
-                    (a, b) => Complex.Create(CtxSubtract(a.RealPart.EDecimal, b.RealPart.EDecimal),
-                                             CtxSubtract(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal))
+                    (a, b) => Real.CreateAtScale(CtxSubtract(a.EDecimal, b.EDecimal), CancelledScaleOfADifference(a.EDecimal, b.EDecimal)),
+                    (a, b) => Complex.CreateAtScales(CtxSubtract(a.RealPart.EDecimal, b.RealPart.EDecimal),
+                                             CtxSubtract(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal),
+                                             CancelledScaleOfADifference(a.RealPart.EDecimal, b.RealPart.EDecimal),
+                                             CancelledScaleOfADifference(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal))
                     );
 
             internal static T OpMul<T>(T a, T b) where T : Number =>
                 SuperSwitch<T>(a, b,
                     (a, b) => Integer.Create(CtxMultiply(a.EInteger, b.EInteger)),
                     (a, b) => Rational.Create(CtxMultiply(a.ERational, b.ERational)),
-                    (a, b) => Real.Create(CtxMultiply(a.EDecimal, b.EDecimal)),
+                    (a, b) => Real.CreateAtScale(CtxMultiply(a.EDecimal, b.EDecimal), EDecimal.Zero),
                     (a, b) =>
                     {
                     // A whole zero against a whole infinity is 0 * oo, which is NaN for a real
@@ -117,9 +149,9 @@ namespace AngouriMath
                     // Define both (oo * i) and (i * oo) to be (oo i) which is (0 + oo i) instead of (NaN + oo i)
                     static EDecimal ModifiedMultiply(EDecimal a, EDecimal b) =>
                             a.IsInfinity() && b.IsZero || b.IsInfinity() && a.IsZero ? EDecimal.Zero : CtxMultiply(a, b);
-                        return Complex.Create(
-                            CtxSubtract(ModifiedMultiply(a.RealPart.EDecimal, b.RealPart.EDecimal), ModifiedMultiply(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal)),
-                            CtxAdd(ModifiedMultiply(a.RealPart.EDecimal, b.ImaginaryPart.EDecimal), ModifiedMultiply(a.ImaginaryPart.EDecimal, b.RealPart.EDecimal)));
+                        var (ac, bd) = (ModifiedMultiply(a.RealPart.EDecimal, b.RealPart.EDecimal), ModifiedMultiply(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal));
+                        var (ad, bc) = (ModifiedMultiply(a.RealPart.EDecimal, b.ImaginaryPart.EDecimal), ModifiedMultiply(a.ImaginaryPart.EDecimal, b.RealPart.EDecimal));
+                        return Complex.CreateAtScales(CtxSubtract(ac, bd), CtxAdd(ad, bc), CancelledScaleOfADifference(ac, bd), CancelledScale(ad, bc));
                     }
                     );
 
@@ -127,7 +159,7 @@ namespace AngouriMath
                 SuperSwitch<Complex>(a, b,
                     (a, b) => CtxDivide(a.ERational, b.ERational) is { } n ? Rational.Create(n) : Real.NaN,
                     (a, b) => CtxDivide(a.ERational, b.ERational) is { } n ? Rational.Create(n) : Real.NaN,
-                    (a, b) => Real.Create(CtxDivide(a.EDecimal, b.EDecimal)),
+                    (a, b) => Real.CreateAtScale(CtxDivide(a.EDecimal, b.EDecimal), EDecimal.Zero),
                     (a, b) =>
                     {
                         /*
@@ -158,7 +190,7 @@ namespace AngouriMath
                         var abs2 = CtxMultiply(bAbs, bAbs);
                         var Re = CtxDivide(conj.RealPart.EDecimal, abs2);
                         var Im = CtxDivide(conj.ImaginaryPart.EDecimal, abs2);
-                        var c = Complex.Create(Re, Im);
+                        var c = Complex.CreateAtScales(Re, Im, EDecimal.Zero, EDecimal.Zero);
                         return a * c;
                     }
                     );
@@ -172,28 +204,35 @@ namespace AngouriMath
             {
                 var (ar, ai) = (a.RealPart.EDecimal, a.ImaginaryPart.EDecimal);
                 var (c, d) = (b.RealPart.EDecimal, b.ImaginaryPart.EDecimal);
-                // Rounded to the context's digits at the end: CtxDivide divides to a number of
-                // decimal places.
                 var context = MathS.Settings.DecimalPrecisionContext.Value;
+                // A part is a residual only of the sum in its numerator, at that sum's scale over the
+                // denominator's; the denominator is a sum of like signs, and a quotient cancels nothing.
+                EDecimal Over(EDecimal scale, EDecimal denominator) => scale.IsZero ? scale : scale.Abs().Divide(denominator.Abs(), context);
                 if (d.IsZero)
-                    return Complex.Create(CtxDivide(ar, c).RoundToPrecision(context), CtxDivide(ai, c).RoundToPrecision(context));
+                    return Complex.CreateAtScales(CtxDivide(ar, c), CtxDivide(ai, c), EDecimal.Zero, EDecimal.Zero);
                 if (c.IsZero)
-                    return Complex.Create(CtxDivide(ai, d).RoundToPrecision(context), CtxDivide(ar.Negate(), d).RoundToPrecision(context));
+                    return Complex.CreateAtScales(CtxDivide(ai, d), CtxDivide(ar.Negate(), d), EDecimal.Zero, EDecimal.Zero);
                 if (c.Abs().CompareTo(d.Abs()) >= 0)
                 {
                     var ratio = CtxDivide(d, c);
                     var denominator = CtxAdd(c, CtxMultiply(d, ratio));
-                    return Complex.Create(
-                        CtxDivide(CtxAdd(ar, CtxMultiply(ai, ratio)), denominator).RoundToPrecision(context),
-                        CtxDivide(CtxSubtract(ai, CtxMultiply(ar, ratio)), denominator).RoundToPrecision(context));
+                    var (aiRatio, arRatio) = (CtxMultiply(ai, ratio), CtxMultiply(ar, ratio));
+                    return Complex.CreateAtScales(
+                        CtxDivide(CtxAdd(ar, aiRatio), denominator),
+                        CtxDivide(CtxSubtract(ai, arRatio), denominator),
+                        Over(CancelledScale(ar, aiRatio), denominator),
+                        Over(CancelledScaleOfADifference(ai, arRatio), denominator));
                 }
                 else
                 {
                     var ratio = CtxDivide(c, d);
                     var denominator = CtxAdd(CtxMultiply(c, ratio), d);
-                    return Complex.Create(
-                        CtxDivide(CtxAdd(CtxMultiply(ar, ratio), ai), denominator).RoundToPrecision(context),
-                        CtxDivide(CtxSubtract(CtxMultiply(ai, ratio), ar), denominator).RoundToPrecision(context));
+                    var (arRatio, aiRatio) = (CtxMultiply(ar, ratio), CtxMultiply(ai, ratio));
+                    return Complex.CreateAtScales(
+                        CtxDivide(CtxAdd(arRatio, ai), denominator),
+                        CtxDivide(CtxSubtract(aiRatio, ar), denominator),
+                        Over(CancelledScale(arRatio, ai), denominator),
+                        Over(CancelledScaleOfADifference(aiRatio, ar), denominator));
                 }
             }
 
@@ -411,8 +450,8 @@ namespace AngouriMath
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,7dc9c2ee4f99814a
                 if (num is Real { EDecimal: var real })
                     if (real.IsNegative)
-                        return Complex.Create(0, real.Negate().SqrtByIntegerRoot(context));
-                    else return Real.Create(real.SqrtByIntegerRoot(context));
+                        return Complex.CreateAtScales(EDecimal.Zero, real.Negate().SqrtByIntegerRoot(context), EDecimal.Zero, EDecimal.Zero);
+                    else return Real.CreateAtScale(real.SqrtByIntegerRoot(context), EDecimal.Zero);
                 else
                 {
 
@@ -459,7 +498,8 @@ namespace AngouriMath
                         if (im.Sign < 0) y = -y;
                         x = im.Divide(y.Multiply(2, context), context);
                     }
-                    return Complex.Create(x, y);
+                    // Each part is a root of a sum of like signs or a quotient by one, and cancels nothing.
+                    return Complex.CreateAtScales(x, y, EDecimal.Zero, EDecimal.Zero);
                 }
             }
 
@@ -470,11 +510,12 @@ namespace AngouriMath
                 var expReal = x.RealPart.EDecimal.Exponential(context);
                 var imaginary = x.ImaginaryPart.EDecimal;
                 if (imaginary.IsZero)
-                    return expReal;
+                    return Real.CreateAtScale(expReal, EDecimal.Zero);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,7dc9c2ee4f99814a
                 var cosImaginary = expReal.Multiply(imaginary.Cos(context), context);
                 var sinImaginary = expReal.Multiply(imaginary.Sin(context), context);
-                return Complex.Create(cosImaginary, sinImaginary);
+                // The residual of a cosine or a sine is the modulus's: e^(i pi) leaves 1e-100 i of it.
+                return Complex.CreateAtScales(cosImaginary, sinImaginary, expReal, expReal);
             }
 
             /// <summary>e.g. Pow(2, 5) = 32</summary>
@@ -517,7 +558,7 @@ namespace AngouriMath
                 // where the power was a logarithm and a series.
                 if (@base is Real { EDecimal: var maybeE } && power is Real { EDecimal: var realExponent }
                     && maybeE.Equals(InternalAMExtensions.ConstantCache.Lookup(MathS.Settings.DecimalPrecisionContext).E))
-                    return Real.Create(realExponent.Exponential(MathS.Settings.DecimalPrecisionContext));
+                    return Real.CreateAtScale(realExponent.Exponential(MathS.Settings.DecimalPrecisionContext), EDecimal.Zero);
                 // TODO: make it more detailed (e. g. +oo ^ +oo = +oo)
                 // A whole power, whether written as an integer or, for a base off the
                 // positive axis, as a decimal with nothing after the point -- which is how `2`
@@ -557,7 +598,7 @@ namespace AngouriMath
                     {
                         var wholeContext = MathS.Settings.DecimalPrecisionContext;
                         var raised = decimalBase.Pow(pow.Abs().ToInt32Checked(), wholeContext);
-                        return Real.Create(pow.Sign < 0 ? EDecimal.One.Divide(raised, wholeContext) : raised);
+                        return Real.CreateAtScale(pow.Sign < 0 ? EDecimal.One.Divide(raised, wholeContext) : raised, EDecimal.Zero);
                     }
                     return BinaryIntPow(@base, pow);
                 }
@@ -573,7 +614,7 @@ namespace AngouriMath
                     var root = rootBase.SqrtByIntegerRoot(halfContext);
                     var n = halfPower.Numerator.Abs().ToInt32Checked();
                     var raised = n == 1 ? root : root.Pow(n, halfContext);
-                    return Real.Create(halfPower.Numerator.Sign < 0 ? EDecimal.One.Divide(raised, halfContext) : raised);
+                    return Real.CreateAtScale(halfPower.Numerator.Sign < 0 ? EDecimal.One.Divide(raised, halfContext) : raised, EDecimal.Zero);
                 }
                 // A negative real to a real power that is a whole number of halves -- a half
                 // power above all -- is the modulus to that power times a power of i, exactly:
@@ -601,20 +642,21 @@ namespace AngouriMath
                         && rootAbove.Multiply(rootAbove).Equals(exactBase.Numerator.Abs()) && rootBelow.Multiply(rootBelow).Equals(exactBase.Denominator))
                         modulus = Pow(Rational.Create(rootAbove, rootBelow), Integer.Create(numeratorOfPower));
                     else if (numeratorOfPower.IsEven)
-                        modulus = Pow(Real.Create(negativeBase.Negate()), Integer.Create(numeratorOfPower.Divide(2)));
+                        modulus = Pow(Real.CreateAtScale(negativeBase.Negate(), EDecimal.Zero), Integer.Create(numeratorOfPower.Divide(2)));
                     else
                     {
                         var root = negativeBase.Negate().SqrtByIntegerRoot(halfContext);
                         var n = numeratorOfPower.Abs().ToInt32Checked();
                         var raised = n == 1 ? root : root.Pow(n, halfContext);
-                        modulus = Real.Create(numeratorOfPower.Sign < 0 ? EDecimal.One.Divide(raised, halfContext) : raised);
+                        modulus = Real.CreateAtScale(numeratorOfPower.Sign < 0 ? EDecimal.One.Divide(raised, halfContext) : raised, EDecimal.Zero);
                     }
                     return quarterTurns.ToInt32Checked() switch
                     {
                         0 => modulus,
-                        1 => Complex.Create(Integer.Zero, modulus.RealPart),
-                        2 => Real.Create(modulus.RealPart.EDecimal.Negate()),
-                        _ => Complex.Create(Integer.Zero, Real.Create(modulus.RealPart.EDecimal.Negate())),
+                        // A turn of the modulus, which is not a residual of anything.
+                        1 => Complex.CreateAtScales(EDecimal.Zero, modulus.RealPart.EDecimal, EDecimal.Zero, EDecimal.Zero),
+                        2 => Real.CreateAtScale(modulus.RealPart.EDecimal.Negate(), EDecimal.Zero),
+                        _ => Complex.CreateAtScales(EDecimal.Zero, modulus.RealPart.EDecimal.Negate(), EDecimal.Zero, EDecimal.Zero),
                     };
                 }
                 if (@base.IsFinite && power is Rational r && r.ERational.Denominator.Abs() < 10 // there should be a minimal threshold to avoid long searches
@@ -643,7 +685,9 @@ namespace AngouriMath
                 var newRho = powerReal.MultiplyAndAdd(theta, powerImaginary.Multiply(rho.NaturalLogarithm(context), context), context);
                 var t = PowerOfReals(rho, powerReal, context).Multiply(powerImaginary.Multiply(-theta, context).Exponential(context), context);
 
-                return Complex.Create(t.Multiply(newRho.Cos(context), context), t.Multiply(newRho.Sin(context), context));
+                // The residual of a cosine or a sine is the modulus's.
+                var modulusScale = t.Abs();
+                return Complex.CreateAtScales(t.Multiply(newRho.Cos(context), context), t.Multiply(newRho.Sin(context), context), modulusScale, modulusScale);
             }
 
             /// <summary>e.g. Log(2, 32) = 5</summary>

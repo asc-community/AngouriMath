@@ -144,6 +144,34 @@ is rounded as before: `(Entity)(1m / 3)` is still `1/3` ([#1944](https://github.
 | The derivative of the antiderivative of `1/sqrt(a + i*a*sinh(c + d*x))` at `a, c, d, x = 21/10, 19/10, 17/10, 227283/1250`, at 2000 digits | `2.0185464…E-68` | `2.0185464…E-68 - 2.0185464…E-68i` |
 | `"1/3 + 1e-60".EvalNumerical()`, `"sin(pi)".EvalNumerical()`, `(Entity)(1.0 / 3)` | `1/3`, `0`, `1/3` | `1/3`, `0`, `1/3` |
 
+### A computed value is zero only where its terms cancelled
+
+**Silent: wrong answers, and values where there was NaN.** A number an evaluation produced was rounded onto zero below
+half the working digits outright, `1e-50` at the default hundred. That held for any number, whatever produced it. So
+`e^(-155)` was `0` at a hundred digits, the modulus of a complex number near `1e-136` was `0`, and a quotient by that
+modulus was `NaN`. The derivative of a right antiderivative of `1/sqrt(a + i a sinh(c + d x))` at a large argument was
+therefore `NaN` at up to two hundred digits and `1.5329…` at three hundred, where it is `2.0185…E-68 - 2.0185…E-68i`.
+
+A number is now rounded onto zero only as a residual of the cancellation that produced it: a difference below half the
+working digits of its larger term. A product, a quotient, a power, a root, an exponential or a modulus cancels nothing
+and is not rounded onto zero, and a cosine's or a sine's residual is measured against the modulus it multiplies.
+`sin(pi)`, `e^(i pi) + 1` and `sqrt(2) sqrt(3) - sqrt(6)` are still `0`. A quotient of decimals is rounded to the
+working precision's number of decimal places, as it was, and one that has lost digits that way is divided again to the
+precision's digits: a quotient of `3.5e-68` kept thirty-three digits, and one below `1e-100` was `0`. The derivative above is right from two hundred digits; its terms cancel in their sixty-eighth digit,
+so at fewer than about twice that many digits the difference is below half of them and reads as a residual
+([#1944](https://github.com/asc-community/AngouriMath/issues/1944)).
+
+| Input, at the default hundred digits unless stated | Was (2.6.0) | Now |
+|---|---|---|
+| `"e^(-155)".EvalNumerical()` | `0` | `4.8345416380533358…E-68` |
+| `"e^(-60) * e^(-60)".EvalNumerical()` | `0` | `7.6676480737219996…E-53` |
+| `"1/(10^67*sqrt(2) + 10^67*sqrt(2)*i)".EvalNumerical()` | `0` | `3.5355339059327376…E-68 - 3.5355339059327376…E-68i` |
+| `"sqrt(-e^(-300))".EvalNumerical()` | `0` | `7.1750959731644104…E-66i` |
+| The derivative above, at 300 digits | `1.5329402…` | `2.0185464…E-68 - 2.0185464…E-68i` |
+| The derivative above, at 200 digits | `NaN` | `2.0185464…E-68 - 2.0185464…E-68i` |
+| The derivative above, at 100 digits | `NaN` | `2.0185464…E-68`, without its imaginary part: a residual at that precision |
+| `"sin(pi)".EvalNumerical()`, `"(1 + sqrt(2) i) (1 - sqrt(2) i)".EvalNumerical()` | `0`, `3` | `0`, `3` |
+
 ---
 
 ## 2.6.0 — since 2.5.0

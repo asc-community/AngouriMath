@@ -65,7 +65,18 @@ namespace AngouriMath
                 /// such logarithms lost its imaginary part.
                 /// https://github.com/asc-community/AngouriMath/issues/1944
                 /// </remarks>
-                public static Real Create(EDecimal value) => Create(value, fromMachineNumber: false);
+                public static Real Create(EDecimal value) => Create(value, fromMachineNumber: false, EDecimal.One);
+
+                /// <summary>
+                /// A value an arithmetic operation produced, which is a residual of cancellation, and zero, only below
+                /// half the working digits of <paramref name="cancelledScale"/>, the size of the terms that cancelled;
+                /// zero for a value no cancellation produced -- a product, a quotient or a power of nonzero values --
+                /// which is never rounded onto zero. With the floor at half the working digits outright, every value
+                /// below 1e-50 was zero at a hundred digits, e^(-155) among them, and a modulus near 1e-136 was zero, so
+                /// that a quotient by it was NaN. https://github.com/asc-community/AngouriMath/issues/1944
+                /// </summary>
+                internal static Real CreateAtScale(EDecimal value, EDecimal cancelledScale)
+                    => Create(value, fromMachineNumber: false, cancelledScale);
 
                 /// <summary>
                 /// A number from a <see cref="float"/>, a <see cref="double"/> or a <see cref="decimal"/>, which carries
@@ -73,11 +84,11 @@ namespace AngouriMath
                 /// <see cref="MathS.Settings.PrecisionErrorZeroRange"/>, ten to the minus sixteen, so that <c>1m/3</c>
                 /// is <c>1/3</c>. https://github.com/asc-community/AngouriMath/issues/1944
                 /// </summary>
-                internal static Real FromMachineNumber(EDecimal value) => Create(value, fromMachineNumber: true);
+                internal static Real FromMachineNumber(EDecimal value) => Create(value, fromMachineNumber: true, EDecimal.One);
 
                 // The tolerance is made only past the cheap check below, which almost every value stops at: made at
                 // the call, it was 580 more bytes on each evaluation of a cubic at a hundred digits.
-                private static Real Create(EDecimal value, bool fromMachineNumber)
+                private static Real Create(EDecimal value, bool fromMachineNumber, EDecimal cancelledScale)
                 {
                     if (!MathS.Settings.DowncastingEnabled)
                         return new Real(value);
@@ -91,11 +102,14 @@ namespace AngouriMath
                     if (!Rational.MayBeASmallRational(value, MathS.Settings.FloatToRationalIterCount, MathS.Settings.DowncastingToleranceAsDouble))
                         return new Real(value);
                     var (intPart, intRest) = value.SplitDecimal();
-                    // If the difference between value & round(value) is zero (see Number.IsZero), we consider value as an integer
+                    // If the difference between value & round(value) is zero (see Number.IsZero), we consider value as an integer.
+                    // Onto zero only as a residual of the cancellation that produced it, below the tolerance times the
+                    // scale of what cancelled; a negative one reaches zero by rounding up.
                     var tolerance = MathS.Settings.DowncastingTolerance;
-                    if (intRest.LessThan(tolerance))
+                    bool IsAResidual() => value.IsZero || !cancelledScale.IsZero && value.Abs().LessThan(tolerance.Multiply(cancelledScale.Abs()));
+                    if (intRest.LessThan(tolerance) && (!intPart.IsZero || IsAResidual()))
                         return Integer.Create(intPart);
-                    if (intRest.GreaterThan(1 - tolerance))
+                    if (intRest.GreaterThan(1 - tolerance) && (!intPart.Increment().IsZero || IsAResidual()))
                         return Integer.Create(intPart.Increment());
 
                     var attempt = Rational.FindRationalWithin(value, fromMachineNumber ? MathS.Settings.PrecisionErrorZeroRange : tolerance);
