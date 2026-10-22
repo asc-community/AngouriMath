@@ -5039,6 +5039,11 @@ namespace AngouriMath.Functions.Algebra
                     or Entity.Arctanf or Entity.Arccotanf
                     or Entity.Arcsecantf or Entity.Arccosecantf => true,
                 _ when IsASpecialFunction(factor) => true,
+                // And the upper incomplete gamma function, whose derivative -u^(n - 1) e^(-u) u' leaves
+                // an exponential beside what was integrated: against 1/(c + d x)^2, a rational function
+                // of x times e^(-a - b x) for a whole n <= 0, which partial fractions and the exponential
+                // integral answer. https://github.com/asc-community/AngouriMath/issues/2075
+                Entity.IncompleteGammaf => true,
                 // And a whole power of one, which is the same function for this purpose:
                 // differentiating ln(x)^2 gives 2ln(x)/x, whose x cancels against the integrated
                 // polynomial exactly as ln(x)'s does, leaving x*ln(x) -- one step simpler, and

@@ -87,6 +87,18 @@ namespace AngouriMath.Tests.Calculus
         public void BesideAPolynomialWithAnOffset(string integrand) => DifferentiatesBack(integrand, Positive);
 
         /// <summary>
+        /// Of a whole order <c>n &lt;= 0</c> over a power of another linear, by parts with the function differentiated: the
+        /// remainder is <c>(a + b x)^(n - 1) e^(-a - b x)</c> over a power of <c>c + d x</c>, a rational function times an
+        /// exponential, which partial fractions and the exponential integral answer. Rubi's 8.6.
+        /// </summary>
+        [Theory]
+        [InlineData("gamma(0, a + b*x)/(c + d*x)^2")]
+        [InlineData("gamma(0, a + b*x)/(c + d*x)^4")]
+        [InlineData("gamma(-1, a + b*x)/(c + d*x)^3")]
+        [InlineData("gamma(-3, a + b*x)/(c + d*x)^2")]
+        public void AWholeOrderOverAPowerOfAnotherLinear(string integrand) => DifferentiatesBack(integrand, Positive);
+
+        /// <summary>
         /// As the function it is, rather than expanded: <c>Gamma(100, a x)</c> is a polynomial of degree 99 times
         /// <c>e^(-a x)</c>, and a hundred rounds of parts.
         /// </summary>
