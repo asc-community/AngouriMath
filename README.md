@@ -53,7 +53,7 @@ Note, that all tests and builds are tested for the following three operating sys
 | Interactive | <a href="https://www.nuget.org/packages/AngouriMath.Interactive"><img alt="Nuget (with prereleases)" src="https://img.shields.io/nuget/vpre/AngouriMath.Interactive?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.Interactive"><img alt="Nuget" src="https://img.shields.io/nuget/v/AngouriMath.Interactive?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.Interactive"><img alt="Nuget" src="https://img.shields.io/nuget/dt/AngouriMath.Interactive?color=darkblue&label=Downloads&style=flat-square"></a> |
 | Experimental | <a href="https://www.nuget.org/packages/AngouriMath.Experimental"><img alt="Nuget (with prereleases)" src="https://img.shields.io/nuget/vpre/AngouriMath.Experimental?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.Experimental"><img alt="Nuget" src="https://img.shields.io/nuget/v/AngouriMath.Experimental?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.Experimental"><img alt="Nuget" src="https://img.shields.io/nuget/dt/AngouriMath.Experimental?color=darkblue&label=Downloads&style=flat-square"></a> |
 | Terminal | <a href="https://www.nuget.org/packages/AngouriMath.Terminal"><img alt="Nuget (with prereleases)" src="https://img.shields.io/nuget/vpre/AngouriMath.Terminal?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.Terminal"><img alt="Nuget" src="https://img.shields.io/nuget/v/AngouriMath.Terminal?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.Terminal"><img alt="Nuget" src="https://img.shields.io/nuget/dt/AngouriMath.Terminal?color=darkblue&label=Downloads&style=flat-square"></a> |
-| C++ | <img alt="GitHub release (latest SemVer including pre-releases)" src="https://img.shields.io/github/v/release/asc-community/AngouriMathLab?include_prereleases&label=GH%20Releases"> | WIP | WIP |
+| C++ | [0.0.0-poc](https://github.com/asc-community/AngouriMathLab/releases/tag/0.0.0-poc) (2021, proof of concept) | WIP | WIP |
 
   
 #### Other info
@@ -129,13 +129,13 @@ As both a demonstration sample and a convenient tool, this repository includes
 tool called AngouriMath.Terminal. It is a CLI-based program to interact with
 AngouriMath (as opposed to API-based interaction, that is, consuming it as a lib).
 
-[**[ Download ]**](https://github.com/asc-community/AngouriMathLab/releases)
+[**[ Download ]**](https://github.com/asc-community/AngouriMath/releases/latest)
 
 Or build from sources:
 ```
 git clone https://github.com/asc-community/AngouriMath
 cd AngouriMath/Sources/Terminal/AngouriMath.Terminal
-dotnet run -c release
+dotnet run -c Release
 ```
 
 See the online [Jupyter notebook](https://mybinder.org/v2/gh/asc-community/AngouriMathLab/try?filepath=HelloBook.AngouriMath.Interactive.ipynb) on
