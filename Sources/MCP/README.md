@@ -104,8 +104,8 @@ raised `NotSufficientlySupportedException`. `unchanged` means no progress, not "
 **A printed `NaN` is screened.** An answer that exists has none in it.
 
 **An approximate answer says how approximate it is.** The numeric fallback for a declined definite
-integral, `Entity.DefiniteIntegral`, is a first-order rule that returns a hundred digits whatever
-its accuracy. It is run at two step counts, and only the digits they agree on are reported.
+integral, `Entity.DefiniteIntegral`, returns the digits its rule knows, and only those are reported,
+with the error they leave.
 
 **Every call has a budget and its own stack.** Each runs under the library's cancellation token on a
 thread with a 64 MB stack, abandoned rather than killed on timeout, so neither a runaway search nor
@@ -151,9 +151,7 @@ existing tool, then a prompt, and add a tool last. A tool's description is a rou
 documentation: say when to call it, and where a model would wrongly trust itself, say so.
 
 This is an adapter, not a second computer algebra system. Mathematics belongs in the library, where
-the terminal and the notebooks get it too, and four workarounds here wait for it:
+the terminal and the notebooks get it too, and three workarounds here wait for it:
 eigenvalues by the characteristic polynomial ([#1676](https://github.com/asc-community/AngouriMath/issues/1676)),
 a numeric comparison with a tolerance ([#1674](https://github.com/asc-community/AngouriMath/issues/1674)),
-`a = b` rewritten to `a - b` for a system ([#1673](https://github.com/asc-community/AngouriMath/issues/1673)),
-and the numeric definite integral run twice to find its good digits
-([#1675](https://github.com/asc-community/AngouriMath/issues/1675)).
+and `a = b` rewritten to `a - b` for a system ([#1673](https://github.com/asc-community/AngouriMath/issues/1673)).

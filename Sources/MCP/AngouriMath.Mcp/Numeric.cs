@@ -179,64 +179,36 @@ internal static class Numeric
     /// <summary>A quadrature result: the value, and how far it can be trusted.</summary>
     public readonly record struct Quadrature(double Value, double ErrorEstimate, int Digits);
 
-    // Step counts for the two runs. AngouriMath's rule is first order — measured, by
-    // doubling: the error of `∫[0,1] e^(x^2)` halves at every doubling of the step count
-    // rather than falling by four — so the gap between a run and its double IS the error of
-    // the coarser one, to a constant. Two runs at these counts cost about a third of a
-    // second together, which is inside the request budget; going further buys one digit per
-    // quadrupling and is not worth the wall clock.
-    private const int CoarseSteps = 2_000;
-    private const int FineSteps = 4_000;
+    // Panels for the library's rule: five evaluations each, on these, twice as many and four times
+    // as many, which is seven thousand evaluations of a compiled function.
+    private const int Panels = 200;
 
     /// <summary>
-    /// Numeric definite integration via `Entity.DefiniteIntegral`, run TWICE so that the
-    /// answer arrives with an error estimate rather than as a hundred digits of false
-    /// precision. https://github.com/asc-community/AngouriMath/issues/1675
+    /// Numeric definite integration via `Entity.DefiniteIntegral`, with the digits it reports. The
+    /// library's rule is five-point Gauss-Legendre, run on its panels, twice as many and four times
+    /// as many, and its value is rounded to the place of the error that leaves, so the digits of the
+    /// value it returns are the digits it knows: `∫[0,1] ln(x)` is -1.000000, six of them.
+    /// https://github.com/asc-community/AngouriMath/issues/1675
     ///
-    /// That precision is the whole reason this is not a one-line call. The library returns
-    /// an arbitrary-precision decimal whatever the step count, so `∫[0,1] e^(x^2)` prints as
-    /// 1.4666222366253148581140206684127892598 when the true value is 1.46265174590718 — a
-    /// figure that is wrong in its third decimal and reads as converged to thirty. Reporting
-    /// only the digits two runs agree on is exactly the job this server exists to do.
-    ///
-    /// Returns null when the integrand cannot be sampled: the rule evaluates at the
-    /// endpoints, so a singularity at either — `∫[0,1] sin(x)/x`, `∫[0,1] ln(x)`, both of
-    /// which converge — comes back NaN and must be declined rather than reported.
+    /// Returns null where there is nothing to report: a NaN, which is how the library answers an
+    /// integral that diverges at a bound, or a complex value for a real integrand over a real
+    /// interval, which means the rule left the domain.
     /// </summary>
     public static Quadrature? TryDefiniteIntegral(Entity integrand, Variable variable,
         double from, double to)
     {
-        var coarse = Sample(integrand, variable, from, to, CoarseSteps);
-        var fine = Sample(integrand, variable, from, to, FineSteps);
-        if (coarse is not { } c || fine is not { } f) return null;
-
-        var error = Math.Abs(f - c);
-
-        // Digits justified by the error, relative to the magnitude of the answer: an error
-        // of 2e-4 on a value near 1.46 pins three decimals, and the fourth is noise. One
-        // digit is dropped on purpose — the estimate is itself an estimate.
-        var scale = Math.Max(Math.Abs(f), double.Epsilon);
-        var digits = error <= 0
-            ? 15
-            : (int)Math.Floor(-Math.Log10(error / scale)) - 1;
-        digits = Math.Clamp(digits, 0, 15);
-
-        return new Quadrature(f, error, digits);
-    }
-
-    private static double? Sample(Entity integrand, Variable variable,
-        double from, double to, int steps)
-    {
         try
         {
-            var value = integrand.DefiniteIntegral(variable, from, to, steps);
-            var real = value.RealPart.EDecimal.ToDouble();
+            var value = integrand.DefiniteIntegral(variable, from, to, Panels);
+            var real = value.RealPart.EDecimal;
             var imaginary = value.ImaginaryPart.EDecimal.ToDouble();
-            if (double.IsNaN(real) || double.IsInfinity(real)) return null;
-            // A real integrand integrated over a real interval that comes back complex means
-            // the rule wandered off the domain; that is not an answer to report.
+            if (real.IsNaN() || real.IsInfinity()) return null;
             if (double.IsNaN(imaginary) || Math.Abs(imaginary) > 1e-12) return null;
-            return real;
+            // A value the library rounded to zero has no significant digit to count, and was
+            // rounded at the fifteenth of the integral of the modulus at most.
+            var digits = real.IsZero ? 15 : Math.Min(15, real.Mantissa.Abs().ToString().Length);
+            var error = 0.5 * Math.Pow(10, real.Exponent.ToInt32Checked());
+            return new Quadrature(real.ToDouble(), error, digits);
         }
         catch
         {

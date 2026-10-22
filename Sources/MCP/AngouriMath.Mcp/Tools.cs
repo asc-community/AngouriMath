@@ -857,10 +857,8 @@ internal static class Tools
 
             if (r.Item4 is { } q)
             {
-                // Rounded to the digits two step counts agree on. Printing the library's
-                // full arbitrary-precision output here would be a hundred digits of a
-                // number correct to four, which is the failure this server exists to
-                // prevent — the caller cannot see the step count and would read it as exact.
+                // To the digits the library's rule knows, which are the digits of the value it
+                // returned: the caller cannot see the rule and would read more as exact.
                 response["numeric_definite_value"] = Math.Round(q.Value, q.Digits)
                     .ToString("G" + Math.Max(q.Digits + 1, 2),
                         System.Globalization.CultureInfo.InvariantCulture);
@@ -868,13 +866,13 @@ internal static class Tools
                     .ToString("G3", System.Globalization.CultureInfo.InvariantCulture);
                 response["numeric_definite_caveat"] =
                     "APPROXIMATE, and produced only because the exact route gave nothing " +
-                    "usable. It is quadrature over 4000 steps, cross-checked against 2000, " +
-                    "and reported to the digits the two agree on — every digit shown is " +
-                    "believed, and there are no more to be had from this call. Unlike the " +
-                    "symbolic answer it is NOT verified by differentiating back. It also " +
-                    "assumes the integrand is finite across the closed interval: the rule " +
-                    "samples both endpoints, so a convergent integral with a singular " +
-                    "endpoint returns nothing here rather than a value.";
+                    "usable. It is five-point Gauss-Legendre quadrature on 200 panels, run " +
+                    "again on 400 and 800, and reported to the digits the runs leave known — " +
+                    "every digit shown is believed, and there are no more to be had from this " +
+                    "call. Unlike the symbolic answer it is NOT verified by differentiating " +
+                    "back. The rule never samples an endpoint, so a convergent integral with " +
+                    "a singular endpoint has a value, and one that diverges there returns " +
+                    "nothing; a singularity inside the interval is not detected.";
 
                 if ((string?)response["status"] == "declined")
                     response["note"] = (string?)response["note"] +
