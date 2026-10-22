@@ -331,16 +331,42 @@ namespace AngouriMath
 
             internal static Real? FindGoodRoot(Complex @base, Integer power)
             {
+                // Searched at the size of one, by an exact power of ten: the candidates are rounded with
+                // the zero range at 1e-6, so a root below it was the integer 0, and 0 ^ q was within 1e-6
+                // of the base, so sqrt(1/10^20) was 0. Scaled, it is sqrt(1) / 10^10.
+                // https://github.com/asc-community/AngouriMath/issues/2065
+                var size = EDecimal.Max(@base.RealPart.EDecimal.Abs(), @base.ImaginaryPart.EDecimal.Abs());
+                if (!size.IsZero && size.IsFinite)
+                {
+                    var shift = size.Exponent.Add(size.Precision()).Subtract(1).Divide(power.EInteger);
+                    if (!shift.IsZero)
+                    {
+                        Real factor = Integer.Create(EInteger.FromInt32(10).Pow(shift.Abs()));
+                        Complex power10 = Integer.Create(EInteger.FromInt32(10).Pow(shift.Abs().Multiply(power.EInteger)));
+                        var scaled = shift.Sign < 0 ? @base * power10 : @base / power10;
+                        return FindGoodRootNearOne(scaled, power) is { } root ? (shift.Sign < 0 ? root / factor : root * factor) : null;
+                    }
+                }
+                return FindGoodRootNearOne(@base, power);
+            }
+
+            private static Real? FindGoodRootNearOne(Complex @base, Integer power)
+            {
                 Real? positive = null, real = null;
                 foreach (var root in GetAllRoots(@base, power.EInteger))
                 {
-                    using var _ = MathS.Settings.FloatToRationalIterCount.Set(15);
-                    using var __ = MathS.Settings.PrecisionErrorZeroRange.Set(1e-6m);
-                    var toCheck = Complex.Create(root.RealPart, root.ImaginaryPart);
-                    switch (toCheck)
+                    // Rounded to six digits only to look for a rational root, which is that root only if its
+                    // power is the base at the working precision: within 1e-6, sqrt(10^12 + 1/2) was 10^6.
+                    // A real root is the candidate as computed, never the rounded one.
+                    // https://github.com/asc-community/AngouriMath/issues/2065
+                    Complex rounded;
+                    using (MathS.Settings.FloatToRationalIterCount.Set(15))
+                    using (MathS.Settings.PrecisionErrorZeroRange.Set(1e-6m))
+                        rounded = Complex.Create(root.RealPart, root.ImaginaryPart);
+                    if (rounded is Rational rational && IsZero(Pow(rational, power) - @base))  // To keep user's desired precision
+                        return rational;
+                    switch (Complex.Create(root.RealPart, root.ImaginaryPart))
                     {
-                        case Rational rational when IsZero(Pow(rational, power) - @base):  // To keep user's desired precision
-                            return rational;
                         case Real r when r > 0:
                             positive ??= r;
                             break;
