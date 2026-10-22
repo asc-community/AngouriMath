@@ -570,6 +570,24 @@ tanh keep the answers the exponential substitution gives them ([#233](https://gi
 | `"sin(tanh(a+b*x))".ToEntity().Integrate("x")` | `integral(...)` | `Si` and `Ci` of `1 - tanh(a + b x)` and `1 + tanh(a + b x)` |
 | `"tanh(x)/sqrt(a+b*tanh(x)^2+c*tanh(x)^4)".ToEntity().Integrate("x")` | `integral(...)` | a logarithm of the root, piecewise on the sign of `a + b + c` |
 
+### The derivative of a sum of exponentials over another is read off the integrand over the other's square
+
+**Answers where there were none.** Rubi's 6.7.1 `x (b - a sinh(x))/(a + b sinh(x))^2` and `x (b + a cosh(x))/(a + b cosh(x))^2`
+were declined. The bracket over the square is the derivative of `-cosh(x)/(a + b sinh(x))`, and of
+`sinh(x)/(a + b cosh(x))`. So by parts the integral is `x` times that quotient, plus `ln(a + b sinh(x))/b` or minus
+`ln(a + b cosh(x))/b`. The integrals without x were answered with a piecewise on a discriminant, from the
+substitution in `e^x`; they are now the quotient itself. For a sum `D` of exponentials, the rule reads the
+integrand over `D^2` as `(N/D)'`, with `N` a constant times each exponential in `D`
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x*(b-a*sinh(x))/(a+b*sinh(x))^2".ToEntity().Integrate("x")` | `integral(...)` | 123 characters |
+| `"x*(b+a*cosh(x))/(a+b*cosh(x))^2".ToEntity().Integrate("x")` | `integral(...)` | 119 characters |
+| `"(b-a*sinh(x))/(a+b*sinh(x))^2".ToEntity().Integrate("x")` | `integral(...)` | 71 characters, where before this change master gave 7,861 |
+| `"(b+a*cosh(x))/(a+b*cosh(x))^2".ToEntity().Integrate("x")` | `integral(...)` | 70 characters, where before this change master gave 7,631 |
+| `"sech(x)^2*tanh(x)^2/(2+tanh(x)^3)^2".ToEntity().Integrate("x")` | no answer in thirty seconds | 60 characters, `-1/3/(2 + tanh(x)^3)`, in 55 ms; master gave 117 in 16 s and 9.7 GB |
+
 ### A hyperbolic function of `a + 2 ln(x)` is integrated with `e^a` as a symbol too
 
 **Answers where there were none.** `tanh(a + 2 ln(x))^2/x^3` was declined, and so were nineteen more of Rubi's 6.3.2,
