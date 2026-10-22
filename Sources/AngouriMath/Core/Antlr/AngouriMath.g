@@ -616,6 +616,9 @@ atom returns[Entity value]
     /* The exponential and logarithmic integrals. https://github.com/asc-community/AngouriMath/issues/1501 */
     | 'Ei(' args = function_arguments ')' { Assert("Ei", 1, $args.list.Count); $value = MathS.Ei($args.list[0]); }
     | 'li(' args = function_arguments ')' { Assert("li", 1, $args.list.Count); $value = MathS.Li($args.list[0]); }
+    /* The polygamma functions, and the digamma function, which is the one of order 0. https://github.com/asc-community/AngouriMath/issues/171 */
+    | 'polygamma(' args = function_arguments ')' { Assert("polygamma", 2, $args.list.Count); $value = MathS.Polygamma($args.list[0], $args.list[1]); }
+    | 'digamma(' args = function_arguments ')' { Assert("digamma", 1, $args.list.Count); $value = MathS.Digamma($args.list[0]); }
     /* The trigonometric and hyperbolic integrals. https://github.com/asc-community/AngouriMath/issues/1501 */
     | 'Si(' args = function_arguments ')' { Assert("Si", 1, $args.list.Count); $value = MathS.Si($args.list[0]); }
     | 'Ci(' args = function_arguments ')' { Assert("Ci", 1, $args.list.Count); $value = MathS.Ci($args.list[0]); }

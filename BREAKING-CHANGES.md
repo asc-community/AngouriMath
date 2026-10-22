@@ -78,6 +78,21 @@ as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` wa
 | `MathS.Equations("x + y = 3", "x - y = 1").Solve("x", "y")` | `null` | `[[2, 1]]` |
 | `MathS.Equations("x + y = 3", "x - y = 1").ToString()` | `x + y = 3 = 0` and `x - y = 1 = 0` | `x + y - 3 = 0` and `x - y - 1 = 0` |
 
+### The polygamma functions, and the derivative of the factorial
+
+**Silent: a new reading, and an answer where there was none.**
+- **New functions.** `polygamma(n, z)` and `digamma(z)` are the polygamma functions `psi^(n)(z)`, the `(n + 1)`-th derivatives of `ln Gamma(z)`, and the digamma function, which is `polygamma(0, z)`. Neither name was recognised, so each was read as a product with an undeclared variable.
+- **Evaluation.** Each is evaluated to the working precision anywhere in the complex plane but at `0, -1, -2, ...`, its poles, where it is `NaN`.
+- **Derivatives.** Each order differentiates to the next. The derivative of `x!`, which was left unevaluated, is `x! * digamma(x + 1)` ([#171](https://github.com/asc-community/AngouriMath/issues/171)).
+
+| Input | Was (2.6.0) | Now |
+|---|---|---|
+| `"digamma(1)".ToEntity()` | `digamma * 1`, the variable `digamma` | `digamma(1)`, which evaluates to `-0.5772156649015328…` |
+| `"digamma(x)".ToEntity()` | `digamma * x` | `digamma(x)` |
+| `"polygamma(1, 1)".ToEntity()` | an `UnhandledParseException` | `polygamma(1, 1)`, which evaluates to `1.6449340668482264…` |
+| `"x!".ToEntity().Differentiate("x")` | `derivative(x!, x)`, unevaluated | `x! * digamma(x + 1)` |
+| `"gamma(x)".ToEntity().Differentiate("x")` | `derivative((x - 1)!, x)` | `(x - 1)! * digamma(x - 1 + 1)` |
+
 ### Numerical equality is to half the evaluation's digits
 
 **Silent: wrong answers.** `MathS.UnsafeAndInternal.AreEqualNumerically` evaluated both sides at its check points and

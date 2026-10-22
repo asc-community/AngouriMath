@@ -1455,6 +1455,25 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Li(Entity a) => new Lif(a);
 
+        /// <summary>The polygamma function, <c>psi^(n)(z)</c>, the <c>(n + 1)</c>-th derivative of <c>ln Gamma(z)</c></summary>
+        /// <param name="order">The order <c>n</c>, a whole number <c>n >= 0</c></param>
+        /// <param name="argument">The argument, any complex number but <c>0, -1, -2, ...</c>, its poles</param>
+        /// <returns>The <see cref="Entity.Polygammaf"/> node</returns>
+        /// <remarks>
+        /// <c>psi^(0)</c> is the digamma function, <c>Gamma'(z)/Gamma(z)</c>, which is what the derivative of
+        /// <c>x!</c> is written with: <c>(x!)' = x! psi(x + 1)</c>. Each order is the derivative of the one before.
+        /// https://github.com/asc-community/AngouriMath/issues/171
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Polygamma(Entity order, Entity argument) => new Polygammaf(order, argument);
+
+        /// <summary>The digamma function, <c>psi(z) = Gamma'(z)/Gamma(z)</c>, which is <c>polygamma(0, z)</c></summary>
+        /// <param name="argument">The argument, any complex number but <c>0, -1, -2, ...</c>, its poles</param>
+        /// <returns>The <see cref="Entity.Polygammaf"/> node of order <c>0</c></returns>
+        /// <remarks>https://github.com/asc-community/AngouriMath/issues/171</remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Digamma(Entity argument) => new Polygammaf(Integer.Zero, argument);
+
         /// <summary>The sine integral, <c>Si(z) = int_0^z sin(t)/t dt</c></summary>
         /// <param name="a">The argument, any complex number</param>
         /// <returns>The <see cref="Entity.Sif"/> node</returns>

@@ -66,6 +66,9 @@ namespace AngouriMath.Functions
                 case Sinf or Cosf or Tanf or Cotanf or Secantf or Cosecantf
                      or Arctanf or Arccotanf or Signumf or Erff or Erfcf or Erfif or Eif or Sif or Shif:
                     return IsRealValued(expr.DirectChildren[0], x);
+                // A polygamma function of a whole order is real on the real line between its poles.
+                case Polygammaf(var order, var argument) when !order.ContainsNode(x):
+                    return IsRealValued(argument, x);
                 // A modulus is real whatever it is taken of, and an Iverson bracket is 0 or 1.
                 case Absf or Iversonf:
                     return true;
@@ -149,6 +152,8 @@ namespace AngouriMath.Functions
                 case Sinf or Cosf or Tanf or Cotanf or Secantf or Cosecantf
                      or Arctanf or Arccotanf or Signumf or Erff or Erfcf or Erfif or Eif or Sif or Shif:
                     return GatherTheBasesOfRoots(expr.DirectChildren[0], x, bases);
+                case Polygammaf(var order, var argument) when !order.ContainsNode(x):
+                    return GatherTheBasesOfRoots(argument, x, bases);
                 case Absf or Iversonf:
                     return true;
                 default:

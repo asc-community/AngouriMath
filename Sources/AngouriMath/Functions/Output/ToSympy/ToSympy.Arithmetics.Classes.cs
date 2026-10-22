@@ -125,6 +125,14 @@ namespace AngouriMath
                 => $@"sympy.li({Argument.ToSymPy()})";
         }
 
+        public partial record Polygammaf
+        {
+            internal override string ToSymPy()
+                => Order is Number.Integer { IsZero: true }
+                ? $@"sympy.digamma({Argument.ToSymPy()})"
+                : $@"sympy.polygamma({Order.ToSymPy()}, {Argument.ToSymPy()})";
+        }
+
         public partial record Sif
         {
             internal override string ToSymPy()
