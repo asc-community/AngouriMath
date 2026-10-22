@@ -30091,6 +30091,216 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power that is not whole of a rational function of one exponential, <c>W = B(t)^p</c> with
+        /// <c>t = e^(s x)</c>, beside a polynomial in x whose coefficients are rational in t, by the ansatz
+        /// <c>F = W P/(t^m E)</c>: <c>P</c> a polynomial in x and t of unknown coefficients, and <c>E</c> read
+        /// off the denominator of the rest, <c>R = f/W</c>. Rubi's 6.7.1
+        /// <c>sqrt(csch(x)) (x cosh(x) - 4 sech(x) tanh(x))</c> is
+        /// <c>(2 x/sqrt(csch(x)) - 4 sech(x)/csch(x)^(3/2))'</c>, <c>sqrt(csch(x))</c> times a rational
+        /// function of x and <c>e^x</c>. By parts leaves <c>-2/sqrt(csch(x))</c>, which is elliptic, and so is
+        /// the other term, and the split declined them both.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>W'/W = p s t B_t/B</c> is rational in t, so <c>F' = W R</c> is
+        /// <c>(P/(t^m E))' + p s t (B_t/B) P/(t^m E) = R</c>, a polynomial identity in x and t over one
+        /// denominator, linear in the unknowns. By Liouville's theorem an elementary antiderivative with no
+        /// logarithmic part is W times a rational function of x and t, with a denominator free of x, as R's
+        /// is, and a degree in x no higher than R's: a higher coefficient would be a constant over W, which
+        /// is not rational. Its denominator is R's with each factor's power lowered by one, or R's itself,
+        /// with t to any power, as <see cref="SolveByRischNormanAnsatz"/> bounds its own.
+        /// </para>
+        /// <para>
+        /// W is the integrand's own power, and every other power of its base is written as W times a whole
+        /// power of the base, which holds on every branch: <c>B^r = B^p B^(r - p)</c> for a whole
+        /// <c>r - p</c>. Respelled in powers of the hyperbolic sine, <c>sqrt(1/S)</c> as <c>1/sqrt(S)</c>, the
+        /// same integrand was right only where <c>sinh(x) > 0</c>. Last, at the question asked, and checked
+        /// by its derivative.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPowerOfAFunctionOfAnExponentialBesideXByAnAnsatz(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            // Every exponential of something of x is e^(c + k s x), for one s and a whole k.
+            Entity? slope = null;
+            var exponentials = new List<(Entity Node, Entity Intercept, int Times)>();
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not Powf(var e, var exponent) || e != MathS.e || !exponent.ContainsNode(x))
+                    continue;
+                if (!TreeAnalyzer.TryGetPolyLinear(exponent, x, out var s, out var c) || s.ContainsNode(x) || c.ContainsNode(x) || TreeAnalyzer.IsZero(s))
+                    return null;
+                slope ??= s;
+                if (Functions.PartialFractions.InLowestTermsOverTheSymbols(s / slope) is not Number.Integer { EInteger: var k }
+                    || !k.CanFitInInt32() || k.Abs().CompareTo(EInteger.FromInt32(MaximumMultipleOfTheExponent)) > 0)
+                    return null;
+                if (!exponentials.Any(known => known.Node == node))
+                    exponentials.Add((node, c, k.ToInt32Unchecked()));
+            }
+            if (slope is null)
+                return null;
+            var t = Variable.CreateUnique(expr, "t_w");
+            Entity InT(Entity e) => e.Replace(node =>
+            {
+                var at = exponentials.FindIndex(known => known.Node == node);
+                if (at < 0)
+                    return node;
+                var (_, intercept, times) = exponentials[at];
+                var magnitude = System.Math.Abs(times);
+                Entity raised = magnitude == 1 ? t : MathS.Pow(t, magnitude);
+                Entity power = times > 0 ? raised : 1 / raised;
+                return TreeAnalyzer.IsZero(intercept) ? power : MathS.Pow(MathS.e, intercept) * power;
+            });
+            var inT = InT(expr);
+            // With x itself beside the exponential: a function of the exponential alone is the substitution's.
+            if (!inT.ContainsNode(x))
+                return null;
+            // One base under powers that are not whole, free of x but for the exponential, the powers a whole
+            // number apart; the base by its value in lowest terms, since two spellings of `csch(x)` that print
+            // alike need not be one tree.
+            Entity? radicand = null;
+            Number.Rational? power = null;
+            var spellings = new List<Entity>();
+            foreach (var node in inT.Nodes)
+            {
+                if (node is not Powf(var @base, var exponent) || exponent is Number.Integer || !@base.ContainsNode(t) && !@base.ContainsNode(x))
+                    continue;
+                if (exponent is not Number.Rational r || @base.ContainsNode(x))
+                    return null;
+                if (radicand is null)
+                {
+                    (radicand, power) = (@base, r);
+                    spellings.Add(@base);
+                    continue;
+                }
+                if (!r.ERational.Subtract(power!.ERational).Denominator.Equals(EInteger.One))
+                    return null;
+                if (spellings.Contains(@base))
+                    continue;
+                if (Functions.PartialFractions.InLowestTermsOverTheSymbols(Functions.SingleQuotient.Combine(@base - radicand)) != Number.Integer.Zero)
+                    return null;
+                spellings.Add(@base);
+            }
+            if (radicand is null || power is null)
+                return null;
+            var written = expr.Nodes.FirstOrDefault(node => node is Powf(var b, var r) && r == power && b.ContainsNode(x) && spellings.Contains(InT(b)));
+            if (written is null)
+                return null;
+            // The rest, each power of the base written over W, a whole power of the base.
+            var rest = inT.Replace(node => node is Powf(var @base, Number.Rational r) && r is not Number.Integer && spellings.Contains(@base)
+                ? r.ERational.Subtract(power.ERational) is var whole && whole.IsZero ? Number.Integer.One
+                  : whole.Equals(ERational.One) ? radicand : MathS.Pow(radicand, Number.Rational.Create(whole))
+                : node);
+            var variables = new List<Variable> { x, t };
+            var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(rest).InnerSimplified);
+            if (Functions.PolynomialGcd.TryCancel(above.Expand().InnerSimplified, below.Expand().InnerSimplified, out var cancelled) && cancelled is not null)
+                (above, below) = Functions.SingleQuotient.Of(Functions.PartialFractions.Bare(cancelled));
+            if (!TryReadInAll(above, variables, out var aboveRead) || !TryReadInAll(below, variables, out var belowRead)
+                || belowRead.Keys.Any(key => key[0] > 0))
+                return null;
+            var degreeInX = aboveRead.Keys.Max(key => key[0]);
+            var aboveInT = aboveRead.Keys.Max(key => key[1]);
+            var belowInT = belowRead.Keys.Max(key => key[1]);
+            if (degreeInX > MaximumDegreeInXBesideAnExponential || aboveInT > 2 * MaximumDegreeInTheExponential || belowInT > 2 * MaximumDegreeInTheExponential)
+                return null;
+            var (radicandAbove, radicandBelow) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(radicand).InnerSimplified);
+            if (!TryReadInAll(radicandAbove, variables, out var baseAbove) || !TryReadInAll(radicandBelow, variables, out var baseBelow)
+                || baseAbove.Keys.Concat(baseBelow.Keys).Any(key => key[0] > 0))
+                return null;
+            // W'/W = p s t (B_n' B_d - B_n B_d')/(B_n B_d), in t.
+            var betaAbove = power * slope * t * (radicandAbove.Differentiate(t) * radicandBelow - radicandAbove * radicandBelow.Differentiate(t));
+            var betaBelow = radicandAbove * radicandBelow;
+            // The denominator's factors in t with their powers, t itself apart: it may stand to any power.
+            var factors = new List<(Entity Factor, int Power)>();
+            var powerOfT = 0;
+            foreach (var factor in Mulf.LinearChildren(below))
+            {
+                var (@base, raisedTo) = factor is Powf(var inner, Number.Integer whole) && whole.EInteger.CanFitInInt32() ? (inner, whole.EInteger.ToInt32Unchecked()) : (factor, 1);
+                if (!@base.ContainsNode(t))
+                    continue;
+                if (@base == t)
+                {
+                    powerOfT += raisedTo;
+                    continue;
+                }
+                var index = factors.FindIndex(known => known.Factor == @base);
+                if (index < 0)
+                    factors.Add((@base, raisedTo));
+                else
+                    factors[index] = (@base, factors[index].Power + raisedTo);
+            }
+            var candidates = new[] { true, false }.Select(lowered => factors.Aggregate((Entity)Number.Integer.One, (product, pair) =>
+                (lowered ? pair.Power - 1 : pair.Power) is var p && p > 0 ? product * (p == 1 ? pair.Factor : MathS.Pow(pair.Factor, p)) : product)).Distinct().ToList();
+            foreach (var q in candidates)
+                for (var m = 0; m <= powerOfT + 1; m++)
+                {
+                    var denominator = m == 0 ? q : q * (m == 1 ? t : MathS.Pow(t, m));
+                    if (!TreeAnalyzer.TryGetPolynomial(denominator, t, out var denominatorRead) || denominatorRead.Count == 0)
+                        continue;
+                    var degreeInT = System.Math.Min(MaximumDegreeInTheExponential,
+                        System.Math.Max(0, aboveInT - belowInT + denominatorRead.Keys.Max()!.ToInt32Unchecked() + 1));
+                    if ((degreeInX + 1) * (degreeInT + 1) > MaximumUnknownsBesideAnExponential)
+                        continue;
+                    var denominatorPrime = denominator.Differentiate(t);
+                    var generators = new List<Entity>();
+                    var columns = new List<Dictionary<int[], Entity>>();
+                    var failed = false;
+                    for (var i = 0; i <= degreeInX && !failed; i++)
+                        for (var j = 0; j <= degreeInT; j++)
+                        {
+                            Entity generator = i == 0 && j == 0 ? Number.Integer.One
+                                : i == 0 ? MathS.Pow(t, j) : j == 0 ? MathS.Pow(x, i) : MathS.Pow(x, i) * MathS.Pow(t, j);
+                            // (g/E)' + (W'/W) g/E over E^2 B_n B_d D_R, with g' = g_x + s t g_t.
+                            var numerator = ((generator.Differentiate(x) + slope * t * generator.Differentiate(t)) * denominator
+                                             - slope * t * generator * denominatorPrime) * betaBelow * below
+                                            + betaAbove * generator * denominator * below;
+                            if (!TryReadInAll(Functions.PartialFractions.Bare(numerator.Expand().InnerSimplified), variables, out var column))
+                            {
+                                failed = true;
+                                break;
+                            }
+                            generators.Add(generator);
+                            columns.Add(column);
+                        }
+                    if (failed)
+                        continue;
+                    if (!TryReadInAll(Functions.PartialFractions.Bare((above * MathS.Sqr(denominator) * betaBelow).Expand().InnerSimplified), variables, out var target))
+                        continue;
+                    var keys = columns.SelectMany(column => column.Keys).Concat(target.Keys).Distinct(new IntArrayComparer()).ToList();
+                    var matrix = keys.Select(key => columns.Select(column => column.TryGetValue(key, out var entry) ? entry : Number.Integer.Zero).ToArray()).ToArray();
+                    var rhs = keys.Select(key => target.TryGetValue(key, out var wanted) ? wanted : Number.Integer.Zero).ToArray();
+                    if ((!Functions.PartialFractions.TrySolveLinear(matrix, rhs, out var values) || values is null)
+                        && (!Functions.PartialFractions.TrySolveLinearWithSymbols(matrix, rhs, out values) || values is null))
+                        continue;
+                    Entity? sum = null;
+                    for (var c = 0; c < values.Length; c++)
+                    {
+                        var value = values[c].InnerSimplified;
+                        if (value.Evaled is Number.Complex { IsZero: true })
+                            continue;
+                        sum = sum is null ? value * generators[c] : sum + value * generators[c];
+                    }
+                    if (sum is null)
+                        continue;
+                    var answer = written * (sum / denominator).Substitute(t, MathS.Pow(MathS.e, slope * x));
+                    if (Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x))
+                        return answer;
+                }
+            return null;
+        }
+
+        /// <summary>
+        /// The largest multiple of the exponent <see cref="SolveAPowerOfAFunctionOfAnExponentialBesideXByAnAnsatz"/>
+        /// reads, the largest degrees of its ansatz in x and in the exponential, and the most unknowns.
+        /// </summary>
+        private const int MaximumMultipleOfTheExponent = 8;
+        private const int MaximumDegreeInXBesideAnExponential = 3;
+        private const int MaximumDegreeInTheExponential = 12;
+        private const int MaximumUnknownsBesideAnExponential = 60;
+
+        /// <summary>
         /// A logarithm of constants and nested powers of one linear <c>L</c>, <c>ln(c (d L^p)^q)</c>, is
         /// <c>p q ln(L) + K</c> with <c>K</c> constant wherever it is continuous, since its derivative is
         /// <c>p q L'/L</c> by the chain rule on any branch: named so, Rubi's 3.3
