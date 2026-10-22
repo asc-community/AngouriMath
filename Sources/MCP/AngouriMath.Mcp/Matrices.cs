@@ -136,8 +136,8 @@ internal static class Matrices
     }
 
     /// <summary>
-    /// Eigenvalues via the characteristic polynomial, which belongs in the library:
-    /// https://github.com/asc-community/AngouriMath/issues/1676
+    /// The characteristic polynomial, det(A - lambda I), and the library's eigenvalues,
+    /// `Matrix.Eigenvalues`. https://github.com/asc-community/AngouriMath/issues/1676
     ///
     /// The guard-dropping is not cosmetic. A determinant taken by dividing by pivots leaves a
     /// `provided` guard for each one, and on a symbolic matrix those are artefacts of the
@@ -163,12 +163,15 @@ internal static class Matrices
         Entity? roots;
         try
         {
-            // The solver reintroduces pivot guards of its own, so the result is cleaned
-            // again — stripping only the characteristic polynomial leaves eigenvalues
-            // reading 'J provided not J = 0'.
-            var (cleaned, solverGuards) = Clean(poly.SolveEquation(lambda).Simplify());
-            roots = cleaned;
-            guards.AddRange(solverGuards);
+            // The library's, from a characteristic polynomial that divides by nothing; cleaned
+            // all the same, so that a guard any later route brings is reported rather than shown.
+            if (a.Eigenvalues is { } eigenvalues)
+            {
+                var (cleaned, solverGuards) = Clean(eigenvalues.Simplify());
+                roots = cleaned;
+                guards.AddRange(solverGuards);
+            }
+            else roots = null;
         }
         catch { roots = null; }
 
