@@ -75,21 +75,6 @@ internal static class SelfTest
     [
         ("Simplify(sqrt(x^2))", () => Value("sqrt(x^2)") != "abs(x)",
             "left as written rather than reduced to abs(x)"),
-        ("DefiniteIntegral is a first-order rule", () =>
-        {
-            // Halving the step count roughly doubles the error iff the rule is first order.
-            // https://github.com/asc-community/AngouriMath/issues/1675
-            // Numeric.TryDefiniteIntegral's step counts, its error estimate and the caveat
-            // am_integrate prints all assume that; a rule of higher order would make the
-            // reported error bound far too pessimistic and the wording wrong.
-            var e = "e^(x^2)".ToEntity();
-            var v = MathS.Var("x");
-            var coarse = e.DefiniteIntegral(v, 0, 1, 500).RealPart.EDecimal.ToDouble();
-            var fine = e.DefiniteIntegral(v, 0, 1, 1000).RealPart.EDecimal.ToDouble();
-            var finer = e.DefiniteIntegral(v, 0, 1, 2000).RealPart.EDecimal.ToDouble();
-            var ratio = Math.Abs(fine - coarse) / Math.Abs(finer - fine);
-            return ratio is > 1.7 and < 2.3;
-        }, "error halves per doubling, so ~4 digits at 4000 steps; Simpson would give more"),
     ];
 
     /// <summary>Runs every check, writes what it found, and returns the exit code: 1 when an identity fails.</summary>

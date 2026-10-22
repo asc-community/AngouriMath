@@ -104,8 +104,8 @@ raised `NotSufficientlySupportedException`. `unchanged` means no progress, not "
 **A printed `NaN` is screened.** An answer that exists has none in it.
 
 **An approximate answer says how approximate it is.** The numeric fallback for a declined definite
-integral, `Entity.DefiniteIntegral`, is a first-order rule that returns a hundred digits whatever
-its accuracy. It is run at two step counts, and only the digits they agree on are reported.
+integral, `Entity.DefiniteIntegral`, returns the digits its rule knows, and only those are reported,
+with the error they leave.
 
 **Every call has a budget and its own stack.** Each runs under the library's cancellation token on a
 thread with a 64 MB stack, abandoned rather than killed on timeout, so neither a runaway search nor

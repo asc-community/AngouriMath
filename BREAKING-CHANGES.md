@@ -42,21 +42,25 @@ A not-equal written `<>` is read as `not (a = b)`, and printed that way.
 
 ## Unreleased — since 2.6.0
 
-### An equality in an equation or a system is read as a difference equal to zero
+### A numerical definite integral is Gauss–Legendre, with the digits it knows
 
-**Silent: wrong answers.** `MathS.SolveEquation`, `Entity.SolveEquation` and `MathS.Equations` read each equation as an
-expression equal to zero, and passed an equality `a = b` on as it stood. One equation came back as the set of x where
-`a = b` and `b = 0`, which is empty unless `b` is zero, and a system came back with no solution. An equality is now read
-as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` was already `{ 2 }`
-([#1673](https://github.com/asc-community/AngouriMath/issues/1673)).
+**Silent: wrong answers, and values where there was NaN.** `Entity.DefiniteIntegral(x, a, b, steps)` was the mean of
+`steps + 1` equally weighted samples, its bounds among them: a first-order rule, whose value on `x^2` over `[0, 1]` was
+off in the third digit at the default 100 steps and printed to a hundred digits. A convergent integral with a singular
+bound had no value. It is now the five-point Gauss–Legendre rule on `steps` panels, which never evaluates a bound, run
+on the panels, twice as many and four times as many. Where the differences between the three do not shrink, the
+integral diverges at a bound and is `NaN`. Otherwise the rest of their geometric series is added and taken as the
+error, and the value is rounded to its place, at most fifteen digits, a double's. A singularity inside the segment is
+not seen, and a symmetric divergent one comes to its principal value
+([#1675](https://github.com/asc-community/AngouriMath/issues/1675)).
 
 | Input | Was (2.6.0) | Now |
 |---|---|---|
-| `MathS.SolveEquation("x + 1 = 3", "x")` | `{ x : x + 1 = 3 and 3 = 0 }` | `{ 2 }` |
-| `"x^2 = 4".SolveEquation("x")` | `{ x : x ^ 2 = 4 and 4 = 0 }` | `{ 2, -2 }` |
-| `"a * x = b".ToEntity().SolveEquation("x")` | `{ x : a * x = b and b = 0 }`, which holds only where `b = 0` | `{ b / a }` |
-| `MathS.Equations("x + y = 3", "x - y = 1").Solve("x", "y")` | `null` | `[[2, 1]]` |
-| `MathS.Equations("x + y = 3", "x - y = 1").ToString()` | `x + y = 3 = 0` and `x - y = 1 = 0` | `x + y - 3 = 0` and `x - y - 1 = 0` |
+| `"x^2".ToEntity().DefiniteIntegral("x", 0, 1)` | `0.334999999999999938…`, a hundred digits | `0.333333333333333` |
+| `"e^x".ToEntity().DefiniteIntegral("x", 0, 2)` | `6.409068937660210827…` | `6.38905609893066` |
+| `"sin(x)/x".ToEntity().DefiniteIntegral("x", 0, 1)` | `NaN` | `0.946083070367182` |
+| `"ln(x)".ToEntity().DefiniteIntegral("x", 0, 1)` | `NaN` | `-1.00000` |
+| `"1/x".ToEntity().DefiniteIntegral("x", 0, 1)` | `NaN` | `NaN` |
 
 ### A root of a small or a large number is searched for at the size of one
 
@@ -76,6 +80,36 @@ at the working precision, and returns a real root as it was computed
 | `"(10^12 + 1/2)^(1/2)".EvalNumerical()` | `1000000` | `1000000.00000024999999999996875…` |
 | `"(2 + i/10^8)^(1/2)".EvalNumerical()` | `1.4142135623730950…` | `1.4142135623730950… + 3.5355339059327376…E-9i` |
 | `"(-8)^(1/3)".EvalNumerical()`, `"sqrt(10^30)".EvalNumerical()` | `-2`, `1000000000000000` | `-2`, `1000000000000000` |
+
+### An equality in an equation or a system is read as a difference equal to zero
+
+**Silent: wrong answers.** `MathS.SolveEquation`, `Entity.SolveEquation` and `MathS.Equations` read each equation as an
+expression equal to zero, and passed an equality `a = b` on as it stood. One equation came back as the set of x where
+`a = b` and `b = 0`, which is empty unless `b` is zero, and a system came back with no solution. An equality is now read
+as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` was already `{ 2 }`
+([#1673](https://github.com/asc-community/AngouriMath/issues/1673)).
+
+| Input | Was (2.6.0) | Now |
+|---|---|---|
+| `MathS.SolveEquation("x + 1 = 3", "x")` | `{ x : x + 1 = 3 and 3 = 0 }` | `{ 2 }` |
+| `"x^2 = 4".SolveEquation("x")` | `{ x : x ^ 2 = 4 and 4 = 0 }` | `{ 2, -2 }` |
+| `"a * x = b".ToEntity().SolveEquation("x")` | `{ x : a * x = b and b = 0 }`, which holds only where `b = 0` | `{ b / a }` |
+| `MathS.Equations("x + y = 3", "x - y = 1").Solve("x", "y")` | `null` | `[[2, 1]]` |
+| `MathS.Equations("x + y = 3", "x - y = 1").ToString()` | `x + y = 3 = 0` and `x - y = 1 = 0` | `x + y - 3 = 0` and `x - y - 1 = 0` |
+
+### Numerical equality is to half the evaluation's digits
+
+**Silent: wrong answers.** `MathS.UnsafeAndInternal.AreEqualNumerically` evaluated both sides at its check points and
+compared the values exactly, so two equal expressions computed by different routes, which differ in their last digits,
+read as unequal. Two values now agree when they differ by no more than half the evaluation's digits, relative to the
+larger of them or to one: a difference of `1e-40` is still a difference at the default hundred digits. The limit
+solver's check that a limit agrees from both sides goes through the same comparison
+([#1674](https://github.com/asc-community/AngouriMath/issues/1674)).
+
+| Input | Was (2.6.0) | Now |
+|---|---|---|
+| `AreEqualNumerically("2 x (-1/4 + ln(x)/2) + 1/x * 2/4 * x^2", "x ln(x)")` | `false` | `true` |
+| `AreEqualNumerically` of `x ln(x)` and its antiderivative's derivative | `false` | `true` |
 
 ---
 
