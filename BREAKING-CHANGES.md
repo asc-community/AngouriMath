@@ -117,6 +117,21 @@ coefficients are the roots of that quadratic, and the polynomial over it is spli
 | `"1/(4*a*c+4*c^2*x^2+4*c*d*x^3+d^2*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 3,920 characters |
 | `"x/(4*a*c+4*c^2*x^2+4*c*d*x^3+d^2*x^4)".ToEntity().Integrate("x")` | `integral(...)` | 2,315 characters |
 
+### An even power of the sine beside the secant is written in the cosine
+
+**Answers where there were none, shorter than master's.** Rubi's 4.5.1.3 `sin(c + d x)^2/(a + b sec(c + d x))` ran
+past the corpus's budget. The half-angle substitution wrote it in 117,751 characters, and `sin(x)^4/(a + b sec(x))` in
+160,657. A rational function of the secant was written in the cosine only beside the cosine itself. The sine beside it
+stands to even powers only, and `sin(z)^(2k)` is `(1 - cos(z)^2)^k`, so the integrand is now written in the cosine, as a
+polynomial over a linear in it. The cosine beside the cosecant is written in the sine the same way
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sin(c+d*x)^2/(a+b*sec(c+d*x))".ToEntity().Integrate("x")` | `integral(...)` | 1,187 characters, where before this change master gave 117,751 |
+| `"sin(x)^4/(a+b*sec(x))".ToEntity().Integrate("x")` | `integral(...)` | 1,729 characters, where before this change master gave 160,657 |
+| `"cos(x)^2/(a+b*csc(x))".ToEntity().Integrate("x")` | `integral(...)` | 994 characters, where before this change master gave 2,271 |
+
 ### An exponential of a quadratic over a power of the linear through its vertex is a moment about it
 
 **Answers where there were none.** `f^(a + b x + c x^2)/(b + 2 c x)` was declined, and so were five more of Rubi's 2.3,
