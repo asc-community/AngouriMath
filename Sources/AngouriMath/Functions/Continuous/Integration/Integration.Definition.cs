@@ -684,6 +684,17 @@ namespace AngouriMath.Functions.Algebra
         private static Entity? ComputeIndefiniteIntegralUncached(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             if (!expr.ContainsNode(x)) return expr * x; // base case, handle here
+            // A condition with no x in it holds for every x or for none, so the integral of `f provided C`
+            // is the integral of f, provided C. Inner simplification writes one at the top of a question a
+            // rule hands on -- `d^0` is `1 provided not d = 0` -- and no rule below reads it: AJ's kept
+            // spelling of `1/((c + d x)(a + b (c + d x)^3))` lost eight rows to that. The same question,
+            // so that a rule scoped to the one asked still reads it. Only the question asked: below it, the
+            // partial fractions of Rubi's 1.2.3.2 `(d f + e f x)/(a + b (d + e x)^2 + c (d + e x)^4)` hand on a
+            // piece with `provided not e = 0` that answered took 0.9 GB, for the answer the rest gives anyway.
+            if (expr is Entity.Providedf(var underTheCondition, var condition) && !condition.ContainsNode(x) && AnsweringTheQuestionAsked)
+                return ComputeAsTheSameQuestion(underTheCondition, x, integrateByParts) is { } underIt
+                    ? new Entity.Providedf(underIt, condition)
+                    : null;
             if ((IntegralPatterns.TryStandardIntegrals(expr, x)) is { } answer) return answer;
             // The flag has to be handed on. Every one of these recurses, and a solver that
             // dropped it re-enabled integration by parts one level below the call that
