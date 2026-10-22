@@ -42,6 +42,19 @@ A not-equal written `<>` is read as `not (a = b)`, and printed that way.
 
 ## Unreleased — since 2.6.0
 
+### A subscript may have a subscript
+
+**Not silent: what was a parse error is a name.** A name took at most one `_`, so `x_1_2` and `X_a_beta` were lexer
+errors. A subscript may now have one of its own: `X_a_beta` is one variable, `X` with the subscript `a_beta`, printed
+in LaTeX as `X_{a_{\beta}}`. `_` still neither begins nor ends a name, and two do not stand together
+([#524](https://github.com/asc-community/AngouriMath/issues/524)).
+
+| Input | Was (2.6.0) | Now |
+|---|---|---|
+| `"X_a_beta + 10".ToEntity()` | an `UnhandledParseException` | `X_a_beta + 10` |
+| `MathS.Var("X_a_beta").Latexize()` | an `UnhandledParseException` | `X_{a_{\beta}}` |
+| `"x__1".ToEntity()` | an `UnhandledParseException` | an `UnhandledParseException` |
+
 ### A numerical definite integral is Gauss–Legendre, with the digits it knows
 
 **Silent: wrong answers, and values where there was NaN.** `Entity.DefiniteIntegral(x, a, b, steps)` was the mean of
@@ -103,6 +116,8 @@ as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` wa
 - **New functions.** `polygamma(n, z)` and `digamma(z)` are the polygamma functions `psi^(n)(z)`, the `(n + 1)`-th derivatives of `ln Gamma(z)`, and the digamma function, which is `polygamma(0, z)`. Neither name was recognised, so each was read as a product with an undeclared variable.
 - **Evaluation.** Each is evaluated to the working precision anywhere in the complex plane but at `0, -1, -2, ...`, its poles, where it is `NaN`.
 - **Derivatives.** Each order differentiates to the next. The derivative of `x!`, which was left unevaluated, is `x! * digamma(x + 1)` ([#171](https://github.com/asc-community/AngouriMath/issues/171)).
+- **Integrals.** Each order integrates to the one before, and `digamma(x)` to `ln((x - 1)!)`.
+- **Exact values.** An odd order at a whole or half-whole argument is a rational times a power of `pi` plus a rational: `polygamma(1, 1)` is `1/6 * pi ^ 2`.
 
 | Input | Was (2.6.0) | Now |
 |---|---|---|
@@ -111,6 +126,8 @@ as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` wa
 | `"polygamma(1, 1)".ToEntity()` | an `UnhandledParseException` | `polygamma(1, 1)`, which evaluates to `1.6449340668482264…` |
 | `"x!".ToEntity().Differentiate("x")` | `derivative(x!, x)`, unevaluated | `x! * digamma(x + 1)` |
 | `"gamma(x)".ToEntity().Differentiate("x")` | `derivative((x - 1)!, x)` | `(x - 1)! * digamma(x - 1 + 1)` |
+| `"polygamma(1, 3)".ToEntity().InnerSimplified` | an `UnhandledParseException` | `1/6 * pi ^ 2 - 5/4` |
+| `"digamma(x)".ToEntity().Integrate("x")` | `digamma * x ^ 2 / 2 + C`, of the product | `ln((x - 1)!) + C` |
 
 ### Numerical equality is to half the evaluation's digits
 
@@ -125,6 +142,18 @@ solver's check that a limit agrees from both sides goes through the same compari
 |---|---|---|
 | `AreEqualNumerically("2 x (-1/4 + ln(x)/2) + 1/x * 2/4 * x^2", "x ln(x)")` | `false` | `true` |
 | `AreEqualNumerically` of `x ln(x)` and its antiderivative's derivative | `false` | `true` |
+
+### A whole number the rational search finds is an integer
+
+**Silent: a wrong type and a wrong comparison.** The search that reads a number as the rational it is near built its
+result without the check that turns a denominator of 1 into an integer. A value just below a whole number came back as
+the `Rational` `1/1` or `3/1`, which is not an `Integer` and is not equal to `1` or `3`
+([#2069](https://github.com/asc-community/AngouriMath/issues/2069)).
+
+| Input | Was (2.6.0) | Now |
+|---|---|---|
+| `(Entity)0.9999999999999999999999999999m` | `Rational 1/1`, and `== 1` is `false` | `Integer 1` |
+| `(Entity)2.9999999999999999999999999999m` | `Rational 3/1` | `Integer 3` |
 
 ### A computed value is a rational only within half the working digits
 

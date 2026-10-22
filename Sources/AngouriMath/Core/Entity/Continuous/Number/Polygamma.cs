@@ -59,6 +59,56 @@ namespace AngouriMath
                 return Complex.Create(valueRe.RoundToPrecision(context), valueIm.RoundToPrecision(context));
             }
 
+            /// <summary>
+            /// <c>psi^(n)(q)</c> exactly, for an odd order <c>n</c> and a whole or half-whole <c>q</c> other than a pole,
+            /// or <see langword="null"/>: a rational times <c>pi^(n + 1)</c>, plus a rational.
+            /// </summary>
+            /// <remarks>
+            /// <c>psi^(n)(1) = n! zeta(n + 1)</c> and <c>psi^(n)(1/2) = (2^(n + 1) - 1) n! zeta(n + 1)</c> for an odd
+            /// <c>n</c> (DLMF 5.15.2, 5.15.3), where <c>zeta(2m) = (-1)^(m + 1) B_(2m) (2 pi)^(2m)/(2 (2m)!)</c> is a
+            /// rational times <c>pi^(2m)</c>; the recurrence <c>psi^(n)(z + 1) = psi^(n)(z) - n!/z^(n + 1)</c> moves
+            /// the argument to either. An even order wants <c>zeta</c> at an odd number, or Euler's constant, which
+            /// have no closed form here. https://github.com/asc-community/AngouriMath/issues/171
+            /// </remarks>
+            internal static Entity? ExactPolygamma(EInteger order, ERational argument)
+            {
+                if (order.Sign <= 0 || order.IsEven || order.CompareTo(100) > 0)
+                    return null;
+                var half = ERational.Create(EInteger.One, EInteger.FromInt32(2));
+                var start = argument.Denominator.Equals(EInteger.One) ? ERational.One
+                    : argument.Denominator.Equals(EInteger.FromInt32(2)) ? half : null;
+                if (start is null || argument.Denominator.Equals(EInteger.One) && argument.Sign <= 0)
+                    return null;
+                var steps = argument.Subtract(start).ToEInteger();
+                if (steps.Abs().CompareTo(1000) > 0)
+                    return null;
+                var n = order.ToInt32Checked();
+                var m = (n + 1) / 2;
+                var factorial = Factorial(n);
+                // zeta(2m) / pi^(2m) = (-1)^(m + 1) B_(2m) 2^(2m) / (2 (2m)!)
+                var zetaOverPiPower = Bernoulli(m).Multiply(ERational.FromEInteger(EInteger.One.ShiftLeft(2 * m)))
+                    .Divide(ERational.FromEInteger(Factorial(2 * m).Multiply(2)));
+                if (m % 2 == 0)
+                    zetaOverPiPower = zetaOverPiPower.Negate();
+                var piCoefficient = zetaOverPiPower.Multiply(ERational.FromEInteger(factorial));
+                if (start.Equals(half))
+                    piCoefficient = piCoefficient.Multiply(ERational.FromEInteger(EInteger.One.ShiftLeft(n + 1).Subtract(EInteger.One)));
+                // The recurrence, up from the start or down to the argument.
+                var rest = ERational.Zero;
+                var power = n + 1;
+                if (steps.Sign > 0)
+                    for (var j = EInteger.Zero; j.CompareTo(steps) < 0; j = j.Add(EInteger.One))
+                        rest = rest.Subtract(ERational.FromEInteger(factorial).Divide(Pow(start.Add(ERational.FromEInteger(j)), power)));
+                else
+                    for (var j = EInteger.One; j.CompareTo(steps.Negate()) <= 0; j = j.Add(EInteger.One))
+                        rest = rest.Add(ERational.FromEInteger(factorial).Divide(Pow(start.Subtract(ERational.FromEInteger(j)), power)));
+                var piTerm = Rational.Create(piCoefficient) * MathS.Pow(MathS.pi, Integer.Create(power));
+                return (rest.Sign < 0 ? piTerm - Rational.Create(rest.Negate()) : piTerm + Rational.Create(rest)).InnerSimplified;
+
+                static ERational Pow(ERational x, int exponent)
+                    => ERational.Create(x.Numerator.Pow(exponent), x.Denominator.Pow(exponent));
+            }
+
             private static (EDecimal Re, EDecimal Im) Polygamma(int n, EDecimal re, EDecimal im, EContext work)
             {
                 if (re.CompareTo(EDecimal.FromString("0.5")) < 0)

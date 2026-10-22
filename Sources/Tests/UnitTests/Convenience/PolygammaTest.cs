@@ -78,6 +78,47 @@ namespace AngouriMath.Tests.Convenience
             Assert.Equal((MathS.Polygamma(3, "x^2") * (2 * MathS.Var("x"))).InnerSimplified, "polygamma(2, x^2)".ToEntity().Differentiate("x").InnerSimplified);
         }
 
+        /// <summary>
+        /// An odd order at a whole or half-whole argument is a rational times <c>pi^(n + 1)</c> plus a rational
+        /// (DLMF 5.15.2, 5.15.3); each is checked against its numerical value.
+        /// </summary>
+        [Theory]
+        [InlineData("polygamma(1, 1)", "1/6 * pi ^ 2")]
+        [InlineData("polygamma(1, 1/2)", "1/2 * pi ^ 2")]
+        [InlineData("polygamma(3, 1)", "1/15 * pi ^ 4")]
+        [InlineData("polygamma(1, 3)", "1/6 * pi ^ 2 - 5/4")]
+        [InlineData("polygamma(1, -1/2)", "1/2 * pi ^ 2 + 4")]
+        [InlineData("polygamma(3, 5/2)", "pi ^ 4 - 2624/27")]
+        public void AnOddOrderAtAWholeOrHalfWholeArgumentIsExact(string expression, string exact)
+        {
+            var simplified = expression.ToEntity().InnerSimplified;
+            Assert.Equal(exact.ToEntity().InnerSimplified, simplified);
+            AssertClose(expression.EvalNumerical().Stringize(), Assert.IsType<Real>(simplified.EvalNumerical()).EDecimal);
+        }
+
+        /// <summary>An even order wants zeta at an odd number, or Euler's constant: it stays as written.</summary>
+        [Theory]
+        [InlineData("digamma(1)")]
+        [InlineData("polygamma(2, 1)")]
+        [InlineData("polygamma(1, 1/3)")]
+        public void OtherwiseItStaysAsWritten(string expression)
+            => Assert.IsType<Entity.Polygammaf>(expression.ToEntity().InnerSimplified);
+
+        /// <summary>Each order integrates to the one before, and the digamma function to <c>ln Gamma</c>.</summary>
+        [Theory]
+        [InlineData("polygamma(2, x)", "polygamma(1, x)")]
+        [InlineData("polygamma(1, 3 * x + 2)", "digamma(3 * x + 2) / 3")]
+        [InlineData("digamma(x)", "ln((x - 1)!)")]
+        [InlineData("digamma(2 * x)", "ln((2 * x - 1)!) / 2")]
+        public void IntegratesToTheOrderBefore(string integrand, string antiderivative)
+        {
+            var integral = integrand.ToEntity().Integrate("x").Substitute("C", 0).Simplify();
+            Assert.Equal(antiderivative.ToEntity().Simplify(), integral);
+            var back = integral.Differentiate("x").Substitute("x", Rational.Create(7, 3)).EvalNumerical();
+            var expected = integrand.ToEntity().Substitute("x", Rational.Create(7, 3)).EvalNumerical();
+            AssertClose(expected.Stringize(), Assert.IsType<Real>(back).EDecimal);
+        }
+
         [Theory]
         [InlineData("digamma(x)", "digamma(x)", @"\psi\left(x\right)", "sympy.digamma(x)")]
         [InlineData("polygamma(2, x)", "polygamma(2, x)", @"\psi^{(2)}\left(x\right)", "sympy.polygamma(2, x)")]

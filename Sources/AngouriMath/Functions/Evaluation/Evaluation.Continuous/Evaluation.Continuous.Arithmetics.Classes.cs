@@ -602,6 +602,7 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Order, Argument,
                     (order, argument) => (order, argument) switch
                     {
+                        (Integer { EInteger: var n }, Rational q) when isExact && Number.ExactPolygamma(n, q.ERational) is { } exact => exact,
                         (Integer { EInteger: var n }, Complex z) when !isExact && n.Sign >= 0 => Number.Polygamma(n, z),
                         (Integer { EInteger: var n }, Real r) when n.Sign >= 0 && r.EDecimal.IsPositiveInfinity() => n.IsZero ? Real.PositiveInfinity : Integer.Zero,
                         _ => null

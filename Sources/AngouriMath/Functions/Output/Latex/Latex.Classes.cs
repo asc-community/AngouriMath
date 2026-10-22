@@ -59,9 +59,15 @@ namespace AngouriMath
                 }
                 // For variables with subscripts (e.g., "pi_2", "x_e", "e_pi")
                 // Both the main part and subscript are processed through LatexizePart,
-                // which handles upright formatting for "pi" and "e" consistently
+                // which handles upright formatting for "pi" and "e" consistently.
+                // A subscript may have one of its own, so X_a_beta is X_{a_{\beta}}.
+                // https://github.com/asc-community/AngouriMath/issues/524
+                static string LatexizeIndex(string index)
+                    => index.IndexOf('_') is var underscore && underscore == -1
+                    ? LatexizePart(index, IsNameLatexUprightFormatted(index))
+                    : $"{LatexizePart(index.Substring(0, underscore), IsNameLatexUprightFormatted(index.Substring(0, underscore)))}_{{{LatexizeIndex(index.Substring(underscore + 1))}}}";
                 return SplitIndex() is var (prefix, index)
-                    ? $"{LatexizePart(prefix, IsNameLatexUprightFormatted(prefix))}_{{{LatexizePart(index, IsNameLatexUprightFormatted(index))}}}"
+                    ? $"{LatexizePart(prefix, IsNameLatexUprightFormatted(prefix))}_{{{LatexizeIndex(index)}}}"
                     : LatexizePart(Name, IsOwnNameUpright);
             }
         }

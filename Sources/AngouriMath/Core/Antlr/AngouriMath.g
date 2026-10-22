@@ -711,7 +711,9 @@ BOOLEAN: ('true' | 'True' | 'false' | 'False') ;
 // otherwise be an identifier. https://github.com/asc-community/AngouriMath/issues/906
 NAN: 'NaN' ;
 
-VARIABLE: ('a'..'z'|'A'..'Z'|'\u0370'..'\u03FF'|'\u1F00'..'\u1FFF'|'\u0400'..'\u04FF'|'\u212F')+ ('_' ('a'..'z'|'A'..'Z'|'0'..'9'|'\u0370'..'\u03FF'|'\u1F00'..'\u1FFF'|'\u0400'..'\u04FF')+)? ;
+/* A subscript may have a subscript of its own: X_a_beta is X with the subscript a_beta, and prints as X_{a_{\beta}}.
+   https://github.com/asc-community/AngouriMath/issues/524 */
+VARIABLE: ('a'..'z'|'A'..'Z'|'\u0370'..'\u03FF'|'\u1F00'..'\u1FFF'|'\u0400'..'\u04FF'|'\u212F')+ ('_' ('a'..'z'|'A'..'Z'|'0'..'9'|'\u0370'..'\u03FF'|'\u1F00'..'\u1FFF'|'\u0400'..'\u04FF')+)* ;
   
 COMMENT: ('//' ~[\r\n]* ('\r'? '\n')? | '/*' .*? '*/') -> skip ;
     
