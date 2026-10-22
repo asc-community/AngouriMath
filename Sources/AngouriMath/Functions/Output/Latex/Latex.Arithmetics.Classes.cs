@@ -220,6 +220,13 @@ namespace AngouriMath
                 : $@"\psi^{{({Order.Latexize()})}}\left({Argument.Latexize()}\right)";
         }
 
+        partial record IncompleteGammaf
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => $@"\Gamma\left({Parameter.Latexize()}, {LowerLimit.Latexize()}\right)";
+        }
+
         partial record Sif
         {
             /// <inheritdoc/>

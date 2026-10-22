@@ -199,6 +199,14 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        public partial record IncompleteGammaf
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() => $"gamma({Parameter.Stringize()}, {LowerLimit.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         public partial record Sif
         {
             /// <inheritdoc/>

@@ -285,6 +285,12 @@ namespace AngouriMath
                 => Choice(level, "polygamma_", "polygamma_", "polygamma_");
         }
 
+        public partial record IncompleteGammaf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "incompletegamma_", "incompletegamma_", "incompletegamma_");
+        }
+
         public partial record Sif
         {
             private protected override string SortHashName(SortLevel level)

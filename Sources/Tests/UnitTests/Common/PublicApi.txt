@@ -1212,6 +1212,28 @@ AngouriMath.Entity+Impliesf.ToString() : System.String
 AngouriMath.Entity+Impliesf.ctor(AngouriMath.Entity, AngouriMath.Entity)
 AngouriMath.Entity+Impliesf.op_Equality(AngouriMath.Entity+Impliesf, AngouriMath.Entity+Impliesf) : System.Boolean
 AngouriMath.Entity+Impliesf.op_Inequality(AngouriMath.Entity+Impliesf, AngouriMath.Entity+Impliesf) : System.Boolean
+AngouriMath.Entity+IncompleteGammaf.<Clone>$() : AngouriMath.Entity+IncompleteGammaf
+AngouriMath.Entity+IncompleteGammaf.Codomain { } : AngouriMath.Core.Domain
+AngouriMath.Entity+IncompleteGammaf.Deconstruct(AngouriMath.Entity&, AngouriMath.Entity&) : System.Void
+AngouriMath.Entity+IncompleteGammaf.EqualityContract { } : System.Type
+AngouriMath.Entity+IncompleteGammaf.Equals(AngouriMath.Entity+Function) : System.Boolean
+AngouriMath.Entity+IncompleteGammaf.Equals(AngouriMath.Entity+IncompleteGammaf) : System.Boolean
+AngouriMath.Entity+IncompleteGammaf.Equals(System.Object) : System.Boolean
+AngouriMath.Entity+IncompleteGammaf.GetHashCode() : System.Int32
+AngouriMath.Entity+IncompleteGammaf.InitDirectChildren() : AngouriMath.Entity[]
+AngouriMath.Entity+IncompleteGammaf.InnerDifferentiate(AngouriMath.Entity+Variable) : AngouriMath.Entity
+AngouriMath.Entity+IncompleteGammaf.InnerSimplify(System.Boolean) : AngouriMath.Entity
+AngouriMath.Entity+IncompleteGammaf.LowerLimit { } : AngouriMath.Entity
+AngouriMath.Entity+IncompleteGammaf.NodeFirstChild { } : AngouriMath.Entity
+AngouriMath.Entity+IncompleteGammaf.NodeSecondChild { } : AngouriMath.Entity
+AngouriMath.Entity+IncompleteGammaf.Parameter { } : AngouriMath.Entity
+AngouriMath.Entity+IncompleteGammaf.PrintMembers(System.Text.StringBuilder) : System.Boolean
+AngouriMath.Entity+IncompleteGammaf.Replace(System.Func<AngouriMath.Entity,AngouriMath.Entity>) : AngouriMath.Entity
+AngouriMath.Entity+IncompleteGammaf.Substitute(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.Entity+IncompleteGammaf.ToString() : System.String
+AngouriMath.Entity+IncompleteGammaf.ctor(AngouriMath.Entity, AngouriMath.Entity)
+AngouriMath.Entity+IncompleteGammaf.op_Equality(AngouriMath.Entity+IncompleteGammaf, AngouriMath.Entity+IncompleteGammaf) : System.Boolean
+AngouriMath.Entity+IncompleteGammaf.op_Inequality(AngouriMath.Entity+IncompleteGammaf, AngouriMath.Entity+IncompleteGammaf) : System.Boolean
 AngouriMath.Entity+Integralf.<Clone>$() : AngouriMath.Entity+Integralf
 AngouriMath.Entity+Integralf.Codomain { } : AngouriMath.Core.Domain
 AngouriMath.Entity+Integralf.Deconstruct(AngouriMath.Entity&, AngouriMath.Entity&, System.Nullable<System.ValueTuple<AngouriMath.Entity,AngouriMath.Entity>>&) : System.Void
@@ -1869,6 +1891,7 @@ AngouriMath.Entity+Number.Gamma(AngouriMath.Entity+Number+Complex) : AngouriMath
 AngouriMath.Entity+Number.GetAllRoots(AngouriMath.Entity+Number+Complex, PeterO.Numbers.EInteger) : System.Collections.Generic.HashSet<AngouriMath.Entity+Number+Complex>
 AngouriMath.Entity+Number.GetAllRootsOf1(PeterO.Numbers.EInteger) : System.Collections.Generic.IEnumerable<AngouriMath.Entity>
 AngouriMath.Entity+Number.GetHashCode() : System.Int32
+AngouriMath.Entity+Number.IncompleteGamma(AngouriMath.Entity+Number+Complex, AngouriMath.Entity+Number+Complex) : AngouriMath.Entity+Number+Complex
 AngouriMath.Entity+Number.InitDirectChildren() : AngouriMath.Entity[]
 AngouriMath.Entity+Number.InnerDifferentiate(AngouriMath.Entity+Variable) : AngouriMath.Entity
 AngouriMath.Entity+Number.InnerSimplify(System.Boolean) : AngouriMath.Entity
@@ -3232,6 +3255,7 @@ AngouriMath.MathS.I_4 : AngouriMath.Entity+Matrix
 AngouriMath.MathS.IdentityMatrix(System.Int32) : AngouriMath.Entity+Matrix
 AngouriMath.MathS.IdentityMatrix(System.Int32, System.Int32) : AngouriMath.Entity+Matrix
 AngouriMath.MathS.Implication(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.MathS.IncompleteGamma(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Integral(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Integral(AngouriMath.Entity, AngouriMath.Entity, AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Intersection(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity+Set
@@ -3415,6 +3439,7 @@ class AngouriMath.Entity+Gcdf
 class AngouriMath.Entity+GreaterOrEqualf
 class AngouriMath.Entity+Greaterf
 class AngouriMath.Entity+Impliesf
+class AngouriMath.Entity+IncompleteGammaf
 class AngouriMath.Entity+Integralf
 class AngouriMath.Entity+Iversonf
 class AngouriMath.Entity+Lambda

@@ -338,6 +338,17 @@ namespace AngouriMath
                 : MathS.Polygamma(Order + 1, Argument) * Argument.DerivativeOver(variable);
         }
 
+        partial record IncompleteGammaf
+        {
+            // Gamma(a, u)' = -u^(a - 1) e^(-u) u', the integrand at its lower limit. A parameter that varies wants
+            // a Meijer G function, and this declines. https://github.com/asc-community/AngouriMath/issues/2075
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable) =>
+                Parameter.ContainsNode(variable)
+                ? base.InnerDifferentiate(variable)
+                : -MathS.Pow(LowerLimit, Parameter - 1) * MathS.Pow(MathS.e, -LowerLimit) * LowerLimit.DerivativeOver(variable);
+        }
+
         partial record Sif
         {
             // Si(a)' = sin(a)/a a', the integrand of its definition, and so for the other three.

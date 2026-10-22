@@ -133,6 +133,12 @@ namespace AngouriMath
                 : $@"sympy.polygamma({Order.ToSymPy()}, {Argument.ToSymPy()})";
         }
 
+        public partial record IncompleteGammaf
+        {
+            internal override string ToSymPy()
+                => $@"sympy.uppergamma({Parameter.ToSymPy()}, {LowerLimit.ToSymPy()})";
+        }
+
         public partial record Sif
         {
             internal override string ToSymPy()

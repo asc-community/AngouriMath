@@ -4369,7 +4369,7 @@ internal partial class AngouriMathParser : Parser {
 				_localctx.args = function_arguments();
 				State = 886;
 				Match(T__30);
-				 Assert("gamma", 1, _localctx.args.list.Count); _localctx.value =  MathS.Gamma(_localctx.args.list[0]); 
+				 if (_localctx.args.list.Count == 2) _localctx.value =  MathS.IncompleteGamma(_localctx.args.list[0], _localctx.args.list[1]); else { Assert("gamma", 1, _localctx.args.list.Count); _localctx.value =  MathS.Gamma(_localctx.args.list[0]); } 
 				}
 				break;
 			case 94:

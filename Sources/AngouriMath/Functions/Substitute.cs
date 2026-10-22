@@ -237,6 +237,13 @@ namespace AngouriMath
                 => this == x ? value : New(Order.Substitute(x, value), Argument.Substitute(x, value));
         }
 
+        partial record IncompleteGammaf
+        {
+            /// <inheritdoc/>
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Parameter.Substitute(x, value), LowerLimit.Substitute(x, value));
+        }
+
         partial record Sif
         {
             /// <inheritdoc/>
