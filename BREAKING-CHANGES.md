@@ -83,6 +83,24 @@ powers of `c + d x` itself were read before ([#233](https://github.com/asc-commu
 | `"e^(k/(c+d*x))/(a+b*x)".ToEntity().Integrate("x")` | `integral(...)` | two `Ei`, of `k/(c + d x)` and of `k/(c + d x) - k b/(a d - b c)` |
 | `"f^(c/(a+b*x)^2)*x^4".ToEntity().Integrate("x")` | `integral(...)` | 1,262 characters, the error function and powers of `1/(a + b x)` |
 
+### A transcendental function of one shifted linear is integrated in the linear
+
+**Answers where there were none.** Rubi's 2.3 `F^(a + b/(c + d x)^3)/(c + d x)^19` and 3.4 `ln(c (d + e/(f + g x)^3)^q)`
+ran past the budget, and 3.3's `(e g + f g x)^(p - 1)/ln(d (e + f x)^p)` was declined. Where every x stands in one linear
+`c + d x`, up to constant multiples, and either a power of it stands below the bar inside a sum or it is the base of powers
+written two ways, the integrand is now written in `u = c + d x` before the polynomial term takes the slope out of a power
+of it: that wrote `(c/d + x)^19` beside the `(c + d x)^3` in the exponent, and the exponential ansatz on the two spellings
+took longer the higher the power, 24 s at the 16th. In u it is 20 ms. Rows of these shapes that were answered are answered
+with the slope in another place, `F^(a + b/(c + d x)^2)/(c + d x)^2` in 15 ms where it took 1.6 s
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"F^(a+b/(c+d*x)^3)/(c+d*x)^19".ToEntity().Integrate("x")` | `integral(...)` | 386 characters, `F^(a + b/(c + d x)^3)` times a polynomial in `(c + d x)^3` |
+| `"ln(c*(d+k/(f+g*x)^3)^q)".ToEntity().Integrate("x")` | `integral(...)` | 626 characters, by parts, the cube roots of `-k/d` |
+| `"(k*g+f*g*x)^(p-1)/ln(d*(k+f*x)^p)".ToEntity().Integrate("x")` | `integral(...)` | 150 characters, `Ei(ln(d (k + f x)^p))` |
+| `"F^(a+b/(c+d*x)^2)/(c+d*x)^2".ToEntity().Integrate("x")` | `integral(...)` | `-F^a sqrt(pi) erf(sqrt(-b ln F)/(c + d x))/(2 d sqrt(-b ln F))` |
+
 ### A polynomial over a symbolic quartic that is two quadratics in a hidden variable is split over them
 
 **Answers where there were none.** `1/(a + b x + c x^2 + b x^3 + a x^4)` was declined, and so were Rubi's 1.3.1
@@ -216,6 +234,22 @@ it is still declined ([#233](https://github.com/asc-community/AngouriMath/issues
 | `"e^(n*acoth(a*x))*x/(c-a^2*c*x^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | 155 characters |
 | `"e^(n*acoth(a*x))*x^3/(c-a^2*c*x^2)^(5/2)".ToEntity().Integrate("x")` | `integral(...)` | 397 characters |
 
+### A product of powers whose logarithmic derivative is a constant is its own derivative's multiple
+
+**Answers where there were none.** Rubi's 2.3 `(a F^(c + d x))^m (b F^(e + f x))^n` and `x^(-2 - 1/x) (1 - ln(x))`, and 6.7.1's
+`cosh(x)^x (ln(cosh(x)) + x tanh(x))` and `F^(a + b x) (cosh(c + d x) - sinh(c + d x))^n`, were declined. The derivative of
+a product of powers was read with some of them raised by one, and never with none: where the product's own logarithmic
+derivative is a constant, the product over that constant is the answer. A power with x in its base and its exponent is an
+exponential, `f^g = e^(g ln f)`, its terms free of x apart, and where the rest of the integrand is a constant times the
+exponentials' logarithmic derivative the exponentials are the answer: `x^(-2 - 1/x) (1 - ln(x))` is `-(x^(-1/x))'`
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a*F^(c+d*x))^m*(b*F^(k+f*x))^n".ToEntity().Integrate("x")` | `integral(...)` | `(a F^(c + d x))^m (b F^(k + f x))^n/((d m + f n) ln(F))` |
+| `"x^(-2-1/x)*(1-ln(x))".ToEntity().Integrate("x")` | `integral(...)` | `-x^(-1/x)` |
+| `"cosh(x)^x*(ln(cosh(x))+x*tanh(x))".ToEntity().Integrate("x")` | `integral(...)` | `((e^x + e^(-x))/2)^x`, which is `cosh(x)^x` |
+
 ### A power of a quotient of linears beside whole powers of them is integrated under the quotient
 
 **Answers where there were none.** `e^(n acoth(a x))/(c - a^2 c x^2)^2` was declined, and so were its `^3` and `^4`, Rubi's
@@ -244,6 +278,26 @@ found by one linear solve whose last equation is checked; where it fails the rul
 | `"e^(5*atanh(a*x))*x^2/(c-a^2*c*x^2)^(27/2)".ToEntity().Integrate("x")` | `integral(...)` | 125 characters |
 | `"e^(1/2*atanh(a*x))*x^2/(c-a^2*c*x^2)^(9/8)".ToEntity().Integrate("x")` | `integral(...)` | 121 characters |
 | `"e^(2*atanh(a*x))*x^2/(c-a^2*c*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 109 characters |
+
+### Powers of two linears beside a negative power of a logarithm of their quotient are integrated onto the exponential integral
+
+**Answers where there were none.** Rubi's 3.2.1 `1/((a g + b g x)^2 (A + B ln(e (a + b x)/(c + d x)))^2)` and three more
+ran past the budget, and the rest of its rows and 3.2.2's with the powers of the linears summing to `-2` or `-3` took from
+0.8 s to past 8 s: twenty of them past 8 s on a loaded machine, now under a quarter of a second. Under `t = (a + b x)/(c + d x)` each is a power of `t` and a polynomial beside a negative power of
+`A + B ln(e t^n)`, which the rule for a power over a power of a logarithm answers onto `Ei`; that substitution was the
+rule's already, far down the chain, and the polynomial term reached first took `b^2 g^2` out of `(a g + b g x)^2` and
+asked again, past the budget. It is now tried first for these shapes. And `1/(t^2 (A + B ln(k t))^2)`, the question it
+asks, had an answer with no value at any point: under `u = ln(k t)` the square `B^2 u^2 + 2 A B u + A^2` was split over
+its two roots, which are one, and the partial fractions divided by their difference. A quadratic below the bar whose
+discriminant is zero is now one linear twice ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((a*g+b*g*x)^2*(A+B*ln(k*(a+b*x)/(c+d*x)))^2)".ToEntity().Integrate("x")` | no answer in twenty seconds | 340 characters, `Ei(-(A + B ln(k (a + b x)/(c + d x)))/B)` and the elementary term |
+| `"1/((a*g+b*g*x)^2*(A+B*ln(k*((a+b*x)/(c+d*x))^n))^2)".ToEntity().Integrate("x")` | `integral(...)` | 394 characters |
+| `"1/((a*g+b*g*x)^2*(A+B*ln(k*(c+d*x)^2/(a+b*x)^2)))".ToEntity().Integrate("x")` | no answer in twenty seconds | 231 characters, one `Ei` |
+| `"1/((a*g+b*g*x)^3*(A+B*ln(k*(a+b*x)/(c+d*x)))^2)".ToEntity().Integrate("x")` | no answer in twenty seconds | 644 characters, two powers of t |
+| `"1/(x^2*(A+B*ln(k*x))^2)".ToEntity().Integrate("x")` | `integral(...)` | 133 characters, `Ei(-(A/B + ln(k x)))`, where before this change master gave an answer with no value at any point |
 
 ### The last digits of an evaluated sine, cosine, tangent, arcsine or arctangent
 
@@ -323,11 +377,28 @@ no order. Five integrals whose working squares such a sum were past the budget a
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
-| `"1/((a*g+b*g*x)^2*(A+B*ln(k*((a+b*x)/(c+d*x))^n))^2)".ToEntity().Integrate("x")` | `integral(...)` | 412 characters |
-| `"1/((a*g+b*g*x)^2*(A+B*ln(k*(a+b*x)/(c+d*x)))^2)".ToEntity().Integrate("x")` | past 60 s | 358 characters |
+| `"1/((a*g+b*g*x)^2*(A+B*ln(k*((a+b*x)/(c+d*x))^n))^2)".ToEntity().Integrate("x")` | `integral(...)` | 394 characters |
+| `"1/((a*g+b*g*x)^2*(A+B*ln(k*(a+b*x)/(c+d*x)))^2)".ToEntity().Integrate("x")` | past 60 s | 340 characters |
 | `"(a+a*sin(k+f*x))^(3/2)*(A+B*sin(k+f*x))/(c+d*sin(k+f*x))^2".ToEntity().Integrate("x")` | `integral(...)` | 5,373 characters |
 | `"sech(x)^2*tanh(x)^2/(2+tanh(x)^3)^2".ToEntity().Integrate("x")` | past 60 s | 117 characters |
 | `"coth(x)^3*csch(x)*sqrt(1+csch(x))".ToEntity().Integrate("x")` | `integral(...)` | 325 characters |
+
+### The derivative of a function over a power of a logarithm, an inverse tangent or a sum with a logarithm in it is read as one
+
+**Answers where there were none.** Rubi's 3.2.3 `1/((c + d x)(c - a + (d - b) x) ln(Q)) + ln(1 - Q)/((a + b x)(c + d x) ln(Q)^2)`
+for `Q = (a + b x)/(c + d x)`, its twin, 5.3.4's `x^3/((1 + a^2 x^2) atan(a x)^3) - 3 x^2/(2 a atan(a x)^2)` and 3.5's
+`(a d n x^m - a d m x^m ln(c x^n) - b d n (q - 1) ln(c x^n)^q)/(x (a x^m + b ln(c x^n)^q)^2)` ran past the budget. Each is
+`(U/V^k)' = U'/V^k - k U V'/V^(k + 1)`, whose terms are not elementary apart, so every split lost it and by parts on either
+term asked the other's question again. For `V` a logarithm or an inverse trigonometric function, the terms over
+`V^(k + 1)` give `U = -B/(k V')`, its rational part in lowest terms; for `V` a sum with a logarithm in it, `U` is a
+monomial of the numerator times a constant read monomial by monomial. The answer is given only where its derivative is
+the whole integrand at sampled points ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((c+d*x)*(-a+c+(-b+d)*x)*ln((a+b*x)/(c+d*x)))+ln(1+(-a-b*x)/(c+d*x))/((a+b*x)*(c+d*x)*ln((a+b*x)/(c+d*x))^2)".ToEntity().Integrate("x")` | no answer in twenty seconds | `ln(1 + (-a - b x)/(c + d x))/((a d - b c) ln((a + b x)/(c + d x)))` |
+| `"x^3/((1+a^2*x^2)*atan(a*x)^3)-3/2*x^2/(a*atan(a*x)^2)".ToEntity().Integrate("x")` | `integral(...)` | `-x^3/(2 a atan(a x)^2)` |
+| `"(a*d*n*x^m-a*d*m*x^m*ln(c*x^n)-b*d*n*(q-1)*ln(c*x^n)^q)/(x*(a*x^m+b*ln(c*x^n)^q)^2)".ToEntity().Integrate("x")` | `integral(...)` | `d ln(x^n c)/(a x^m + b ln(c x^n)^q)` |
 
 ### A rational evaluated at a higher precision than before has all of its digits
 
@@ -372,6 +443,23 @@ parts what is left is a rational function and one over the root
 | Input | Was (2.5.0) | Now |
 |---|---|---|
 | `"x^3*ln(-1+4*x+4*sqrt((x-1)*x))".ToEntity().Integrate("x")` | `integral(...)` | `x^4 ln(...)/4` minus a polynomial, `ln(8 x + 1)` and terms over `sqrt(x^2 - x)` |
+
+### The Risch-Norman ansatz reads `ln(x)` beside x, with the logarithmic integral and the error function among its terms
+
+**Answers where there were none.** Rubi's 3.5 `(1 - ln(x))/(x (x + ln(x)))` and `(1 + x)/(ln(x) (x + ln(x)))`, and 2.3's
+`e^((a + x)^2)/x^2 - 2 a e^((a + x)^2)/x`, were declined. The ansatz left a plain `ln(x)` to the logarithm tower's, a
+polynomial in it, which has no logarithm of `x + ln(x)`; it now reads one where a sum below the bar holds x beside
+`ln(x)` to two or more powers. Its answer may now hold `li(x)`, whose derivative is `1/ln(x)`, where `ln(x)` divides the
+denominator, and for an exponential of a quadratic `erfi(sqrt(A) (x + B/(2 A)))`, whose derivative is a constant times
+the exponential: `(1 + x)/(ln(x) (x + ln(x)))` is `(li(x) + ln(ln(x)) - ln(x + ln(x)))'`, and by parts the first term
+of the third leaves the second's negative and `2 e^((a + x)^2)`. With either among the terms the elimination pins the
+symbols first where it declines with them in ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(1-ln(x))/(x*(x+ln(x)))".ToEntity().Integrate("x")` | `integral(...)` | `ln(x + ln(x)) - ln(x)` |
+| `"(1+x)/(ln(x)*(x+ln(x)))".ToEntity().Integrate("x")` | `integral(...)` | `li(x) + ln(ln(x)) - ln(x + ln(x))` |
+| `"e^((a+x)^2)/x^2-2*e^((a+x)^2)*a/x".ToEntity().Integrate("x")` | `integral(...)` | `-e^((a + x)^2)/x + sqrt(pi) erfi(x + a)` |
 
 ### The last digits of an evaluated logarithm, exponential, real power or complex power
 
