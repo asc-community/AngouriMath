@@ -1053,8 +1053,20 @@ namespace AngouriMath.Core.Transformations
             protected override Entity? ApplyCore(Entity input)
                 => MathS.Settings.DowncastingEnabled.Value ? Integrate(input) : IntegrateExactly(input);
 
+            /// <remarks>
+            /// Inner-simplified, which drops a branch whose guard is decidably false; but not where that
+            /// multiplies the answer: a sum of piecewises whose conditions differ as written is combined case
+            /// by case, and the 11,811 characters `x^19/(a + b x^2)^10` is answered in came to 5,051,391,
+            /// ten piecewises of four arms each, which the corpus spent seventeen seconds differentiating back.
+            /// </remarks>
             private Entity? Integrate(Entity input)
-                => Functions.Algebra.Integration.ComputeIndefiniteIntegral(input.InnerSimplified, variable)?.InnerSimplified;
+                => Functions.Algebra.Integration.ComputeIndefiniteIntegral(input.InnerSimplified, variable) is { } antiderivative
+                   && antiderivative.InnerSimplified is var simplified
+                    ? simplified.Complexity > LargestGrowthBySimplifying * antiderivative.Complexity ? antiderivative : simplified
+                    : null;
+
+            /// <summary>How many times larger the inner simplification of an answer may make it.</summary>
+            private const int LargestGrowthBySimplifying = 4;
 
             /// <summary>See <see cref="ReadExactly"/>.</summary>
             private Entity? IntegrateExactly(Entity input)

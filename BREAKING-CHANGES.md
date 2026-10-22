@@ -493,6 +493,20 @@ It is written out again in the precision asked for now
 | `Rational.Create(128, 12167)`'s `EDecimal`, read at the default precision and then under 300 digits | 100 digits | 300 digits |
 | `sqrt(46) * 128/12167` evaluated under 300 digits, with that rational | relative error `4.7e-101` | correct to 300 digits |
 
+### An antiderivative is not inner-simplified where that would multiply it
+
+**Shorter answers, where 2.5.0 gave none.** `Integrate` inner-simplifies the antiderivative before returning it, which drops a branch whose
+guard is decidably false. A sum of piecewises whose conditions differ as written is combined case by case there. Rubi's
+1.1.2.2 `x^19/(a + b x^2)^10` was answered in 11,811 characters, and the combination came to 5,051,391: ten piecewises of
+four arms each. The corpus spent seventeen seconds differentiating that back. Where the simplification makes an answer
+more than four times larger, the answer is returned as it was found
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^19/(a+b*x^2)^10".ToEntity().Integrate("x")` | `integral(...)` | 11,815 characters, where before this change master gave 5,051,391 |
+| `"x^7/(a+b*x^2)^4".ToEntity().Integrate("x")` | `integral(...)` | 3,269 characters, where before this change master gave 20,387 |
+
 ### A polynomial over a power of a linear beside `a + b ln(c x^n)` is integrated by parts against its antiderivative vanishing at zero
 
 **Answers where there were none.** Rubi's 3.1.4 `x^5 (a + b ln(c x^n))/(d + e x)^7` was declined, and on unreleased
