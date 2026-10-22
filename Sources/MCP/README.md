@@ -151,8 +151,7 @@ existing tool, then a prompt, and add a tool last. A tool's description is a rou
 documentation: say when to call it, and where a model would wrongly trust itself, say so.
 
 This is an adapter, not a second computer algebra system. Mathematics belongs in the library, where
-the terminal and the notebooks get it too, and three workarounds here wait for it:
+the terminal and the notebooks get it too, and two workarounds here wait for it:
 eigenvalues by the characteristic polynomial ([#1676](https://github.com/asc-community/AngouriMath/issues/1676)),
-`a = b` rewritten to `a - b` for a system ([#1673](https://github.com/asc-community/AngouriMath/issues/1673)),
 and the numeric definite integral run twice to find its good digits
 ([#1675](https://github.com/asc-community/AngouriMath/issues/1675)).

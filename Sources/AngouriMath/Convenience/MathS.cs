@@ -267,7 +267,7 @@ namespace AngouriMath
         public static EquationSystem Equations(IEnumerable<Entity> equations) => new EquationSystem(equations);
 
         /// <summary>Solves one equation over one variable</summary>
-        /// <param name="equation">An equation that is assumed to equal 0</param>
+        /// <param name="equation">An expression that is assumed to equal 0, or an equality <c>a = b</c>, read as <c>a - b = 0</c></param>
         /// <param name="var">Variable whose values we are looking for</param>
         /// <returns>A <see cref="Set"/> of possible values or intervals of values</returns>
         /// <example>
