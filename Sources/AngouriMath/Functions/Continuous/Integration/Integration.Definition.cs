@@ -695,6 +695,9 @@ namespace AngouriMath.Functions.Algebra
             // And a squared sine beside the squared cosine of its argument, the one they add up to:
             // `e^(cos(x)^2 + sin(x)^2)` was declined, written with an x its value does not hold.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingAPythagoreanPair(expr, x, integrateByParts)) is { }) return answer;
+            // A logarithm of nested powers of one linear, `ln(c (d (e + f x)^p)^q)`, named as `p q ln(e + f x)`
+            // plus a constant, before the rules that declined its cube beside a quadratic after twelve gigabytes.
+            if ((answer = IndefiniteIntegralSolver.SolveByNamingALogarithmOfNestedPowersOfALinear(expr, x, integrateByParts)) is { }) return answer;
             // An arctangent over a power of d (1 +- i c x), under x = tan(u)/c, where 1 + i tan(u) is
             // e^(i u)/cos(u): the rules below ran out of time on `(a + b atan(c x))^2/(d + i c d x)^2`.
             if ((answer = IndefiniteIntegralSolver.SolveAnArctangentOverAPowerOfOnePlusICXUnderTheTangent(expr, x, integrateByParts)) is { }) return answer;
