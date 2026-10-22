@@ -527,6 +527,20 @@ interval without a case for each. Only where nothing else answers the integrand 
 | `"acoth(x)^2/(1-x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 1,304 characters, with `(ln((x + 1)/(x - 1)) - ln((1 + x)/(1 - x)))/2` for `K` |
 | `"acoth(c*x)^2/(1-c^2*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 1,681 characters |
 
+### A power of a sum of exponentials that is one exponential is written as it
+
+**Answers where there were none, and a shorter one.** The parser writes `cosh(u) + sinh(u)` as
+`(e^u + e^(-u))/2 + (e^u - e^(-u))/2`, and nothing collected it. Rubi's 6.7.1 `F^(a + b x) (cosh(c + d x) + sinh(c + d x))^n`
+and its twin with the difference were declined. A power of such a sum is now written as the one exponential it is,
+`c^n e^(p n u)` for a sum that is `c e^(p u)`, which holds for a real `u` since `e^(p u)` is positive
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"F^(a+b*x)*(cosh(c+d*x)+sinh(c+d*x))^n".ToEntity().Integrate("x")` | `integral(...)` | 160 characters |
+| `"F^(a+b*x)*(cosh(c+d*x)-sinh(c+d*x))^n".ToEntity().Integrate("x")` | `integral(...)` | 165 characters |
+| `"(cosh(x)+sinh(x))^3".ToEntity().Integrate("x")` | 787 characters | `e^(3 x)/3`, 19 characters |
+
 ### A function of the hyperbolic tangent alone is integrated under `u = tanh`
 
 **Answers where there were none.** `tanh(x)/sqrt(a + b tanh(x)^2 + c tanh(x)^4)` was declined, and so were 35 more of

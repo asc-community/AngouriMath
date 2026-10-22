@@ -695,6 +695,8 @@ namespace AngouriMath.Functions.Algebra
             // And a squared sine beside the squared cosine of its argument, the one they add up to:
             // `e^(cos(x)^2 + sin(x)^2)` was declined, written with an x its value does not hold.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingAPythagoreanPair(expr, x, integrateByParts)) is { }) return answer;
+            // And a power of a sum of exponentials that is one exponential, the hyperbolic `cosh(u) + sinh(u)`.
+            if ((answer = IndefiniteIntegralSolver.SolveByFoldingASumOfExponentialsIntoOne(expr, x, integrateByParts)) is { }) return answer;
             // An arctangent over a power of d (1 +- i c x), under x = tan(u)/c, where 1 + i tan(u) is
             // e^(i u)/cos(u): the rules below ran out of time on `(a + b atan(c x))^2/(d + i c d x)^2`.
             if ((answer = IndefiniteIntegralSolver.SolveAnArctangentOverAPowerOfOnePlusICXUnderTheTangent(expr, x, integrateByParts)) is { }) return answer;

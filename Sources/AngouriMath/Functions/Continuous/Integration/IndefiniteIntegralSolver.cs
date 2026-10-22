@@ -41969,6 +41969,60 @@ namespace AngouriMath.Functions.Algebra
         [System.ThreadStatic] private static bool clearingANegativeExponential;
 
         /// <summary>
+        /// A power of a sum of exponentials of x that is one exponential, written as it: Rubi's
+        /// <c>F^(a + b x) (cosh(c + d x) + sinh(c + d x))^n</c> is <c>F^(a + b x) e^(n (c + d x))</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </summary>
+        /// <remarks>
+        /// The parser writes the hyperbolic functions as exponentials, and the sum is
+        /// <c>(e^u + e^(-u))/2 + (e^u - e^(-u))/2</c> as written, which nothing collects: beside
+        /// <c>F^(a + b x)</c> it was declined. With each exponential a whole power of the first,
+        /// <c>w</c>, the base is a Laurent polynomial in <c>w</c>, and where one coefficient is left it
+        /// is <c>c w^p</c>; <c>(c w^p)^n</c> is <c>c^n w^(p n)</c> for a positive <c>w</c>, which <c>e</c> to a
+        /// real power is. At the question asked.
+        /// </remarks>
+        internal static Entity? SolveByFoldingASumOfExponentialsIntoOne(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            static bool IsAnExponential(Entity node, Entity.Variable x) => node is Powf(var @base, var exponent) && @base == MathS.e && exponent.ContainsNode(x);
+            var folded = expr.Replace(node =>
+            {
+                if (node is not Powf(Sumf or Minusf, var power) raised || power.ContainsNode(x) || power == Number.Integer.One)
+                    return node;
+                var sum = raised.Base;
+                var exponentials = sum.Nodes.Where(inner => IsAnExponential(inner, x)).Distinct().ToList();
+                if (exponentials.Count < 2
+                    || sum.Replace(inner => IsAnExponential(inner, x) ? Number.Integer.One : inner).ContainsNode(x))
+                    return node;
+                // Each a whole power of the first, e^(m + k x).
+                var first = ((Powf)exponentials[0]).Exponent;
+                var powers = new Dictionary<Entity, int>();
+                foreach (var exponential in exponentials)
+                    if (Functions.PartialFractions.Bare((((Powf)exponential).Exponent / first).Simplify()) is Number.Integer { EInteger: var whole } && whole.CanFitInInt32())
+                        powers[exponential] = whole.ToInt32Unchecked();
+                    else
+                        return node;
+                var w = Variable.CreateUnique(expr, "w_fold");
+                var inW = sum.Replace(inner => powers.TryGetValue(inner, out var k) ? MathS.Pow(w, Number.Integer.Create(k)) : inner);
+                // Expanded, `(w + 1/w)/2 + (w - 1/w)/2` is `w provided not w = 0`, and w is never 0.
+                if (!TreeAnalyzer.TryGetPolynomial(Functions.PartialFractions.Bare(inW.Expand()), w, out var read))
+                    return node;
+                var left = read.Where(pair => !Functions.PartialFractions.IsZeroAsAValue(pair.Value)).ToList();
+                if (left.Count != 1 || !left[0].Key.CanFitInInt32())
+                    return node;
+                var (degree, coefficient) = (left[0].Key.ToInt32Unchecked(), Functions.PartialFractions.Bare(left[0].Value.InnerSimplified));
+                var exponentialOfThePower = MathS.Pow(MathS.e, (power * degree * first).InnerSimplified);
+                return coefficient == Number.Integer.One ? exponentialOfThePower : MathS.Pow(coefficient, power) * exponentialOfThePower;
+            });
+            if (folded == expr)
+                return null;
+            // Inner-simplified, which takes the `ln(e)` the rule for `F^u` writes for the base to 1.
+            var answer = Integration.ComputeAsTheSameQuestion(folded.InnerSimplified, x, integrateByParts)?.InnerSimplified;
+            return answer is not null && Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+        }
+
+        /// <summary>
         /// A squared sine and a squared cosine of one argument in a sum, written as the one they
         /// add up to: Rubi's <c>e^(cos(x)^2 + sin(x)^2)</c> is <c>e x</c>.
         /// https://github.com/asc-community/AngouriMath/issues/233
