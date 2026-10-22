@@ -782,8 +782,10 @@ namespace AngouriMath
                 var context = MathS.Settings.DecimalPrecisionContext;
                 if (LostToExponentRange(x) && x is Rational { ERational: { Sign: > 0 } ratio })
                     return LnOfRatio(ratio, context);
+                // A function's residual is its argument's: sin(pi) leaves about 1e-100 pi, where sin(1e-60)
+                // cancels nothing and is 1e-60. https://github.com/asc-community/AngouriMath/issues/2074
                 if (x is Real { EDecimal: { IsNegative: false } real })
-                    return real.NaturalLogarithm(context);
+                    return Real.CreateAtScale(real.NaturalLogarithm(context), real);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
                 return Complex.Create(x.Abs().EDecimal.NaturalLogarithm(context), x.ImaginaryPart.EDecimal.Arctan2(x.RealPart.EDecimal, context));
             }
@@ -793,7 +795,7 @@ namespace AngouriMath
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
                 if (num is Real { EDecimal: var real })
-                    return real.Sin(context);
+                    return Real.CreateAtScale(real.Sin(context), real);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
                 var (re, im) = (num.RealPart.EDecimal, num.ImaginaryPart.EDecimal);
                 // We need both sinh and cosh of imaginary part.
@@ -857,7 +859,7 @@ namespace AngouriMath
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
                 if (num is Real { EDecimal: var real })
-                    return real.Cos(context);
+                    return Real.CreateAtScale(real.Cos(context), real);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
                 var (re, im) = (num.RealPart.EDecimal, num.ImaginaryPart.EDecimal);
                 var p = im.Exponential(context);
@@ -874,7 +876,7 @@ namespace AngouriMath
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
                 if (num is Real { EDecimal: var real })
-                    return real.Tan(context);
+                    return Real.CreateAtScale(real.Tan(context), real);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
 
                 // tan z = sin z / cos z, but to avoid unnecessary repeated trig computations, use
@@ -954,7 +956,7 @@ namespace AngouriMath
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
                 if (num is Real { EDecimal: var real } && !(real.GreaterThan(EDecimal.One) || real.LessThan(-EDecimal.One)))
-                    return real.Arcsin(context);
+                    return Real.CreateAtScale(real.Arcsin(context), real);
                 var (beta, v) = ArcSinCosInner(num, context);
                 return Complex.Create(beta.Arcsin(context), v);
             }
@@ -964,7 +966,7 @@ namespace AngouriMath
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
                 if (num is Real { EDecimal: var real } && !(real.GreaterThan(EDecimal.One) || real.LessThan(-EDecimal.One)))
-                    return real.Acos(context);
+                    return Real.CreateAtScale(real.Acos(context), real);
                 var (beta, v) = ArcSinCosInner(num, context);
                 return Complex.Create(beta.Acos(context), -v);
             }
@@ -974,7 +976,7 @@ namespace AngouriMath
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
                 if (num is Real { EDecimal: var real })
-                    return real.Arctan(context);
+                    return Real.CreateAtScale(real.Arctan(context), real);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
                 var one = Integer.One;
                 var two = Integer.Create(2);
