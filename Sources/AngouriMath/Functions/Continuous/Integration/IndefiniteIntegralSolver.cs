@@ -43437,7 +43437,12 @@ namespace AngouriMath.Functions.Algebra
                 (rewritten, root) = (paired, pairRoot);
             if (rewritten == expr)
                 return null;
-            var simplified = rewritten.InnerSimplified;
+            // Without a condition over the whole of it, which the inner simplification writes where a
+            // linear stands on both sides of the bar and nothing below reads: Rubi's 7.2.5
+            // `x/(acosh(x) sqrt(x - 1) sqrt(x + 1))` became `x/(K sqrt(x^2 - 1) acosh(x)) provided not
+            // x - 1 = 0`, and ran past the budget, where without the condition it is a `Chi`. The point
+            // it excludes is outside the integrand's domain.
+            var simplified = Functions.PartialFractions.Bare(rewritten.InnerSimplified);
             if (simplified == expr || simplified == expr.InnerSimplified)
                 return null;
             if (Integration.ComputeAsTheSameQuestion(simplified, x, integrateByParts) is not { } answer)

@@ -542,6 +542,18 @@ becomes a polynomial in `u` times exponentials and trigonometric functions, and 
 | `"(a+b*atan(c*x))^2/(1+i*c*x)^4".ToEntity().Integrate("x")` | `integral(...)` | 731 characters |
 | `"(a+b*atan(c*x))^3/(d+i*c*d*x)^4".ToEntity().Integrate("x")` | `integral(...)` | 1,202 characters |
 
+### Two roots of linears written as an inverse hyperbolic cosine's radicand are asked without a condition
+
+**Answers where there were none.** Rubi's 7.2.5 `x/(acosh(x) sqrt(x - 1) sqrt(x + 1))` ran past the budget. The pair of roots
+is written as the root of `x^2 - 1` that `acosh(x)` holds, with the factor `K` that is constant where it is defined.
+The inner simplification then wrote the rewritten question with `provided not x - 1 = 0` over the whole of it, and
+nothing below read that. The point it excludes is outside the integrand's domain, and the question is now asked
+without it ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x/(acosh(x)*sqrt(-1+x)*sqrt(1+x))".ToEntity().Integrate("x")` | `integral(...)` | 93 characters, `K Chi(acosh(x))` |
+
 ### An arcoth of a linear is integrated as its artanh plus a constant
 
 **Answers where there were none.** `acoth(x)^2/(1 - x^2)^2`, Rubi's 7.4.1, was declined, where
