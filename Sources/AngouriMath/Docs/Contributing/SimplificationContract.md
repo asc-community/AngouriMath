@@ -1,4 +1,4 @@
-# What a simplification rule may assume
+﻿# What a simplification rule may assume
 
 A rewrite rule in this library is a claim: *this expression and that one are two ways of writing the
 same thing.* This file says what has to be true for that claim to hold, so that a new rule can be
@@ -256,6 +256,8 @@ release touches a branch. A rewrite that changes any of them changes answers.
 | `(-8)^(1/5)` | `-1.5157...` | the real root |
 | `(-8)^(1/4)` | `1.1892 + 1.1892i` | principal — there is no real fourth root |
 | `(-8)^0.3333333333` | `1.0 + 1.7320i` | **principal**, not the real root |
+| `(-8)^(1/11)` | `1.1592 + 0.3404i` | principal: the real root is searched for below a denominator of 10 |
+| `gamma(1/3, -2)` | `10.2125...` | the power's real root, which `z^a` in `Gamma(a) - z^a g(a, z)` is |
 
 Read the last three rows together, because they are a trap. For a negative base and an exact
 `Rational` exponent with an **odd denominator**, this library takes the real root. Write the same

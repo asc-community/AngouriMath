@@ -16,8 +16,9 @@ namespace AngouriMath
         {
             /// <summary>
             /// The upper incomplete gamma function, <c>Gamma(a, z) = int_z^oo t^(a - 1) e^(-t) dt</c>, at the working
-            /// precision, for complex <c>a</c> and <c>z</c>, with the principal branch of <c>z^a</c>: the cut is the
-            /// negative real axis, which keeps the value from above.
+            /// precision, for complex <c>a</c> and <c>z</c>, with the branch of <c>z^a</c> the power takes: the principal
+            /// one, whose cut is the negative real axis and which keeps the value from above, and on that axis the real root
+            /// where the power takes it, for an exact <c>a</c> of odd denominator below 10.
             /// </summary>
             /// <remarks>
             /// <para>
@@ -65,12 +66,30 @@ namespace AngouriMath
                 // summed instead.
                 var order = Math.Sqrt(Math.Pow(ar.ToDouble(), 2) + Math.Pow(ai.ToDouble(), 2));
                 var useTheFraction = modulus > 2 * order + 10 && (zr.Sign >= 0 || modulus > (digits + 5) * Math.Log(10));
+                // Gamma(a, z) is Gamma(a) - z^a g(a, z) with g entire, and its z^a is the power's: on the negative axis, for
+                // an exact a of odd denominator q below 10, the power takes the real root, rho = (-1)^p e^(-i pi p/q) times
+                // the principal one. With the principal branch there, -z^(a - 1) e^(-z), whose power takes the same root, was
+                // not the derivative of the value, and an antiderivative written in the function had the values of one
+                // turned by rho: the integral of e^(x^3) from 1 to 2 came out -137.8 + 238.6 i, where it is 275.5.
+                // SimplificationContract.md section 6; https://github.com/asc-community/AngouriMath/issues/204
+                var turn = TheRealRootsTurn(a, zr, zi);
                 var (re, im) = useTheFraction
                     ? ByContinuedFraction((ar, ai), (zr, zi), Working(context, 10))
-                    : BySeries((ar, ai), (zr, zi), modulus, context);
-                // Real where it is real, exactly: for a real a and a positive z, and for a positive whole a and any real
-                // z, where Gamma(n, z) is (n - 1)! e^(-z) times a polynomial; z^a leaves a residue of e^(i pi n) there.
-                if (ai.IsZero && zi.IsZero && (zr.Sign > 0 || ar.IsInteger() && ar.Sign > 0))
+                    : BySeries((ar, ai), (zr, zi), modulus, context, turn);
+                // The continued fraction is used on the negative axis only past (P + 5) ln 10, where the value is e^|z| in
+                // size and (1 - rho) Gamma(a) + rho times the principal value cancels nothing.
+                if (turn is { } fractionsTurn && useTheFraction)
+                {
+                    var work = Working(context, 10);
+                    var rho = Turned(fractionsTurn, work);
+                    var gamma = GammaOf((ar, ai), work);
+                    var turned = Multiply(rho, (re, im), work);
+                    (re, im) = (gamma.Re.Subtract(gamma.Re.Multiply(rho.Re, work), work).Add(turned.Re, work), turned.Im.Subtract(gamma.Re.Multiply(rho.Im, work), work));
+                }
+                // Real where it is real, exactly: for a real a and a positive z, for a positive whole a and any real z,
+                // where Gamma(n, z) is (n - 1)! e^(-z) times a polynomial and z^a leaves a residue of e^(i pi n), and where
+                // z^a is the real root, each factor of Gamma(a) - z^a g(a, z) being real.
+                if (ai.IsZero && zi.IsZero && (zr.Sign > 0 || ar.IsInteger() && ar.Sign > 0 || turn is not null))
                     im = EDecimal.Zero;
                 // Otherwise each part is accurate to its own size, whatever that is, and is never rounded onto zero by
                 // size: Gamma(1/2, 300) is 3e-132, and Gamma(100, -5 + i/10) has an imaginary part 1e-86 of its real one.
@@ -104,7 +123,31 @@ namespace AngouriMath
                 return Multiply(Multiply(ComplexExp((z.Re.Negate(), z.Im.Negate()), work), ComplexPower(z, a, work), work), h, work);
             }
 
-            private static (EDecimal Re, EDecimal Im) BySeries((EDecimal Re, EDecimal Im) a, (EDecimal Re, EDecimal Im) z, double modulus, EContext context)
+            /// <summary>
+            /// Where the power takes the real root of <c>z^a</c>, the turn from the principal value to it, <c>e^(i pi k/q)</c>
+            /// as <c>(k, q)</c>: an exact <paramref name="a"/> of odd denominator <c>q</c> below 10 and a negative real
+            /// <c>z</c>, the case <see cref="Pow"/> searches for a real root in. <see langword="null"/> elsewhere.
+            /// </summary>
+            private static (EInteger Turns, EInteger Q)? TheRealRootsTurn(Complex a, EDecimal zr, EDecimal zi)
+            {
+                if (a is not Rational { ERational: var exponent } || a is Integer || !zi.IsZero || zr.Sign >= 0)
+                    return null;
+                var q = exponent.Denominator.Abs();
+                if (q.IsEven || q.CompareTo(EInteger.FromInt32(10)) >= 0)
+                    return null;
+                // (-1)^p e^(-i pi p/q) = e^(i pi p (q - 1)/q), the angle taken modulo 2 pi.
+                var p = exponent.Denominator.Sign < 0 ? exponent.Numerator.Negate() : exponent.Numerator;
+                return (p.Multiply(q.Subtract(EInteger.One)).Mod(q.Multiply(EInteger.FromInt32(2))), q);
+            }
+
+            private static (EDecimal Re, EDecimal Im) Turned((EInteger Turns, EInteger Q) turn, EContext work)
+            {
+                var angle = InternalAMExtensions.ConstantCache.Lookup(work).Pi.Multiply(EDecimal.FromEInteger(turn.Turns), work).Divide(EDecimal.FromEInteger(turn.Q), work);
+                return (angle.Cos(work), angle.Sin(work));
+            }
+
+            private static (EDecimal Re, EDecimal Im) BySeries((EDecimal Re, EDecimal Im) a, (EDecimal Re, EDecimal Im) z, double modulus, EContext context,
+                (EInteger Turns, EInteger Q)? turn)
             {
                 var guard = (int)Math.Ceiling(2 * modulus / Math.Log(10)) + 10;
                 for (var attempt = 0; ; attempt++)
@@ -112,7 +155,7 @@ namespace AngouriMath
                     var work = Working(context, guard);
                     var (value, scale) = a.Im.IsZero && a.Re.IsInteger() && a.Re.Sign <= 0
                         ? AtANonPositiveWholeOrder(a.Re.ToEInteger().Negate().ToInt32Checked(), z, work)
-                        : AsGammaLessTheLower(a, z, work);
+                        : AsGammaLessTheLower(a, z, work, turn);
                     // How many digits the value lost to the cancellation, against the largest thing that cancelled.
                     var size = Magnitude(value);
                     var lost = size.IsZero ? guard : DecimalOrder(scale) - DecimalOrder(size) + 1;
@@ -125,7 +168,8 @@ namespace AngouriMath
             /// <summary>
             /// <c>Gamma(a) - z^a e^(-z) sum_k z^k / (a)_(k + 1)</c>, and the size of the larger of the two terms.
             /// </summary>
-            private static ((EDecimal Re, EDecimal Im) Value, EDecimal Scale) AsGammaLessTheLower((EDecimal Re, EDecimal Im) a, (EDecimal Re, EDecimal Im) z, EContext work)
+            private static ((EDecimal Re, EDecimal Im) Value, EDecimal Scale) AsGammaLessTheLower((EDecimal Re, EDecimal Im) a, (EDecimal Re, EDecimal Im) z, EContext work,
+                (EInteger Turns, EInteger Q)? turn)
             {
                 var epsilon = EDecimal.Create(EInteger.One, EInteger.FromInt32(-work.Precision.ToInt32Checked()));
                 // term_k = z^k / (a (a + 1) ... (a + k)), starting at 1/a
@@ -170,7 +214,10 @@ namespace AngouriMath
                             break;
                     }
                 }
-                var prefactor = Multiply(ComplexPower(z, a, work), ComplexExp((z.Re.Negate(), z.Im.Negate()), work), work);
+                var power = ComplexPower(z, a, work);
+                if (turn is { } realRoot)
+                    power = Multiply(Turned(realRoot, work), power, work);
+                var prefactor = Multiply(power, ComplexExp((z.Re.Negate(), z.Im.Negate()), work), work);
                 var lower = Multiply(prefactor, sum, work);
                 var gamma = GammaOf(a, work);
                 var scale = EDecimal.Max(Magnitude(gamma), Magnitude(prefactor).Multiply(peak, work));
