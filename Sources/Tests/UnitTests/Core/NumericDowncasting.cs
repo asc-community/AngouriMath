@@ -270,5 +270,20 @@ namespace AngouriMath.Tests.Core
             );
         
         #endregion
+
+        /// <summary>
+        /// A whole number the rational search finds is an <see cref="Integer"/>: a value just below one came back
+        /// as the Rational 1/1, which is not equal to 1.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/2069">#2069</a>
+        /// </summary>
+        [Theory]
+        [InlineData("0.9999999999999999999999999999", 1)]
+        [InlineData("2.9999999999999999999999999999", 3)]
+        public void AWholeNumberFromTheRationalSearchIsAnInteger(string written, int whole)
+        {
+            Entity value = decimal.Parse(written, System.Globalization.CultureInfo.InvariantCulture);
+            value.Should().BeOfType<Integer>();
+            value.Should().Be((Entity)whole);
+        }
     }
 }
