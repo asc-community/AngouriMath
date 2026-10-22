@@ -1415,6 +1415,7 @@ AngouriMath.Entity+Matrix.CharacteristicPolynomial(AngouriMath.Entity+Variable) 
 AngouriMath.Entity+Matrix.Codomain { } : AngouriMath.Core.Domain
 AngouriMath.Entity+Matrix.ColumnCount { } : System.Int32
 AngouriMath.Entity+Matrix.Determinant { } : AngouriMath.Entity
+AngouriMath.Entity+Matrix.Eigenvalues { } : AngouriMath.Entity+Set
 AngouriMath.Entity+Matrix.EqualityContract { } : System.Type
 AngouriMath.Entity+Matrix.Equals(AngouriMath.Entity) : System.Boolean
 AngouriMath.Entity+Matrix.Equals(AngouriMath.Entity+Matrix) : System.Boolean
