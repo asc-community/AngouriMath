@@ -15817,7 +15817,12 @@ namespace AngouriMath.Functions.Algebra
 
             if (Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is not { } result)
                 return null;
-            var back = result.Substitute(u, MathS.Pow(radicalBase, Number.Rational.Create(1, q)));
+            // A whole power of u that is a multiple of q is a whole power of the radicand on every
+            // branch, `(B^(1/q))^(k q) = B^k`, and is written so: as `((x^(1/2))^5)^2`, the `x^5` in Rubi's
+            // `1/(x^(7/2) sqrt(a + b x^5))` was real at a negative x with a zero imaginary part, the outer
+            // root on its branch cut there, and the measurement below could not read the answer where
+            // the integrand is real, and kept `provided x >= 0` on an answer that holds on both sides.
+            var back = WithWholePowersOfARootAsPowersOfItsRadicand(result.Substitute(u, MathS.Pow(radicalBase, Number.Rational.Create(1, q))), radicalBase);
             // Beside a second root the integrand can be real where this radicand is negative, and
             // the condition was the whole of its domain there: the remainder parts leaves from
             // Timofeev's `arcsec(x) sqrt(x^2 - 1)/x^4`, in `w = x^2`, is
@@ -48133,6 +48138,7 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         private static Entity ConditionedOnTheRadicand(Entity answer, Entity expr, Entity radicand, Entity.Variable x)
         {
+            answer = WithWholePowersOfARootAsPowersOfItsRadicand(answer, radicand);
             var condition = radicand >= Number.Integer.Zero;
             if (!HoldsAnEvenRootBesides(expr, radicand, x))
                 return answer.Provided(condition);
@@ -48147,6 +48153,29 @@ namespace AngouriMath.Functions.Algebra
                     return answer.Provided(condition);
             }
         }
+
+        /// <summary>
+        /// <paramref name="answer"/> with every whole power of a root of <paramref name="radicand"/> that
+        /// is a multiple of the root's order written as a power of the radicand, which it is on every
+        /// branch: <c>(B^(1/q))^(k q) = B^k</c>, nested whole powers flattened first. Spelled
+        /// <c>((x^(1/2))^5)^2</c>, the <c>x^5</c> in the answer to Rubi's 1.1.3.2
+        /// <c>1/(x^(7/2) sqrt(a + b x^5))</c> was real at a negative x with a zero imaginary part, the
+        /// outer root on its cut there, which the interval and decimal evaluations rightly refuse, and
+        /// the measurement of where the answer holds kept <c>provided x &gt;= 0</c> on an answer that holds
+        /// on both sides; so did <c>(x^(1/2))^2</c> in 1.1.1.2's <c>1/(sqrt(x) sqrt(2 x - 3))</c>.
+        /// </summary>
+        private static Entity WithWholePowersOfARootAsPowersOfItsRadicand(Entity answer, Entity radicand)
+            => answer
+                .Replace(node => node is Powf(Powf(var inner, Number.Integer k), Number.Integer m) && IsARootOf(inner, radicand)
+                    ? MathS.Pow(inner, Number.Integer.Create(k.EInteger * m.EInteger)) : node)
+                .Replace(node => node is Powf(var inner, Number.Integer { EInteger: var n }) && IsARootOf(inner, radicand)
+                    && ((Powf)inner).Exponent is Number.Rational { ERational: var root } && n.Remainder(root.Denominator).IsZero
+                    ? MathS.Pow(radicand, Number.Integer.Create(n.Divide(root.Denominator))) : node);
+
+        /// <summary>Whether <paramref name="node"/> is <c>radicand^(1/q)</c> for a whole q past 1.</summary>
+        private static bool IsARootOf(Entity node, Entity radicand)
+            => node is Powf(var @base, Number.Rational { ERational: var root }) && @base == radicand
+               && root.Numerator.Equals(EInteger.One) && root.Denominator.CompareTo(EInteger.One) > 0;
 
         /// <summary>
         /// The one base other than <paramref name="radicand"/> under a power of
