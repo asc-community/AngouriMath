@@ -351,6 +351,19 @@ a second now, as 114, which carry a factor `(1/c)^(-2)/c^2` that is 1.
 | `"e^(a+b*x+c*x^2)*(b+2*c*x)/(a+b*x+c*x^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 197 characters |
 | `"e^(a+b*x+c*x^2)*(b+2*c*x)/(a+b*x+c*x^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 114 characters |
 
+### A power with x in its base and its exponent is read by the Risch-Norman ansatz as an exponential
+
+**Answers where there were none.** Rubi's 2.3 `x^(-2 - 1/x) (1 - ln(x))` is `(-x^(-1/x))'`, and was declined, where
+`e^(-ln(x)/x) (1 - ln(x))/x^2` was answered by the Risch-Norman ansatz at once. `B^E` is `e^(E ln(B))` on the principal
+branch, which is what the power means. With the part of the exponent free of x kept as a power of `B`, the ansatz
+now reads it so, and the answer is written back as a power, its factors written on both sides of the bar cancelled
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^(-2-1/x)*(1-ln(x))".ToEntity().Integrate("x")` | `integral(...)` | `-x^(-1/x)`, 17 characters |
+| `"x^(-1/x)*(1-ln(x))/x^2".ToEntity().Integrate("x")` | `integral(...)` | 19 characters |
+
 ### A power of a sum beside its derivative is read with the logarithms in it as factors
 
 **Answers where there were none.** `(a m x^m + b n q ln(c x^n)^(q - 1))/(x (a x^m + b ln(c x^n)^q))` was declined, and so

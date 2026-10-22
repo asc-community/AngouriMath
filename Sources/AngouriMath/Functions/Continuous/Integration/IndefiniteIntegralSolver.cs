@@ -21050,6 +21050,42 @@ namespace AngouriMath.Functions.Algebra
         {
             if (!Integration.AnsweringTheQuestionAsked)
                 return null;
+            // A power with x in its base and its exponent, `B^E`, is `e^(E ln(B))` on the principal
+            // branch, which is what the power means, and so a monomial of the tower: Rubi's 2.3
+            // `x^(-2 - 1/x) (1 - ln(x))` is `(-x^(-1/x))'`, and written so it was declined, where
+            // `e^(-ln(x)/x) (1 - ln(x))/x^2` is answered at once.
+            if (expr.Nodes.Any(node => node is Powf(var b, var p) && b != MathS.e && b.ContainsNode(x) && p.ContainsNode(x)))
+            {
+                // The part of the exponent free of x stays a power of B: `x^(-2 - 1/x)` is
+                // `x^(-2) e^(-ln(x)/x)`, a rational function of x times the monomial, which the ansatz
+                // reads where `e^((-2 - 1/x) ln(x))` is a monomial it has no polynomial in x beside.
+                var asExponentials = expr.Replace(node =>
+                {
+                    if (node is not Powf(var b, var p) || b == MathS.e || !b.ContainsNode(x) || !p.ContainsNode(x))
+                        return node;
+                    Entity constantPart = Number.Integer.Zero, variablePart = Number.Integer.Zero;
+                    foreach (var term in Sumf.LinearChildren(p))
+                        if (term.ContainsNode(x))
+                            variablePart = variablePart == Number.Integer.Zero ? term : variablePart + term;
+                        else
+                            constantPart = constantPart == Number.Integer.Zero ? term : constantPart + term;
+                    var exponential = MathS.Pow(MathS.e, (variablePart * MathS.Ln(b)).InnerSimplified);
+                    return constantPart == Number.Integer.Zero ? exponential : MathS.Pow(b, constantPart) * exponential;
+                });
+                // And written back: `e^(q ln(B))` is `B^q` again, as the integrand had it.
+                return SolveByRischNormanAnsatzAsWritten(asExponentials, x) is { } inExponentials
+                    && inExponentials.Replace(node => node is Powf(var e0, Mulf(var q, Logf(var lb, var b))) && e0 == MathS.e && lb == MathS.e && b.ContainsNode(x)
+                        ? MathS.Pow(b, q) : node).InnerSimplified is var writtenBack
+                    && Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(writtenBack)) is var (top, bottom)
+                    // A factor written on both sides of the bar, `-x x^(-1/x)/x`, cancelled.
+                    && CancelCommonFactors(top, bottom) is var answer
+                    && Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+            }
+            return SolveByRischNormanAnsatzAsWritten(expr, x);
+        }
+
+        private static Entity? SolveByRischNormanAnsatzAsWritten(Entity expr, Entity.Variable x)
+        {
             // The transcendental monomials: every exponential and natural logarithm of
             // something in x, innermost first, each read in the indeterminates of the ones
             // inside it.
