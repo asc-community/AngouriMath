@@ -135,6 +135,23 @@ shares a power of `1 - w` with its numerator, and is left to the rules that answ
 | `"csch(c+d*x)/(a-b*sinh(c+d*x)^4)^2".ToEntity().Integrate("x")` | `integral(...)` | 2,511 characters |
 | `"1/((d+k*x^2)*(a+b*x^2+c*x^4)^2)".ToEntity().Integrate("x")` | `integral(...)` | 9,968 characters, in 0.9 s, where before this change master gave 18,154 in 11 s and 10.8 GB |
 
+### A biquadratic with two real roots in `x^2` is integrated by the sign of each root
+
+**Answers where there were none.** Over `a + b x^2 + c x^4`, each root `r` in `x^2` was written `atan(x/sqrt(-r))/sqrt(-r)`.
+Where the discriminant is a positive number times even powers, as `a^2` is, both roots are real, and for a positive
+root that arctangent has an imaginary argument, on its branch cut wherever `x^2 > r`. Each term is now written by the
+sign of its root, as `1/(x^2 - r)` is: the arctangent for a negative root, and `ln((x - sqrt(r))/(x + sqrt(r)))/(2 sqrt(r))`
+for a positive one, with the discriminant's square root taken by halving its powers, so that `4 b^2` gives `2 b` and
+not `2 |b|`. Where the product of the roots is a positive number times even powers too, the roots share a sign, and
+one piecewise holds both terms. Rubi's 7.4.2 `e^(3 acoth(a x)) sqrt(c - c/(a x))/x` had no value between 0 and
+`1/a`, where it is real ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(3*acoth(a*x))*sqrt(c-c/(a*x))/x".ToEntity().Integrate("x")` | `integral(...)` | 3,677 characters, where before this change master gave 1,869 with no value between 0 and `1/a` |
+| `"1/((a-x^2)*(2*a-x^2))".ToEntity().Integrate("x")` | `integral(...)` | 289 characters, by the sign of `a`, where before this change master gave 218 with both arctangents on their cuts past `x^2 = 2 a` |
+| `"x^4/((a-x^2)*(2*a-x^2))".ToEntity().Integrate("x")` | `integral(...)` | 413 characters, where before this change master gave 332 |
+
 ### A polynomial over a symbolic quartic that is two quadratics in a hidden variable is split over them
 
 **Answers where there were none.** `1/(a + b x + c x^2 + b x^3 + a x^4)` was declined, and so were Rubi's 1.3.1
