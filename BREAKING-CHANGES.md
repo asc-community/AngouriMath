@@ -40,6 +40,26 @@ A not-equal written `<>` is read as `not (a = b)`, and printed that way.
 
 ---
 
+## Unreleased — since 2.6.0
+
+### An equality in an equation or a system is read as a difference equal to zero
+
+**Silent: wrong answers.** `MathS.SolveEquation`, `Entity.SolveEquation` and `MathS.Equations` read each equation as an
+expression equal to zero, and passed an equality `a = b` on as it stood. One equation came back as the set of x where
+`a = b` and `b = 0`, which is empty unless `b` is zero, and a system came back with no solution. An equality is now read
+as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` was already `{ 2 }`
+([#1673](https://github.com/asc-community/AngouriMath/issues/1673)).
+
+| Input | Was (2.6.0) | Now |
+|---|---|---|
+| `MathS.SolveEquation("x + 1 = 3", "x")` | `{ x : x + 1 = 3 and 3 = 0 }` | `{ 2 }` |
+| `"x^2 = 4".SolveEquation("x")` | `{ x : x ^ 2 = 4 and 4 = 0 }` | `{ 2, -2 }` |
+| `"a * x = b".ToEntity().SolveEquation("x")` | `{ x : a * x = b and b = 0 }`, which holds only where `b = 0` | `{ b / a }` |
+| `MathS.Equations("x + y = 3", "x - y = 1").Solve("x", "y")` | `null` | `[[2, 1]]` |
+| `MathS.Equations("x + y = 3", "x - y = 1").ToString()` | `x + y = 3 = 0` and `x - y = 1 = 0` | `x + y - 3 = 0` and `x - y - 1 = 0` |
+
+---
+
 ## 2.6.0 — since 2.5.0
 
 ### A high half-odd power of a quadratic beside a power of another is reduced in exact rationals

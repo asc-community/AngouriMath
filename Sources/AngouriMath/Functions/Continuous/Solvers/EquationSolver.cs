@@ -20,6 +20,12 @@ namespace AngouriMath.Functions.Algebra
         /// <summary>Solves one equation</summary>
         internal static Set Solve(Entity equation, Variable x)
         {
+            // An equality `a = b` is `a - b = 0`, as a statement's own solve reads it: passed on as it
+            // stood, `MathS.SolveEquation("x + 1 = 3", x)` was `{ x : x + 1 = 3 and 3 = 0 }`, which is
+            // empty, where "x + 1 = 3".Solve("x") is `{ 2 }`.
+            // https://github.com/asc-community/AngouriMath/issues/1673
+            if (equation is Equalsf(var left, var right))
+                equation = left - right;
             using var _ = MathS.Settings.PrecisionErrorZeroRange.Set(1e-12m);
             using var __ = MathS.Settings.FloatToRationalIterCount.Set(0);
             using var ___ = MathS.Settings.MaxExpansionTermCount.Set(50);
