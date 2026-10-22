@@ -95,7 +95,7 @@ internal static class Resources
         - `ln log log2 log10 exp pow sqrt cbrt sqr abs signum sign sgn`
         - `floor ceil ceiling round min max gcd lcm`
         - `gamma factorial binomial phi prime valuation`
-        - special functions: `erf erfc erfi Ei li Si Ci Shi Chi`
+        - special functions: `erf erfc erfi Ei li Si Ci Shi Chi`, and `digamma(z)` and `polygamma(n, z)`
         - sets: `card powerset union intersection complement image preimage domain aleph
           iverson`
         - `derivative integral limit limitleft limitright sum product argmax argmin piecewise
