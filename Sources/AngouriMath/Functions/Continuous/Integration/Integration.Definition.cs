@@ -1242,6 +1242,9 @@ namespace AngouriMath.Functions.Algebra
             // `sinh(x)^2/(a + b sinh(x) + c sinh(x)^2)` is a quartic with symbols, and its partial
             // fractions ran past the budget, where the sine's rule answers the question in s at once.
             if ((answer = IndefiniteIntegralSolver.SolveAHyperbolicIntegrandAsATrigonometricOne(expr, x, integrateByParts, rationalToo: true, overAQuadraticInTheSine: true)) is { }) return answer;
+            // And one of the cosine alone over a sum linear in it, which the tangent made a cube of
+            // `1 + t^2` beside a symbolic quadratic: `sech(x)^3/(a + b cosh(x))` in 118,366 characters.
+            if ((answer = IndefiniteIntegralSolver.SolveAHyperbolicIntegrandAsATrigonometricOne(expr, x, integrateByParts, rationalToo: true, overALinearInTheCosine: true)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOfTheHyperbolicTangent(expr, x, integrateByParts)) is { }) return answer;
             // A rational function of a sine or a cosine over a quadratic in it with a symbol
             // among the coefficients, split over the quadratic's two roots: under the
