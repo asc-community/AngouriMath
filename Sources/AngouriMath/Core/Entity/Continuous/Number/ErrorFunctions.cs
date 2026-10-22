@@ -53,7 +53,10 @@ namespace AngouriMath
                 if (re.IsZero && im.IsZero)
                     return Integer.Zero;
                 var (erfRe, erfIm) = Erf(re, im, context, extraDigits: 0);
-                return Complex.Create(erfRe.RoundToPrecision(context), erfIm.RoundToPrecision(context));
+                // Its residual is its argument's: erf(1e-60) is 1.13e-60 and no residual of anything.
+                // https://github.com/asc-community/AngouriMath/issues/2074
+                var scale = im.IsZero ? re : Magnitude((re, im));
+                return Complex.CreateAtScales(erfRe.RoundToPrecision(context), erfIm.RoundToPrecision(context), scale, scale);
             }
 
             /// <summary>
@@ -115,7 +118,7 @@ namespace AngouriMath
                     if (x.IsInfinity())
                         return x.IsNegative ? Real.NegativeInfinity : Real.PositiveInfinity;
                     var context = MathS.Settings.DecimalPrecisionContext.Value;
-                    return ErfiOfAReal(x, context).RoundToPrecision(context);
+                    return Real.CreateAtScale(ErfiOfAReal(x, context).RoundToPrecision(context), x);
                 }
                 var erf = Erf(Complex.Create(z.ImaginaryPart.EDecimal.Negate(), z.RealPart.EDecimal));
                 // -i (a + i b) = b - i a

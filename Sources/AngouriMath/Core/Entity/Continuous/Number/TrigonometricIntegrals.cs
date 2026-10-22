@@ -93,6 +93,13 @@ namespace AngouriMath
                     else
                         valueIm = im.IsNegative ? pi.Divide(-2, context) : pi.Divide(2, context);
                 }
+                // Si and Shi vanish at 0 like their argument, and their residual is its: Si(1e-60) is 1e-60.
+                // https://github.com/asc-community/AngouriMath/issues/2074
+                if (odd)
+                {
+                    var scale = im.IsZero ? re : re.IsZero ? im : Magnitude((re, im));
+                    return Complex.CreateAtScales(valueRe.RoundToPrecision(context), valueIm.RoundToPrecision(context), scale, scale);
+                }
                 return Complex.Create(valueRe.RoundToPrecision(context), valueIm.RoundToPrecision(context));
             }
 

@@ -201,6 +201,23 @@ so at fewer than about twice that many digits the difference is below half of th
 | The derivative above, at 100 digits | `NaN` | `2.0185464…E-68`, without its imaginary part: a residual at that precision |
 | `"sin(pi)".EvalNumerical()`, `"(1 + sqrt(2) i) (1 - sqrt(2) i)".EvalNumerical()` | `0`, `3` | `0`, `3` |
 
+### A function of a small argument is its value, not zero
+
+**Silent: wrong answers.** A function's value was rounded onto zero below half the working digits outright, for the
+residual a function leaves at its own zeros, such as `sin(pi)`'s. That residual is relative to the argument, and a
+function of an exact small argument cancels nothing, so `sin(10^(-60))` was `0` at the default hundred digits. The
+sine, cosine, tangent, logarithm, arcsine, arccosine and arctangent of a real argument, and the error functions and
+`Si` and `Shi`, now measure their residual against their argument. `sin(pi)`, `cos(pi/2)` and `tan(pi)` are still `0`
+([#2074](https://github.com/asc-community/AngouriMath/issues/2074)).
+
+| Input | Was (2.6.0) | Now |
+|---|---|---|
+| `"sin(10^(-60))".EvalNumerical()` | `0` | `1E-60`, to the hundredth digit |
+| `"arctan(10^(-60))".EvalNumerical()` | `0` | `1E-60`, to the hundredth digit |
+| `"erf(10^(-60))".EvalNumerical()` | `0` | `1.1283791670955125…E-60` |
+| `"Si(10^(-60))".EvalNumerical()` | `0` | `1E-60`, to the hundredth digit |
+| `"sin(pi)".EvalNumerical()` | `0` | `0` |
+
 ---
 
 ## 2.6.0 — since 2.5.0
