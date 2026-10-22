@@ -62,6 +62,25 @@ not seen, and a symmetric divergent one comes to its principal value
 | `"ln(x)".ToEntity().DefiniteIntegral("x", 0, 1)` | `NaN` | `-1.00000` |
 | `"1/x".ToEntity().DefiniteIntegral("x", 0, 1)` | `NaN` | `NaN` |
 
+### A root of a small or a large number is searched for at the size of one
+
+**Silent: wrong answers.** The search for an exact root of a number rounded each candidate to six digits, absolutely.
+A root below `1e-6` became the integer `0`, which was accepted because `0 ^ q` is within `1e-6` of a base below it; and
+a rounded candidate was returned as the real root even where its power was not the base. It now searches with the
+base scaled to the size of one by an exact power of ten. It accepts a rational root only where its power is the base
+at the working precision, and returns a real root as it was computed
+([#2065](https://github.com/asc-community/AngouriMath/issues/2065)).
+
+| Input | Was (2.6.0) | Now |
+|---|---|---|
+| `"sqrt(2/10^20)".EvalNumerical()` | `0` | `1.4142135623730950…E-10` |
+| `"sqrt(1/10^20)".EvalNumerical()` | `0` | `1/10000000000` |
+| `"(-2/10^21)^(1/3)".EvalNumerical()` | `0` | `-1.2599210498948731…E-7` |
+| `"sqrt(i/10^20)".EvalNumerical()` | `0` | `7.0710678118654752…E-11 + 7.0710678118654752…E-11i` |
+| `"(10^12 + 1/2)^(1/2)".EvalNumerical()` | `1000000` | `1000000.00000024999999999996875…` |
+| `"(2 + i/10^8)^(1/2)".EvalNumerical()` | `1.4142135623730950…` | `1.4142135623730950… + 3.5355339059327376…E-9i` |
+| `"(-8)^(1/3)".EvalNumerical()`, `"sqrt(10^30)".EvalNumerical()` | `-2`, `1000000000000000` | `-2`, `1000000000000000` |
+
 ### An equality in an equation or a system is read as a difference equal to zero
 
 **Silent: wrong answers.** `MathS.SolveEquation`, `Entity.SolveEquation` and `MathS.Equations` read each equation as an
