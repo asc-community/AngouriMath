@@ -285,6 +285,13 @@ namespace AngouriMath
                 null;
         }
 
+        // Neither has an inverse among the library's nodes. https://github.com/asc-community/AngouriMath/issues/2075
+        partial record IncompleteGammaf
+        {
+            private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x) =>
+                null;
+        }
+
         // None of the four has an inverse among the library's nodes, and none of their preimages
         // is empty: Si(x) = 1 near 1.1654, Ci(x) = 0 near 0.6165.
         // https://github.com/asc-community/AngouriMath/issues/1501

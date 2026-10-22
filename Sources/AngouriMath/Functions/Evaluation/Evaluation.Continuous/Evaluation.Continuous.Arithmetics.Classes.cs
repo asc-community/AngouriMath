@@ -610,6 +610,44 @@ namespace AngouriMath
                     (@this, order, argument) => ((Polygammaf)@this).New(order, argument), isExact);
         }
 
+        public partial record IncompleteGammaf
+        {
+            // Defined but at z = 0 where Re a <= 0, where the integral diverges at its lower limit.
+            // https://github.com/asc-community/AngouriMath/issues/2075
+            private protected override Entity IntrinsicCondition =>
+                !LowerLimit.EqualTo(0) | Parameter > 0;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Parameter, LowerLimit,
+                    (a, z) => (a, z) switch
+                    {
+                        (Complex n, Complex x) when !isExact => Number.IncompleteGamma(n, x),
+                        (_, Real { EDecimal: var x }) when x.IsPositiveInfinity() => Integer.Zero,
+                        // Gamma(a, 0) is Gamma(a) where the integral converges at 0.
+                        (Real { IsPositive: true } positive, Integer { IsZero: true }) => MathS.Gamma(positive).InnerSimplified,
+                        // A whole n >= 1 is elementary, (n - 1)! e^(-z) sum_(k < n) z^k/k! (DLMF 8.4.8), and a half is
+                        // sqrt(pi) erfc(sqrt(z)) (DLMF 8.4.6).
+                        (Integer { EInteger: var n }, _) when n.Sign > 0 && n.CompareTo(30) <= 0 => WholeOrder(n.ToInt32Checked(), z),
+                        (Rational { ERational: var h }, _) when h.Numerator.Equals(PeterO.Numbers.EInteger.One) && h.Denominator.Equals(PeterO.Numbers.EInteger.FromInt32(2))
+                            => MathS.Sqrt(MathS.pi) * MathS.Erfc(MathS.Sqrt(z)),
+                        _ => null
+                    },
+                    (@this, a, z) => ((IncompleteGammaf)@this).New(a, z), isExact);
+
+            private static Entity WholeOrder(int n, Entity z)
+            {
+                Entity sum = Integer.One;
+                Entity term = Integer.One;
+                for (var k = 1; k < n; k++)
+                {
+                    term = term * z / k;
+                    sum += term;
+                }
+                return (Number.Factorial(Integer.Create(n - 1)) * MathS.Pow(MathS.e, -z) * sum).InnerSimplified;
+            }
+        }
+
         public partial record Sif
         {
             // Entire, so defined for every argument. https://github.com/asc-community/AngouriMath/issues/1501

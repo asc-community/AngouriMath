@@ -1474,6 +1474,19 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Digamma(Entity argument) => new Polygammaf(Integer.Zero, argument);
 
+        /// <summary>The upper incomplete gamma function, <c>Gamma(a, z) = int_z^oo t^(a - 1) e^(-t) dt</c></summary>
+        /// <param name="parameter">The parameter <c>a</c>, any complex number</param>
+        /// <param name="lowerLimit">The lower limit <c>z</c>, any complex number; <c>0</c> only where <c>Re a > 0</c></param>
+        /// <returns>The <see cref="Entity.IncompleteGammaf"/> node</returns>
+        /// <remarks>
+        /// <c>z^a</c> takes its principal branch, so the cut is the negative real axis, which keeps the value from above.
+        /// <c>Gamma(a, 0)</c> is <c>Gamma(a)</c>, and the derivative in <c>z</c> is <c>-z^(a - 1) e^(-z)</c>. It is written
+        /// <c>gamma(a, z)</c>, as Mathematica's <c>Gamma[a, z]</c> and mpmath's <c>gammainc(a, z)</c> are.
+        /// https://github.com/asc-community/AngouriMath/issues/2075
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity IncompleteGamma(Entity parameter, Entity lowerLimit) => new IncompleteGammaf(parameter, lowerLimit);
+
         /// <summary>The sine integral, <c>Si(z) = int_0^z sin(t)/t dt</c></summary>
         /// <param name="a">The argument, any complex number</param>
         /// <returns>The <see cref="Entity.Sif"/> node</returns>

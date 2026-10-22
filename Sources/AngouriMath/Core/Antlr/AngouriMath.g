@@ -543,7 +543,9 @@ atom returns[Entity value]
 
 
     | 'factorial(' args = function_arguments ')' { Assert("factorial", 1, $args.list.Count); $value = MathS.Factorial($args.list[0]); }
-    | 'gamma(' args = function_arguments ')' { Assert("gamma", 1, $args.list.Count); $value = MathS.Gamma($args.list[0]); }
+    /* With a second argument, the upper incomplete gamma function Gamma(a, z), as Mathematica's Gamma[a, z].
+       https://github.com/asc-community/AngouriMath/issues/2075 */
+    | 'gamma(' args = function_arguments ')' { if ($args.list.Count == 2) $value = MathS.IncompleteGamma($args.list[0], $args.list[1]); else { Assert("gamma", 1, $args.list.Count); $value = MathS.Gamma($args.list[0]); } }
     | 'derivative(' args = function_arguments ')' 
         {
             if (Assert("derivative", (3, 2), $args.list.Count))

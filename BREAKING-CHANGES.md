@@ -129,6 +129,23 @@ as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` wa
 | `"polygamma(1, 3)".ToEntity().InnerSimplified` | an `UnhandledParseException` | `1/6 * pi ^ 2 - 5/4` |
 | `"digamma(x)".ToEntity().Integrate("x")` | `digamma * x ^ 2 / 2 + C`, of the product | `ln((x - 1)!) + C` |
 
+### `gamma(a, z)` is the upper incomplete gamma function
+
+**Not silent: what was a parse error is a function.** `gamma` took one argument, and a second was a
+`FunctionArgumentCountException`. With two it is now the upper incomplete gamma function,
+`Gamma(a, z) = int_z^oo t^(a - 1) e^(-t) dt`, as Mathematica's `Gamma[a, z]` is.
+- **Branch.** It takes the principal branch of `z^a`, with the cut on the negative real axis.
+- **Evaluation.** It is evaluated to the working precision for any complex `a` and `z`.
+- **Derivative.** In `z` it is `-z^(a - 1) e^(-z)`.
+- **Exact forms.** A whole `a >= 1` and `a = 1/2` are elementary.
+([#2075](https://github.com/asc-community/AngouriMath/issues/2075))
+
+| Input | Was (2.6.0) | Now |
+|---|---|---|
+| `"gamma(1/3, x)".ToEntity()` | a `FunctionArgumentCountException` | `gamma(1/3, x)` |
+| `"gamma(1/3, 2)".EvalNumerical()` | a `FunctionArgumentCountException` | `0.068136414441459136…` |
+| `"gamma(3, x)".ToEntity().InnerSimplified` | a `FunctionArgumentCountException` | `2 * e ^ (-x) * (1 + x + x ^ 2 / 2)` |
+
 ### Numerical equality is to half the evaluation's digits
 
 **Silent: wrong answers.** `MathS.UnsafeAndInternal.AreEqualNumerically` evaluated both sides at its check points and

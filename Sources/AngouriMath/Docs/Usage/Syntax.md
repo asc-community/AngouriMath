@@ -340,6 +340,14 @@ argument is exact, a rational times a power of `pi` plus a rational: `polygamma(
 `1/6 * pi ^ 2` and `polygamma(1, 3)` is `1/6 * pi ^ 2 - 5/4`. Other special values, such as
 `digamma(1) = -gamma`, stay as written, since the library has no symbol for Euler's constant.
 
+**Incomplete gamma function** — `gamma(a, z)`. With a second argument, `gamma` is the upper incomplete
+gamma function `Gamma(a, z) = int_z^oo t^(a - 1) e^(-t) dt`, as Mathematica's `Gamma[a, z]` and
+mpmath's `gammainc(a, z)` are. `z^a` takes its principal branch, so the cut is the negative real axis,
+which keeps the value from above. It is evaluated to the working precision for any complex `a` and `z`,
+and `gamma(a, 0)` is `gamma(a)` where `Re a > 0`. Its derivative in `z` is `-z ^ (a - 1) * e ^ (-z)`.
+A whole `a >= 1` is elementary, `gamma(3, x)` being `2 * e ^ (-x) * (1 + x + x ^ 2 / 2)`, and
+`gamma(1/2, x)` is `sqrt(pi) * erfc(sqrt(x))`.
+
 **Calculus** — `derivative(expr, var, order)`, `integral(expr, var)`,
 `integral(expr, var, from, to)`, `limit(expr, var, dest)`, `limitleft(...)`, `limitright(...)`;
 `sum(expr, var in set)` for a sum over a set; `max(expr, var in set)` and `min` for the extremum of
