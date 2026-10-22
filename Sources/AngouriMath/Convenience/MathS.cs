@@ -1480,7 +1480,10 @@ namespace AngouriMath
         /// <returns>The <see cref="Entity.IncompleteGammaf"/> node</returns>
         /// <remarks>
         /// <c>z^a</c> takes its principal branch, so the cut is the negative real axis, which keeps the value from above.
-        /// <c>Gamma(a, 0)</c> is <c>Gamma(a)</c>, and the derivative in <c>z</c> is <c>-z^(a - 1) e^(-z)</c>. It is written
+        /// <c>Gamma(a, 0)</c> is <c>Gamma(a)</c>, and the derivative in <c>z</c> is <c>-z^(a - 1) e^(-z)</c>. At a negative
+        /// <c>z</c> the power there takes the real root for an exact <c>a</c> of small odd denominator, not the principal
+        /// branch, so for such an <c>a</c> it is not the derivative of the value
+        /// (https://github.com/asc-community/AngouriMath/issues/204). It is written
         /// <c>gamma(a, z)</c>, as Mathematica's <c>Gamma[a, z]</c> and mpmath's <c>gammainc(a, z)</c> are.
         /// https://github.com/asc-community/AngouriMath/issues/2075
         /// </remarks>

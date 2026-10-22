@@ -68,6 +68,7 @@ namespace AngouriMath.Functions.Algebra
             Entity.Shif(var arg) => arg,
             Entity.Chif(var arg) => arg,
             Entity.Polygammaf(var order, var arg) when !order.ContainsNode(x) => arg,
+            Entity.IncompleteGammaf(var order, var arg) when !order.ContainsNode(x) => arg,
             Entity.Arcsinf(var arg) => arg,
             Entity.Arccosf(var arg) => arg,
             Entity.Arctanf(var arg) => arg,
@@ -268,6 +269,188 @@ namespace AngouriMath.Functions.Algebra
             _ => MathS.Pow(x, k + 1) * bell / (k + 1) + (-2 * A / (k + 1)).InnerSimplified * Moment(k + 2, A, bell, x),
         };
 
+        /// <summary>
+        /// <c>int P Gamma(n, u) dx</c> for the upper incomplete gamma function of a linear
+        /// <c>u = a + b x</c> with <c>n</c> free of <c>x</c>, where <c>P</c> is a polynomial in
+        /// <c>x</c>, or, without an offset <c>a</c>, a power <c>(d x)^m</c> for any <c>m</c> but -1.
+        /// By parts against an antiderivative <c>Q</c> of <c>P</c>: the derivative of
+        /// <c>Gamma(n, u)</c> is <c>-b u^(n - 1) e^(-u)</c>, and with <c>Q</c> written in powers of
+        /// <c>u</c>, each <c>u^k</c> lands on <c>u^(n + k - 1) e^(-u)</c>, the derivative in <c>u</c>
+        /// of <c>-Gamma(n + k, u)</c>. Rubi's 8.6.
+        /// https://github.com/asc-community/AngouriMath/issues/2075
+        /// </summary>
+        private static Entity? IncompleteGammaBesideAPower(Entity expr, Entity.Variable x)
+        {
+            // Asked of every integrand that reaches the table, so a type test comes first, and
+            // nothing here captures a local.
+            if (expr is not (Entity.Mulf or Entity.Divf or Entity.IncompleteGammaf))
+                return null;
+            var (numerator, denominator) = expr is Entity.Divf(var n, var d) ? (n, d) : (expr, (Entity)Entity.Number.Integer.One);
+            Entity coefficient = Entity.Number.Integer.One;
+            Entity.IncompleteGammaf? gamma = null;
+            Entity? above = null;
+            Entity? below = null;
+            foreach (var factor in Entity.Mulf.LinearChildren(numerator))
+                if (!factor.ContainsNode(x))
+                    coefficient *= factor;
+                else if (gamma is null && factor is Entity.IncompleteGammaf incompleteGamma)
+                    gamma = incompleteGamma;
+                else
+                    above = above is null ? factor : above * factor;
+            foreach (var factor in Entity.Mulf.LinearChildren(denominator))
+                if (!factor.ContainsNode(x))
+                    coefficient /= factor;
+                else if (below is null)
+                    below = factor;
+                else
+                    return null;
+            if (gamma is null || gamma.Parameter.ContainsNode(x)
+                || !TreeAnalyzer.TryGetPolyLinear(gamma.LowerLimit, x, out var slope, out var offset))
+                return null;
+            var withoutAnOffset = TreeAnalyzer.IsZero(offset);
+            if (below is null && ThePowersOf(above, x, withoutAnOffset ? 100 : 32) is { } inX)
+                return (withoutAnOffset
+                    ? BesideAPolynomialWithoutAnOffset(inX, gamma, slope, x)
+                    : BesideAPolynomial(above ?? Entity.Number.Integer.One, gamma, slope, offset, x)) is { } answer
+                    ? coefficient * answer
+                    : null;
+            if (!withoutAnOffset)
+                return null;
+
+            // A power of a multiple of x, of any exponent but -1, whose integral is not a gamma
+            // function: x^m Gamma(n, b x) is x^(m + 1) Gamma(n, b x)/(m + 1) - x^m (b x)^(-m)
+            // Gamma(m + n + 1, b x)/(b (m + 1)), and the quotient x^m/(b x)^m is b^(-m) for a whole m
+            // only: elsewhere the two powers take their branches separately, and it is constant only
+            // between the cuts.
+            Entity written;
+            Entity @base;
+            Entity scale;
+            Entity m;
+            if (below is null && above is not null && TryReadAPowerOfAMultiple(above, x, out @base, out scale, out m))
+                written = above;
+            else if (above is null && below is not null && TryReadAPowerOfAMultiple(below, x, out @base, out scale, out var mBelow))
+            {
+                written = 1 / below;
+                m = (-mBelow).InnerSimplified;
+            }
+            else
+                return null;
+            var mPlusOne = (m + 1).InnerSimplified;
+            if (TreeAnalyzer.IsZero(mPlusOne))
+                return null;
+            // (d x)^(m + 1)/d, which is (d x)^m x on every branch.
+            var integrated = @base == x ? MathS.Pow(x, mPlusOne) : MathS.Pow(@base, mPlusOne) / scale;
+            var shifted = MathS.IncompleteGamma((gamma.Parameter + mPlusOne).InnerSimplified, gamma.LowerLimit);
+            var quotient = m is Entity.Number.Integer
+                ? MathS.Pow((scale / slope).InnerSimplified, m)
+                : written * MathS.Pow(gamma.LowerLimit, -m);
+            return coefficient * (integrated * gamma - quotient * shifted / slope) / mPlusOne;
+        }
+
+        /// <summary>
+        /// <paramref name="polynomial"/>'s coefficients by power of <paramref name="x"/>, with
+        /// <see langword="null"/> read as 1, or <see langword="null"/> where it is not a polynomial
+        /// of a degree from 0 to <paramref name="highest"/>.
+        /// </summary>
+        private static Dictionary<EInteger, Entity>? ThePowersOf(Entity? polynomial, Entity.Variable x, int highest)
+        {
+            if (polynomial is null)
+                return new Dictionary<EInteger, Entity> { [EInteger.Zero] = Entity.Number.Integer.One };
+            if (!TreeAnalyzer.TryGetPolynomial(polynomial, x, out var powers))
+                return null;
+            foreach (var power in powers.Keys)
+                if (power.Sign < 0 || power.CompareTo(EInteger.FromInt32(highest)) > 0)
+                    return null;
+            return powers;
+        }
+
+        /// <summary>
+        /// <c>int P(x) Gamma(n, b x) dx</c> for <c>P</c> read into <paramref name="powers"/>: each
+        /// <c>c x^j</c> is <c>c (x^(j + 1) Gamma(n, b x) - Gamma(n + j + 1, b x)/b^(j + 1))/(j + 1)</c>.
+        /// </summary>
+        private static Entity BesideAPolynomialWithoutAnOffset(Dictionary<EInteger, Entity> powers, Entity.IncompleteGammaf gamma, Entity slope, Entity.Variable x)
+        {
+            Entity antiderivative = Entity.Number.Integer.Zero;
+            Entity shifted = Entity.Number.Integer.Zero;
+            foreach (var monomial in powers)
+            {
+                var next = Entity.Number.Integer.Create(monomial.Key.Add(1));
+                antiderivative += monomial.Value * Power(x, next.EInteger.ToInt32Checked()) / next;
+                shifted += (monomial.Value / (next * Power(slope, next.EInteger.ToInt32Checked()))).InnerSimplified
+                    * MathS.IncompleteGamma((gamma.Parameter + next).InnerSimplified, gamma.LowerLimit);
+            }
+            return antiderivative.InnerSimplified * gamma - shifted;
+        }
+
+        /// <summary>
+        /// <c>int P(x) Gamma(n, u) dx</c> for <c>u = a + b x</c> with an offset: with <c>P</c> written
+        /// in powers of <c>u</c>, each <c>p u^k</c> is <c>p (u^(k + 1) Gamma(n, u) - Gamma(n + k + 1, u))/(b (k + 1))</c>.
+        /// </summary>
+        private static Entity? BesideAPolynomial(Entity polynomial, Entity.IncompleteGammaf gamma, Entity slope, Entity offset, Entity.Variable x)
+        {
+            // A power (c + d x)^k of a linear, the shape the integrand is usually written in, as
+            // the binomial it is in u: with s = b c - a d, c + d x is (s + d u)/b, so the weight of
+            // u^j is C(k, j) s^(k - j) d^j/((j + 1) b^(k + 1)), and the antiderivative vanishing at
+            // u = 0 is ((c + d x)^(k + 1) - (s/b)^(k + 1))/((k + 1) d).
+            var (linear, power) = polynomial is Entity.Powf(var written, Entity.Number.Integer exponent) ? (written, exponent.EInteger) : (polynomial, EInteger.One);
+            if (power.Sign > 0 && power.CompareTo(EInteger.FromInt32(32)) <= 0 && linear.ContainsNode(x)
+                && TreeAnalyzer.TryGetPolyLinear(linear, x, out var d, out var c))
+            {
+                var k = power.ToInt32Checked();
+                var s = (slope * c - offset * d).InnerSimplified;
+                var kPlusOne = Entity.Number.Integer.Create(k + 1);
+                Entity weighted = Entity.Number.Integer.Zero;
+                // Without a zeroth power, which is 1 provided its base is not 0.
+                for (var j = 0; j <= k; j++)
+                    weighted += (Entity.Number.Rational.Create(Binomial(k, j).EInteger, EInteger.FromInt32(j + 1)) * Power(s, k - j) * Power(d, j)).InnerSimplified
+                        * MathS.IncompleteGamma((gamma.Parameter + (j + 1)).InnerSimplified, gamma.LowerLimit);
+                return (MathS.Pow(linear, kPlusOne) / d - (MathS.Pow(s, kPlusOne) / (d * MathS.Pow(slope, kPlusOne))).InnerSimplified) / kPlusOne * gamma
+                    - weighted / MathS.Pow(slope, kPlusOne);
+            }
+            var u = Entity.Variable.CreateUnique(polynomial + gamma + x, "u");
+            if (ThePowersOf(polynomial.Substitute(x, (u - offset) / slope), u, 32) is not { } inU)
+                return null;
+            Entity antiderivative = Entity.Number.Integer.Zero;
+            Entity shifted = Entity.Number.Integer.Zero;
+            foreach (var monomial in inU)
+            {
+                var next = Entity.Number.Integer.Create(monomial.Key.Add(1));
+                var weight = (monomial.Value / (next * slope)).InnerSimplified;
+                antiderivative += weight * Power(gamma.LowerLimit, next.EInteger.ToInt32Checked());
+                shifted += weight * MathS.IncompleteGamma((gamma.Parameter + next).InnerSimplified, gamma.LowerLimit);
+            }
+            return antiderivative * gamma - shifted;
+        }
+
+        private static Entity Power(Entity @base, int power) => power switch
+        {
+            0 => Entity.Number.Integer.One,
+            1 => @base,
+            _ => MathS.Pow(@base, power)
+        };
+
+        /// <summary>
+        /// <paramref name="factor"/> read as <c>(d x)^m</c>, with <c>d</c> and <c>m</c> free of
+        /// <paramref name="x"/>: <c>x</c> itself, a power of it, or a power of a multiple of it.
+        /// </summary>
+        private static bool TryReadAPowerOfAMultiple(Entity factor, Entity.Variable x, out Entity @base, out Entity scale, out Entity exponent)
+        {
+            @base = x;
+            scale = exponent = Entity.Number.Integer.One;
+            if (factor == x)
+                return true;
+            if (factor is not Entity.Powf(var written, var power) || power.ContainsNode(x))
+                return false;
+            exponent = power;
+            if (written == x)
+                return true;
+            if (!TreeAnalyzer.TryGetPolyLinear(written, x, out var multiple, out var offset) || !TreeAnalyzer.IsZero(offset))
+                return false;
+            @base = written;
+            scale = multiple;
+            return true;
+        }
+
         internal static Entity? TryStandardIntegrals(Entity expr, Entity.Variable x) => expr switch
         {
             // Every rule below divides by the linear rate of its integrand's argument, and
@@ -396,6 +579,10 @@ namespace AngouriMath.Functions.Algebra
             Entity.Polygammaf(Entity.Number.Integer { IsZero: true }, var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
                     MathS.Ln(MathS.Factorial(arg - 1)) / a,
+
+            // The upper incomplete gamma function of a linear, alone or beside a power of x or a
+            // polynomial. https://github.com/asc-community/AngouriMath/issues/2075
+            _ when IncompleteGammaBesideAPower(expr, x) is { } gamma => gamma,
 
             Entity.Absf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) => // ∫ |ax + b| dx = sgn(ax + b) * (ax + b)^2 / (2a)

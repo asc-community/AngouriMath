@@ -136,8 +136,12 @@ as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` wa
 `Gamma(a, z) = int_z^oo t^(a - 1) e^(-t) dt`, as Mathematica's `Gamma[a, z]` is.
 - **Branch.** It takes the principal branch of `z^a`, with the cut on the negative real axis.
 - **Evaluation.** It is evaluated to the working precision for any complex `a` and `z`.
-- **Derivative.** In `z` it is `-z^(a - 1) e^(-z)`.
+- **Derivative.** In `z` it is `-z^(a - 1) e^(-z)`. At a negative `z` that power takes the real root for an exact
+  `a` of small odd denominator, so there it is not the derivative of the value
+  ([#204](https://github.com/asc-community/AngouriMath/issues/204)).
 - **Exact forms.** A whole `a >= 1` and `a = 1/2` are elementary.
+- **Integrals.** Of a linear `u`, beside a polynomial, or beside any power of `x` but `1/x` where `u` is a multiple
+  of `x`, by parts, in gamma functions of `u`.
 ([#2075](https://github.com/asc-community/AngouriMath/issues/2075))
 
 | Input | Was (2.6.0) | Now |
@@ -145,6 +149,8 @@ as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` wa
 | `"gamma(1/3, x)".ToEntity()` | a `FunctionArgumentCountException` | `gamma(1/3, x)` |
 | `"gamma(1/3, 2)".EvalNumerical()` | a `FunctionArgumentCountException` | `0.068136414441459136…` |
 | `"gamma(3, x)".ToEntity().InnerSimplified` | a `FunctionArgumentCountException` | `2 * e ^ (-x) * (1 + x + x ^ 2 / 2)` |
+| `"x^2*gamma(0, a*x)".ToEntity().Integrate("x")` | a `FunctionArgumentCountException` | `x ^ 3 / 3 * gamma(0, a * x) - 1 / (3 * a ^ 3) * 2 * e ^ (-a * x) * (1 + a * x + (a * x) ^ 2 / 2) + C` |
+| `"x^m*gamma(n, b*x)".ToEntity().Integrate("x")` | a `FunctionArgumentCountException` | `(x ^ (m + 1) * gamma(n, b * x) - x ^ m * (b * x) ^ (-m) * gamma(n + m + 1, b * x) / b) / (m + 1) + C` |
 
 ### Numerical equality is to half the evaluation's digits
 
