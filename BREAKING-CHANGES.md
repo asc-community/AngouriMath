@@ -83,6 +83,21 @@ powers of `c + d x` itself were read before ([#233](https://github.com/asc-commu
 | `"e^(k/(c+d*x))/(a+b*x)".ToEntity().Integrate("x")` | `integral(...)` | two `Ei`, of `k/(c + d x)` and of `k/(c + d x) - k b/(a d - b c)` |
 | `"f^(c/(a+b*x)^2)*x^4".ToEntity().Integrate("x")` | `integral(...)` | 1,262 characters, the error function and powers of `1/(a + b x)` |
 
+### An integrand under a condition free of x is integrated under the condition
+
+**Answers where there were none.** A condition with no x in it holds for every x or for none, so the integral of
+`f provided C` is the integral of f, provided C. `(x^2 sin(x)) provided not k = 0` was declined where `x^2 sin(x)` is
+answered, and so was `(1/((a + b x) 3 x)) provided not d = 0`. Inner simplification writes such a condition at the top
+of the questions rules hand on: `d^0` is `1 provided not d = 0`. Before this change master integrated
+`(1/x) provided a > 0` to `ln(x/a)`, which has a value where `a < 0` and the integrand has none; it is
+`ln(x) provided a > 0` ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(x^2*sin(x)) provided not k = 0".ToEntity().Integrate("x")` | `integral(...)` | 72 characters |
+| `"(1/((a+b*x)*3*x)) provided not d = 0".ToEntity().Integrate("x")` | `integral(...)` | 289 characters |
+| `"(1/x) provided a > 0".ToEntity().Integrate("x")` | `integral(...)` | 26 characters, `(ln(x) provided a > 0) + C` |
+
 ### A transcendental function of one shifted linear is integrated in the linear
 
 **Answers where there were none.** Rubi's 2.3 `F^(a + b/(c + d x)^3)/(c + d x)^19` and 3.4 `ln(c (d + e/(f + g x)^3)^q)`
