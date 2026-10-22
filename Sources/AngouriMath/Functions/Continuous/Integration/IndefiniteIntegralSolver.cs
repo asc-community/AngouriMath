@@ -47122,8 +47122,14 @@ namespace AngouriMath.Functions.Algebra
             var argument = reciprocal.DirectChildren.First();
             var function = reciprocal is Secantf ? MathS.Cos(argument) : MathS.Sin(argument);
             // The cosine of the same argument beside the secant, or the sine beside the cosecant, is
-            // what the rewritten integrand is in already; any other is a second function.
-            if (partners.Any(partner => partner != function))
+            // what the rewritten integrand is in already, and the other of the two is too where it
+            // stands only to even powers, `sin(z)^(2k)` being `(1 - cos(z)^2)^k`: the half-angle
+            // substitution wrote `sin(x)^2/(a + b sec(x))` in 117,517 characters, where
+            // `(1 - cos(x)^2) cos(x)/(a cos(x) + b)` is 969. Any other is a second function.
+            var complement = reciprocal is Secantf ? MathS.Sin(argument) : MathS.Cos(argument);
+            static bool AnEvenPower(Entity node, Entity of) => node is Powf(var @base, Number.Integer { EInteger: var power }) && @base == of && power.IsEven && power.Sign > 0;
+            var inEvenPowers = expr.Nodes.Count(node => node == complement) == expr.Nodes.Count(node => AnEvenPower(node, complement));
+            if (partners.Any(partner => partner != function && (partner != complement || !inEvenPowers)))
                 return null;
             // Only two sums in the secant or more, all below the bar: one, or one above, the rules for
             // the secant answer as written, and in the cosine `sec(x)^5/(a + b sec(x))^3` ran past five
@@ -47142,7 +47148,11 @@ namespace AngouriMath.Functions.Algebra
             if (partners.Count > 0
                 && (!below.Nodes.Any(ASum) || Mulf.LinearChildren(below).Any(factor => factor is Powf(var @base, _) && ASum(@base))))
                 return null;
-            var rewritten = Functions.SingleQuotient.Combine(expr.Replace(node => node == reciprocal ? 1 / function : node));
+            var rewritten = Functions.SingleQuotient.Combine(expr.Replace(node =>
+                node == reciprocal ? 1 / function
+                : AnEvenPower(node, complement) && node is Powf(_, Number.Integer { EInteger: var power })
+                    ? MathS.Pow(1 - MathS.Pow(function, 2), Number.Integer.Create(power / 2))
+                    : node));
             return Integration.ComputeAsTheSameQuestion(rewritten, x, integrateByParts);
         }
 
