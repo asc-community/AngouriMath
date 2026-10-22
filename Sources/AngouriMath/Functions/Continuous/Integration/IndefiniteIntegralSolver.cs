@@ -29711,6 +29711,64 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An inverse sine of a sine of a linear <c>L = a + k x</c> is <c>s k x + c</c> on each interval
+        /// where <c>cos(L)</c> keeps its sign, with <c>s = cos(L)/sqrt(cos(L)^2)</c> that sign and <c>c</c>
+        /// constant there, and an inverse cosine of a cosine the same with the sign of <c>sin(L)</c>:
+        /// the derivative of <c>asin(sin(L))</c> is <c>k cos(L)/sqrt(1 - sin(L)^2)</c>. Named so, with
+        /// <c>s</c> and <c>c</c> standing for those, <c>x/asin(sin(x))</c> is the rational function
+        /// <c>x/(s x + c)</c>, which the rules answer, where the inverse sine was an atom no rule read past
+        /// a polynomial beside it. The answer is the generic case's on every interval, as
+        /// <see cref="SolveByNamingALogarithmLinearInTheVariable"/>'s is, and a whole power of <c>s</c> in
+        /// it is 1 or <c>s</c>. Real <paramref name="x"/> only: off the real line the sign is not constant
+        /// anywhere. Rubi's 5.1.5. Asked as a question of its own.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        internal static Entity? SolveByNamingAnInverseSineOfASineLinearOnEachInterval(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            Entity? named = null;
+            Entity? sign = null;
+            Entity? slope = null;
+            foreach (var node in expr.Nodes)
+            {
+                (Entity? linear, Entity? signOf) = node switch
+                {
+                    Arcsinf(Sinf(var inner)) => (inner, (Entity)MathS.Cos(inner)),
+                    Arccosf(Cosf(var inner)) => (inner, MathS.Sin(inner)),
+                    _ => (null, null)
+                };
+                if (linear is null || signOf is null || !linear.ContainsNode(x))
+                    continue;
+                var rate = linear.Differentiate(x).InnerSimplified;
+                if (rate.ContainsNode(x) || rate is Derivativef || rate == Number.Integer.Zero)
+                    continue;
+                (named, sign, slope) = (node, signOf / MathS.Sqrt(MathS.Pow(signOf, 2)), rate);
+                break;
+            }
+            if (named is null || sign is null || slope is null)
+                return null;
+            var s = Variable.CreateUnique(expr, "s");
+            var constant = Variable.CreateUnique(expr + s, "c");
+            var rewritten = expr.Substitute(named, s * slope * x + constant);
+            if (rewritten == expr || rewritten.ContainsNode(named))
+                return null;
+            if (Integration.ComputeAsAQuestionOfItsOwn(rewritten, x, integrateByParts) is not { } answer)
+                return null;
+            // s is 1 or -1, so a whole power of it is 1 or s, and dividing by it is multiplying by it.
+            Entity Folded(Entity e) => e.Replace(node => node switch
+            {
+                Powf(var @base, Number.Integer power) when @base == s => power.EInteger.IsEven ? Number.Integer.One : s,
+                Divf(var above, var below) when below == s => above * s,
+                _ => node
+            }).InnerSimplified;
+            // And a sum that is the name, `s x + c` in a logarithm, is the inverse sine again, where written
+            // back term by term it was `s x + (asin(sin(x)) - s x)`.
+            var linearInX = s * slope * x + constant;
+            var written = Folded(answer).Replace(node => node is Sumf or Minusf && node.ContainsNode(constant)
+                && Functions.PartialFractions.InLowestTermsOverTheSymbols(node - linearInX) == Number.Integer.Zero ? named : node);
+            return Folded(written.Substitute(constant, named - s * slope * x)).Substitute(s, sign);
+        }
+
+        /// <summary>
         /// The sign of a real-valued function of <paramref name="x"/> among the factors of the
         /// integrand is constant on every interval between its zeros, and goes in front of the
         /// antiderivative of the rest: <c>sgn(x) f(x)</c> is <c>sgn(x) F(x)</c> on each half-line,

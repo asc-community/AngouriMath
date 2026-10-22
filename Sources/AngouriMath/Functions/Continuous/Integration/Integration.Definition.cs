@@ -1792,6 +1792,10 @@ namespace AngouriMath.Functions.Algebra
             // `(atanh(x) + K)^2/(1 - x^2)^2` with `K = acoth(x) - atanh(x)`, constant where it is
             // continuous, which the substitution under the hyperbolic tangent answers.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAnArcothAsAnArtanhPlusAConstant(expr, x, integrateByParts)) is { }) return answer;
+            // And an inverse sine of a sine of a linear, which is linear on each interval its cosine keeps
+            // a sign on. Last, so that every one answered as written keeps that answer: parts answers a
+            // polynomial beside it.
+            if ((answer = IndefiniteIntegralSolver.SolveByNamingAnInverseSineOfASineLinearOnEachInterval(expr, x, integrateByParts)) is { }) return answer;
             return null;
         }
         /// <summary>

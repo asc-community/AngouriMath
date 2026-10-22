@@ -587,6 +587,23 @@ without it ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
 |---|---|---|
 | `"x/(acosh(x)*sqrt(-1+x)*sqrt(1+x))".ToEntity().Integrate("x")` | `integral(...)` | 93 characters, `K Chi(acosh(x))` |
 
+### An inverse sine of a sine of a linear is integrated as linear on each interval
+
+**Answers where there were none, and one that was wrong.** Rubi's 5.1.5 `x/asin(sin(x))` was declined, and so was
+`asin(sin(x))/x`. 2.5.0 integrated `1/asin(sin(x))` to `ln(asin(sin(x)))`, which is wrong wherever `cos(x) < 0`, and master
+declined it before this change. On each interval where `cos(x)` keeps its sign, `asin(sin(x))` is `s x + c`, with
+`s = cos(x)/sqrt(cos(x)^2)` and `c` constant there, and an inverse cosine of a cosine is the same with the sign of the
+sine. Named so, the integrand is a rational function of x. The answer is the generic case's on every interval, as for a
+logarithm whose derivative is a constant. Asked last, so a polynomial beside the inverse sine keeps the answer parts
+gives it ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x/asin(sin(x))".ToEntity().Integrate("x")` | `integral(...)` | 111 characters |
+| `"1/asin(sin(x))".ToEntity().Integrate("x")` | `ln(arcsin(sin(x)))`, wrong past `x = pi/2` | 50 characters, `ln(arcsin(sin(x))) cos(x)/sqrt(cos(x)^2)` |
+| `"asin(sin(x))/x".ToEntity().Integrate("x")` | `integral(...)` | 222 characters |
+| `"x/acos(cos(a+b*x))".ToEntity().Integrate("x")` | `integral(...)` | 171 characters |
+
 ### An arcoth of a linear is integrated as its artanh plus a constant
 
 **Answers where there were none.** `acoth(x)^2/(1 - x^2)^2`, Rubi's 7.4.1, was declined, where
