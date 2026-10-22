@@ -751,6 +751,26 @@ namespace AngouriMath.Functions.Algebra
             // A power of x times a power of a sum holding an inverse function of x^n, under t = x^n,
             // before the rules that timed out on `x^3 (a + b atanh(c x^2))^2`.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfXTimesAFunctionOfAnotherUnderThatPower(expr, x)) is { }) return answer;
+            // An even power of a cosine over a whole power of a binomial in the sine, or the other way
+            // round, by the reduction formulas in the power of the binomial, before the half-angle ran out
+            // of time on `cos(c + d x)^8/(a + b sin(c + d x))^8` with symbols for coefficients.
+            if ((answer = IndefiniteIntegralSolver.SolveAnEvenPowerOfACosineOverAPowerOfABinomialInTheSineByReduction(expr, x)) is { }) return answer;
+            // A power of a secant over one of a cos(y) + b sin(y), the two together odd, in powers of
+            // a + b tan(y), before the half-angle ran out of time on `sec(c + d x)^4/(a cos + b sin)^3`.
+            if ((answer = IndefiniteIntegralSolver.SolveASecantPowerOverAPowerOfACosineAndASineInPowersOfABinomialInTheTangent(expr, x)) is { }) return answer;
+            // An odd power of a sine over a power of a + b tan(y)^2 under u = cos(y), a - b named, before
+            // the substitution search ran out of time on `sin(e + f x)^3/(a + b tan(e + f x)^2)^3`.
+            if ((answer = IndefiniteIntegralSolver.SolveAnOddPowerOfASineOverAPowerOfABinomialInTheSquaredTangentUnderTheCosine(expr, x)) is { }) return answer;
+            // An odd power of a tangent beside a function of sin(y)^2 under v = sin(y)^2, before the
+            // secant's substitution took eight seconds on `tan(e + f x)^5/(a + b sin(e + f x)^2)^(5/2)`.
+            if ((answer = IndefiniteIntegralSolver.SolveAnOddPowerOfATangentBesideAFunctionOfTheSquaredSineUnderIt(expr, x)) is { }) return answer;
+            // From the twelfth power, an even power of a tangent over a power of k (1 +- sec), cancelled:
+            // the rules after it ran out of time on `tan(c + d x)^12/(a + a sec(c + d x))^3`.
+            if ((answer = IndefiniteIntegralSolver.SolveAnEvenPowerOfATangentOverAPowerOfOnePlusASecantByCancelling(expr, x)) is { }) return answer;
+            // A root of k (1 +- sin) or of k (1 +- cos), or of it over something in the function, beside
+            // another root, under u = sin or u = cos: the half angle reads only roots of the first kind,
+            // and `sqrt((1 - cos(x))/(a - cos(x)))` ran out of time.
+            if ((answer = IndefiniteIntegralSolver.SolveARootOfOnePlusASineBesideAnotherRootUnderTheSine(expr, x)) is { }) return answer;
             // A polynomial in a sine or a cosine over a whole power of a binomial in it, in powers of the
             // binomial, before the half-angle wrote 30 million characters for `(A + B cos + C cos^2)/(a + b cos)^4`.
             if ((answer = IndefiniteIntegralSolver.SolveAPolynomialInASineOverAPowerOfABinomialInItInPowersOfTheBinomial(expr, x)) is { }) return answer;
@@ -1700,6 +1720,10 @@ namespace AngouriMath.Functions.Algebra
             // Two square roots as one, up to a factor whose square is a constant, in front:
             // `sqrt(b - a/x^2)/sqrt(a - b x^2)` is that factor over x.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingTwoRootsAsOneUpToAConstantFactor(expr, x, integrateByParts)) is { }) return answer;
+            // Roots that are a constant times a power of the variable, though written with it, taken
+            // out as that constant: `sin(x) sqrt(b - a/x^2)/sqrt(a - b x^2)` is K sin(x)/x. As late,
+            // since it fires only where everything reading the roots as written has declined.
+            if ((answer = IndefiniteIntegralSolver.SolveByTakingOutRootsConstantUpToAPowerOfTheVariable(expr, x)) is { }) return answer;
             // The sign of a real-valued factor is constant between its zeros, and goes in
             // front of the antiderivative of the rest. After every rule that reads the sign
             // where it stands: `cos(x) sgn(sin(x))` is `|sin(x)|` by the substitution, and

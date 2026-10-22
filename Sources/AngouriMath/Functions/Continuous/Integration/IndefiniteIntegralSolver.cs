@@ -35512,6 +35512,834 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>N/((a^2 - b^2)^d b^e)</c> with <c>N</c> a polynomial over the rationals in <c>a</c>,
+        /// <c>b</c> and a third placeholder: the coefficients the reduction formulas in a power of
+        /// <c>a + b sin(y)</c> leave, kept exact, so that summing the many paths that reach one
+        /// term adds numerators instead of growing an expression.
+        /// </summary>
+        private readonly record struct OverTheDifferenceOfSquares(MultivariatePolynomial Numerator, int Difference, int B)
+        {
+            /// <summary><c>a^2 - b^2</c> in the placeholders, <c>a</c> the first and <c>b</c> the second.</summary>
+            internal static MultivariatePolynomial DifferenceOfSquares
+                => MultivariatePolynomial.Monomial(3, 0).Multiply(MultivariatePolynomial.Monomial(3, 0))!
+                    .Subtract(MultivariatePolynomial.Monomial(3, 1).Multiply(MultivariatePolynomial.Monomial(3, 1))!);
+
+            internal static OverTheDifferenceOfSquares Of(MultivariatePolynomial numerator) => new(numerator, 0, 0);
+
+            /// <summary>Over one bar, or null where the numerator grows past what the polynomials hold.</summary>
+            internal OverTheDifferenceOfSquares? Plus(OverTheDifferenceOfSquares other)
+            {
+                var difference = System.Math.Max(Difference, other.Difference);
+                var b = System.Math.Max(B, other.B);
+                return Raised(difference - Difference, b - B) is { } left && other.Raised(difference - other.Difference, b - other.B) is { } right
+                    ? new OverTheDifferenceOfSquares(left.Add(right), difference, b) : null;
+            }
+
+            internal OverTheDifferenceOfSquares? Times(MultivariatePolynomial factor)
+                => Numerator.Multiply(factor) is { } product ? this with { Numerator = product } : null;
+
+            private MultivariatePolynomial? Raised(int differences, int bs)
+            {
+                MultivariatePolynomial? raised = Numerator;
+                for (var i = 0; i < differences && raised is not null; i++)
+                    raised = raised.Multiply(DifferenceOfSquares);
+                return raised is null || bs == 0 ? raised : raised.ShiftedBy(1, bs);
+            }
+
+            /// <summary>In <paramref name="a"/> and <paramref name="b"/>, what divides the numerator divided out first.</summary>
+            internal Entity ToEntity(IReadOnlyList<Variable> placeholders, Entity a, Entity b)
+            {
+                var (numerator, difference, power) = (Numerator, Difference, B);
+                while (difference > 0 && numerator.DivideExact(DifferenceOfSquares) is { } lower)
+                    (numerator, difference) = (lower, difference - 1);
+                while (power > 0 && numerator.DivideExact(MultivariatePolynomial.Monomial(3, 1)) is { } lower)
+                    (numerator, power) = (lower, power - 1);
+                Entity value = numerator.ToEntity(placeholders).Substitute(placeholders[0], a).Substitute(placeholders[1], b);
+                if (difference > 0)
+                    value /= difference == 1 ? a * a - b * b : MathS.Pow(a * a - b * b, Number.Integer.Create(difference));
+                if (power > 0)
+                    value /= power == 1 ? b : MathS.Pow(b, Number.Integer.Create(power));
+                return value;
+            }
+        }
+
+        /// <summary>
+        /// An even power of a cosine over a whole power of a binomial in the sine of the same
+        /// linear, <c>cos(y)^p/(a + b sin(y))^n</c>, or of a sine over one in the cosine, with
+        /// <c>p</c> of either sign -- a power of the secant is one below the bar -- by the
+        /// reduction formulas in the power of the binomial. With <c>u = a + b sin(y)</c>,
+        /// <c>b^2 cos(y)^2 = (b^2 - a^2) + 2 a u - u^2</c> lowers a power of the cosine above the
+        /// bar, and read for <c>a^2 - b^2</c>, <c>(a^2 - b^2) = 2 a u - u^2 - b^2 cos(y)^2</c>
+        /// lowers one below it; what is left is <c>I_n</c>, the integral of <c>1/u^n</c>, and
+        /// <c>(n - 1)(a^2 - b^2) I_n = b cos(y) u^(1 - n) + (2 n - 3) a I_(n - 1) - (n - 2) I_(n - 2)</c>
+        /// takes it down to <c>I_1</c>, the one integral asked of the rest of the integrator
+        /// besides the powers of the sine and the secant the reductions end on. For the cosine,
+        /// <c>b sin(y)</c> is <c>-b sin(y)</c> in the last.
+        /// </summary>
+        /// <remarks>
+        /// The rules after it took the whole quotient through the half-angle, where the
+        /// coefficients are symbols: Rubi's 4.1.1.2 <c>cos(c + d x)^8/(a + b sin(c + d x))^8</c>,
+        /// <c>cos^6/(a + b sin)^8</c>, <c>sec^2/(a + b sin)^8</c>, <c>sec^4/(a + b sin)^8</c>
+        /// and <c>sec^4/(a + b sin)^3</c> ran out of time, and <c>cos^4/(a + b sin)^8</c> and
+        /// <c>cos^6/(a + b sin)</c>, answered, were 40 thousand characters each. For
+        /// <c>a^2 - b^2 != 0</c>, the generic case Rubi answers: <c>a + a sin(y)</c> is
+        /// another shape, and declines.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static Entity? SolveAnEvenPowerOfACosineOverAPowerOfABinomialInTheSineByReduction(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            static IEnumerable<(Entity Factor, bool Below)> Factors(Entity e, bool below) => e switch
+            {
+                Mulf(var l, var r) => Factors(l, below).Concat(Factors(r, below)),
+                Divf(var l, var r) => Factors(l, below).Concat(Factors(r, !below)),
+                _ => new[] { (e, below) }
+            };
+            Entity constant = Number.Integer.One;
+            Entity? binomial = null;
+            var n = 0;
+            var trigonometric = new List<(Entity Function, int Power)>();
+            foreach (var (factor, below) in Factors(expr, false))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = below ? constant / factor : constant * factor;
+                    continue;
+                }
+                var (@base, power) = factor is Powf(var b0, Number.Integer { EInteger: var e0 }) && e0.CanFitInInt32()
+                    ? (b0, e0.ToInt32Unchecked()) : (factor, 1);
+                if (below)
+                    power = -power;
+                if (@base is Sinf or Cosf or Secantf or Cosecantf)
+                    trigonometric.Add((@base, power));
+                else if (@base is Sumf or Minusf && (binomial is null || binomial == @base))
+                {
+                    binomial = @base;
+                    n -= power;
+                }
+                else
+                    return null;
+            }
+            if (binomial is null || n < 1 || n > 12)
+                return null;
+            var functions = binomial.Nodes.Where(node => node is Sinf or Cosf && node.ContainsNode(x)).Distinct().ToList();
+            if (functions.Count != 1)
+                return null;
+            var function = functions[0];
+            var sine = function is Sinf;
+            var argument = function is Sinf(var ys) ? ys : ((Cosf)function).Argument;
+            // The power of the co-function, its reciprocal counted below the bar.
+            Entity cofunction = sine ? MathS.Cos(argument) : MathS.Sin(argument);
+            Entity reciprocal = sine ? MathS.Sec(argument) : MathS.Cosec(argument);
+            var p = 0;
+            foreach (var (written, power) in trigonometric)
+            {
+                if (written == cofunction)
+                    p += power;
+                else if (written == reciprocal)
+                    p -= power;
+                else
+                    return null;
+            }
+            // An odd power is a rational function of the binomial's own function, and 1/u is the base case.
+            if (p % 2 != 0 || p == 0 && n < 2 || System.Math.Abs(p) > 12)
+                return null;
+            if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out _) || Functions.PartialFractions.IsZeroAsAValue(slope))
+                return null;
+            var s = Variable.CreateUnique(expr, "s_red");
+            if (!TreeAnalyzer.TryGetPolyLinear(binomial.Substitute(function, s), s, out var b, out var a)
+                || a.ContainsNode(x) || b.ContainsNode(x) || a.ContainsNode(s) || b.ContainsNode(s)
+                || Functions.PartialFractions.IsZeroAsAValue(a) || Functions.PartialFractions.IsZeroAsAValue(b)
+                || VanishesIdentically(a * a - b * b))
+                return null;
+
+            // The placeholders a, b and u, in that order.
+            var placeholders = new[] { Variable.CreateUnique(expr, "a_red"), Variable.CreateUnique(expr, "b_red"), Variable.CreateUnique(expr, "u_red") };
+            var pa = MultivariatePolynomial.Monomial(3, 0);
+            var pb = MultivariatePolynomial.Monomial(3, 1);
+            var pu = MultivariatePolynomial.Monomial(3, 2);
+            MultivariatePolynomial Whole(int value) => MultivariatePolynomial.Constant(3, ERational.FromInt32(value));
+            // The terms: (0, j) for cos(y) u^(-j), (1, m) for I_m, and (2, q, i) for the integral of
+            // cos(y)^q sin(y)^i, q zero or negative, asked of the integrator.
+            var combination = new Dictionary<(int Kind, int First, int Second), OverTheDifferenceOfSquares>();
+            bool Add(Dictionary<(int, int, int), OverTheDifferenceOfSquares> into, (int, int, int) key, OverTheDifferenceOfSquares? value)
+            {
+                if (value is not { } added)
+                    return false;
+                if (!into.TryGetValue(key, out var existing))
+                {
+                    into[key] = added;
+                    return true;
+                }
+                if (existing.Plus(added) is not { } sum)
+                    return false;
+                into[key] = sum;
+                return true;
+            }
+            // cos(y)^q u^k, k >= 0, in powers of the sine: u^k = sum C(k, i) a^(k - i) b^i sin(y)^i.
+            bool AddPowers(Dictionary<(int, int, int), OverTheDifferenceOfSquares> into, int q, int k, OverTheDifferenceOfSquares factor)
+            {
+                var choose = EInteger.One;
+                for (var i = 0; i <= k; i++)
+                {
+                    if (i > 0)
+                        choose = choose * (k - i + 1) / i;
+                    var monomial = pa.Power(k - i)?.Multiply(pb.Power(i)!)?.ScaleBy(ERational.FromEInteger(choose));
+                    if (monomial is null || !Add(into, (2, q, i), factor.Times(monomial)))
+                        return false;
+                }
+                return true;
+            }
+            var reduced = new Dictionary<(int, int), Dictionary<(int, int, int), OverTheDifferenceOfSquares>?>();
+            // cos(y)^q/u^m, q even and at most zero, in I_m and the powers.
+            Dictionary<(int, int, int), OverTheDifferenceOfSquares>? Reduced(int q, int m)
+            {
+                if (reduced.TryGetValue((q, m), out var known))
+                    return known;
+                Dictionary<(int, int, int), OverTheDifferenceOfSquares>? terms = new();
+                var one = OverTheDifferenceOfSquares.Of(Whole(1));
+                if (m <= 0)
+                    terms = AddPowers(terms, q, -m, one) ? terms : null;
+                else if (q == 0)
+                    terms[(1, m, 0)] = one;
+                else
+                {
+                    // (a^2 - b^2)/(cos^(-q) u^m) = 2 a/(cos^(-q) u^(m - 1)) - 1/(cos^(-q) u^(m - 2)) - b^2/(cos^(-q - 2) u^m).
+                    foreach (var (term, factor) in new[] { ((q, m - 1), pa.ScaleBy(ERational.FromInt32(2))), ((q, m - 2), Whole(-1)), ((q + 2, m), pb.Multiply(pb)!.ScaleBy(ERational.FromInt32(-1))) })
+                    {
+                        if (terms is null || Reduced(term.Item1, term.Item2) is not { } below)
+                        {
+                            terms = null;
+                            break;
+                        }
+                        foreach (var entry in below)
+                            if (!Add(terms, entry.Key, entry.Value.Times(factor) is { } scaled ? scaled with { Difference = scaled.Difference + 1 } : null))
+                            {
+                                terms = null;
+                                break;
+                            }
+                    }
+                }
+                reduced[(q, m)] = terms;
+                return terms;
+            }
+            if (p > 0)
+            {
+                // cos(y)^p = ((b^2 - a^2) + 2 a u - u^2)^(p/2)/b^p, in powers of u over u^n.
+                var square = pb.Multiply(pb)!.Subtract(pa.Multiply(pa)!).Add(pa.Multiply(pu)!.ScaleBy(ERational.FromInt32(2))).Subtract(pu.Multiply(pu)!);
+                if (square.Power(p / 2) is not { } expanded)
+                    return null;
+                // .Key and .Value: KeyValuePair has no Deconstruct on netstandard2.0.
+                foreach (var power in expanded.CoefficientsIn(2))
+                {
+                    var j = power.Key;
+                    var factor = OverTheDifferenceOfSquares.Of(power.Value) with { B = p };
+                    if (n - j >= 1 ? !Add(combination, (1, n - j, 0), factor) : !AddPowers(combination, 0, j - n, factor))
+                        return null;
+                }
+            }
+            else if (Reduced(p, n) is { } reducedTerms)
+                combination = reducedTerms;
+            else
+                return null;
+            // I_m, m >= 2, in cos(y) u^(-j) and I_1: (m - 1)(a^2 - b^2) I_m = sigma b cos(y) u^(1 - m) + (2 m - 3) a I_(m - 1) - (m - 2) I_(m - 2).
+            var sigma = sine ? 1 : -1;
+            var recurrences = new Dictionary<int, Dictionary<(int, int, int), OverTheDifferenceOfSquares>?>();
+            Dictionary<(int, int, int), OverTheDifferenceOfSquares>? Recurrence(int m)
+            {
+                if (recurrences.TryGetValue(m, out var known))
+                    return known;
+                Dictionary<(int, int, int), OverTheDifferenceOfSquares>? terms = new();
+                if (m == 1)
+                    terms[(1, 1, 0)] = OverTheDifferenceOfSquares.Of(Whole(1));
+                else
+                {
+                    var over = ERational.Create(EInteger.One, EInteger.FromInt32(m - 1));
+                    OverTheDifferenceOfSquares Lowered(MultivariatePolynomial numerator) => new(numerator.ScaleBy(over), 1, 0);
+                    var ok = Add(terms, (0, m - 1, 0), Lowered(pb.ScaleBy(ERational.FromInt32(sigma))));
+                    foreach (var (lower, factor) in new[] { (m - 1, pa.ScaleBy(ERational.FromInt32(2 * m - 3))), (m - 2, Whole(-(m - 2))) })
+                    {
+                        if (!ok || lower < 1 || factor.IsZero)
+                            continue;
+                        if (Recurrence(lower) is not { } below)
+                        {
+                            ok = false;
+                            break;
+                        }
+                        foreach (var entry in below)
+                            ok &= Add(terms, entry.Key, entry.Value.Times(factor.ScaleBy(over)) is { } scaled ? scaled with { Difference = scaled.Difference + 1 } : null);
+                    }
+                    if (!ok)
+                        terms = null;
+                }
+                recurrences[m] = terms;
+                return terms;
+            }
+            var final = new Dictionary<(int, int, int), OverTheDifferenceOfSquares>();
+            foreach (var entry in combination)
+            {
+                if (entry.Key.Item1 != 1)
+                {
+                    if (!Add(final, entry.Key, entry.Value))
+                        return null;
+                    continue;
+                }
+                if (Recurrence(entry.Key.Item2) is not { } expandedPower)
+                    return null;
+                foreach (var term in expandedPower)
+                    if (!Add(final, term.Key, term.Value.Numerator.Multiply(entry.Value.Numerator) is { } product
+                        ? new OverTheDifferenceOfSquares(product, term.Value.Difference + entry.Value.Difference, term.Value.B + entry.Value.B) : null))
+                        return null;
+            }
+            // The algebraic terms simplified apart from the integrals, which a piecewise
+            // answer for I_1 would otherwise take into each of its branches.
+            Entity algebraic = Number.Integer.Zero;
+            Entity integrals = Number.Integer.Zero;
+            foreach (var entry in final.OrderBy(entry => entry.Key))
+            {
+                if (entry.Value.Numerator.IsZero)
+                    continue;
+                var coefficient = entry.Value.ToEntity(placeholders, a, b);
+                var (kind, first, second) = entry.Key;
+                if (kind == 0)
+                {
+                    algebraic += coefficient * cofunction / (first == 1 ? binomial : MathS.Pow(binomial, Number.Integer.Create(first)));
+                    continue;
+                }
+                Entity question = kind == 1 ? 1 / binomial
+                    : (first == 0 ? Number.Integer.One : MathS.Pow(reciprocal, Number.Integer.Create(-first)))
+                      * (second == 0 ? Number.Integer.One : second == 1 ? function : MathS.Pow(function, Number.Integer.Create(second)));
+                if (Integration.ComputeAsAQuestionOfItsOwn(question.InnerSimplified, x, integrateByParts: true) is not { } integrated)
+                    return null;
+                integrals += coefficient * integrated;
+            }
+            var answer = constant * ((algebraic / slope).InnerSimplified + integrals);
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
+        /// A power of a secant over a whole power of <c>a cos(y) + b sin(y)</c>, the two powers
+        /// together odd, <c>sec(y)^m/(a cos(y) + b sin(y))^n</c>, in powers of the binomial
+        /// <c>w = a + b tan(y)</c>: the quotient is <c>sec(y) (1 + tan(y)^2)^k/w^n</c> with
+        /// <c>2 k + 1 = m + n</c>, and with <c>tan(y) = (w - a)/b</c> the power
+        /// <c>(1 + tan(y)^2)^k = ((w - a)^2 + b^2)^k/b^(2 k) = sum d_j w^j</c>. A term below the
+        /// bar, <c>sec(y)/w^i</c>, is <c>cos(y)^(i - 1)/(a cos(y) + b sin(y))^i</c>, and one above
+        /// it a polynomial in the tangent beside the secant; each is its own question.
+        /// </summary>
+        /// <remarks>
+        /// Where <c>m + n</c> is even the quotient is a rational function of the tangent beside
+        /// <c>sec(y)^2</c>, which the substitution answers; odd, it took the half-angle, and with
+        /// symbols for <c>a</c> and <c>b</c> Rubi's 4.7.2 <c>sec(c + d x)^4/(a cos + b sin)^3</c>
+        /// and <c>sec^3/(a cos + b sin)^4</c> ran out of time, and <c>sec^6/(a cos + b sin)</c>,
+        /// answered, was 5.6 thousand characters. From <c>m + n = 7</c>, where the half-angle
+        /// stops answering in time.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static Entity? SolveASecantPowerOverAPowerOfACosineAndASineInPowersOfABinomialInTheTangent(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            static IEnumerable<(Entity Factor, bool Below)> Factors(Entity e, bool below) => e switch
+            {
+                Mulf(var l, var r) => Factors(l, below).Concat(Factors(r, below)),
+                Divf(var l, var r) => Factors(l, below).Concat(Factors(r, !below)),
+                _ => new[] { (e, below) }
+            };
+            Entity constant = Number.Integer.One;
+            Entity? combination = null;
+            Entity? argument = null;
+            var n = 0;
+            var m = 0;
+            foreach (var (factor, below) in Factors(expr, false))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = below ? constant / factor : constant * factor;
+                    continue;
+                }
+                var (@base, power) = factor is Powf(var b0, Number.Integer { EInteger: var e0 }) && e0.CanFitInInt32()
+                    ? (b0, e0.ToInt32Unchecked()) : (factor, 1);
+                if (below)
+                    power = -power;
+                switch (@base)
+                {
+                    case Secantf(var y) when argument is null || argument == y:
+                        argument = y;
+                        m += power;
+                        break;
+                    case Cosf(var y) when argument is null || argument == y:
+                        argument = y;
+                        m -= power;
+                        break;
+                    case Sumf or Minusf when combination is null || combination == @base:
+                        combination = @base;
+                        n -= power;
+                        break;
+                    default:
+                        return null;
+                }
+            }
+            // From m + n = 7: below it the half-angle answers in time, and this, asking up to five
+            // questions, was no faster on `sec(y)/(a cos(y) + b sin(y))^4`.
+            if (combination is null || argument is null || m < 1 || n < 1 || (m + n) % 2 == 0 || m + n < 7 || m + n > 13)
+                return null;
+            if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out _) || Functions.PartialFractions.IsZeroAsAValue(slope))
+                return null;
+            // a cos(y) + b sin(y), nothing else.
+            var cosine = Variable.CreateUnique(expr, "c_tan");
+            var sine = Variable.CreateUnique(expr, "s_tan");
+            var inBoth = combination.Substitute(MathS.Cos(argument), cosine).Substitute(MathS.Sin(argument), sine);
+            if (inBoth.ContainsNode(x)
+                || !TreeAnalyzer.TryGetPolyLinear(inBoth, cosine, out var a, out var rest)
+                || !TreeAnalyzer.TryGetPolyLinear(rest, sine, out var b, out var free)
+                || a.ContainsNode(sine) || !Functions.PartialFractions.IsZeroAsAValue(free)
+                || Functions.PartialFractions.IsZeroAsAValue(a) || Functions.PartialFractions.IsZeroAsAValue(b))
+                return null;
+            var k = (m + n - 1) / 2;
+            // The placeholders a, b and w, in that order; every coefficient is over b^(2 k).
+            var placeholders = new[] { Variable.CreateUnique(expr, "a_tan"), Variable.CreateUnique(expr, "b_tan"), Variable.CreateUnique(expr, "w_tan") };
+            var pa = MultivariatePolynomial.Monomial(3, 0);
+            var pb = MultivariatePolynomial.Monomial(3, 1);
+            var pw = MultivariatePolynomial.Monomial(3, 2);
+            var shifted = pw.Subtract(pa);
+            if (shifted.Multiply(shifted)?.Add(pb.Multiply(pb)!).Power(k) is not { } expanded)
+                return null;
+            // The terms: (true, i) for cos(y)^(i - 1)/(a cos(y) + b sin(y))^i, (false, i) for sec(y) tan(y)^i.
+            var terms = new Dictionary<(bool Below, int Power), MultivariatePolynomial>();
+            void Add((bool, int) key, MultivariatePolynomial value)
+                => terms[key] = terms.TryGetValue(key, out var existing) ? existing.Add(value) : value;
+            // .Key and .Value: KeyValuePair has no Deconstruct on netstandard2.0.
+            foreach (var power in expanded.CoefficientsIn(2))
+            {
+                var (j, d) = (power.Key, power.Value);
+                if (j < n)
+                {
+                    Add((true, n - j), d);
+                    continue;
+                }
+                // sec(y) w^(j - n), w = a + b tan(y), in powers of the tangent.
+                var choose = EInteger.One;
+                for (var i = 0; i <= j - n; i++)
+                {
+                    if (i > 0)
+                        choose = choose * (j - n - i + 1) / i;
+                    if (pa.Power(j - n - i)?.Multiply(pb.Power(i)!)?.Multiply(d)?.ScaleBy(ERational.FromEInteger(choose)) is not { } term)
+                        return null;
+                    Add((false, i), term);
+                }
+            }
+            Entity answer = Number.Integer.Zero;
+            foreach (var entry in terms.OrderBy(entry => entry.Key))
+            {
+                if (entry.Value.IsZero)
+                    continue;
+                // Over b^(2 k), with the powers of b the numerator holds divided out first.
+                var (numerator, power) = (entry.Value, 2 * k);
+                while (power > 0 && numerator.DivideExact(pb) is { } lower)
+                    (numerator, power) = (lower, power - 1);
+                Entity coefficient = numerator.ToEntity(placeholders).Substitute(placeholders[0], a).Substitute(placeholders[1], b);
+                if (power > 0)
+                    coefficient /= power == 1 ? b : MathS.Pow(b, Number.Integer.Create(power));
+                var (isBelow, i) = entry.Key;
+                Entity question = isBelow
+                    ? (i == 1 ? Number.Integer.One : i == 2 ? MathS.Cos(argument) : MathS.Pow(MathS.Cos(argument), Number.Integer.Create(i - 1)))
+                      / (i == 1 ? combination : MathS.Pow(combination, Number.Integer.Create(i)))
+                    : MathS.Sec(argument) * (i == 0 ? Number.Integer.One : i == 1 ? MathS.Tan(argument) : MathS.Pow(MathS.Tan(argument), Number.Integer.Create(i)));
+                if (Integration.ComputeAsAQuestionOfItsOwn(question.InnerSimplified, x, integrateByParts: true) is not { } integrated)
+                    return null;
+                answer += coefficient * integrated;
+            }
+            answer = constant * answer;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
+        /// An odd power of a sine over a whole power of <c>a + b tan(y)^2</c>, under
+        /// <c>u = cos(y)</c>: <c>a + b tan(y)^2 = ((a - b) u^2 + b)/u^2</c> and
+        /// <c>sin(y)^m dy = -(1 - u^2)^((m - 1)/2) du</c>, so the integrand is the rational
+        /// function <c>-(1 - u^2)^((m - 1)/2) u^(2 n)/((a - b) u^2 + b)^n</c>, asked with
+        /// <c>a - b</c> named by a symbol of its own and written back into the answer.
+        /// </summary>
+        /// <remarks>
+        /// Bioche's substitution, which comes after the substitution search: the search ran out
+        /// of time on Rubi's 4.3.7 <c>sin(e + f x)^3/(a + b tan(e + f x)^2)^3</c>, and took
+        /// fifteen seconds on <c>sin^5/(a + b tan^2)^3</c>. The rational function with
+        /// <c>a - b</c> written in it took seven seconds, where named it takes a tenth of one.
+        /// The quadratic has no linear term, so the name hides no relation between its
+        /// coefficients; <c>a = b</c> is another shape, and declines.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static Entity? SolveAnOddPowerOfASineOverAPowerOfABinomialInTheSquaredTangentUnderTheCosine(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            static IEnumerable<(Entity Factor, bool Below)> Factors(Entity e, bool below) => e switch
+            {
+                Mulf(var l, var r) => Factors(l, below).Concat(Factors(r, below)),
+                Divf(var l, var r) => Factors(l, below).Concat(Factors(r, !below)),
+                _ => new[] { (e, below) }
+            };
+            Entity constant = Number.Integer.One;
+            Entity? binomial = null;
+            Entity? argument = null;
+            var n = 0;
+            var m = 0;
+            foreach (var (factor, below) in Factors(expr, false))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = below ? constant / factor : constant * factor;
+                    continue;
+                }
+                var (@base, power) = factor is Powf(var b0, Number.Integer { EInteger: var e0 }) && e0.CanFitInInt32()
+                    ? (b0, e0.ToInt32Unchecked()) : (factor, 1);
+                if (below)
+                    power = -power;
+                switch (@base)
+                {
+                    case Sinf(var y) when argument is null || argument == y:
+                        argument = y;
+                        m += power;
+                        break;
+                    case Sumf or Minusf when binomial is null || binomial == @base:
+                        binomial = @base;
+                        n -= power;
+                        break;
+                    default:
+                        return null;
+                }
+            }
+            if (binomial is null || argument is null || m < 1 || m % 2 == 0 || m > 15 || n < 1 || n > 8)
+                return null;
+            if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out _) || Functions.PartialFractions.IsZeroAsAValue(slope))
+                return null;
+            var tangent = MathS.Tan(argument);
+            var t = Variable.CreateUnique(expr, "t_sq");
+            var inT = binomial.Substitute(tangent, t);
+            if (inT.ContainsNode(x) || !TreeAnalyzer.TryGetPolynomial(inT, t, out var read)
+                || read.Count != 2 || !read.TryGetValue(EInteger.Zero, out var a) || !read.TryGetValue(EInteger.FromInt32(2), out var b)
+                || Functions.PartialFractions.IsZeroAsAValue(b))
+                return null;
+            var difference = (a - b).InnerSimplified;
+            if (VanishesIdentically(difference))
+                return null;
+            var named = difference is Number or Variable ? difference : Variable.CreateUnique(expr, "g_sq");
+            var u = Variable.CreateUnique(expr + named, "u_sq");
+            var k = (m - 1) / 2;
+            Entity inU = MathS.Pow(u, Number.Integer.Create(2 * n)) / (n == 1 ? named * MathS.Sqr(u) + b : MathS.Pow(named * MathS.Sqr(u) + b, Number.Integer.Create(n)));
+            inU = -(k == 0 ? inU : MathS.Pow(1 - MathS.Sqr(u), Number.Integer.Create(k)) * inU);
+            if (Integration.ComputeAsAQuestionOfItsOwn(inU, u, integrateByParts: true) is not { } integrated)
+                return null;
+            if (named is Variable name && name != difference)
+                integrated = integrated.Substitute(name, difference);
+            var answer = constant * integrated.Substitute(u, MathS.Cos(argument)) / slope;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
+        /// An odd power of a tangent beside a function of the square of the sine of the same
+        /// linear, <c>tan(y)^(2 k + 1) F(sin(y)^2)</c>, under <c>v = sin(y)^2</c>: with
+        /// <c>dv = 2 sin(y) cos(y) dy</c>, <c>tan(y)^(2 k + 1) dy = v^k/(1 - v)^(k + 1) dv/2</c>,
+        /// and <c>v^k F(v)/(2 (1 - v)^(k + 1))</c> is asked of the rest of the integrator.
+        /// </summary>
+        /// <remarks>
+        /// The substitution in the secant after it writes <c>a + b sin(y)^2</c> as
+        /// <c>a + b (1 - 1/u^2)</c>, and writing the power of that quotient apart took eight
+        /// seconds on Rubi's 4.1.7 <c>tan(e + f x)^5/(a + b sin(e + f x)^2)^(5/2)</c>, which
+        /// ran out of time; in <c>v</c> it is a power of a linear beside a rational function,
+        /// answered in a tenth of a second. Only where a root holds the sine's square: a
+        /// rational function of it the secant's substitution answers as shortly.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static Entity? SolveAnOddPowerOfATangentBesideAFunctionOfTheSquaredSineUnderIt(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            static IEnumerable<(Entity Factor, bool Below)> Factors(Entity e, bool below) => e switch
+            {
+                Mulf(var l, var r) => Factors(l, below).Concat(Factors(r, below)),
+                Divf(var l, var r) => Factors(l, below).Concat(Factors(r, !below)),
+                _ => new[] { (e, below) }
+            };
+            Entity constant = Number.Integer.One;
+            Entity rest = Number.Integer.One;
+            Entity? argument = null;
+            var j = 0;
+            foreach (var (factor, below) in Factors(expr, false))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = below ? constant / factor : constant * factor;
+                    continue;
+                }
+                var (@base, power) = factor is Powf(var b0, Number.Integer { EInteger: var e0 }) && e0.CanFitInInt32()
+                    ? (b0, e0.ToInt32Unchecked()) : (factor, 1);
+                if (@base is Tanf(var y) && (argument is null || argument == y))
+                {
+                    argument = y;
+                    j += below ? -power : power;
+                }
+                else
+                    rest = below ? rest / factor : rest * factor;
+            }
+            if (argument is null || j < 1 || j % 2 == 0 || j > 15 || rest == Number.Integer.One)
+                return null;
+            if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out _) || Functions.PartialFractions.IsZeroAsAValue(slope))
+                return null;
+            var v = Variable.CreateUnique(expr, "v_sq");
+            var sine = MathS.Sin(argument);
+            var inV = rest.Replace(node => node is Powf(var s0, Number.Integer { EInteger: var e1 }) && s0 == sine && !e1.IsZero && e1.IsEven && e1.CanFitInInt32()
+                ? MathS.Pow(v, Number.Integer.Create(e1.ToInt32Unchecked() / 2)) : node);
+            // A root of a sum in v with a constant in it, which the secant's substitution writes
+            // apart: a rational function of the sine's square it answers as one in the secant, and as
+            // shortly, and `tan(y)/sqrt(a sin(y)^2)` in 110 characters, where in v it is 627.
+            if (inV.ContainsNode(x) || !inV.ContainsNode(v)
+                || !inV.Nodes.Any(node => node is Powf(var radicand, Number.Rational and not Number.Integer) && radicand.ContainsNode(v)
+                    && TreeAnalyzer.TryGetPolynomial(radicand, v, out var inPowers) && inPowers.Count >= 2 && inPowers.ContainsKey(EInteger.Zero)))
+                return null;
+            var k = (j - 1) / 2;
+            Entity measure = (k == 0 ? Number.Integer.One : k == 1 ? v : MathS.Pow(v, Number.Integer.Create(k)))
+                / (2 * (k == 0 ? 1 - v : MathS.Pow(1 - v, Number.Integer.Create(k + 1))));
+            if (Integration.ComputeAsAQuestionOfItsOwn(measure * inV, v, integrateByParts: true) is not { } integrated)
+                return null;
+            var answer = constant * integrated.Substitute(v, MathS.Sqr(sine)) / slope;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
+        /// An even power of a tangent over a power of <c>k (1 +- sec(y))</c>, cancelled where the
+        /// power above is at least twice the one below: <c>tan^2 = (sec - 1)(sec + 1)</c>, so
+        /// <c>tan(y)^m/(k (1 + sec(y)))^n</c> is <c>tan(y)^(m - 2 n) (sec(y) - 1)^n/k^n</c>, and
+        /// over <c>k (1 - sec(y))</c> it is <c>tan(y)^(m - 2 n) (sec(y) + 1)^n/(-k)^n</c>.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's 4.5.1.4 <c>tan(c + d x)^12/(a + a sec(c + d x))^3</c> ran out of time, and
+        /// <c>tan(c + d x)^6 (sec(c + d x) - 1)^3/a^3</c> is answered in a third of a second.
+        /// From the twelfth power only, where the rules after it stop answering in time --
+        /// <c>tan^12/(a + a sec)</c> and <c>tan^14/(a + a sec)^3</c> ran past a minute -- since
+        /// below it they answer more shortly: <c>tan^10/(a + a sec)^3</c> in 507 characters
+        /// where cancelled it is 851.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static Entity? SolveAnEvenPowerOfATangentOverAPowerOfOnePlusASecantByCancelling(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            static IEnumerable<(Entity Factor, bool Below)> Factors(Entity e, bool below) => e switch
+            {
+                Mulf(var l, var r) => Factors(l, below).Concat(Factors(r, below)),
+                Divf(var l, var r) => Factors(l, below).Concat(Factors(r, !below)),
+                _ => new[] { (e, below) }
+            };
+            Entity constant = Number.Integer.One;
+            Entity? binomial = null;
+            Entity? argument = null;
+            var n = 0;
+            var m = 0;
+            foreach (var (factor, below) in Factors(expr, false))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = below ? constant / factor : constant * factor;
+                    continue;
+                }
+                var (@base, power) = factor is Powf(var b0, Number.Integer { EInteger: var e0 }) && e0.CanFitInInt32()
+                    ? (b0, e0.ToInt32Unchecked()) : (factor, 1);
+                if (below)
+                    power = -power;
+                switch (@base)
+                {
+                    case Tanf(var y) when argument is null || argument == y:
+                        argument = y;
+                        m += power;
+                        break;
+                    case Sumf or Minusf when binomial is null || binomial == @base:
+                        binomial = @base;
+                        n -= power;
+                        break;
+                    default:
+                        return null;
+                }
+            }
+            if (binomial is null || argument is null || n < 1 || m % 2 != 0 || m < 2 * n || m < 12 || m > 24)
+                return null;
+            // k (1 + sigma sec(y)).
+            var secant = MathS.Sec(argument);
+            var s = Variable.CreateUnique(expr, "s_tc");
+            if (!TreeAnalyzer.TryGetPolyLinear(binomial.Substitute(secant, s), s, out var slope, out var k)
+                || slope.ContainsNode(x) || k.ContainsNode(x) || Functions.PartialFractions.IsZeroAsAValue(k))
+                return null;
+            var sigma = (slope / k).InnerSimplified;
+            int sign;
+            if (Functions.PartialFractions.IsZeroAsAValue((sigma - 1).InnerSimplified)) sign = 1;
+            else if (Functions.PartialFractions.IsZeroAsAValue((sigma + 1).InnerSimplified)) sign = -1;
+            else return null;
+            var left = m - 2 * n;
+            var tangent = MathS.Tan(argument);
+            Entity cancelled = (left == 0 ? Number.Integer.One : MathS.Pow(tangent, Number.Integer.Create(left)))
+                * (n == 1 ? secant - sign : MathS.Pow(secant - sign, Number.Integer.Create(n)))
+                / (n == 1 ? sign * k : MathS.Pow(sign * k, Number.Integer.Create(n)));
+            return Integration.ComputeAsAQuestionOfItsOwn((constant * cancelled).InnerSimplified, x, integrateByParts: true);
+        }
+
+        /// <summary>
+        /// A product of roots that is a constant times a whole power of the variable, though
+        /// written with it, beside something else: with <c>A</c> the roots and <c>r</c> the sum of
+        /// their exponents times the degrees of what is under them, <c>K = A/x^r</c> has the
+        /// derivative zero wherever it is real, and <c>integral A T dx = K integral x^r T dx</c>.
+        /// <c>sqrt(b - a/x^2)/sqrt(a - b x^2)</c> is <c>K/x</c>, with <c>K^2 = -1</c>.
+        /// </summary>
+        /// <remarks>
+        /// <c>r</c> is the degree of <c>A</c> both at infinity and at zero, which a constant times
+        /// <c>x^r</c> needs, and <c>K</c> is taken as constant only where its derivative is zero at
+        /// the sampled points; the answer is checked. Rubi's 4.7.7
+        /// <c>sin(x) sqrt(b - a/x^2)/sqrt(a - b x^2)</c>, which is <c>K Si(x)</c>, was declined.
+        /// Late, where everything reading the integrand as written has declined.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static Entity? SolveByTakingOutRootsConstantUpToAPowerOfTheVariable(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            static IEnumerable<(Entity Factor, bool Below)> Factors(Entity e, bool below) => e switch
+            {
+                Mulf(var l, var r) => Factors(l, below).Concat(Factors(r, below)),
+                Divf(var l, var r) => Factors(l, below).Concat(Factors(r, !below)),
+                _ => new[] { (e, below) }
+            };
+            Entity roots = Number.Integer.One;
+            Entity rest = Number.Integer.One;
+            var atInfinity = ERational.Zero;
+            var atZero = ERational.Zero;
+            foreach (var (factor, below) in Factors(expr, false))
+            {
+                if (factor is Powf(var radicand, Number.Rational { ERational: var exponent }) && radicand.ContainsNode(x)
+                    && exponent.ToLowestTerms() is var q && !q.Denominator.Equals(EInteger.One))
+                {
+                    // The degrees of what is under the root at infinity and at zero, negative powers read.
+                    if (!TreeAnalyzer.TryGetPolynomial(radicand, x, out var read) || read.Count == 0
+                        || read.Values.Any(value => value.ContainsNode(x) || Functions.PartialFractions.IsZeroAsAValue(value)))
+                        return null;
+                    var signed = below ? q.Negate() : q;
+                    atInfinity += signed * ERational.FromEInteger(read.Keys.Max()!);
+                    atZero += signed * ERational.FromEInteger(read.Keys.Min()!);
+                    roots = below ? roots / factor : roots * factor;
+                }
+                else
+                    rest = below ? rest / factor : rest * factor;
+            }
+            atInfinity = atInfinity.ToLowestTerms();
+            if (roots == Number.Integer.One || !rest.ContainsNode(x) || atInfinity.CompareTo(atZero) != 0
+                || !atInfinity.Denominator.Equals(EInteger.One) || !atInfinity.Numerator.CanFitInInt32())
+                return null;
+            var r = atInfinity.Numerator.ToInt32Unchecked();
+            if (System.Math.Abs(r) > 6)
+                return null;
+            // As written, x^(-r) beside the roots: simplified, the roots were taken apart and put back.
+            var constant = r == 0 ? roots : (r == -1 ? x : MathS.Pow(x, Number.Integer.Create(-r))) * roots;
+            // Constant where its derivative is zero at the sampled points: its value is not one
+            // number across them, since `sqrt(b - a/x^2) x/sqrt(a - b x^2)` is i on one side of
+            // sqrt(a/b), where both roots vanish, and -i on the other.
+            if (!constant.ContainsNode(x)
+                || !Functions.PartialFractions.HoldsAtSampledPoints(constant.Differentiate(x), Number.Integer.Zero, x))
+                return null;
+            var power = r == 0 ? rest : r == 1 ? x * rest : MathS.Pow(x, Number.Integer.Create(r)) * rest;
+            if (Integration.ComputeAsAQuestionOfItsOwn(power.InnerSimplified, x, integrateByParts: true) is not { } integrated)
+                return null;
+            var answer = constant * integrated;
+            return answer.Nodes.Any(node => node == MathS.NaN) || Functions.PartialFractions.DerivativeDiffersWhereReal(answer, expr, x) ? null : answer;
+        }
+
+        /// <summary>
+        /// The root of <c>k (1 +- f(y))</c>, or of it over something in <c>f(y)</c>, beside another
+        /// root of something in <c>f(y)</c>, for <c>f</c> a sine or a cosine, under
+        /// <c>u = f(y)</c>: with <c>g</c> the other function, <c>R = sqrt(k (1 + s f)/D)</c> is
+        /// <c>K g/(sqrt(D) sqrt(1 - s f))</c> where <c>K = R sqrt(D) sqrt(1 - s f)/g</c> has the square
+        /// <c>k</c>, and so is constant between the zeros of <c>g</c>; and <c>g dy</c> is
+        /// <c>du</c> for the sine and <c>-du</c> for the cosine. What is asked in <c>u</c> is the
+        /// rest over <c>sqrt(D(u)) sqrt(1 - s u)</c>.
+        /// </summary>
+        /// <remarks>
+        /// The half angle at which <c>1 +- f</c> is a square reads only roots of that kind, and
+        /// Rubi's 4.2.2.1 <c>sqrt(1 - cos(x))/sqrt(a - cos(x))</c> was declined and
+        /// <c>sqrt((1 - cos(x))/(a - cos(x)))</c> ran out of time; under <c>u = cos(x)</c> they are
+        /// <c>1/(sqrt(1 + u) sqrt(a - u))</c>, answered in a tenth of a second. Only for a number
+        /// <c>k</c>, and where another root of something in the function with a symbol in it is
+        /// there: the rules after it answer the rest, and more shortly.
+        /// https://github.com/asc-community/AngouriMath/issues/233
+        /// </remarks>
+        internal static Entity? SolveARootOfOnePlusASineBesideAnotherRootUnderTheSine(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var functions = expr.Nodes.Where(node => node.ContainsNode(x) && node is Sinf or Cosf or Tanf or Cotanf or Secantf or Cosecantf).Distinct().ToList();
+            if (functions.Count != 1 || functions[0] is not (Sinf or Cosf))
+                return null;
+            var function = functions[0];
+            var sine = function is Sinf;
+            var argument = function is Sinf(var ys) ? ys : ((Cosf)function).Argument;
+            if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out _) || Functions.PartialFractions.IsZeroAsAValue(slope))
+                return null;
+            var u = Variable.CreateUnique(expr, "u_root");
+            // k (1 + s f) as written, the sign s, or null.
+            int? Sign(Entity radicand)
+            {
+                if (!TreeAnalyzer.TryGetPolyLinear(radicand.Substitute(function, u), u, out var coefficient, out var k)
+                    || coefficient.ContainsNode(x) || k.ContainsNode(x) || Functions.PartialFractions.IsZeroAsAValue(k))
+                    return null;
+                var ratio = (coefficient / k).InnerSimplified;
+                return Functions.PartialFractions.IsZeroAsAValue((ratio - 1).InnerSimplified) ? 1
+                    : Functions.PartialFractions.IsZeroAsAValue((ratio + 1).InnerSimplified) ? -1 : null;
+            }
+            static IEnumerable<(Entity Factor, bool Below)> Factors(Entity e, bool below) => e switch
+            {
+                Mulf(var l, var r) => Factors(l, below).Concat(Factors(r, below)),
+                Divf(var l, var r) => Factors(l, below).Concat(Factors(r, !below)),
+                _ => new[] { (e, below) }
+            };
+            var factors = Factors(expr, false).ToList();
+            for (var at = 0; at < factors.Count; at++)
+            {
+                var (root, rootBelow) = factors[at];
+                if (rootBelow || root is not Powf(var radicand, Number.Rational { ERational: var half })
+                    || half.CompareTo(ERational.Create(1, 2)) != 0 || !radicand.ContainsNode(x))
+                    continue;
+                var (above, below) = Functions.SingleQuotient.Of(radicand);
+                // A number for k: `sqrt(a + a sin(y))` beside another root the rules after it answer,
+                // and more shortly than this, `sqrt(a + a sin(y)) sqrt(c + d sin(y))/sin(y)` in 1,071
+                // characters where this wrote 1,879.
+                if (above.Vars.Any(v => v != x) || Sign(above) is not { } s)
+                    continue;
+                // Everything else, and another root of something in the function among it or below the root.
+                Entity rest = Number.Integer.One;
+                for (var other = 0; other < factors.Count; other++)
+                    if (other != at)
+                        rest = factors[other].Below ? rest / factors[other].Factor : rest * factors[other].Factor;
+                // With a symbol in it: over numbers the half angle answers, `sqrt(1 - cos(x))/sqrt(2 - cos(x))`
+                // in 95 characters where this wrote over five hundred.
+                var anotherRoot = below.ContainsNode(x) && below.Vars.Any(v => v != x)
+                    || rest.Nodes.Any(node => node is Powf(var r0, Number.Rational and not Number.Integer)
+                        && r0.ContainsNode(x) && r0.Vars.Any(v => v != x) && Sign(r0) is null);
+                if (!anotherRoot)
+                    continue;
+                Entity complement = sine ? MathS.Cos(argument) : MathS.Sin(argument);
+                Entity conjugate = s == 1 ? 1 - function : 1 + function;
+                var constant = root * (below.ContainsNode(x) ? MathS.Sqrt(below) : Number.Integer.One) * MathS.Sqrt(conjugate) / complement;
+                // g dy = du for the sine, -du for the cosine.
+                var inU = ((sine ? rest : -rest) / ((below.ContainsNode(x) ? MathS.Sqrt(below) : Number.Integer.One) * MathS.Sqrt(conjugate)))
+                    .Substitute(function, u);
+                if (inU.ContainsNode(x))
+                    continue;
+                if (Integration.ComputeAsAQuestionOfItsOwn(inU.InnerSimplified, u, integrateByParts: true) is not { } integrated)
+                    return null;
+                var answer = constant * integrated.Substitute(u, function) / slope;
+                return answer.Nodes.Any(node => node == MathS.NaN) || Functions.PartialFractions.DerivativeDiffersWhereReal(answer, expr, x) ? null : answer;
+            }
+            return null;
+        }
+
+        /// <summary>
         /// A power of x times a whole power, past the first, of a sum holding an inverse function or a
         /// logarithm of a power of x, <c>x^m (a + b atanh(c x^n))^p</c>, under <c>t = x^n</c> where
         /// <c>(m + 1)/n</c> is whole: <c>x^m dx = t^((m + 1)/n - 1) dt/n</c>.

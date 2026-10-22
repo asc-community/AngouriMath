@@ -637,6 +637,27 @@ written in powers of `u = a + b f`, with coefficients `c_j = sum_i p_i C(i, j) (
 | `"(a+b*sin(e+f*x))^2*(A+B*sin(e+f*x))/(c+d*sin(e+f*x))^2".ToEntity().Integrate("x")` | `integral(...)` | 3,337 characters |
 | `"cos(c+d*x)^4*(A+C*cos(c+d*x)^2)/(a+b*cos(c+d*x))^4".ToEntity().Integrate("x")` | `integral(...)` | 10,859 characters |
 
+### An even power of a cosine over a power of `a + b sin` is reduced in the power of the binomial
+
+**Answers where there were none.** `cos(c + d x)^8/(a + b sin(c + d x))^8` ran out of time, and so did
+`cos^6`, `sec^2` and `sec^4` over the same eighth power and `sec^4/(a + b sin)^3`, Rubi's 4.1.1.2: with symbols for `a`
+and `b` the half-angle's partial fractions did not finish. With `u = a + b sin(y)`, `b^2 cos(y)^2 = (b^2 - a^2) + 2 a u - u^2`
+lowers a power of the cosine above the bar, and read for `a^2 - b^2` it lowers one below it; what is left is the integral
+`I_n` of `1/u^n`, and `(n - 1)(a^2 - b^2) I_n = b cos(y) u^(1 - n) + (2 n - 3) a I_(n - 1) - (n - 2) I_(n - 2)` takes it
+down to `I_1`. A sine over a binomial in the cosine is the same with `-b sin(y)`. The coefficients are summed exactly, so
+the answer holds `I_1` once. For `a^2 != b^2`, the generic case, as Rubi answers it: `a + a sin` declines. `1/(a + b sin)^n`
+and a polynomial in the sine over it are answered this way too, more shortly than by the half-angle
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"cos(c+d*x)^8/(a+b*sin(c+d*x))^8".ToEntity().Integrate("x")` | `integral(...)` | 4,788 characters |
+| `"sec(c+d*x)^4/(a+b*sin(c+d*x))^8".ToEntity().Integrate("x")` | `integral(...)` | 6,910 characters |
+| `"sec(c+d*x)^4/(a+b*sin(c+d*x))^3".ToEntity().Integrate("x")` | `integral(...)` | 3,030 characters |
+| `"cos(c+d*x)^4/(a+b*sin(c+d*x))^8".ToEntity().Integrate("x")` | `integral(...)` | 4,092 characters |
+| `"sin(x)^4/(a+b*cos(x))".ToEntity().Integrate("x")` | `integral(...)` | 1,309 characters |
+| `"1/(a+b*cos(c+d*x))^4".ToEntity().Integrate("x")` | `integral(...)` | 1,851 characters |
+
 ### A difference of a negated term is printed as a sum
 
 **A printed form.** A solution and a difference were printed with the sign of a negative factor left inside:
@@ -762,6 +783,18 @@ Only where the product `T B` is in the integrand; without it the rules after thi
 | `"x^4*(a+b*atanh(c*x))*(d+k*ln(1-c^2*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 721 characters |
 | `"x^5*(a+b*acoth(c*x))*(d+k*ln(1-c^2*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 717 characters |
 | `"(a+b*acoth(c*x))*(d+k*ln(1-c^2*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 354 characters |
+
+### An odd power of a tangent beside a root of `a + b sin^2` is integrated under `v = sin^2`
+
+**Answers where there were none.** `tan(e + f x)^5/(a + b sin(e + f x)^2)^(5/2)`, Rubi's 4.1.7, ran out of time: the
+substitution in the secant wrote the root as a power of `a + b - b/u^2` and spent eight seconds writing it apart. With
+`v = sin(y)^2`, `tan(y)^(2 k + 1) dy = v^k/(1 - v)^(k + 1) dv/2`, and in `v` the root is of a linear. Only where a root of a
+sum with a constant in it holds the sine's square ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"tan(k+f*x)^5/(a+b*sin(k+f*x)^2)^(5/2)".ToEntity().Integrate("x")` | `integral(...)` | 4,109 characters |
+| `"tan(k+f*x)^5/sqrt(a-a*sin(k+f*x)^2)".ToEntity().Integrate("x")` | `integral(...)` | 190 characters |
 
 ### A power of x times an inverse tangent and the logarithm of its quadratic is integrated by parts
 
@@ -939,6 +972,17 @@ over a power of a linear. That is answered with `Si` and `Ci`
 | `"cos(c+d*x)^3/((pe+f*x)*(a+a*sin(c+d*x)))".ToEntity().Integrate("x")` | `integral(...)` | 246 characters |
 | `"cos(c+d*x)^3/((pe+f*x)^2*(a+a*sin(c+d*x)))".ToEntity().Integrate("x")` | `integral(...)` | 790 characters |
 
+### From the twelfth power, a power of a tangent over a power of `a + a sec` is cancelled
+
+**Answers where there were none.** `tan(c + d x)^12/(a + a sec(c + d x))^3`, Rubi's 4.5.1.4, ran out of time. `tan^2` is
+`(sec - 1)(sec + 1)`, so `tan(y)^m/(k (1 + sec(y)))^n` is `tan(y)^(m - 2 n) (sec(y) - 1)^n/k^n`, and over `k (1 - sec(y))`
+the same with `sec(y) + 1` over `(-k)^n`. From the twelfth power only, where the rules after it stop answering in time:
+below it they answer more shortly ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"tan(c+d*x)^12/(a+a*sec(c+d*x))^3".ToEntity().Integrate("x")` | `integral(...)` | 1,140 characters |
+
 ### Every linear beside a block is split off, a quadratic with rational roots among them
 
 **Answers where there were none.** `sec(c + d x)/(a + b sin(c + d x)^3)` was declined, and so were
@@ -1110,6 +1154,20 @@ split. It is written `b (s + r)(s^2 - r s + r^2)` now, with `r = (a/b)^(1/3)`, w
 | `"csc(c + d*x)^5/(a + b*sin(c + d*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 5,958 characters |
 | `"sec(c + d*x)^2/(a + b*sin(c + d*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 7,010 characters |
 | `"sec(c + d*x)^4/(a + b*sin(c + d*x)^3)".ToEntity().Integrate("x")` | `integral(...)` | 11,646 characters |
+
+### A root of `1 - cos` beside another root is integrated under the cosine
+
+**Answers where there were none.** `sqrt(1 - cos(x))/sqrt(a - cos(x))`, Rubi's 4.2.2.1, was declined and
+`sqrt((1 - cos(x))/(a - cos(x)))` ran out of time: the half angle at which `1 - cos` is a square reads only roots of
+that kind. With `g` the other function, `sqrt(k (1 + s f)/D)` is `K g/(sqrt(D) sqrt(1 - s f))` where `K` has the square
+`k` and so is constant between the zeros of `g`, and under `u = f(y)` what is left is
+`1/(sqrt(1 + u) sqrt(a - u))`. For a number `k` and another root with a symbol in it only: the rules after it answer
+the rest, and more shortly ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(1-cos(x))/sqrt(a-cos(x))".ToEntity().Integrate("x")` | `integral(...)` | 98 characters |
+| `"sqrt((1-cos(x))/(a-cos(x)))".ToEntity().Integrate("x")` | `integral(...)` | 138 characters |
 
 ### A linear factor common to a sum below the bar is taken out of it
 
@@ -1529,6 +1587,18 @@ integral of the function ([#718](https://github.com/asc-community/AngouriMath/is
 | `"atan(k*x/sqrt(-a*k^2/b-k^2*x^2))^m/sqrt(a+b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 320 characters |
 | `"1/(atan(k*x/sqrt(-a*k^2/b-k^2*x^2))^3*sqrt(a+b*x^2))".ToEntity().Integrate("x")` | `integral(...)` | 314 characters |
 
+### Roots that are a constant times a power of x are taken out as that constant
+
+**Answers where there were none.** `sin(x) sqrt(b - a/x^2)/sqrt(a - b x^2)`, Rubi's 4.7.7, was declined. The roots are
+`K/x` with `K = x sqrt(b - a/x^2)/sqrt(a - b x^2)`, whose square is `-1`: constant between the zeros of the roots, where
+it changes sign. With `r` the degree of the roots both at infinity and at zero, `K = A/x^r` is taken as constant where its
+derivative is zero at sampled points, and the integral is `K` times that of `x^r` times the rest, here `K Si(x)`. Last
+but two, where everything reading the roots as written has declined ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sin(x)*sqrt(b-a/x^2)/sqrt(a-b*x^2)".ToEntity().Integrate("x")` | `integral(...)` | 107 characters |
+
 ### Half an odd power of an inverse hyperbolic cosine of `c + d x^2` is integrated in error functions
 
 **Answers where there were none.** `(a + b acosh(1 + d x^2))^(1/2)` was declined, and so were thirteen more of Rubi's
@@ -1613,6 +1683,21 @@ answer these integrands; the split now ends at the first term declined. More slo
 | `"1/(a*sech(x)+b*tanh(x))^2".ToEntity().Integrate("x")` | `integral(...)` | 1,836 characters |
 | `"1/(a*coth(x)+b*csch(x))^2".ToEntity().Integrate("x")` | `integral(...)` | 1,831 characters |
 | `"1/(1-cosh(x)^8)".ToEntity().Integrate("x")` | `integral(...)` | 1,232 characters |
+
+### A power of a secant over a power of `a cos + b sin` is written in powers of `a + b tan`
+
+**Answers where there were none.** `sec(c + d x)^4/(a cos(c + d x) + b sin(c + d x))^3` and `sec^3/(a cos + b sin)^4`, Rubi's
+4.7.2, ran out of time. Where the two powers together are even the quotient is a rational function of the tangent beside
+`sec^2`; odd, it went to the half-angle. It is `sec(y) (1 + tan(y)^2)^k/(a + b tan(y))^n` with `2 k + 1 = m + n`, and in
+powers of `w = a + b tan(y)` a term below the bar, `sec(y)/w^i`, is `cos(y)^(i - 1)/(a cos(y) + b sin(y))^i`, and one above
+it a polynomial in the tangent beside the secant. From `m + n = 7`: below it the half-angle answers in time
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sec(c+d*x)^4/(a*cos(c+d*x)+b*sin(c+d*x))^3".ToEntity().Integrate("x")` | `integral(...)` | 2,175 characters |
+| `"sec(c+d*x)^3/(a*cos(c+d*x)+b*sin(c+d*x))^4".ToEntity().Integrate("x")` | `integral(...)` | 3,401 characters |
+| `"sec(c+d*x)^6/(a*cos(c+d*x)+b*sin(c+d*x))".ToEntity().Integrate("x")` | `integral(...)` | 1,151 characters |
 
 ### A whole power of an inverse function of `c + d x^2` is integrated by its recurrence
 
@@ -1738,6 +1823,18 @@ twice ([#1877](https://github.com/asc-community/AngouriMath/issues/1877),
 | `"sin(a + b*x)/((c + d)*x^2 + (e - f)*x + 1)".ToEntity().Integrate("x")` | `integral(...)` | 921 characters |
 | `"sin(a + b*x)/((d*e - c*f)*x^3 + f)".ToEntity().Integrate("x")` | `integral(...)` | 1,416 characters |
 | `"sin(x)/(a*x^2 + 2*a*x + a)".ToEntity().Integrate("x")` | `integral(...)` | 246 characters |
+
+### An odd power of a sine over a power of `a + b tan^2` is integrated under the cosine with `a - b` named
+
+**Answers where there were none.** `sin(e + f x)^3/(a + b tan(e + f x)^2)^3`, Rubi's 4.3.7, ran out of time in the
+substitution search before Bioche's substitution was reached, and `sin^5` over the same cube took fifteen seconds. Under
+`u = cos(y)`, `a + b tan(y)^2 = ((a - b) u^2 + b)/u^2`, and the rational function in `u` is asked with `a - b` named by
+a symbol of its own: written in, it took seven seconds, named a tenth of one ([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sin(k+f*x)^3/(a+b*tan(k+f*x)^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 2,667 characters |
+| `"sin(k+f*x)^5/(a+b*tan(k+f*x)^2)^3".ToEntity().Integrate("x")` | `integral(...)` | 6,183 characters |
 
 ### A trigonometric function of `a + b/x` beside a rational function is integrated in `1/x`
 
@@ -4001,7 +4098,7 @@ of the six functions read inside a power as it is
 | `"(c*sin(a+b*x)^n)^(1/n)".ToEntity().Integrate("x")` | `integral(...)` | 77 characters |
 | `"sin(c+d*x)^6/(a+b*sin(c+d*x)^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 2,169 characters |
 | `"cot(c+d*x)^2/(a+b*sec(c+d*x)^2)^2".ToEntity().Integrate("x")` | `integral(...)` | 1,963 characters |
-| `"sqrt(1-cos(x))/sqrt(a-cos(x))".ToEntity().Integrate("x")` | `integral(...)` | 70 characters |
+| `"sqrt(1-cos(x))/sqrt(a-cos(x))".ToEntity().Integrate("x")` | `integral(...)` | 98 characters |
 
 ### A product of powers of the trigonometric functions, some not whole, is integrated as sine and cosine powers
 
