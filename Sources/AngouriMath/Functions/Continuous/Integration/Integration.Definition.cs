@@ -1266,6 +1266,10 @@ namespace AngouriMath.Functions.Algebra
             // And the secant beside powers of a + a sec(y) and c - c sec(y), whose product is a
             // square of the tangent: in u = a + a sec(y), a symbolic power of it too.
             if ((answer = IndefiniteIntegralSolver.SolveASecantBesidePowersOfItsConjugateSums(expr, x, integrateByParts)) is { }) return answer;
+            // And a function of the roots of sec(y) + 1 and sec(y) - 1, in their difference w, of
+            // which both and the secant are rational functions: Charlwood's
+            // `sqrt(sqrt(1 + sec(x)) - sqrt(sec(x) - 1))`.
+            if ((answer = IndefiniteIntegralSolver.SolveAFunctionOfTheRootsOfTheSecantPlusAndMinusOneInTheirDifference(expr, x, integrateByParts)) is { }) return answer;
             // And an odd power of the tangent beside a function of the secant, in u = sec(y).
             if ((answer = IndefiniteIntegralSolver.SolveAnOddPowerOfTheTangentBesideAFunctionOfTheSecant(expr, x, integrateByParts)) is { }) return answer;
             // And `a ± a cosh(y)` under a fractional power: `2a cosh(y/2)^2`, `-2a sinh(y/2)^2`.
@@ -1568,6 +1572,10 @@ namespace AngouriMath.Functions.Algebra
             // apart where its residue, the radicand at its root, is zero.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingALinearBelowTheBarOverTheRadicand(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByEulerSubstitution(expr, x)) is { }) return answer;
+            // And a half-odd power of L + sqrt(Q) where Q - L^2 is a square, in u = (sqrt(Q) - L)/(x - r),
+            // of which x, the inner root and the outer one's square are rational functions:
+            // Bondarenko's `sqrt(1 + sqrt(x) + sqrt(1 + 2x + 2 sqrt(x)))` under x = t^2.
+            if ((answer = IndefiniteIntegralSolver.SolveAHalfOddPowerOfALinearPlusTheRootOfAQuadraticByEulersSubstitution(expr, x, integrateByParts)) is { }) return answer;
             // And a root over the root of a quadratic, or over the roots of two linears with one
             // slope, in the variable that rationalises the roots inside: `sqrt(1 - x^2 + x sqrt(x^2 - 1))`.
             if ((answer = IndefiniteIntegralSolver.SolveANestedRootByRationalisingTheRootsInIt(expr, x, integrateByParts)) is { }) return answer;
@@ -1590,6 +1598,11 @@ namespace AngouriMath.Functions.Algebra
             // rationalises it, and the elementary ones are logarithms of `L - y` for linear L
             // whose cube agrees with the polynomial at the poles, found by an ansatz.
             if ((answer = CubeRootLogarithmAnsatz.Integrate(expr, x)) is { }) return answer;
+            // And a quotient beside the cube root of a polynomial with a linear factor L, at the
+            // coefficients where it is a constant times T'/(1 - T^3) for T = m L/y or m y/L, in
+            // closed form: after the ansatz, which answers the numeric ones and declined Welz's,
+            // with symbols in the radicand.
+            if ((answer = IndefiniteIntegralSolver.SolveAPseudoEllipticQuotientBesideACubeRootWithALinearFactor(expr, x)) is { }) return answer;
             // And of one square root of a squarefree quadratic, cubic or quartic -- the latter
             // two elliptic, the first rational but with residues Euler's substitutions leave in
             // a field of degree four: the elementary ones are logarithms and arctangents of
@@ -1603,6 +1616,11 @@ namespace AngouriMath.Functions.Algebra
             // And a sum with the root below the bar, over its conjugate: after every rule above,
             // which answer the numeric spellings, `1/(a c + b c x^2 + d sqrt(a + b x^2))` among them.
             if ((answer = IndefiniteIntegralSolver.SolveByTheConjugateOfASumWithARootOfAQuadraticBelowTheBar(expr, x, integrateByParts)) is { }) return answer;
+            // A linear over a linear beside the root of a cubic or a quartic, where the integral is a
+            // function of the numerator's square over the root: Welz's
+            // `(1 + x - sqrt(3))/((1 + x + sqrt(3)) sqrt(x^4 + 4 sqrt(3) x^2 - 4))`, whose pole is
+            // irrational. After the ansatz, which answers the ones with rational poles.
+            if ((answer = IndefiniteIntegralSolver.SolveALinearOverALinearBesideTheRootOfAQuarticByTheSquareOfTheNumerator(expr, x)) is { }) return answer;
             // And a power of a product with a factor under a whole power, that power taken out in
             // front of a constant: `(c sin(a + b x)^3)^(1/3)` is `K sin(a + b x)`.
             if ((answer = IndefiniteIntegralSolver.SolveByTakingTheWholePowersOutOfAPowerOfAProduct(expr, x, integrateByParts)) is { }) return answer;
@@ -1632,6 +1650,10 @@ namespace AngouriMath.Functions.Algebra
             // an ansatz finds it or nothing does. After the substitutions, which answer the
             // linear-exponent cases in their own terms.
             if ((answer = IndefiniteIntegralSolver.SolveByExponentialAnsatz(expr, x)) is { }) return answer;
+            // And where it declines for a simple pole at a zero of the exponent, the derivative of a
+            // multiple of Ei(h) taken out first: Hebisch's
+            // `(2 + 2x + 3x^2 - x^3 + 2x^4) e^(x/(2 + x^2))/(2x + x^3)`.
+            if ((answer = IndefiniteIntegralSolver.SolveAnExponentialBesideAMultipleOfTheDerivativeOfItsExponentialIntegral(expr, x)) is { }) return answer;
             // An exponential of a polynomial in the reciprocal of a linear that is not a Gaussian,
             // under the Gaussian's substitution `u = 1/L`. After the ansatz, which answers some of
             // these in the base: `f^(a + b/x)/x^4` is `f^(a + b/x)` times a polynomial in `1/x`.
