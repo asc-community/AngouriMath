@@ -1068,6 +1068,21 @@ roots, `1 - x^2`, is taken as its two ([#718](https://github.com/asc-community/A
 | `"1/((1 - x^2)*(a + b*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,600 characters |
 | `"1/(x*(1 - x^2)*(a + b*x^3))".ToEntity().Integrate("x")` | `integral(...)` | 1,637 characters |
 
+### A hyperbolic quotient over a quadratic in its sine or cosine is asked as the sine's, before the tangent
+
+**Answers where there were none, and one longer spelling.** Rubi's 6.7.1 `sinh(x)^2/(a + b sinh(x) + c sinh(x)^2)`
+and `sinh(x)^3/(a + b sinh(x) + c sinh(x)^2)` ran past the budget. The tangent of the half argument made each a
+quartic with symbols in it, and its partial fractions did not return. Under Osborn's rule each is a rational
+function of a sine over a symbolic quadratic in it, and the sine's rule for that shape is now asked first, before
+the tangent. A quotient master answered some other way can come back spelled through the sine instead
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sinh(x)^2/(a+b*sinh(x)+c*sinh(x)^2)".ToEntity().Integrate("x")` | no answer in twenty seconds | 681 characters |
+| `"sinh(x)^3/(a+b*sinh(x)+c*sinh(x)^2)".ToEntity().Integrate("x")` | no answer in twenty seconds | 810 characters |
+| `"cosh(x)^2/(a+b*cosh(x)+c*cosh(x)^2)".ToEntity().Integrate("x")` | no answer in twenty seconds; 791 characters on the unreleased master | 813 characters |
+
 ### A hyperbolic integrand is asked as a trigonometric one
 
 **Answers where there were none.** The parser writes the hyperbolic functions as exponentials, so the trigonometric

@@ -1429,7 +1429,8 @@ namespace AngouriMath.Functions.Algebra
         /// the bar of degree above two: the second pass answers it in <c>e^L</c>, and the question in
         /// <c>s</c> took seconds to decline, five gigabytes for <c>1/(1 + sinh(x)^3)</c> against 0.2.
         /// </remarks>
-        internal static Entity? SolveAHyperbolicIntegrandAsATrigonometricOne(Entity expr, Entity.Variable x, bool integrateByParts, bool rationalToo)
+        internal static Entity? SolveAHyperbolicIntegrandAsATrigonometricOne(Entity expr, Entity.Variable x, bool integrateByParts, bool rationalToo,
+            bool overAQuadraticInTheSine = false)
         {
             // Only the question asked: a question in s is not cheap to decline, and below the top every
             // sub-question a route gives up on would ask it.
@@ -1497,7 +1498,11 @@ namespace AngouriMath.Functions.Algebra
                 && AFactorAboveAQuadraticInS(inS, s))
                 return null;
             var question = MathS.i / slopeOfL * inS;
-            if (Integration.ComputeAsAQuestionOfItsOwn(question, s, integrateByParts) is not { } inTermsOfS
+            // Or the one rule for a rational function of a sine or a cosine over a symbolic quadratic in
+            // it, asked ahead of the exponential substitution and cheap to decline.
+            if ((overAQuadraticInTheSine
+                    ? SolveARationalFunctionOfASineOverASymbolicQuadratic(inS, s, integrateByParts) is { } overTheQuadratic ? MathS.i / slopeOfL * overTheQuadratic : null
+                    : Integration.ComputeAsAQuestionOfItsOwn(question, s, integrateByParts)) is not { } inTermsOfS
                 || inTermsOfS.Nodes.Any(node => node is Integralf || node == MathS.NaN))
                 return null;
             var linear = interceptOfL.Evaled is Number.Complex { IsZero: true } ? slopeOfL * x : interceptOfL + slopeOfL * x;
