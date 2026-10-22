@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -129,28 +129,50 @@ namespace AngouriMath
             {
                 var epsilon = EDecimal.Create(EInteger.One, EInteger.FromInt32(-work.Precision.ToInt32Checked()));
                 // term_k = z^k / (a (a + 1) ... (a + k)), starting at 1/a
-                var term = Reciprocal(a, work);
-                var sum = term;
-                var peak = Magnitude(term);
-                var aPlusK = a;
-                for (var k = 1; ; k++)
+                (EDecimal Re, EDecimal Im) sum;
+                EDecimal peak;
+                if (a.Im.IsZero && z.Im.IsZero)
                 {
-                    aPlusK = (aPlusK.Re.Add(EDecimal.One, work), aPlusK.Im);
-                    term = Multiply(Multiply(term, z, work), Reciprocal(aPlusK, work), work);
-                    sum = (sum.Re.Add(term.Re, work), sum.Im.Add(term.Im, work));
-                    var size = Magnitude(term);
-                    if (size.CompareTo(peak) > 0)
-                        peak = size;
-                    if (k > 4 && size.CompareTo(Magnitude(sum).Multiply(epsilon, work)) < 0 && size.CompareTo(peak) < 0)
-                        break;
+                    // Real, as a sampled function's arguments are: one product and one quotient a term, where the complex
+                    // arithmetic took nineteen operations, and an evaluation four milliseconds.
+                    var term = EDecimal.One.Divide(a.Re, work);
+                    var real = term;
+                    peak = term.Abs();
+                    var aPlusK = a.Re;
+                    for (var k = 1; ; k++)
+                    {
+                        aPlusK = aPlusK.Add(EDecimal.One, work);
+                        term = term.Multiply(z.Re, work).Divide(aPlusK, work);
+                        real = real.Add(term, work);
+                        var size = term.Abs();
+                        if (size.CompareTo(peak) > 0)
+                            peak = size;
+                        if (k > 4 && size.CompareTo(real.Abs().Multiply(epsilon, work)) < 0 && size.CompareTo(peak) < 0)
+                            break;
+                    }
+                    sum = (real, EDecimal.Zero);
+                }
+                else
+                {
+                    var term = Reciprocal(a, work);
+                    sum = term;
+                    peak = Magnitude(term);
+                    var aPlusK = a;
+                    for (var k = 1; ; k++)
+                    {
+                        aPlusK = (aPlusK.Re.Add(EDecimal.One, work), aPlusK.Im);
+                        term = Multiply(Multiply(term, z, work), Reciprocal(aPlusK, work), work);
+                        sum = (sum.Re.Add(term.Re, work), sum.Im.Add(term.Im, work));
+                        var size = Magnitude(term);
+                        if (size.CompareTo(peak) > 0)
+                            peak = size;
+                        if (k > 4 && size.CompareTo(Magnitude(sum).Multiply(epsilon, work)) < 0 && size.CompareTo(peak) < 0)
+                            break;
+                    }
                 }
                 var prefactor = Multiply(ComplexPower(z, a, work), ComplexExp((z.Re.Negate(), z.Im.Negate()), work), work);
                 var lower = Multiply(prefactor, sum, work);
-                Complex gammaOfA;
-                using (MathS.Settings.DecimalPrecisionContext.Set(work))
-                using (MathS.Settings.DowncastingEnabled.Set(false))
-                    gammaOfA = Factorial(Complex.Create(a.Re.Subtract(EDecimal.One, work), a.Im) as Complex);
-                var gamma = (Re: gammaOfA.RealPart.EDecimal, Im: gammaOfA.ImaginaryPart.EDecimal);
+                var gamma = GammaOf(a, work);
                 var scale = EDecimal.Max(Magnitude(gamma), Magnitude(prefactor).Multiply(peak, work));
                 return ((gamma.Re.Subtract(lower.Re, work), gamma.Im.Subtract(lower.Im, work)), scale);
             }
@@ -210,6 +232,29 @@ namespace AngouriMath
                 return ((difference.Re.Multiply(coefficient, work), difference.Im.Multiply(coefficient, work)), scale.Multiply(coefficient.Abs(), work));
             }
 
+            /// <summary>
+            /// <c>Gamma(a)</c> at <paramref name="work"/>'s digits, remembered: it is most of the cost of an evaluation, six
+            /// milliseconds at a hundred digits, and a function sampled at points is asked it at one <c>a</c> for every
+            /// <c>z</c>.
+            /// </summary>
+            private static (EDecimal Re, EDecimal Im) GammaOf((EDecimal Re, EDecimal Im) a, EContext work)
+            {
+                var key = (a.Re, a.Im, work.Precision.ToInt32Checked());
+                if (gammaOfTheOrder.TryGetValue(key, out var known))
+                    return known;
+                Complex value;
+                using (MathS.Settings.DecimalPrecisionContext.Set(work))
+                using (MathS.Settings.DowncastingEnabled.Set(false))
+                    value = Factorial(Complex.Create(a.Re.Subtract(EDecimal.One, work), a.Im) as Complex);
+                var gamma = (value.RealPart.EDecimal, value.ImaginaryPart.EDecimal);
+                // Emptied rather than grown without end, as the integrator's answers are.
+                if (gammaOfTheOrder.Count >= 256)
+                    gammaOfTheOrder.Clear();
+                gammaOfTheOrder[key] = gamma;
+                return gamma;
+            }
+            [ConcurrentField] private static readonly System.Collections.Concurrent.ConcurrentDictionary<(EDecimal, EDecimal, int), (EDecimal, EDecimal)> gammaOfTheOrder = new();
+
             /// <summary>The power of ten of a nonzero finite decimal's leading digit: 2 for 345.6, -3 for 0.00123.</summary>
             private static int DecimalOrder(EDecimal value)
                 => value.Exponent.Add(value.Precision()).Subtract(EInteger.One).ToInt32Checked();
@@ -227,8 +272,11 @@ namespace AngouriMath
             {
                 if (z.Im.IsZero && z.Re.Sign > 0)
                     return (z.Re.Log(work), EDecimal.Zero);
+                // On the cut, ln |z| + i pi, with pi from the cache: computed afresh it was a third of an evaluation.
+                if (z.Im.IsZero)
+                    return (z.Re.Negate().Log(work), InternalAMExtensions.ConstantCache.Lookup(work).Pi);
                 var modulus = z.Re.Multiply(z.Re, work).Add(z.Im.Multiply(z.Im, work), work).Sqrt(work);
-                return (modulus.Log(work), z.Im.IsZero ? EDecimal.PI(work) : z.Im.Arctan2(z.Re, work));
+                return (modulus.Log(work), z.Im.Arctan2(z.Re, work));
             }
 
             /// <summary><c>z^a = e^(a ln z)</c>, principal.</summary>
