@@ -376,6 +376,35 @@ namespace AngouriMath
                 return polynomial ?? 0;
             }
 
+            /// <summary>
+            /// The eigenvalues of this square matrix: the roots of its
+            /// <see cref="CharacteristicPolynomial"/>, as a set, a repeated root once.
+            /// <see langword="null"/> where the matrix is not square.
+            /// </summary>
+            /// <remarks>
+            /// The characteristic polynomial divides by nothing, so its roots carry no condition an
+            /// elimination's pivots would bring: <c>[[0, J], [J, 0]]</c> has <c>sqrt(J^2)</c> and
+            /// <c>-sqrt(J^2)</c>, which hold at <c>J = 0</c> too. Up to the fourth degree the roots are
+            /// in radicals, and past it where the polynomial factors; otherwise the set is the one the
+            /// equation solver leaves.
+            /// <a href="https://github.com/asc-community/AngouriMath/issues/1676">#1676</a>
+            /// </remarks>
+            /// <example>
+            /// <code>
+            /// Console.WriteLine(MathS.Matrix(new Entity[,] { { 2, 0, 0 }, { 0, 3, 4 }, { 0, 4, 9 } }).Eigenvalues);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// { 1, 2, 11 }
+            /// </code>
+            /// </example>
+            public Set? Eigenvalues => eigenvalues.GetValue(static @this =>
+            {
+                var lambda = Variable.CreateUnique(@this, "lambda");
+                return @this.CharacteristicPolynomial(lambda) is { } polynomial ? polynomial.SolveEquation(lambda) : null;
+            }, this);
+            private LazyPropertyA<Set?> eigenvalues;
+
             /// <summary>Returns an inverse matrix if it exists</summary>
             public Matrix? Inverse => inverse.GetValue(static @this =>
             {
