@@ -142,12 +142,14 @@ is `pi` and the script `ℯ` is `e`, so `sin(π)` is `0` and `ln(ℯ)` is `1`. T
 they are variables that print like `e` and `x`, and `х + x` has two
 ([#1260](https://github.com/asc-community/AngouriMath/issues/1260)).
 
-Four things that look like names and are not:
+A subscript may have one of its own: `X_a_beta` is one name, `X` with the subscript `a_beta`, and in
+LaTeX it is `X_{a_{\beta}}` ([#524](https://github.com/asc-community/AngouriMath/issues/524)).
+
+Three things that look like names and are not:
 
 | written | what it is |
 |---|---|
-| `_x`, `x_` | a lexer error. `_` may neither begin a name nor end one |
-| `x_1_2` | a lexer error. At most one `_`, so subscripts do not nest ([#524](https://github.com/asc-community/AngouriMath/issues/524)) |
+| `_x`, `x_`, `x__1` | a lexer error. `_` may neither begin a name nor end one, and two do not stand together |
 | `x1` | `x ^ 1`. A digit is not a letter, and a name beside a number is a power — see below |
 | `sinx` | one name, spelled `sinx`. Letters written together are a single name, never a product of one-letter ones |
 

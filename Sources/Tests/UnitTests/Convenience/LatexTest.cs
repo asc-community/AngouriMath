@@ -65,6 +65,10 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void SubscriptSingle() => Test(@"c_{\mathrm{e}}", MathS.Var("c_e"));
         [Fact] public void SubscriptDuo() => Test(@"\Delta_{\mathrm{a2}}", MathS.Var("Delta_a2"));
         [Fact] public void SubscriptDuoPlus() => TestSimplify(@"6+\Delta_{\mathrm{a2}}", "Delta_a2+6");
+        // A subscript of a subscript. https://github.com/asc-community/AngouriMath/issues/524
+        [Fact] public void SubscriptNested() => Test(@"X_{a_{\beta}}", MathS.Var("X_a_beta"));
+        [Fact] public void SubscriptNestedThrice() => Test(@"x_{1_{2_{\mathrm{e}}}}", MathS.Var("x_1_2_e"));
+        [Fact] public void SubscriptNestedParsed() => Test(@"X_{a_{\beta}}+10", MathS.FromString("X_a_beta + 10"));
         [Fact] public void Square() => Test(@"{x}^{2}", MathS.Sqr(x));
         [Fact] public void TwoXSquare() => Test(@"2 {x}^{2}", 2 * MathS.Sqr(x));
         [Fact] public void MTwoXSquare() => Test(@"-2 \cdot {x}^{2}", -2 * MathS.Sqr(x));
