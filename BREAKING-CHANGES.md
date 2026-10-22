@@ -58,6 +58,20 @@ as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` wa
 | `MathS.Equations("x + y = 3", "x - y = 1").Solve("x", "y")` | `null` | `[[2, 1]]` |
 | `MathS.Equations("x + y = 3", "x - y = 1").ToString()` | `x + y = 3 = 0` and `x - y = 1 = 0` | `x + y - 3 = 0` and `x - y - 1 = 0` |
 
+### Numerical equality is to half the evaluation's digits
+
+**Silent: wrong answers.** `MathS.UnsafeAndInternal.AreEqualNumerically` evaluated both sides at its check points and
+compared the values exactly, so two equal expressions computed by different routes, which differ in their last digits,
+read as unequal. Two values now agree when they differ by no more than half the evaluation's digits, relative to the
+larger of them or to one: a difference of `1e-40` is still a difference at the default hundred digits. The limit
+solver's check that a limit agrees from both sides goes through the same comparison
+([#1674](https://github.com/asc-community/AngouriMath/issues/1674)).
+
+| Input | Was (2.6.0) | Now |
+|---|---|---|
+| `AreEqualNumerically("2 x (-1/4 + ln(x)/2) + 1/x * 2/4 * x^2", "x ln(x)")` | `false` | `true` |
+| `AreEqualNumerically` of `x ln(x)` and its antiderivative's derivative | `false` | `true` |
+
 ### A computed value is a rational only within half the working digits
 
 **Silent: wrong answers.** A number an evaluation produced became the small rational it was near within a fixed
