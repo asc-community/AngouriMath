@@ -1430,7 +1430,7 @@ namespace AngouriMath.Functions.Algebra
         /// <c>s</c> took seconds to decline, five gigabytes for <c>1/(1 + sinh(x)^3)</c> against 0.2.
         /// </remarks>
         internal static Entity? SolveAHyperbolicIntegrandAsATrigonometricOne(Entity expr, Entity.Variable x, bool integrateByParts, bool rationalToo,
-            bool overAQuadraticInTheSine = false)
+            bool overAQuadraticInTheSine = false, bool overALinearInTheCosine = false)
         {
             // Only the question asked: a question in s is not cheap to decline, and below the top every
             // sub-question a route gives up on would ask it.
@@ -1498,6 +1498,12 @@ namespace AngouriMath.Functions.Algebra
                 && AFactorAboveAQuadraticInS(inS, s))
                 return null;
             var question = MathS.i / slopeOfL * inS;
+            // Or, asked as early, only a rational function of the cosine alone over a sum linear in it, or in
+            // the secant: under the tangent of the half argument Rubi's `sech(x)^3/(a + b cosh(x))` is a
+            // cube of `1 + t^2` beside a symbolic quadratic, answered in 118,366 characters, where in the
+            // cosine `1/(cos(s)^3 (a + b cos(s)))` is a partial fraction in it.
+            if (overALinearInTheCosine && !IsARationalFunctionOfTheCosineOverALinearInIt(inS, s))
+                return null;
             // Or the one rule for a rational function of a sine or a cosine over a symbolic quadratic in
             // it, asked ahead of the exponential substitution and cheap to decline.
             if ((overAQuadraticInTheSine
@@ -1519,6 +1525,26 @@ namespace AngouriMath.Functions.Algebra
                 _ => node
             }).Substitute(s, -MathS.i * linear).InnerSimplified;
             return Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x) ? answer : null;
+
+            // Whether inS holds s only in cos(s), and below the bar a sum linear in it, to the first power:
+            // over `b^2 + 2 a b cos(s) + a^2 cos(s)^2`, the square of one, the question in s took four times
+            // the memory the tangent did, Rubi's 6.7.1 `(a + b cosh(x))/(b + a cosh(x))^2`.
+            static bool IsARationalFunctionOfTheCosineOverALinearInIt(Entity inS, Variable s)
+            {
+                var cosine = MathS.Cos(s);
+                foreach (var node in inS.Nodes)
+                    if (node.ContainsNode(s) && node != cosine && node != s
+                        && node is not (Sumf or Minusf or Mulf or Divf or Powf(_, Number.Integer)))
+                        return false;
+                var (_, below) = Functions.SingleQuotient.Of(inS);
+                var y = Variable.CreateUnique(inS, "y_osb");
+                bool ASum(Entity node) => node is Sumf or Minusf && node.ContainsNode(cosine);
+                bool Linear(Entity sum) => TreeAnalyzer.TryGetPolynomial(sum.Replace(node => node == cosine ? y : node), y, out var read)
+                    && read.Keys.Max()!.Equals(EInteger.One);
+                var sums = Mulf.LinearChildren(below).Where(ASum).ToList();
+                return sums.Count > 0 && sums.All(Linear)
+                    && !Mulf.LinearChildren(below).Any(factor => factor is Powf(var @base, _) && ASum(@base));
+            }
 
             // Whether inS, rational in cos(s) alone or sin(s) alone, has a denominator of degree three or
             // more that t = tan(s/2) or t = tan(s) leaves with an irreducible factor of degree above two,

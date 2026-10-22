@@ -561,6 +561,22 @@ power, which by parts answers as before ([#233](https://github.com/asc-community
 | `"x*(a+b*atanh(c*x))^2/(d+c*d*x)^3".ToEntity().Integrate("x")` | `integral(...)` | 731 characters |
 | `"x*(a+b*acoth(c*x))^2/(d+c*d*x)^3".ToEntity().Integrate("x")` | `integral(...)` | 756 characters |
 
+### A hyperbolic quotient over a linear in its cosine is asked as the cosine's
+
+**Answers where there were none, and shorter than master's.** Rubi's 6.2.5 `sech(x)^3/(a + b cosh(x))` and 6.5.3
+`sech(x)^4/(a + b sech(x))` ran past the corpus's budget. Under the tangent of the half argument each is a cube of
+`1 + t^2` beside a symbolic quadratic, and was answered in about 118,000 characters. By Osborn's rule each is a rational
+function of a cosine alone, over a sum linear in it, and that question is now asked first. In the cosine,
+`1/(cos(s)^3 (a + b cos(s)))` is a partial fraction in it
+([#233](https://github.com/asc-community/AngouriMath/issues/233)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sech(x)^3/(a+b*cosh(x))".ToEntity().Integrate("x")` | `integral(...)` | 2,396 characters, where before this change master gave 118,366 |
+| `"sech(x)^4/(a+b*sech(x))".ToEntity().Integrate("x")` | `integral(...)` | 2,412 characters, where before this change master gave 118,032 |
+| `"cosh(x)^3/(a+b*cosh(x))".ToEntity().Integrate("x")` | `integral(...)` | 1,108 characters, where before this change master gave 2,858 |
+| `"cosh(x)^2/(a+b*sech(x))".ToEntity().Integrate("x")` | `integral(...)` | 802 characters, where before this change master gave 2,820 |
+
 ### An arctangent over a power of `d (1 + i c x)` is integrated under the tangent
 
 **Answers where there were none.** `(a + b atan(c x))^2/(d + i c d x)^2` ran out of time, and so did seven more of
