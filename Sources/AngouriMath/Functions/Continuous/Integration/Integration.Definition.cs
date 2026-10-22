@@ -139,7 +139,12 @@ namespace AngouriMath
         /// <param name="x">The variable to integrate over.</param>
         /// <param name="from">The lower bound.</param>
         /// <param name="to">The upper bound.</param>
-        /// <param name="stepCount">How many steps to take; more is more accurate and slower.</param>
+        /// <param name="stepCount">
+        /// How many panels to cut the segment into, each integrated by the five-point Gauss–Legendre rule; more
+        /// is more accurate and slower. Neither bound is evaluated, so an integrable singularity at one is
+        /// allowed, and one that diverges is NaN. The value has the digits the rule agrees on as the panels are
+        /// doubled, at most fifteen, a double's. A singularity inside the segment is not seen.
+        /// </param>
         /// <returns>The value of the integral.</returns>
         /// <remarks>
         /// This is the instance method the obsolete <c>MathS.Compute.DefiniteIntegral</c>
@@ -156,7 +161,12 @@ namespace AngouriMath
         /// <param name="x">The variable to integrate over.</param>
         /// <param name="from">The lower bound.</param>
         /// <param name="to">The upper bound.</param>
-        /// <param name="stepCount">How many steps to take; more is more accurate and slower.</param>
+        /// <param name="stepCount">
+        /// How many panels to cut the segment into, each integrated by the five-point Gauss–Legendre rule; more
+        /// is more accurate and slower. Neither bound is evaluated, so an integrable singularity at one is
+        /// allowed, and one that diverges is NaN. The value has the digits the rule agrees on as the panels are
+        /// doubled, at most fifteen, a double's. A singularity inside the segment is not seen.
+        /// </param>
         /// <returns>The value of the integral.</returns>
         public Number.Complex DefiniteIntegral(Variable x, EDecimal from, EDecimal to, int stepCount = 100)
             => Integration.IntegrateNumerically(this, x,
@@ -1825,26 +1835,106 @@ namespace AngouriMath.Functions.Algebra
             return null;
         }
         /// <summary>
-        /// Returns the approximate numeric value of a definite integral of a function. Only works for one-variable functions.
-        /// Accuracy is limited to the number specified (default is 100).
-        /// See more at <see cref="Entity.DefiniteIntegral(Entity.Variable, EDecimal, EDecimal, int)"/>
+        /// The integral of a function of one variable along the segment from <paramref name="from"/> to
+        /// <paramref name="to"/>, by the five-point Gauss–Legendre rule on each of
+        /// <paramref name="panels"/> equal panels, in double precision. See
+        /// <see cref="Entity.DefiniteIntegral(Entity.Variable, EDecimal, EDecimal, int)"/>.
         /// </summary>
+        /// <remarks>
+        /// It was the mean of <c>panels + 1</c> equally weighted samples, the endpoints among them: a first-order
+        /// rule, whose error on <c>x^2</c> over <c>[0, 1]</c> halved with each doubling, 1.67e-4 at 1000 steps,
+        /// and printed to a hundred digits. And a convergent integral with a singular endpoint had no value:
+        /// <c>sin(x)/x</c> and <c>ln(x)</c> over <c>[0, 1]</c> were NaN. Gauss–Legendre never evaluates an
+        /// endpoint, and the five-point rule is exact on each panel for a polynomial of degree nine. It is run on
+        /// the panels, twice as many and four times as many: where the differences do not shrink, the integral
+        /// diverges at a bound and is NaN, and otherwise the rest of their geometric series is added and is the
+        /// error, and the value is rounded to its place, fifteen digits at most. A singularity inside the
+        /// segment is not seen, and a symmetric divergent one, as in 1/x over [-1, 1], comes to its principal
+        /// value.
+        /// https://github.com/asc-community/AngouriMath/issues/1675
+        /// </remarks>
         /// <param name="expr">Expression to integrate</param>
         /// <param name="x">Variable to integrate over</param>
         /// <param name="from">The complex lower bound for integrating</param>
         /// <param name="to">The complex upper bound for integrating</param>
-        /// <param name="accuracy">Accuracy (for now, number of iterations)</param>
-        internal static Complex IntegrateNumerically(Entity expr, Entity.Variable x, Complex from, Complex to, int accuracy = 100)
+        /// <param name="panels">How many panels the segment is cut into, five evaluations each</param>
+        internal static Complex IntegrateNumerically(Entity expr, Entity.Variable x, Complex from, Complex to, int panels = 100)
         {
-            System.Numerics.Complex res = 0;
-            var cfunc = expr.Compile(x);
-            for (int i = 0; i <= accuracy; i++)
+            var function = expr.Compile(x);
+            var start = from.ToNumerics();
+            var length = to.ToNumerics() - start;
+            panels = System.Math.Max(1, panels);
+            // The integral on so many panels, and the integral of the modulus, which the rounding is measured
+            // against: an integral that comes to zero, x^3 over [-1, 1], is a sum of terms that do not.
+            (System.Numerics.Complex Value, double OfTheModulus) OnPanels(int count)
             {
-                var share = ((EDecimal)i) / accuracy;
-                var tmp = Complex.Create(from.RealPart.EDecimal * share + to.RealPart.EDecimal * (1 - share), from.ImaginaryPart.EDecimal * share + to.ImaginaryPart.EDecimal * (1 - share));
-                res += cfunc.Substitute(tmp.ToNumerics());
+                System.Numerics.Complex sum = 0;
+                var ofTheModulus = 0.0;
+                for (var i = 0; i < count; i++)
+                {
+                    var centre = start + length * ((i + 0.5) / count);
+                    for (var k = 0; k < GaussLegendreNodes.Length; k++)
+                    {
+                        var term = GaussLegendreWeights[k] * function.Substitute(centre + length * (GaussLegendreNodes[k] / (2.0 * count)));
+                        sum += term;
+                        ofTheModulus += System.Numerics.Complex.Abs(term);
+                    }
+                }
+                var width = System.Numerics.Complex.Abs(length) / (2.0 * count);
+                return (sum * length / (2.0 * count), ofTheModulus * width);
             }
-            return res.ToNumber() / (accuracy + 1) * (to - from);
+            // On the panels, twice as many and four times as many. Never evaluating a bound, the rule gives a
+            // divergent integral a finite value: 1/x over [0, 1] came to about 10. Where it converges the
+            // differences between the three shrink, by r = 2^-(1 - p) for an endpoint singularity like x^-p,
+            // p < 1; for 1/x they stay at ln(2), and they grow for anything worse. So differences that do not
+            // shrink, above the rounding, are NaN; and where they shrink, the rest of the geometric series,
+            // d r/(1 - r) for the last difference d, is both the correction and the error: for x^-0.9 the last
+            // difference is a fourteenth of the error, and the value without it was 7 where it is 10.
+            var (coarse, _) = OnPanels(panels);
+            var (middle, _) = OnPanels(2 * panels);
+            var (fine, ofTheModulus) = OnPanels(4 * panels);
+            if (double.IsNaN(fine.Real) || double.IsNaN(fine.Imaginary) || double.IsInfinity(fine.Real) || double.IsInfinity(fine.Imaginary))
+                return fine.ToNumber();
+            var rounding = 1e-14 * System.Math.Max(ofTheModulus, System.Numerics.Complex.Abs(fine));
+            if (rounding == 0)
+                return Integer.Zero;
+            var first = System.Numerics.Complex.Abs(middle - coarse);
+            var last = System.Numerics.Complex.Abs(fine - middle);
+            if (last > rounding && last >= 0.99 * first)
+                return Real.NaN;
+            var value = fine;
+            var error = System.Math.Max(last, rounding);
+            if (last > rounding && first > rounding)
+            {
+                var ratio = last / first;
+                var tail = (fine - middle) * (ratio / (1 - ratio));
+                value = fine + tail;
+                error = System.Math.Max(System.Numerics.Complex.Abs(tail), rounding);
+            }
+            // Then rounded to the place of that error, and to no more digits than a double holds: the value
+            // was the double's exact binary expansion, fifty digits of which most were not known.
+            var magnitude = System.Numerics.Complex.Abs(value);
+            var quantum = (int)System.Math.Floor(System.Math.Log10(error));
+            if (magnitude > 0)
+                quantum = System.Math.Max(quantum, (int)System.Math.Floor(System.Math.Log10(magnitude)) - MostDigitsOfADouble + 1);
+            // A part that rounds to zero is zero, which prints as 0 and not as -0E-15; and a value with no
+            // imaginary part is real.
+            EDecimal Rounded(double part)
+                => EDecimal.FromDouble(part).Quantize(quantum, ERounding.HalfEven) is var rounded && rounded.IsZero ? EDecimal.Zero : rounded;
+            var (realPart, imaginaryPart) = (Rounded(value.Real), Rounded(value.Imaginary));
+            using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+            return imaginaryPart.IsZero ? Real.Create(realPart) : Complex.Create(realPart, imaginaryPart);
         }
+
+        private const int MostDigitsOfADouble = 15;
+
+        // The five-point Gauss–Legendre rule on [-1, 1]: the roots of the fifth Legendre polynomial,
+        // 0 and ±sqrt(5 ∓ 2 sqrt(10/7))/3, and their weights.
+        [ConstantField]
+        private static readonly double[] GaussLegendreNodes =
+            { 0.0, -0.5384693101056831, 0.5384693101056831, -0.9061798459386640, 0.9061798459386640 };
+        [ConstantField]
+        private static readonly double[] GaussLegendreWeights =
+            { 0.5688888888888889, 0.4786286704993665, 0.4786286704993665, 0.2369268850561891, 0.2369268850561891 };
     }
 }

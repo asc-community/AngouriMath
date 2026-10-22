@@ -42,6 +42,26 @@ A not-equal written `<>` is read as `not (a = b)`, and printed that way.
 
 ## Unreleased — since 2.6.0
 
+### A numerical definite integral is Gauss–Legendre, with the digits it knows
+
+**Silent: wrong answers, and values where there was NaN.** `Entity.DefiniteIntegral(x, a, b, steps)` was the mean of
+`steps + 1` equally weighted samples, its bounds among them: a first-order rule, whose value on `x^2` over `[0, 1]` was
+off in the third digit at the default 100 steps and printed to a hundred digits. A convergent integral with a singular
+bound had no value. It is now the five-point Gauss–Legendre rule on `steps` panels, which never evaluates a bound, run
+on the panels, twice as many and four times as many. Where the differences between the three do not shrink, the
+integral diverges at a bound and is `NaN`. Otherwise the rest of their geometric series is added and taken as the
+error, and the value is rounded to its place, at most fifteen digits, a double's. A singularity inside the segment is
+not seen, and a symmetric divergent one comes to its principal value
+([#1675](https://github.com/asc-community/AngouriMath/issues/1675)).
+
+| Input | Was (2.6.0) | Now |
+|---|---|---|
+| `"x^2".ToEntity().DefiniteIntegral("x", 0, 1)` | `0.334999999999999938…`, a hundred digits | `0.333333333333333` |
+| `"e^x".ToEntity().DefiniteIntegral("x", 0, 2)` | `6.409068937660210827…` | `6.38905609893066` |
+| `"sin(x)/x".ToEntity().DefiniteIntegral("x", 0, 1)` | `NaN` | `0.946083070367182` |
+| `"ln(x)".ToEntity().DefiniteIntegral("x", 0, 1)` | `NaN` | `-1.00000` |
+| `"1/x".ToEntity().DefiniteIntegral("x", 0, 1)` | `NaN` | `NaN` |
+
 ### An equality in an equation or a system is read as a difference equal to zero
 
 **Silent: wrong answers.** `MathS.SolveEquation`, `Entity.SolveEquation` and `MathS.Equations` read each equation as an
