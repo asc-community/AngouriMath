@@ -126,6 +126,18 @@ solver's check that a limit agrees from both sides goes through the same compari
 | `AreEqualNumerically("2 x (-1/4 + ln(x)/2) + 1/x * 2/4 * x^2", "x ln(x)")` | `false` | `true` |
 | `AreEqualNumerically` of `x ln(x)` and its antiderivative's derivative | `false` | `true` |
 
+### A whole number the rational search finds is an integer
+
+**Silent: a wrong type and a wrong comparison.** The search that reads a number as the rational it is near built its
+result without the check that turns a denominator of 1 into an integer. A value just below a whole number came back as
+the `Rational` `1/1` or `3/1`, which is not an `Integer` and is not equal to `1` or `3`
+([#2069](https://github.com/asc-community/AngouriMath/issues/2069)).
+
+| Input | Was (2.6.0) | Now |
+|---|---|---|
+| `(Entity)0.9999999999999999999999999999m` | `Rational 1/1`, and `== 1` is `false` | `Integer 1` |
+| `(Entity)2.9999999999999999999999999999m` | `Rational 3/1` | `Integer 3` |
+
 ### A computed value is a rational only within half the working digits
 
 **Silent: wrong answers.** A number an evaluation produced became the small rational it was near within a fixed

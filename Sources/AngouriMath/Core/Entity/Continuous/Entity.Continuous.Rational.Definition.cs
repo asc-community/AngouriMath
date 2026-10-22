@@ -215,7 +215,10 @@ namespace AngouriMath
                         var rat = FindRationalExactly(inv, iterCount - 1, tolerance);
                         if (rat is null)
                             return null;
-                        return new Rational((intPart * sign + sign / rat.ERational).InLowestTerms());
+                        // Through Create, so that a whole number is an Integer: a value just below one is 0 + 1/1, and
+                        // came back as the Rational 1/1, which is not equal to 1.
+                        // https://github.com/asc-community/AngouriMath/issues/2069
+                        return Rational.Create(intPart * sign + sign / rat.ERational);
                     }
                 }
 
