@@ -73,7 +73,10 @@ namespace AngouriMath.Tests.Calculus
         {
             Entity? result = null;
             var task = System.Threading.Tasks.Task.Run(() => result = Definite(integrand, "0", "1"));
-            Assert.True(task.Wait(System.TimeSpan.FromSeconds(60)), $"the integral of {integrand} from 0 to 1 was still being simplified");
+            // The budget bounds the work, in limits; this wall is a backstop against a hang that the budget no longer
+            // bounds, not a measure of time. The erf integral takes about nine seconds alone, and a wall of sixty
+            // fired in the full suite on a loaded machine.
+            Assert.True(task.Wait(System.TimeSpan.FromMinutes(5)), $"the integral of {integrand} from 0 to 1 was still being simplified");
             Assert.IsType<Entity.Integralf>(result);
             Assert.DoesNotContain(result!.Nodes, node => node == MathS.NaN);
         }
