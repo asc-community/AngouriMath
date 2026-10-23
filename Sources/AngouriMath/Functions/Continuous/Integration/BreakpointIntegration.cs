@@ -54,6 +54,12 @@ namespace AngouriMath.Functions.Algebra
     /// (<a href="https://github.com/asc-community/AngouriMath/issues/1174">#1174</a>).
     /// </para>
     /// <para>
+    /// <b>Where something in the variable is a whole number</b> -- a floor or a ceiling of
+    /// <c>x^2</c>, of <c>sin(pi x/2)</c> -- the breaks are those points, which
+    /// <see cref="StepPieces"/> finds and proves to be all of them over a range with numeric
+    /// bounds; each piece is then integrated with its step a constant.
+    /// </para>
+    /// <para>
     /// Offered only where every piece then resolves; an integral rewritten as an unevaluated sum
     /// of unevaluated integrals is not an answer. Question I.2 of
     /// <a href="https://github.com/asc-community/AngouriMath/issues/1212">#1212</a>, and the
@@ -65,7 +71,7 @@ namespace AngouriMath.Functions.Algebra
     {
         /// <summary>
         /// Whether the integrand can jump in <paramref name="x"/>: a piecewise whose conditions
-        /// mention it, or a floor or ceiling of it.
+        /// mention it, or a floor or ceiling of something in it.
         /// </summary>
         internal static bool HasABreak(Entity expr, Variable x)
             => expr.Nodes.Any(node => IsABreak(node, x));
@@ -73,8 +79,8 @@ namespace AngouriMath.Functions.Algebra
         private static bool IsABreak(Entity node, Variable x)
             => node switch
             {
-                Floorf(var argument) => argument == x,
-                Ceilf(var argument) => argument == x,
+                Floorf(var argument) => argument.ContainsNode(x),
+                Ceilf(var argument) => argument.ContainsNode(x),
                 Piecewise piecewise => piecewise.Cases.Any(c => c.Predicate.ContainsNode(x)),
                 // A condition on the variable is a one-case piecewise whose other case is undefined.
                 Providedf provided => provided.Predicate.ContainsNode(x),
@@ -85,9 +91,43 @@ namespace AngouriMath.Functions.Algebra
         {
             if (expr.Nodes.Any(node => node is Piecewise or Providedf && IsABreak(node, x)))
                 return OverCaseBoundaries(expr, x, from, to);
+            if (expr.Nodes.Any(node => node is Floorf(var f) && f != x && f.ContainsNode(x) || node is Ceilf(var c) && c != x && c.ContainsNode(x)))
+                return OverStepPieces(expr, x, from, to);
             if (HasAStep(expr, x))
                 return OverUnitIntervals(expr, x, from, to);
             return null;
+        }
+
+        // ---- a floor or a ceiling of something in the variable: the pieces StepPieces proves -------
+
+        /// <summary>
+        /// The integral as the sum of the integrals of the pieces <see cref="StepPieces"/> writes the integrand in over
+        /// the range, each with its steps replaced by their values there, so with no jump in it: <c>floor(x^2)</c> from 0
+        /// to 2 is <c>(sqrt(2) - 1) + 2 (sqrt(3) - sqrt(2)) + 3 (2 - sqrt(3))</c>, which is <c>5 - sqrt(2) - sqrt(3)</c>.
+        /// A piece that is a point adds nothing. Where the pieces are not proved complete, or a piece does not integrate,
+        /// the integral is left as written. https://github.com/asc-community/AngouriMath/issues/1807
+        /// </summary>
+        private static Entity? OverStepPieces(Entity expr, Variable x, Entity from, Entity to)
+        {
+            if (from.Evaled is not Real lower || !lower.IsFinite || to.Evaled is not Real upper || !upper.IsFinite)
+                return null;
+            if (lower == upper)
+                return Integer.Zero;
+            if (upper < lower)
+                return OverStepPieces(expr, x, to, from) is { } reversed ? (-reversed).InnerSimplified : null;
+            if (StepPieces.Of(expr, x, from, to) is not { } pieces)
+                return null;
+            Entity total = Integer.Zero;
+            foreach (var @case in pieces.Cases)
+            {
+                if (@case.Predicate is not Set.Inf(_, Set.Interval interval))
+                    continue;
+                var piece = @case.Expression.Integrate(x, interval.Left, interval.Right);
+                if (piece.Nodes.Any(node => node is Integralf))
+                    return null;
+                total += piece;
+            }
+            return total.InnerSimplified;
         }
 
         // ---- finitely many breakpoints: a piecewise --------------------------------------------

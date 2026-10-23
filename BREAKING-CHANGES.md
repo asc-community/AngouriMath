@@ -110,6 +110,23 @@ as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` wa
 | `MathS.Equations("x + y = 3", "x - y = 1").Solve("x", "y")` | `null` | `[[2, 1]]` |
 | `MathS.Equations("x + y = 3", "x - y = 1").ToString()` | `x + y = 3 = 0` and `x - y = 1 = 0` | `x + y - 3 = 0` and `x - y - 1 = 0` |
 
+### A definite integral of a floor or a ceiling of something in x is the sum over its pieces
+
+**Silent: values where the integral was left as written.** A floor or a ceiling was split only where its argument was
+`x` itself, and `integral(floor(x^2), x, 0, 2)` stayed as written. Between two bounds that are numbers it is now the
+sum of the integrals of the pieces `MathS.ExperimentalFeatures.PiecewiseOver` writes the integrand in, each with the
+step a constant there: the points where the argument is a whole number, from the solver, with a proof that there are
+no others. Where that proof does not go through, or a bound is symbolic, the integral is left as written, as before
+([#1807](https://github.com/asc-community/AngouriMath/issues/1807)).
+
+| Input | Was (2.6.0) | Now |
+|---|---|---|
+| `integral(floor(x^2), x, 0, 2)` | `integral(floor(x ^ 2), x, 0, 2)` | `5 - sqrt(2) - sqrt(3)` |
+| `integral(floor(2*x), x, 0, 3)` | `integral(floor(2 * x), x, 0, 3)` | `15/2` |
+| `integral(floor(sin(pi*x*(4-x)/2)), x, 0, 4)` | as written | `(-2) * sqrt(2)` |
+| `integral(floor(1/x), x, 1/4, 1)` | as written | `13/12` |
+| `integral(floor(1/x), x, -1, 1)` | as written | as written: a pole inside the range |
+
 ### The polygamma functions, and the derivative of the factorial
 
 **Silent: a new reading, and an answer where there was none.**

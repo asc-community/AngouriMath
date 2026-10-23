@@ -318,6 +318,22 @@ namespace AngouriMath.Numerics
         }
 
         /// <summary>
+        /// An interval that holds every value <paramref name="expr"/> takes for <paramref name="x"/> in
+        /// <paramref name="range"/>, or null as <see cref="Of"/> has it. Every operation is an enclosure over
+        /// an interval as well as at a point -- the sine and cosine by their slope about the middle -- so
+        /// the result is one, if a loose one: <c>x x</c> over <c>[-1, 2]</c> is <c>[-2, 4]</c>.
+        /// </summary>
+        internal static ComplexInterval? Over(Entity expr, Variable x, Interval range)
+        {
+            var (outerVariable, outerRange) = (boundVariable, boundRange);
+            (boundVariable, boundRange) = (x, range);
+            try { return Of(expr); }
+            finally { (boundVariable, boundRange) = (outerVariable, outerRange); }
+        }
+        [System.ThreadStatic] private static Variable? boundVariable;
+        [System.ThreadStatic] private static Interval boundRange;
+
+        /// <summary>
         /// Whether the two agree to <paramref name="relativeTolerance"/> of the larger's size (or
         /// of one, where both are smaller): true where the whole of their difference is within
         /// it, false where the whole of it is beyond, null where the intervals cannot tell.
@@ -396,6 +412,8 @@ namespace AngouriMath.Numerics
                     return ComplexInterval.Real(Interval.Around(Math.PI));
                 case Variable variable when variable == MathS.e:
                     return ComplexInterval.Real(Interval.Around(Math.E));
+                case Variable variable when boundVariable is not null && variable == boundVariable:
+                    return ComplexInterval.Real(boundRange);
                 case Powf(var @base, var exponent):
                 {
                     if (@base == MathS.e)

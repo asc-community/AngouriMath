@@ -187,6 +187,32 @@ namespace AngouriMath
             /// </returns>
             public static Entity? SymbolicFormOfCosine(Entity angle)
                 => TrigonometricAngleExpansion.SymbolicFormOfCosine(angle)?.InnerSimplified;
+
+            /// <summary>
+            /// <paramref name="expr"/> over <c>[<paramref name="from"/>, <paramref name="to"/>]</c> as the piecewise it is
+            /// there, with each floor and ceiling of <paramref name="x"/> replaced by its value on each piece: the pieces
+            /// partition the range, their ends are exact, and an end belongs to the piece whose value it has, which the
+            /// closedness of each piece's interval says. <c>floor(x^2)</c> over <c>[0, 2]</c> is <c>0</c> for
+            /// <c>x in [0; 1)</c>, <c>1</c> for <c>x in [1; sqrt(2))</c>, <c>2</c> for <c>x in [sqrt(2); sqrt(3))</c>,
+            /// <c>3</c> for <c>x in [sqrt(3); 2)</c>, and <c>4</c> for <c>x = 2</c>.
+            /// </summary>
+            /// <remarks>
+            /// The ends are the points where a floor's or ceiling's argument is a whole number, from the solver; that
+            /// there are no others is proved, by intervals that hold every value the argument takes between two ends.
+            /// Where that cannot be proved -- a root the solver does not give, an argument with a pole in the range, a
+            /// floor inside another, or any other jump in <paramref name="x"/> -- the answer is <see langword="null"/>,
+            /// and never a partition with a piece missing.
+            /// https://github.com/asc-community/AngouriMath/issues/1807
+            /// </remarks>
+            /// <param name="expr">The expression, with floors and ceilings of <paramref name="x"/> in it</param>
+            /// <param name="x">The variable</param>
+            /// <param name="from">The start of the range, a finite real number</param>
+            /// <param name="to">The end of the range, a finite real number above <paramref name="from"/></param>
+            /// <returns>
+            /// The piecewise, or <see langword="null"/> where its pieces cannot be proved to be all of them
+            /// </returns>
+            public static Entity.Piecewise? PiecewiseOver(Entity expr, Entity.Variable x, Entity from, Entity to)
+                => Functions.Algebra.StepPieces.Of(expr, x, from, to);
         }
     }
 }

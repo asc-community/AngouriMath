@@ -93,6 +93,35 @@ namespace AngouriMath.Tests.Calculus
         public void ABoundThatIsNotWholeContributesItsOwnPiece(string integral, string expected)
             => Assert.Equal(expected.ToEntity(), integral.ToEntity().Simplify());
 
+        /// <summary>
+        /// A floor or a ceiling of something in x, integrated over the pieces
+        /// <see cref="MathS.ExperimentalFeatures.PiecewiseOver"/> proves, each with the step a constant:
+        /// <c>floor(x^2)</c> from 0 to 2 is <c>(sqrt(2) - 1) + 2 (sqrt(3) - sqrt(2)) + 3 (2 - sqrt(3))</c>.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1807">#1807</a>
+        /// </summary>
+        [Theory]
+        [InlineData("integral(floor(x^2), x, 0, 2)", "5 - sqrt(2) - sqrt(3)")]
+        [InlineData("integral(floor(2x), x, 0, 3)", "15/2")]
+        [InlineData("integral(x * floor(x^2), x, 0, 2)", "3")]
+        [InlineData("integral(floor(sin(pi * x * (4 - x)/2)), x, 0, 4)", "-2 sqrt(2)")]
+        [InlineData("integral(ceil(3x - 1), x, 0, 1)", "1")]
+        [InlineData("integral(floor(1/x), x, 1/4, 1)", "13/12")]
+        [InlineData("integral(floor(x^2), x, 2, 0)", "sqrt(2) + sqrt(3) - 5")]
+        public void AStepOfSomethingInXIsIntegratedOverItsPieces(string integral, string expected)
+        {
+            var result = integral.ToEntity().Simplify();
+            Assert.DoesNotContain(result.Nodes, node => node is Entity.Integralf);
+            var difference = (result - expected.ToEntity()).EvalNumerical();
+            Assert.True(difference.Abs() < 1e-30, $"{integral} is {result}, not {expected}");
+        }
+
+        /// <summary>A symbolic bound, and a pole of the step's argument inside the range: left as written.</summary>
+        [Theory]
+        [InlineData("integral(floor(x^2), x, 0, a)")]
+        [InlineData("integral(floor(1/x), x, -1, 1)")]
+        public void AStepWhosePiecesAreNotProvedIsLeftAsWritten(string integral)
+            => Assert.IsType<Entity.Integralf>(integral.ToEntity().Simplify());
+
         // A symbolic bound is declined rather than integrated as if the step were constant,
         // which used to answer (n - floor(n))^3 / 3 for this one; with the bound a number the
         // same integral splits.
@@ -116,10 +145,10 @@ namespace AngouriMath.Tests.Calculus
                 "integral(floor(x)^floor(x), x, 1, +oo)".ToEntity().Simplify());
         }
 
-        // Not split and not integrated either: a floor of something other than the variable
-        // is not a break this reads, and an integrand the unit interval cannot integrate stays.
+        // Split and not integrated: an integrand the unit interval cannot integrate stays. A floor of
+        // something other than the variable was here too, floor(x^2) from 0 to 2, and is now split
+        // at its pieces: see AStepOfSomethingInXIsIntegratedOverItsPieces.
         [Theory]
-        [InlineData("integral(floor(x^2), x, 0, 2)")]
         [InlineData("integral(floor(x) * e^(x^3 + x) , x, 0, 2)")]
         public void WhatCannotBeSplitIsLeftAsWritten(string integral)
             => Assert.IsType<Integralf>(integral.ToEntity().Simplify());
