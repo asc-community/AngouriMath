@@ -1245,17 +1245,24 @@ namespace AngouriMath
 
                 constants[0] = EDecimal.PI(mc).Multiply(2, mc).Sqrt(mc);
 
-                var negative = false;
+                // c_k = (-1)^(k - 1) (a - k)^(k - 1)/(k - 1)! sqrt(a - k) e^(a - k), the first factor a ratio of exact
+                // integers and e^(a - k) a product of e's, with digits to spare for the a multiplications that make it.
+                // With a power of a - k to k - 1/2 and an exponential for each k, the constants for 300 digits took 20
+                // seconds, and for 600 digits 218.
+                var work = EContext.ForPrecision(a * 15 / 10 + 10);
+                var e = EDecimal.One.Exp(work);
+                var powersOfE = new EDecimal[a];
+                powersOfE[0] = EDecimal.One;
+                for (int m = 1; m < a; m++)
+                    powersOfE[m] = powersOfE[m - 1].Multiply(e, work);
                 for (int k = 1; k < a; k++)
                 {
-                    var deltaAK = EDecimal.FromInt32(a - k);
-                    var ck = deltaAK.Pow(EDecimal.FromInt32(k).Subtract(0.5m), mc);
-                    ck = deltaAK.Exp(mc).Multiply(ck, mc);
-                    ck = ck.Divide(Factorial(k - 1), mc);
-                    if (negative)
-                        ck = ck.Negate();
-                    constants[k] = ck;
-                    negative = !negative;
+                    var m = a - k;
+                    var ck = EDecimal.FromEInteger(EInteger.FromInt32(m).Pow(k - 1)).Divide(EDecimal.FromEInteger(Factorial(k - 1)), work)
+                        .Multiply(EDecimal.FromInt32(m).Sqrt(work), work)
+                        .Multiply(powersOfE[m], work)
+                        .RoundToPrecision(mc);
+                    constants[k] = k % 2 == 0 ? ck.Negate() : ck;
                 }
 
                 return constants;
