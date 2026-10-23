@@ -143,6 +143,8 @@ as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` wa
 - **Exact forms.** A whole `a >= 1` and `a = 1/2` are elementary.
 - **Integrals.** Of a linear `u`, beside a polynomial, or beside any power of `x` but `1/x` where `u` is a multiple
   of `x`, by parts, in gamma functions of `u`.
+  And of a whole `a <= 0` over a power of another linear, by parts, where what is left is an exponential over
+  linears.
 ([#2075](https://github.com/asc-community/AngouriMath/issues/2075))
 
 | Input | Was (2.6.0) | Now |
@@ -153,6 +155,7 @@ as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` wa
 | `"gamma(1/3, -2)".EvalNumerical()` | a `FunctionArgumentCountException` | `10.212552064243320672…`, real |
 | `"x^2*gamma(0, a*x)".ToEntity().Integrate("x")` | a `FunctionArgumentCountException` | `x ^ 3 / 3 * gamma(0, a * x) - 1 / (3 * a ^ 3) * 2 * e ^ (-a * x) * (1 + a * x + (a * x) ^ 2 / 2) + C` |
 | `"x^m*gamma(n, b*x)".ToEntity().Integrate("x")` | a `FunctionArgumentCountException` | `(x ^ (m + 1) * gamma(n, b * x) - x ^ m * (b * x) ^ (-m) * gamma(n + m + 1, b * x) / b) / (m + 1) + C` |
+| `"gamma(0, a + b*x)/(c + d*x)^2".ToEntity().Integrate("x")` | a `FunctionArgumentCountException` | `-gamma(0, a + b x)/(d (c + d x))` and two exponential integrals, of `a + b x` and of `b (c + d x)/d` |
 
 ### Numerical equality is to half the evaluation's digits
 
