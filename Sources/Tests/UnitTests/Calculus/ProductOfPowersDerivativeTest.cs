@@ -98,12 +98,25 @@ namespace AngouriMath.Tests.Calculus
                 "p*x^m*ln(x)^n*(1 + n + (1 + m)*ln(x))".ToEntity().Integrate("x").Stringize());
 
         /// <summary>
-        /// A sum that is not the derivative's is declined, not answered: <c>x^m ln(x)^n (1 + ln x)</c>
-        /// with symbols for <c>m</c> and <c>n</c> is not elementary.
+        /// A sum that is not the derivative's is not answered as one: <c>x^m ln(x)^n (1 + ln x)</c> with symbols for
+        /// <c>m</c> and <c>n</c> is not elementary, and under <c>t = ln x</c> it is two gamma functions of
+        /// <c>-(m + 1) ln x</c>. https://github.com/asc-community/AngouriMath/issues/2075
         /// </summary>
         [Fact]
-        public void WhatIsNotADerivativeIsDeclined()
-            => Assert.Contains("integral(", "x^m*ln(x)^n*(1 + ln(x))".ToEntity().Integrate("x").Stringize());
+        public void WhatIsNotADerivativeIsNotAnsweredAsOne()
+        {
+            var integrand = "x^m*ln(x)^n*(1 + ln(x))".ToEntity();
+            var integral = integrand.Integrate("x");
+            Assert.Contains("gamma(", integral.Stringize());
+            Entity Pinned(Entity e) => e.Substitute("m", "1/2".ToEntity()).Substitute("n", "3/4".ToEntity()).Substitute("C", 0);
+            var derivative = Pinned(integral).Differentiate("x");
+            foreach (var at in new[] { "7/5", "23/10" })
+            {
+                var got = derivative.Substitute("x", at.ToEntity()).EvalNumerical();
+                var want = Pinned(integrand).Substitute("x", at.ToEntity()).EvalNumerical();
+                Assert.True(((double)(got - want).Abs()) < 1e-9 * Math.Max(1, (double)want.Abs()), $"d/dx {integral} is {got} at {at}, where {want}");
+            }
+        }
 
         /// <summary>
         /// Rubi's 1.3.2, two symbolic powers of a quadratic and a cubic beside a power of x:

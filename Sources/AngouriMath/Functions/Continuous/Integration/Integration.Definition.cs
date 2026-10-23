@@ -80,10 +80,15 @@ namespace AngouriMath
                 || (lower < upper
                     ? AntiderivativeBreaks.Inside(antiderivative, x, lower, upper)
                     : AntiderivativeBreaks.Inside(antiderivative, x, upper, lower)) is not { Count: > 0 } breaks)
-                return AtTheBound(antiderivative, x, to, from) - AtTheBound(antiderivative, x, from, to);
+                return AtTheBound(antiderivative, x, to, from) is { } atTheTop && AtTheBound(antiderivative, x, from, to) is { } atTheBottom
+                    ? atTheTop - atTheBottom
+                    : null;
             if (lower > upper)
                 breaks.Reverse();
-            var total = -AtTheBound(antiderivative, x, from, to);
+            // Not across a break of an antiderivative in the incomplete gamma function: see AtTheBound.
+            if (HoldsAnIncompleteGammaFunction(antiderivative) || AtTheBound(antiderivative, x, from, to) is not { } atTheStart)
+                return null;
+            var total = -atTheStart;
             foreach (var (at, _) in breaks)
             {
                 // Approached from the side the range comes from, then left on the other.
@@ -94,7 +99,15 @@ namespace AngouriMath
                     return null;
                 total += before - after;
             }
-            return total + AtTheBound(antiderivative, x, to, from);
+            return AtTheBound(antiderivative, x, to, from) is { } atTheEnd ? total + atTheEnd : null;
+        }
+
+        private static bool HoldsAnIncompleteGammaFunction(Entity expr)
+        {
+            foreach (var node in expr.Nodes)
+                if (node is IncompleteGammaf)
+                    return true;
+            return false;
         }
 
         /// <summary>
@@ -112,7 +125,7 @@ namespace AngouriMath
         /// decided, the value stays undefined, as it is for <c>sin(x)</c> from 0 to <c>+oo</c>,
         /// whose antiderivative has no limit there.
         /// </remarks>
-        private static Entity AtTheBound(Entity antiderivative, Variable x, Entity bound, Entity otherBound)
+        private static Entity? AtTheBound(Entity antiderivative, Variable x, Entity bound, Entity otherBound)
         {
             var value = antiderivative.Substitute(x, bound);
             if (!value.InnerSimplified.IsNaN)
@@ -128,6 +141,12 @@ namespace AngouriMath
             };
             if (side is not { } inside)
                 return value;
+            // An antiderivative in the incomplete gamma function undefined at a bound is left as written rather than
+            // taken to its limit there: x^3 (-x^4)^(-3/4) gamma(3/4, -x^4), the integral of x^2 e^(x^4), is 0 times an
+            // infinity at 0, and its limit went through l'Hopital's rule on the whole product, differentiating the function
+            // and evaluating Gamma(3/4) at every step, for over a minute. https://github.com/asc-community/AngouriMath/issues/2075
+            if (HoldsAnIncompleteGammaFunction(antiderivative))
+                return null;
             var limit = antiderivative.Limit(x, bound, inside);
             return limit.IsNaN || limit.Nodes.Any(node => node is Limitf) ? value : limit;
         }

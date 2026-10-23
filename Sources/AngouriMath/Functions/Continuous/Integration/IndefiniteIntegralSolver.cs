@@ -260,8 +260,11 @@ namespace AngouriMath.Functions.Algebra
                 // And one with a polynomial in x beside something in its antiderivative: what parts
                 // leaves then has the power it took away, and asking it does not descend --
                 // `x erfc(a + b x)^2`, whose cofactor's antiderivative has `x erfc(a + b x)^2` in it.
+                // Nor one whose antiderivative is an incomplete gamma function of an argument that is not linear, which
+                // the remainder would hold: see TryIntegrateByPartsOnce. `(g + h x)^2 (a + b ln(c (d (e + f x)^p)^q))^n`
+                // went from a decline in three seconds to one in two minutes.
                 if (Integration.ComputeAsAQuestionOfItsOwn(rest, x, integrateByParts: true) is not { } antiderivative
-                    || HasAPolynomialFactorIn(antiderivative, x))
+                    || HasAPolynomialFactorIn(antiderivative, x) || IntroducesAnIncompleteGammaFunctionOfANonlinear(antiderivative, rest, x))
                 {
                     remainder.Add(term);
                     continue;
@@ -5166,6 +5169,9 @@ namespace AngouriMath.Functions.Algebra
                     ?? Integration.ComputeIndefiniteIntegral(toIntegrate, x, false);
                 if (integral is null) return null;
                 var differential = polynomialToDifferentiate.Differentiate(x);
+                // And the next round integrates what this one returned, which nothing does where that is an incomplete
+                // gamma function of an argument that is not linear: see TryIntegrateByPartsOnce.
+                if (!TreeAnalyzer.IsZero(differential) && IntroducesAnIncompleteGammaFunctionOfANonlinear(integral, toIntegrate, x)) return null;
                 var result = IntegrateByPartsPolynomial(differential, integral, x, currentRecursion + 1);
                 return (result is null) ? null : polynomialToDifferentiate * integral - result;
             }
@@ -5194,6 +5200,12 @@ namespace AngouriMath.Functions.Algebra
                     byThePolynomialsParts = integralOfU is not null;
                 }
                 if (integralOfU is null) return null;
+                // Not where the integral of u is an incomplete gamma function of an argument that is not linear, which u
+                // did not hold: the remainder holds it then, and nothing here integrates it. (a + b ln(c x^n))^p beside
+                // d + e ln(f x^r) integrates the power to gamma(p + 1, -(a + b ln(c x^n))/(b n)), and the search on its
+                // remainder sampled it three thousand times before declining, thirty-five seconds where it had been one.
+                // https://github.com/asc-community/AngouriMath/issues/2075
+                if (IntroducesAnIncompleteGammaFunctionOfANonlinear(integralOfU, u, x)) return null;
 
                 // Differentiate v
                 var derivativeOfV = v.Differentiate(x).InnerSimplified;
@@ -50046,6 +50058,23 @@ namespace AngouriMath.Functions.Algebra
         /// their own, so that the asking is not nested; see <c>TryIntegrateByPartsOnce</c>.
         /// </summary>
         [System.ThreadStatic] private static bool askingTheTermsOfARemainder;
+
+        /// <summary>
+        /// Whether <paramref name="integral"/> holds an incomplete gamma function of an argument not linear in
+        /// <paramref name="x"/> where <paramref name="integrand"/> holds none.
+        /// </summary>
+        private static bool IntroducesAnIncompleteGammaFunctionOfANonlinear(Entity integral, Entity integrand, Variable x)
+        {
+            foreach (var node in integral.Nodes)
+                if (node is IncompleteGammaf { LowerLimit: var argument } && !TreeAnalyzer.TryGetPolyLinear(argument, x, out _, out _))
+                {
+                    foreach (var written in integrand.Nodes)
+                        if (written is IncompleteGammaf)
+                            return false;
+                    return true;
+                }
+            return false;
+        }
 
         private static bool IsASpecialFunction(Entity node)
             => node is Entity.Erff or Entity.Erfcf or Entity.Erfif or Entity.Eif or Entity.Lif

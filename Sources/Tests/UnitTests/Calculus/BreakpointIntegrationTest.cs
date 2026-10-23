@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using System;
 using AngouriMath;
 using AngouriMath.Extensions;
 using Xunit;
@@ -119,9 +120,22 @@ namespace AngouriMath.Tests.Calculus
         // is not a break this reads, and an integrand the unit interval cannot integrate stays.
         [Theory]
         [InlineData("integral(floor(x^2), x, 0, 2)")]
-        [InlineData("integral(floor(x) * e^(x^3) , x, 0, 2)")]
+        [InlineData("integral(floor(x) * e^(x^3 + x) , x, 0, 2)")]
         public void WhatCannotBeSplitIsLeftAsWritten(string integral)
             => Assert.IsType<Integralf>(integral.ToEntity().Simplify());
+
+        /// <summary>
+        /// And split, where the unit interval integrates it: <c>e^(x^3)</c> from 1 to 2 as a gamma function of <c>-x^3</c>,
+        /// whose values on the cut take the power's real root. Quadrature gives 275.510983763311601498257886996.
+        /// https://github.com/asc-community/AngouriMath/issues/2075
+        /// </summary>
+        [Fact]
+        public void AGammaFunctionOnItsCutHasTheValuesOfAnAntiderivative()
+        {
+            var value = "integral(floor(x) * e^(x^3), x, 0, 2)".ToEntity().Simplify().EvalNumerical();
+            Assert.True(Math.Abs((double)value.ImaginaryPart) < 1e-20, $"{value}");
+            Assert.True(Math.Abs((double)value.RealPart - 275.510983763311601498257886996) < 1e-12, $"{value}");
+        }
 
         // ---- what does not break is unaffected --------------------------------------------------
 

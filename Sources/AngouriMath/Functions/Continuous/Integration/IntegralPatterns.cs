@@ -348,6 +348,205 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>int x^m F^(a + b x^n) dx</c>, and <c>int (c + d x)^m F^(a + b x) dx</c>, where the integral is a gamma
+        /// function of <c>s = (m + 1)/n</c>, for an <c>s</c> neither whole nor half a whole number -- where it is
+        /// elementary, an exponential integral or an error function, and those are answered as such -- or not a
+        /// number at all. With <c>z = -b ln(F) x^n</c>, <c>x^(m + 1) z^(-s)</c> is constant between the cuts and
+        /// <c>Gamma(s, z)</c> differentiates to <c>-z^(s - 1) e^(-z) z'</c>, so the first is
+        /// <c>-F^a x^(m + 1) z^(-s) Gamma(s, z)/n</c>; the second is the first with <c>n = 1</c> under
+        /// <c>t = c + d x</c>. Rubi's 2.3. https://github.com/asc-community/AngouriMath/issues/2075
+        /// </summary>
+        private static Entity? APowerBesideAnExponentialOfAPower(Entity expr, Entity.Variable x)
+        {
+            // Asked of every integrand that reaches the table, so a type test comes first, and
+            // nothing here captures a local.
+            if (expr is not (Entity.Mulf or Entity.Divf or Entity.Powf))
+                return null;
+            var (numerator, denominator) = expr is Entity.Divf(var n, var d) ? (n, d) : (expr, (Entity)Entity.Number.Integer.One);
+            Entity.Powf? exponential = null;
+            var exponentialBelow = false;
+            foreach (var factor in Entity.Mulf.LinearChildren(numerator))
+                if (factor is Entity.Powf(var exponentialBase, var power) candidate && !exponentialBase.ContainsNode(x) && power.ContainsNode(x))
+                {
+                    if (exponential is not null)
+                        return null;
+                    exponential = candidate;
+                }
+            foreach (var factor in Entity.Mulf.LinearChildren(denominator))
+                if (factor is Entity.Powf(var exponentialBase, var power) candidate && !exponentialBase.ContainsNode(x) && power.ContainsNode(x))
+                {
+                    if (exponential is not null)
+                        return null;
+                    exponential = candidate;
+                    exponentialBelow = true;
+                }
+            if (exponential is null)
+                return null;
+
+            // What is beside it: constants, and powers of multiples of x, (d x)^m, whose product P has
+            // P'/P = M/x with M the sum of their exponents -- or one power of a linear with an offset.
+            Entity coefficient = Entity.Number.Integer.One;
+            Entity? written = null;
+            Entity exponents = Entity.Number.Integer.Zero;
+            var factorsInX = 0;
+            var allOfX = true;
+            var allMultiples = true;
+            Entity? single = null;
+            var singleBelow = false;
+            Entity singleBase = x;
+            Entity singleScale = Entity.Number.Integer.One;
+            for (var side = 0; side < 2; side++)
+                foreach (var factor in Entity.Mulf.LinearChildren(side == 0 ? numerator : denominator))
+                {
+                    if (ReferenceEquals(factor, exponential))
+                        continue;
+                    if (!factor.ContainsNode(x))
+                    {
+                        coefficient = side == 0 ? coefficient * factor : coefficient / factor;
+                        continue;
+                    }
+                    factorsInX++;
+                    single = factor;
+                    singleBelow = side == 1;
+                    if (TryReadAPowerOfAMultiple(factor, x, out var @base, out var scale, out var m))
+                    {
+                        written = written is null ? (side == 0 ? factor : 1 / factor) : side == 0 ? written * factor : written / factor;
+                        exponents = side == 0 ? exponents + m : exponents - m;
+                        allOfX &= @base == x;
+                        singleBase = @base;
+                        singleScale = scale;
+                    }
+                    else
+                        allMultiples = false;
+                }
+            var exponent = exponentialBelow ? -exponential.Exponent : exponential.Exponent;
+            var logarithm = exponential.Base == MathS.e ? Entity.Number.Integer.One : MathS.Ln(exponential.Base);
+
+            // The exponent as a + b x^n, the term in x as written.
+            Entity constant = Entity.Number.Integer.Zero;
+            Entity? term = null;
+            Entity? degree = null;
+            foreach (var summand in Entity.Sumf.LinearChildren(exponent))
+                if (!summand.ContainsNode(x))
+                    constant += summand;
+                else if (term is null && ThePowerOfX(summand, x) is { } read)
+                {
+                    term = summand;
+                    degree = read;
+                }
+                else
+                    return null;
+            if (term is null || degree is null || TreeAnalyzer.IsZero(degree))
+                return null;
+
+            if (allMultiples)
+            {
+                var mPlusOne = (exponents + 1).InnerSimplified;
+                var s = TheOrder(mPlusOne / degree);
+                if (WholeOrHalfWhole(s))
+                    return null;
+                // z = k x for a linear exponent, with the rate read as the number it may be.
+                var linearRate = degree.Equals(Entity.Number.Integer.One) && TreeAnalyzer.TryGetPolyLinear(term, x, out var rateOfTerm, out _)
+                    ? (-logarithm * rateOfTerm).InnerSimplified
+                    : null;
+                var z = linearRate is null ? (-logarithm * term).InnerSimplified : (linearRate * x).InnerSimplified;
+                var leading = (-coefficient / degree).InnerSimplified * Exponential(exponential.Base, constant);
+                // For a positive k, x^(m + 1) z^(-s) is k^(-s) on every branch, and for a whole s with any k.
+                if (linearRate is not null && allOfX && (linearRate is Entity.Number.Real { IsPositive: true } || s is Entity.Number.Integer))
+                    return leading * MathS.Pow(linearRate, (-s).InnerSimplified).InnerSimplified * MathS.IncompleteGamma(s, z);
+                // P x: x^(M + 1) for powers of x, and (d x)^(m + 1)/d for one power of a multiple.
+                var integrated = allOfX ? Power(x, mPlusOne)
+                    : factorsInX == 1 ? MathS.Pow(singleBase, mPlusOne) / singleScale
+                    : written! * x;
+                var constantFactor = integrated * MathS.Pow(z, (-s).InnerSimplified);
+                // x^(m + 1) z^(-s), constant on each half-line, is K^(-s) for x > 0 with z = K x^n, and its value at -1 for
+                // x < 0. Where the two are one number it is that number on the whole line, and the answer has a value at 0
+                // rather than 0 times an infinity there: e^(x^3) is gamma(1/3, -x^3)/3, and its integral from 0 to 1 was NaN.
+                if (allOfX && mPlusOne is Entity.Number && degree is Entity.Number
+                    && (-logarithm * term.Substitute(x, Entity.Number.Integer.One)).InnerSimplified is Entity.Number theRate
+                    && MathS.Pow(theRate, (-s).InnerSimplified).InnerSimplified is Entity.Number onTheRight
+                    && constantFactor.Substitute(x, Entity.Number.Integer.MinusOne).InnerSimplified is Entity.Number onTheLeft
+                    && onTheRight == onTheLeft)
+                    return leading * onTheRight * MathS.IncompleteGamma(s, z);
+                return leading * constantFactor * MathS.IncompleteGamma(s, z);
+            }
+
+            // A power of a linear with an offset, beside an exponential of a linear.
+            if (factorsInX != 1 || !degree.Equals(Entity.Number.Integer.One)
+                || single is not Entity.Powf(var linear, var exponentOfLinear) || exponentOfLinear.ContainsNode(x)
+                || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out var offset)
+                || !TreeAnalyzer.TryGetPolyLinear(term, x, out var rate, out _))
+                return null;
+            var exponentOfPower = singleBelow ? (-exponentOfLinear).InnerSimplified : exponentOfLinear;
+            if (WholeOrHalfWhole(TheOrder(exponentOfPower + 1)))
+                return null;
+            var under = (-logarithm * rate * linear / slope).InnerSimplified;
+            return coefficient * Exponential(exponential.Base, (constant - rate * offset / slope).InnerSimplified) * (singleBelow ? 1 / single : single)
+                * MathS.Pow(under, -exponentOfPower) * MathS.IncompleteGamma((exponentOfPower + 1).InnerSimplified, under) / (logarithm * rate);
+        }
+
+        /// <summary>
+        /// The gamma function's order <paramref name="s"/>, as the number it is where its symbols cancel: <c>(-1 + n + 1)/n</c>
+        /// is 1, which inner simplification leaves as written, and <c>(p x)^(n - 1) e^(x^n)</c>, whose integral is
+        /// <c>e^(x^n)/n</c>, was answered as <c>gamma((-1 + n + 1)/n, -x^n)</c>.
+        /// </summary>
+        private static Entity TheOrder(Entity s)
+        {
+            var inner = s.InnerSimplified;
+            if (inner is Entity.Number || !inner.Vars.Any())
+                return inner;
+            // 1 provided not n = 0, as the integrator answers the generic case.
+            return inner.Simplify() switch
+            {
+                Entity.Number number => number,
+                Entity.Providedf(Entity.Number number, _) => number,
+                _ => inner
+            };
+        }
+
+        /// <summary>
+        /// Whether <paramref name="s"/> is a number that is whole or half of a whole number, and no more than 30 in size:
+        /// where the integral is elementary, an exponential integral or an error function, and is answered as such. Past
+        /// that it is the gamma function, which stays one, where parts or the Gaussian's moments would take as many
+        /// steps as <c>s</c> and write as many terms: <c>x^100 e^(-a x)</c> is <c>-Gamma(101, a x)/a^101</c>.
+        /// </summary>
+        private static bool WholeOrHalfWhole(Entity s)
+            => s is Entity.Number.Rational { ERational: var exact }
+                ? exact.Denominator.CompareTo(EInteger.FromInt32(2)) <= 0 && exact.Abs().CompareTo(ERational.FromInt32(30)) <= 0
+                : s is Entity.Number.Real { EDecimal: var approximate } && approximate.IsFinite && approximate.Multiply(2).IsInteger()
+                    && approximate.Abs().CompareTo(EDecimal.FromInt32(30)) <= 0;
+
+        /// <summary><paramref name="base"/> to <paramref name="power"/>, without a zeroth power.</summary>
+        private static Entity Exponential(Entity @base, Entity power)
+            => TreeAnalyzer.IsZero(power) ? Entity.Number.Integer.One : MathS.Pow(@base, power);
+
+        /// <summary>
+        /// The <c>n</c> of <paramref name="term"/> as <c>b x^n</c>, with <c>b</c> and <c>n</c> free of
+        /// <paramref name="x"/>, or <see langword="null"/>: each factor in <c>x</c> is <c>x</c>, a power of it, or a whole
+        /// power of one, which is how a quotient's divisor is read.
+        /// </summary>
+        private static Entity? ThePowerOfX(Entity term, Entity.Variable x)
+        {
+            Entity? degree = null;
+            foreach (var factor in Entity.Mulf.LinearChildren(term))
+            {
+                if (!factor.ContainsNode(x))
+                    continue;
+                Entity? read = factor == x ? Entity.Number.Integer.One
+                    : factor is Entity.Powf(var @base, var power) && !power.ContainsNode(x)
+                        ? (@base == x ? power
+                            : @base is Entity.Powf(var inner, var innerPower) && inner == x && !innerPower.ContainsNode(x) && power is Entity.Number.Integer
+                                ? innerPower * power
+                                : null)
+                        : null;
+                if (read is null)
+                    return null;
+                degree = degree is null ? read : degree + read;
+            }
+            return degree?.InnerSimplified;
+        }
+
+        /// <summary>
         /// <paramref name="polynomial"/>'s coefficients by power of <paramref name="x"/>, with
         /// <see langword="null"/> read as 1, or <see langword="null"/> where it is not a polynomial
         /// of a degree from 0 to <paramref name="highest"/>.
@@ -428,6 +627,9 @@ namespace AngouriMath.Functions.Algebra
             1 => @base,
             _ => MathS.Pow(@base, power)
         };
+
+        private static Entity Power(Entity @base, Entity power)
+            => power is Entity.Number.Integer { EInteger: var whole } && whole.CanFitInInt32() ? Power(@base, whole.ToInt32Checked()) : MathS.Pow(@base, power);
 
         /// <summary>
         /// <paramref name="factor"/> read as <c>(d x)^m</c>, with <c>d</c> and <c>m</c> free of
@@ -583,6 +785,10 @@ namespace AngouriMath.Functions.Algebra
             // The upper incomplete gamma function of a linear, alone or beside a power of x or a
             // polynomial. https://github.com/asc-community/AngouriMath/issues/2075
             _ when IncompleteGammaBesideAPower(expr, x) is { } gamma => gamma,
+
+            // And a power beside an exponential of a power, where that is a gamma function and
+            // neither elementary nor an error function. https://github.com/asc-community/AngouriMath/issues/2075
+            _ when APowerBesideAnExponentialOfAPower(expr, x) is { } gammaForm => gammaForm,
 
             Entity.Absf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) => // ∫ |ax + b| dx = sgn(ax + b) * (ax + b)^2 / (2a)

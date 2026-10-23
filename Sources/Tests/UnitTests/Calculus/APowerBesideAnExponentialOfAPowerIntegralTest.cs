@@ -1,0 +1,108 @@
+//
+// Copyright (c) 2019-2026 Angouri.
+// AngouriMath is licensed under MIT.
+// Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+// Website: https://am.angouri.org.
+//
+
+using System;
+using System.Linq;
+using AngouriMath.Extensions;
+using Xunit;
+
+namespace AngouriMath.Tests.Calculus
+{
+    /// <summary>
+    /// <c>x^m F^(a + b x^n)</c> and <c>(c + d x)^m F^(a + b x)</c>, whose integral is a gamma function of
+    /// <c>s = (m + 1)/n</c> where <c>s</c> is neither whole nor half a whole number. Rubi's 2.3.
+    /// <a href="https://github.com/asc-community/AngouriMath/issues/2075">#2075</a>
+    /// </summary>
+    [Trait("Area", "Calculus")]
+    public sealed class APowerBesideAnExponentialOfAPowerIntegralTest
+    {
+        private static readonly (string Name, string Value)[] Pins =
+            { ("a", "1/3"), ("b", "-2/3"), ("c", "5/4"), ("d", "1/2"), ("f", "3"), ("m", "3/7"), ("n", "5/2") };
+
+        /// <summary>Where every integrand here is real.</summary>
+        private static readonly double[] Points = { 0.35, 0.9, 1.45, 2.3 };
+
+        private static Entity DifferentiatesBack(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Entity Pinned(Entity e) => Pins.Aggregate(e, (current, pin) => current.Substitute(pin.Name, pin.Value.ToEntity()));
+            var derivative = Pinned(integral.Substitute("C", 0)).Differentiate("x");
+            var original = Pinned(integrand.ToEntity());
+            foreach (var at in Points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart));
+                Assert.True(difference / scale < 1e-9, $"d/dx of {integral} is {got} at x = {at}, where {integrand} is {want}");
+            }
+            return integral;
+        }
+
+        [Theory]
+        [InlineData("x^m*e^(b*x)")]
+        [InlineData("(d*x)^m*e^(b*x)")]
+        [InlineData("x^(1/3)*e^(-x)")]
+        [InlineData("f^(a + b*x^3)")]
+        [InlineData("f^(a + b*x^3)*x")]
+        [InlineData("e^(b*x^3)/x^2")]
+        [InlineData("x^m*f^(a + b*x^n)")]
+        [InlineData("f^(a + b/x)*x^m")]
+        [InlineData("f^(a + b/x^2)*x^m")]
+        [InlineData("(d*x)^m*x^2*e^(b*x)")]
+        [InlineData("x^(1/3)*sqrt(x)*e^(-x)")]
+        // A whole order is elementary before it is integrated, which leaves exactly these: Rubi's 8.6.
+        [InlineData("(d*x)^m*gamma(3, b*x)")]
+        public void APowerOfXBesideAnExponentialOfAPowerOfX(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// Past 30, a whole <c>s</c> as the gamma function, where parts would write <c>s</c> terms.
+        /// </summary>
+        [Fact]
+        public void AHighWholePowerIsOneGammaFunction()
+            => Assert.Contains("gamma(101, a * x)", DifferentiatesBack("x^100*e^(-a*x)").Stringize());
+
+        [Theory]
+        [InlineData("(c + d*x)^m*e^(a + b*x)")]
+        [InlineData("(c + d*x)^(1/3)*f^(a + b*x)")]
+        [InlineData("e^(a + b*x)/(c + d*x)^(4/3)")]
+        public void APowerOfALinearBesideAnExponentialOfAnother(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// Where <c>x^(m + 1) z^(-s)</c> is one number on both half-lines, it is written as that number, and the answer has a
+        /// value at 0: from 0 to 1, by quadrature, 1.34190441797742 and 0.807511182139671.
+        /// </summary>
+        [Theory]
+        [InlineData("integral(e^(x^3), x, 0, 1)", 1.34190441797742)]
+        [InlineData("integral(e^(-x^3), x, 0, 1)", 0.807511182139671)]
+        public void ADefiniteIntegralFromZero(string integral, double value)
+        {
+            var result = integral.ToEntity().Simplify().EvalNumerical();
+            Assert.True(Math.Abs((double)result.ImaginaryPart) < 1e-20 && Math.Abs((double)result.RealPart - value) < 1e-12, $"{result}");
+        }
+
+        /// <summary>
+        /// With a positive rate, <c>x^(m + 1) (k x)^(-s)</c> is <c>k^(-s)</c>, and is written so.
+        /// </summary>
+        [Fact]
+        public void APositiveRateIsTakenOutOfThePower()
+            => Assert.Equal("-gamma(4/3, x)", DifferentiatesBack("x^(1/3)*e^(-x)").Substitute("C", 0).InnerSimplified.Stringize());
+
+        /// <summary>
+        /// Not where the integral is elementary, an exponential integral or an error function: those keep the form
+        /// they had.
+        /// </summary>
+        [Theory]
+        [InlineData("x^2*e^(b*x^3)")]
+        [InlineData("sqrt(x)*e^(-x)")]
+        [InlineData("e^(b*x^2)")]
+        [InlineData("e^(b*x)/x")]
+        public void NotWhereTheIntegralIsElementaryOrAnErrorFunction(string integrand)
+            => Assert.DoesNotContain("gamma(", DifferentiatesBack(integrand).Stringize());
+    }
+}
