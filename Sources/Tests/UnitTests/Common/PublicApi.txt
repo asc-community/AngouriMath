@@ -3092,6 +3092,7 @@ AngouriMath.MathS+ExperimentalFeatures.ExpandSineArgumentMultiplied(AngouriMath.
 AngouriMath.MathS+ExperimentalFeatures.ExpandSineOfSum(System.Collections.Generic.IReadOnlyList<System.ValueTuple<AngouriMath.Entity,AngouriMath.Entity>>) : AngouriMath.Entity
 AngouriMath.MathS+ExperimentalFeatures.GetCosineOfHalvedAngle(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS+ExperimentalFeatures.GetSineOfHalvedAngle(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.MathS+ExperimentalFeatures.PiecewiseOver(AngouriMath.Entity, AngouriMath.Entity+Variable, AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity+Piecewise
 AngouriMath.MathS+ExperimentalFeatures.SolveDiophantineEquation(AngouriMath.Entity+Number+Integer, AngouriMath.Entity+Number+Integer, AngouriMath.Entity+Number+Integer) : System.Nullable<System.ValueTuple<AngouriMath.Entity+Number+Integer,AngouriMath.Entity+Number+Integer>>
 AngouriMath.MathS+ExperimentalFeatures.SymbolicFormOfCosine(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS+ExperimentalFeatures.SymbolicFormOfSine(AngouriMath.Entity) : AngouriMath.Entity
