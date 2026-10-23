@@ -18315,6 +18315,75 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power that is not whole of a linear in one logarithm <c>L = ln(c x^n)</c>, beside a linear in it or in another
+        /// logarithm of a power of x, <c>(a + b L)^p (d + e M)</c> with <c>M = ln(f x^r)</c>. M is <c>(r/n) L + delta</c>,
+        /// where <c>delta = M - (r/n) L</c> is constant between the cuts, its derivative being <c>r/x - (r/n)(n/x) = 0</c>.
+        /// So <c>d + e M</c> is <c>alpha (a + b L) + beta</c>, with <c>alpha = e r/(n b)</c> and
+        /// <c>beta = d + e delta - alpha a</c>, and the integrand is <c>alpha (a + b L)^(p + 1) + beta (a + b L)^p</c> beside
+        /// what else is there: powers of the one logarithm, which the rules for those answer. delta is written back in the
+        /// answer. Rubi's 3.1.5. https://github.com/asc-community/AngouriMath/issues/2075
+        /// </summary>
+        internal static Entity? SolveAPowerOfALogarithmBesideALinearInALogarithm(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow || expr is not (Mulf or Divf))
+                return null;
+            var (numerator, denominator) = expr is Divf(var above, var below) ? (above, below) : (expr, (Entity)Number.Integer.One);
+            Powf? power = null;
+            Entity? linear = null;
+            Entity beside = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(numerator))
+            {
+                if (power is null && factor is Powf(var @base, var exponent) candidate && exponent is not Number.Integer
+                    && !exponent.ContainsNode(x) && TheLinearInOneLogarithm(@base, x) is not null)
+                    power = candidate;
+                else if (linear is null && factor.ContainsNode(x) && factor is Logf or Sumf or Minusf && TheLinearInOneLogarithm(factor, x) is not null)
+                    linear = factor;
+                else
+                    beside *= factor;
+            }
+            if (power is null || linear is null
+                || TheLinearInOneLogarithm(power.Base, x) is not var (logarithm, degree, a, b)
+                || TheLinearInOneLogarithm(linear, x) is not var (other, otherDegree, d, e))
+                return null;
+            var ratio = (otherDegree / degree).InnerSimplified;
+            Entity delta = other == logarithm ? Number.Integer.Zero : Variable.CreateUnique(expr, "delta_log");
+            var alpha = e * ratio / b;
+            var beta = d + e * delta - alpha * a;
+            beside /= denominator;
+            if (Integration.ComputeAsAQuestionOfItsOwn((beside * MathS.Pow(power.Base, power.Exponent + 1)).InnerSimplified, x, integrateByParts) is not { } raised
+                || Integration.ComputeAsAQuestionOfItsOwn((beside * power).InnerSimplified, x, integrateByParts) is not { } asWritten)
+                return null;
+            var answer = alpha * raised + beta * asWritten;
+            if (delta is Variable constant)
+                answer = answer.Substitute(constant, other - ratio * logarithm);
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> as <c>a + b L</c>, linear in one logarithm <c>L = ln(c x^n)</c> and free of x otherwise,
+        /// with the logarithm, <c>n</c>, <c>a</c> and <c>b</c>; or <see langword="null"/>.
+        /// </summary>
+        private static (Entity Logarithm, Entity Degree, Entity Offset, Entity Slope)? TheLinearInOneLogarithm(Entity expr, Entity.Variable x)
+        {
+            Entity? logarithm = null;
+            foreach (var node in expr.Nodes)
+                if (node is Logf(var @base, var antilogarithm) && @base == MathS.e && antilogarithm.ContainsNode(x))
+                {
+                    if (logarithm is not null && node != logarithm)
+                        return null;
+                    logarithm = node;
+                }
+            if (logarithm is not Logf(_, var argument) || TheMonomial(argument, x) is not var (_, degree) || TreeAnalyzer.IsZero(degree))
+                return null;
+            var l = Variable.CreateUnique(expr, "l_log");
+            var inL = expr.Replace(node => node == logarithm ? l : node);
+            if (inL.ContainsNode(x) || !TreeAnalyzer.TryGetPolyLinear(inL, l, out var slope, out var offset)
+                || slope.ContainsNode(l) || offset.ContainsNode(l) || TreeAnalyzer.IsZero(slope))
+                return null;
+            return (logarithm, degree, offset, slope);
+        }
+
+        /// <summary>
         /// Whether <paramref name="factor"/> is a power that is not whole of something holding a logarithm of something in
         /// <paramref name="x"/>, or an exponential of something in <paramref name="x"/> that is not linear in it.
         /// </summary>

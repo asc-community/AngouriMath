@@ -158,6 +158,17 @@ namespace AngouriMath.Tests.Calculus
         public void APowerOfXBesideAFunctionOfABinomial(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// A power of a linear in one logarithm of a power of x beside a linear in it or in another, which is the first
+        /// times a ratio of degrees plus a constant between the cuts: two powers of the one logarithm. Rubi's 3.1.5.
+        /// </summary>
+        [Theory]
+        [InlineData("(f - b*ln(c*x^2))^n*(d + a*ln(f*x^3))")]
+        [InlineData("x^2*(f - b*ln(c*x))^n*(d + a*ln(f*x^3))")]
+        [InlineData("(f - b*ln(c*x))^n*(d + a*ln(c*x))/x^2")]
+        [InlineData("(d*x)^m*(f - b*ln(c*x^2))^n*ln(a*x)")]
+        public void APowerOfALogarithmBesideALinearInALogarithm(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// Not where the integral is elementary, an exponential integral or an error function: those keep the form
         /// they had.
         /// </summary>
