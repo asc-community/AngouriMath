@@ -163,8 +163,38 @@ namespace AngouriMath.Functions.Algebra
                 _ => expr
             };
 
+        /// <summary>
+        /// How many limits a budgeted computation may still take, every one it asks along the way counted, or
+        /// <see langword="null"/> where there is no budget. Past it each is undecided. Set by <see cref="WithinABudget"/>.
+        /// </summary>
+        [System.ThreadStatic] private static int? remainingLimits;
+
+        /// <summary>
+        /// <paramref name="compute"/> with at most <paramref name="limits"/> limits taken in all, for a caller that has a
+        /// use only for a limit it can have cheaply, and leaves the question open otherwise.
+        /// </summary>
+        internal static T WithinABudget<T>(int limits, System.Func<T> compute)
+        {
+            var enclosing = remainingLimits;
+            var start = enclosing is { } outer ? System.Math.Min(outer, limits) : limits;
+            remainingLimits = start;
+            try { return compute(); }
+            finally
+            {
+                // What was spent here is spent from the enclosing budget too.
+                var used = start - (remainingLimits ?? 0);
+                remainingLimits = enclosing is { } stillOuter ? stillOuter - used : null;
+            }
+        }
+
         public static Entity? ComputeLimit(Entity expr, Variable x, Entity dest, ApproachFrom side = ApproachFrom.BothSides, bool acceptNaN = false)
         {
+            if (remainingLimits is { } remaining)
+            {
+                if (remaining <= 0)
+                    return null;
+                remainingLimits = remaining - 1;
+            }
             // The approach is stated for the whole computation, not only where the destination
             // has been normalised to +oo. Everything below simplifies as it goes, and a rule that
             // may only fire while the approach is in scope is otherwise declining through most of

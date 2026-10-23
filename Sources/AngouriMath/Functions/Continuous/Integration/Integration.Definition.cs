@@ -121,9 +121,10 @@ namespace AngouriMath
         /// at 0 is <c>0 * -oo</c>, so the integral of <c>ln(x)</c> from 0 to 1 was <c>NaN</c> where it
         /// is -1. The limit is taken only where the value is undefined, so a bound the substitution
         /// answered is answered as before. Its side is known at an infinity, and at a finite bound
-        /// from the other bound where both have numeric values. Elsewhere, and where the limit is not
-        /// decided, the value stays undefined, as it is for <c>sin(x)</c> from 0 to <c>+oo</c>,
-        /// whose antiderivative has no limit there.
+        /// from the other bound where both have numeric values. Elsewhere, and where the limit is
+        /// undefined, the value stays undefined, as it is for <c>sin(x)</c> from 0 to <c>+oo</c>,
+        /// whose antiderivative has no limit there. Where the limit is not decided there is no value,
+        /// <see langword="null"/>, and the integral is left as written.
         /// </remarks>
         private static Entity? AtTheBound(Entity antiderivative, Variable x, Entity bound, Entity otherBound)
         {
@@ -147,9 +148,51 @@ namespace AngouriMath
             // and evaluating Gamma(3/4) at every step, for over a minute. https://github.com/asc-community/AngouriMath/issues/2075
             if (HoldsAnIncompleteGammaFunction(antiderivative))
                 return null;
-            var limit = antiderivative.Limit(x, bound, inside);
-            return limit.IsNaN || limit.Nodes.Any(node => node is Limitf) ? value : limit;
+            var limit = LimitAtTheBound(antiderivative, x, bound, inside);
+            // A limit that is not decided is no value: the integral is left as written. Undefined would say it does not
+            // exist, and the integral of ln(x) erf(x) from 0 to 1 was NaN where it is -0.2613, for want of erf's limit at
+            // 0. https://github.com/asc-community/AngouriMath/issues/2081
+            if (limit.Nodes.Any(node => node is Limitf))
+                return null;
+            return limit.IsNaN ? value : limit;
         }
+
+        /// <summary>
+        /// The antiderivative's limit at a bound, remembered under the settings it was taken in, as
+        /// the cache of answers remembers an antiderivative. A definite integral left as written is evaluated
+        /// again by every candidate <c>Simplify</c> tries, and the limit that left it so is the slow part: at 0,
+        /// the antiderivative of <c>ln(x) erf(x)</c> is an infinity less an infinity that l'Hopital's rule does
+        /// not settle, two seconds of search each time, and the simplification ran past two minutes.
+        /// https://github.com/asc-community/AngouriMath/issues/2081
+        /// </summary>
+        private static Entity LimitAtTheBound(Entity antiderivative, Variable x, Entity bound, ApproachFrom side)
+        {
+            if (limitsAtBounds is null || limitsAtBoundsUnder is null || !SettingsState.StillHolds(limitsAtBoundsUnder))
+            {
+                limitsAtBounds = new();
+                limitsAtBoundsUnder = SettingsState.Snapshot();
+            }
+            var into = limitsAtBounds;
+            var stamp = limitsAtBoundsUnder;
+            var key = (antiderivative, x, bound, side);
+            if (into.TryGetValue(key, out var known))
+                return known;
+            // Within a budget of the limits it asks along the way. Past it the limit is undecided and the integral left
+            // as written, which is no wrong answer. The most a decided limit at a bound took in the tests is 957; one
+            // spelling of the antiderivative of ln(x) Si(x) took over 38,000 in forty seconds without deciding.
+            var limit = Functions.Algebra.LimitFunctional.WithinABudget(LimitsAtABound, () => antiderivative.Limit(x, bound, side));
+            if (SettingsState.StillHolds(stamp))
+            {
+                if (into.Count >= 256)
+                    into.Clear();
+                into[key] = limit;
+            }
+            return limit;
+        }
+        [System.ThreadStatic] private static Dictionary<(Entity, Variable, Entity, ApproachFrom), Entity>? limitsAtBounds;
+        /// <summary>How many limits the limit at one bound may ask in all.</summary>
+        private const int LimitsAtABound = 2000;
+        [System.ThreadStatic] private static object?[]? limitsAtBoundsUnder;
 
         /// <summary>
         /// Integrates numerically over <paramref name="x"/> between two bounds, without

@@ -75,6 +75,19 @@ not seen, and a symmetric divergent one comes to its principal value
 | `"ln(x)".ToEntity().DefiniteIntegral("x", 0, 1)` | `NaN` | `-1.00000` |
 | `"1/x".ToEntity().DefiniteIntegral("x", 0, 1)` | `NaN` | `NaN` |
 
+### A definite integral whose bound has no decided limit is left as written
+
+**Not silent: what was `NaN` is the integral as written.** Where the antiderivative is undefined at a bound, its limit
+from inside the range is taken, and where that limit could not be decided the integral was `NaN`, which says it does not
+exist. It is left as written now. The limit at a bound is also asked within a budget of the limits it takes along the way,
+so that a simplification asking it for each spelling of the integrand ends.
+([#2081](https://github.com/asc-community/AngouriMath/issues/2081))
+
+| Input | Was (2.6.0) | Now |
+|---|---|---|
+| `"integral(ln(x) * erf(x), x, 0, 1)".ToEntity().Simplify()` | `NaN` | `integral(erf(x) * ln(x), x, 0, 1)`, whose value is `-0.2613…` |
+| `"integral(ln(x) * Si(x), x, 0, 1)".ToEntity().Simplify()` | `NaN` | `integral(Si(x) * ln(x), x, 0, 1)`, whose value is `-0.2466…` |
+
 ### A root of a small or a large number is searched for at the size of one
 
 **Silent: wrong answers.** The search for an exact root of a number rounded each candidate to six digits, absolutely.

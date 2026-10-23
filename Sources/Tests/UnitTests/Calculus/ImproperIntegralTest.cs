@@ -59,6 +59,28 @@ namespace AngouriMath.Tests.Calculus
         [Fact]
         public void AnAntiderivativeWithoutALimitLeavesNaN() => Assert.Equal(MathS.NaN, Definite("sin(x)", "0", "+oo"));
 
+        /// <summary>
+        /// And as written where the limit is not decided: undefined would say the integral does not exist, and
+        /// <c>ln(x) erf(x)</c> over <c>[0, 1]</c>, whose antiderivative is an infinity less an infinity at 0 that no rule
+        /// settles, was <c>NaN</c> where it is -0.2613. The limit there is asked within a budget, and the simplification,
+        /// which asks it again for each spelling of the integrand it tries, ran past two minutes without one.
+        /// https://github.com/asc-community/AngouriMath/issues/2081
+        /// </summary>
+        [Theory]
+        [InlineData("ln(x) * erf(x)")]
+        [InlineData("ln(x) * Si(x)")]
+        public void ABoundWhoseLimitIsNotDecidedLeavesTheIntegralAsWritten(string integrand)
+        {
+            Entity? result = null;
+            var task = System.Threading.Tasks.Task.Run(() => result = Definite(integrand, "0", "1"));
+            // The budget bounds the work, in limits; this wall is a backstop against a hang that the budget no longer
+            // bounds, not a measure of time. The erf integral takes about nine seconds alone, and a wall of sixty
+            // fired in the full suite on a loaded machine.
+            Assert.True(task.Wait(System.TimeSpan.FromMinutes(5)), $"the integral of {integrand} from 0 to 1 was still being simplified");
+            Assert.IsType<Entity.Integralf>(result);
+            Assert.DoesNotContain(result!.Nodes, node => node == MathS.NaN);
+        }
+
         /// <summary>A bound the substitution answers is answered as it was.</summary>
         [Theory]
         [InlineData("e^(-x)", "0", "+oo", "1")]
