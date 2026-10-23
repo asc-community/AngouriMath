@@ -149,7 +149,8 @@ as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` wa
   `z = -b ln(F) x^n` and `s = (m + 1)/n`, where `s` is neither whole nor half a whole number, or is past 30, as
   `x^31 e^(-x)` is, whose sum of 32 terms is `-gamma(32, x)` now. A definite integral of such an answer that is
   undefined at a bound is left as written. And beside a power of a sine and a cosine, which Euler's formula writes as
-  those exponentials, the gamma functions of an imaginary argument.
+  those exponentials, the gamma functions of an imaginary argument, and beside a hyperbolic function of a power of
+  `x`, as `x sinh(c + d x^3)`.
 ([#2075](https://github.com/asc-community/AngouriMath/issues/2075))
 
 | Input | Was (2.6.0) | Now |

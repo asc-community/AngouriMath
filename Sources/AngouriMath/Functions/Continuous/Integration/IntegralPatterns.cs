@@ -422,23 +422,31 @@ namespace AngouriMath.Functions.Algebra
             var exponent = exponentialBelow ? -exponential.Exponent : exponential.Exponent;
             var logarithm = exponential.Base == MathS.e ? Entity.Number.Integer.One : MathS.Ln(exponential.Base);
 
-            // The exponent as a + b x^n, the term in x as written.
+            // The exponent as a + b x^n, the term in x as written, or as expanded: -(c + d x^3) is one term as written, and
+            // it is how sinh(c + d x^3) arrives, as (e^(c + d x^3) - e^(-(c + d x^3)))/2.
             Entity constant = Entity.Number.Integer.Zero;
             Entity? term = null;
             Entity? degree = null;
-            foreach (var summand in Entity.Sumf.LinearChildren(exponent))
-                if (!summand.ContainsNode(x))
-                    constant += summand;
-                else if (term is null && ThePowerOfX(summand, x) is { } read)
-                {
-                    term = summand;
-                    degree = read;
-                }
-                else
-                {
-                    term = null;
+            for (var reading = 0; reading < 2 && term is null; reading++)
+            {
+                var asRead = reading == 0 ? exponent : exponent.Expand();
+                if (reading == 1 && asRead == exponent)
                     break;
-                }
+                constant = Entity.Number.Integer.Zero;
+                foreach (var summand in Entity.Sumf.LinearChildren(asRead))
+                    if (!summand.ContainsNode(x))
+                        constant += summand;
+                    else if (term is null && ThePowerOfX(summand, x) is { } read)
+                    {
+                        term = summand;
+                        degree = read;
+                    }
+                    else
+                    {
+                        term = null;
+                        break;
+                    }
+            }
             // Or a linear written otherwise, as the negation -(a + b x) is, which is how gamma(2, a + b x) is
             // elementary: e^(-(a + b x)) (1 + a + b x). https://github.com/asc-community/AngouriMath/issues/2075
             if (term is null && TreeAnalyzer.TryGetPolyLinear(exponent, x, out var slopeOfTheExponent, out var offsetOfTheExponent)
@@ -474,11 +482,11 @@ namespace AngouriMath.Functions.Algebra
                 // x^(m + 1) z^(-s), constant on each half-line, is K^(-s) for x > 0 with z = K x^n, and its value at -1 for
                 // x < 0. Where the two are one number it is that number on the whole line, and the answer has a value at 0
                 // rather than 0 times an infinity there: e^(x^3) is gamma(1/3, -x^3)/3, and its integral from 0 to 1 was NaN.
-                if (allOfX && mPlusOne is Entity.Number && degree is Entity.Number
-                    && (-logarithm * term.Substitute(x, Entity.Number.Integer.One)).InnerSimplified is Entity.Number theRate
-                    && MathS.Pow(theRate, (-s).InnerSimplified).InnerSimplified is Entity.Number onTheRight
-                    && constantFactor.Substitute(x, Entity.Number.Integer.MinusOne).InnerSimplified is Entity.Number onTheLeft
-                    && onTheRight == onTheLeft)
+                // The two are its values at 1 and -1, which need not be numbers: x^(1/3) e^(-1 - 3 x^2) has 3^(-2/3) on both.
+                if (allOfX
+                    && constantFactor.Substitute(x, Entity.Number.Integer.One).InnerSimplified is var onTheRight
+                    && !onTheRight.ContainsNode(x)
+                    && constantFactor.Substitute(x, Entity.Number.Integer.MinusOne).InnerSimplified == onTheRight)
                     return leading * onTheRight * MathS.IncompleteGamma(s, z);
                 return leading * constantFactor * MathS.IncompleteGamma(s, z);
             }

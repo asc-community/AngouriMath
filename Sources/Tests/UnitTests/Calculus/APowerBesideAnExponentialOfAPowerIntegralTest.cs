@@ -84,6 +84,8 @@ namespace AngouriMath.Tests.Calculus
         [Theory]
         [InlineData("integral(e^(x^3), x, 0, 1)", 1.34190441797742)]
         [InlineData("integral(e^(-x^3), x, 0, 1)", 0.807511182139671)]
+        // 3^(-2/3) on both half-lines, which is not a number but one constant.
+        [InlineData("integral(x^(1/3)*e^(-(1 + 3*x^2)), x, 0, 1)", 0.1169389395696306439)]
         public void ADefiniteIntegralFromZero(string integral, double value)
         {
             var result = integral.ToEntity().Simplify().EvalNumerical();
@@ -109,6 +111,17 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x*(a + b*sin(c + d*x^3))")]
         [InlineData("sin(c + d*x^3)^2")]
         public void APowerBesideASineOrACosine(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// And a hyperbolic function of a power of <c>x</c>, which arrives as <c>e^u</c> and <c>e^(-u)</c>: the second's exponent
+        /// is read expanded. Rubi's 6.1.3.
+        /// </summary>
+        [Theory]
+        [InlineData("x*sinh(c + d*x^3)")]
+        [InlineData("(f*x)^m*sinh(c + d*x^2)")]
+        [InlineData("x^m*sinh(a + b/x)")]
+        [InlineData("x^m*e^(-(a + b*x^2))")]
+        public void AHyperbolicFunctionOfAPowerOfX(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
         /// Not where the integral is elementary, an exponential integral or an error function: those keep the form
