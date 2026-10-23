@@ -545,6 +545,34 @@ namespace AngouriMath.Numerics
                     return BySlope(Evaluate(argument), Number.Shi, z => Divide(Half(Subtract(Exp(z), Exp(Negate(z)))), z), cutEnd: null);
                 case Chif(var argument):
                     return BySlope(Evaluate(argument), Number.Chi, z => Divide(Half(Add(Exp(z), Exp(Negate(z)))), z), cutEnd: EDecimal.Zero);
+                // The upper incomplete gamma function of a constant order, through its derivative in z,
+                // -z^(a - 1) e^(-z), jumping across the negative real axis but at a whole order a >= 1. The
+                // power is the principal one, as this evaluation's powers are. An order known only to its
+                // last place, as 1/3 is, is taken at both ends, and the value is the hull of the two: across
+                // an interval that narrow the function is linear in its order.
+                // https://github.com/asc-community/AngouriMath/issues/2075
+                case IncompleteGammaf(var parameter, var lowerLimit):
+                {
+                    var order = Evaluate(parameter);
+                    if (!order.IsFinite)
+                        return undefined;
+                    var z = Evaluate(lowerLimit);
+                    var entire = order.IsReal && order.Re.Low.CompareTo(order.Re.High) == 0 && order.Re.Low.IsInteger() && order.Re.Low.Sign > 0;
+                    PreciseComplexInterval AtTheOrder(EDecimal re, EDecimal im)
+                    {
+                        var a = Number.Complex.Create(re, im);
+                        var aLessOne = new PreciseComplexInterval(PreciseInterval.Exactly(re.Subtract(EDecimal.One)), PreciseInterval.Exactly(im));
+                        return BySlope(z, w => Number.IncompleteGamma(a, w), w => Negate(Multiply(Pow(w, aLessOne), Exp(Negate(w)))), cutEnd: entire ? null : EDecimal.Zero);
+                    }
+                    var low = AtTheOrder(order.Re.Low, order.Im.Low);
+                    if (order.Re.Low.CompareTo(order.Re.High) == 0 && order.Im.Low.CompareTo(order.Im.High) == 0 || !low.IsFinite)
+                        return low;
+                    var high = AtTheOrder(order.Re.High, order.Im.High);
+                    if (!high.IsFinite)
+                        return undefined;
+                    return new(new(EDecimal.Min(low.Re.Low, high.Re.Low), EDecimal.Max(low.Re.High, high.Re.High)),
+                        new(EDecimal.Min(low.Im.Low, high.Im.Low), EDecimal.Max(low.Im.High, high.Im.High)));
+                }
                 // A sum over the roots of a polynomial, the form Rothstein–Trager answers in: each
                 // root enclosed, the summand worked out on its rectangle, and the terms added.
                 // https://github.com/asc-community/AngouriMath/issues/1285

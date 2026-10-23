@@ -137,6 +137,17 @@ namespace AngouriMath.Tests.Calculus
         public void APolynomialBesideAFunctionOfAShiftedLinear(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// A symbolic power of an inverse hyperbolic function, which its substitution writes as powers of <c>u</c> beside
+        /// exponentials of it, each a gamma function. The route had these answers and turned them away: its check at
+        /// sampled points could not evaluate a gamma function, and so had no point to compare at. Rubi's 7.1.4 and 7.2.4.
+        /// </summary>
+        [Theory]
+        [InlineData("x*asinh(c*x)^n/sqrt(1 + c^2*x^2)")]
+        [InlineData("(d + f*asinh(c*x))^n*sqrt(1 + c^2*x^2)")]
+        [InlineData("x*(d + f*acosh(f*x))^n/(sqrt(f*x - 1)*sqrt(f*x + 1))")]
+        public void ASymbolicPowerOfAnInverseHyperbolicFunction(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// Not where the integral is elementary, an exponential integral or an error function: those keep the form
         /// they had.
         /// </summary>
