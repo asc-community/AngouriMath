@@ -18222,8 +18222,9 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             // The function first, by its shape, before any factor is read as a polynomial: that expands it, and asked of
             // every product an algebraic integrand is, it was five per cent of the corpus's time.
+            var (numerator, denominator) = expr is Divf(var above, var below) ? (above, below) : (expr, (Entity)Number.Integer.One);
             Entity? transcendental = null;
-            foreach (var factor in Mulf.LinearChildren(expr))
+            foreach (var factor in Mulf.LinearChildren(numerator))
                 if (factor.ContainsNode(x) && IsATranscendentalPowerOfSomethingInX(factor, x))
                 {
                     if (transcendental is not null)
@@ -18233,7 +18234,7 @@ namespace AngouriMath.Functions.Algebra
             if (transcendental is null)
                 return null;
             Entity? polynomial = null;
-            foreach (var factor in Mulf.LinearChildren(expr))
+            foreach (var factor in Mulf.LinearChildren(numerator))
             {
                 if (!factor.ContainsNode(x) || ReferenceEquals(factor, transcendental))
                     continue;
@@ -18247,6 +18248,18 @@ namespace AngouriMath.Functions.Algebra
                 || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out var offset)
                 || slope.ContainsNode(x) || offset.ContainsNode(x) || TreeAnalyzer.IsZero(slope) || VanishesIdentically(offset))
                 return null;
+            // Below the bar, constants and whole powers of a multiple of the linear, which in u are powers of u:
+            // (h + j x)^2 (a + b ln(c (e + f x)))^p/(d e + d f x) is a polynomial in u over d u.
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                    continue;
+                var linearBelow = factor is Powf(var powered, Number.Integer { EInteger.Sign: > 0 }) ? powered : factor;
+                if (!TreeAnalyzer.TryGetPolyLinear(linearBelow, x, out var belowSlope, out var belowOffset)
+                    || belowSlope.ContainsNode(x) || belowOffset.ContainsNode(x)
+                    || !VanishesIdentically(belowSlope * offset - belowOffset * slope))
+                    return null;
+            }
             // x = (u - a)/b, so that the function is of u, and dx = du/b: the whole integrand, its constants with it.
             var u = Variable.CreateUnique(expr, "u_linear");
             if (transcendental.Replace(node => node == linear ? u : node).ContainsNode(x))
