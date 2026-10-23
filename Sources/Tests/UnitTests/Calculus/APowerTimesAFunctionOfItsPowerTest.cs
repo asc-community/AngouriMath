@@ -78,9 +78,16 @@ namespace AngouriMath.Tests.Calculus
             Assert.Equal("e^(x^n)/n".ToEntity().Simplify(), "x^(n-1)*e^(x^n)".ToEntity().Integrate("x").Substitute("C", 0).Simplify());
         }
 
-        /// <summary>A power in front that is not one less than a multiple of the power inside is left alone.</summary>
+        /// <summary>
+        /// A power in front that is not one less than a multiple of the power inside is not substituted for: its integral is
+        /// a gamma function of <c>-x^n</c>, of order <c>(n + 1)/n</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/2075
+        /// </summary>
         [Fact]
-        public void APowerThatIsNotTheDerivativeIsLeftAsWritten()
-            => Assert.Contains("integral(", "x^n*e^(x^n)".ToEntity().Integrate("x").Stringize());
+        public void APowerThatIsNotTheDerivativeIsAGammaFunction()
+        {
+            DifferentiatesBack("x^n*e^(x^n)");
+            Assert.Contains("gamma(", "x^n*e^(x^n)".ToEntity().Integrate("x").Stringize());
+        }
     }
 }

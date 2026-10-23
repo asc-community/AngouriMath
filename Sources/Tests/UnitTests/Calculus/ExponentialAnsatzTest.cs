@@ -180,10 +180,11 @@ namespace AngouriMath.Tests.Calculus
         /// <summary>
         /// What has no antiderivative in the library's functions is declined, not answered: the
         /// ansatz finds no <c>N</c>, which by Liouville is the proof that none is elementary.
-        /// <c>e^x/x</c> and <c>e^x/(1 + x)</c> are not elementary either, but they are <c>Ei</c>.
+        /// <c>e^x/x</c> and <c>e^x/(1 + x)</c> are not elementary either, but they are <c>Ei</c>, and
+        /// <c>e^(x^3)</c> is a gamma function of <c>-x^3</c>; <c>e^(x^3 + x)</c> is neither.
         /// </summary>
         [Theory]
-        [InlineData("e^(x^3)")]
+        [InlineData("e^(x^3 + x)")]
         public void ANonElementaryOneIsDeclined(string integrand)
             => Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
 

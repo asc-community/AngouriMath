@@ -347,6 +347,25 @@ namespace AngouriMath
                     x, dist, side);
         }
 
+        // The upper incomplete gamma function, continuous in z away from 0, and at 0 for Re a > 0, where it is Gamma(a): the
+        // limit is the function at its argument's limit wherever that value is a finite number. An infinite one is not taken,
+        // since it can differ by side: gamma(-1, z) is about 1/z. An answer in it from 0 is 0 times an infinity there, which a
+        // definite integral takes the limit of. https://github.com/asc-community/AngouriMath/issues/2075
+        partial record IncompleteGammaf
+        {
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                if (Parameter.ContainsNode(x))
+                    return null;
+                // By continuity alone: the value at a point where it is infinite is not the limit there -- gamma(-1, 0) is +oo,
+                // the integral diverging, where gamma(-1, z) is about 1/z and tends to -oo from the left.
+                return LowerLimit.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } limit && !limit.ContainsNode(x)
+                    && New(Parameter, limit) is var value && value.Evaled is Number.Complex { IsFinite: true, IsNaN: false }
+                    ? value
+                    : null;
+            }
+        }
+
         partial record Derivativef
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
