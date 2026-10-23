@@ -377,7 +377,7 @@ namespace AngouriMath.Numerics
 
         /// <summary>
         /// The numerator of <paramref name="exponent"/> where it is an exact fraction of odd denominator below 10, to which
-        /// <see cref="Number.Pow"/> raises a negative real as its real root; <see langword="null"/> otherwise.
+        /// <c>Number.Pow</c> raises a negative real as its real root; <see langword="null"/> otherwise.
         /// </summary>
         internal static EInteger? TheRealRootIsTaken(Entity exponent)
             => exponent is Number.Rational { ERational: var exact } and not Number.Integer
