@@ -148,7 +148,8 @@ as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` wa
 - **Integrals in it.** `x^m F^(a + b x^n)` and `(c + d x)^m F^(a + b x)` are `-F^a x^(m + 1) z^(-s) gamma(s, z)/n`, with
   `z = -b ln(F) x^n` and `s = (m + 1)/n`, where `s` is neither whole nor half a whole number, or is past 30, as
   `x^31 e^(-x)` is, whose sum of 32 terms is `-gamma(32, x)` now. A definite integral of such an answer that is
-  undefined at a bound is left as written.
+  undefined at a bound is left as written. And beside a power of a sine and a cosine, which Euler's formula writes as
+  those exponentials, the gamma functions of an imaginary argument.
 ([#2075](https://github.com/asc-community/AngouriMath/issues/2075))
 
 | Input | Was (2.6.0) | Now |
@@ -164,6 +165,8 @@ as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` wa
 | `"x^(1/3)*gamma(2, a + b*x)".ToEntity().Integrate("x")` | a `FunctionArgumentCountException` | `-b * e ^ (-a) * x ^ (7/3) * (b * x) ^ (-7/3) * gamma(7/3, b * x) + -(1 + a) * e ^ (-a) * x ^ (4/3) * (b * x) ^ (-4/3) * gamma(4/3, b * x) + C` |
 | `"(c + d*x)^m*e^(a + b*x)".ToEntity().Integrate("x")` | `integral((c + d * x) ^ m * e ^ (a + b * x), x)` | `e ^ (a - b * c / d) * (c + d * x) ^ m * (-b * (c + d * x) / d) ^ (-m) * gamma(m + 1, -b * (c + d * x) / d) / b + C` |
 | `"x^31*e^(-x)".ToEntity().Integrate("x")` | a sum of 32 terms, 6,172 characters | `-gamma(32, x) + C` |
+| `"x^m*sin(b*x)".ToEntity().Integrate("x")` | `integral(x ^ m * sin(b * x), x)` | `gamma(m + 1, -i b x)` and `gamma(m + 1, i b x)`, each beside `x ^ (m + 1) (∓i b x) ^ (-(m + 1))` |
+| `"sin(c + d*x^3)".ToEntity().Integrate("x")` | `integral(sin(c + d * x ^ 3), x)` | `gamma(1/3, -i d x ^ 3)` and `gamma(1/3, i d x ^ 3)`, beside `e ^ (±i c)` |
 | `"integral(e^(x^3), x, 0, 1)".ToEntity().Simplify()` | `integral(e ^ x ^ 3, x, 0, 1)` | `(gamma(1/3, -1) - (-2/3)!) / 3`, which is `1.3419044179774…` |
 
 ### Numerical equality is to half the evaluation's digits

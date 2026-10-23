@@ -98,6 +98,19 @@ namespace AngouriMath.Tests.Calculus
             => Assert.Equal("-gamma(4/3, x)", DifferentiatesBack("x^(1/3)*e^(-x)").Substitute("C", 0).InnerSimplified.Stringize());
 
         /// <summary>
+        /// Beside a power of a sine and a cosine, by Euler's formula: each <c>e^(i q u)</c> beside the power is a gamma function
+        /// of an imaginary argument. Rubi's 4.1.10 and 4.1.12.
+        /// </summary>
+        [Theory]
+        [InlineData("(c + d*x)^m*sin(a + b*x)")]
+        [InlineData("(c + d*x)^m*cos(a + b*x)^2")]
+        [InlineData("x^m*sin(b*x)")]
+        [InlineData("x^(1/3)*sin(x)*cos(x)")]
+        [InlineData("x*(a + b*sin(c + d*x^3))")]
+        [InlineData("sin(c + d*x^3)^2")]
+        public void APowerBesideASineOrACosine(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// Not where the integral is elementary, an exponential integral or an error function: those keep the form
         /// they had.
         /// </summary>
@@ -106,6 +119,8 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("sqrt(x)*e^(-x)")]
         [InlineData("e^(b*x^2)")]
         [InlineData("e^(b*x)/x")]
+        [InlineData("x^2*sin(x)")]
+        [InlineData("sin(x)/x")]
         public void NotWhereTheIntegralIsElementaryOrAnErrorFunction(string integrand)
             => Assert.DoesNotContain("gamma(", DifferentiatesBack(integrand).Stringize());
     }

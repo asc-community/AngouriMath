@@ -498,6 +498,120 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>int P sin(u)^k cos(u)^j dx</c> for a power <c>P</c> of <c>x</c>, or of a linear, which is not a polynomial -- or
+        /// none, beside a function of a power of <c>x</c>, <c>sin(a + b x^3)</c>: by
+        /// Euler's formula <c>sin(u)^k cos(u)^j</c> is a sum of <c>e^(i q u)</c>, each beside <c>P</c> a gamma function of
+        /// <see cref="APowerBesideAnExponentialOfAPower"/>, and the term with <c>q = 0</c> is <c>P</c>'s own integral. Where any
+        /// term is declined -- a whole power of <c>x</c>, whose integral is elementary and answered by parts -- so is the
+        /// integrand. The gamma functions' arguments are imaginary on the real line, off the cut. Rubi's 4.1.10 and 4.1.12.
+        /// https://github.com/asc-community/AngouriMath/issues/2075
+        /// </summary>
+        private static Entity? APowerBesideATrigonometricFunction(Entity expr, Entity.Variable x)
+        {
+            // Asked of every integrand that reaches the table, so a type test comes first, and nothing here captures a
+            // local before it has found a sine or a cosine.
+            if (expr is not (Entity.Mulf or Entity.Divf or Entity.Sinf or Entity.Cosf or Entity.Powf(Entity.Sinf or Entity.Cosf, _)))
+                return null;
+            var (numerator, denominator) = expr is Entity.Divf(var n, var d) ? (n, d) : (expr, (Entity)Entity.Number.Integer.One);
+            Entity coefficient = Entity.Number.Integer.One;
+            Entity? argument = null;
+            var sines = 0;
+            var cosines = 0;
+            Entity? above = null;
+            Entity? below = null;
+            foreach (var factor in Entity.Mulf.LinearChildren(numerator))
+            {
+                if (!factor.ContainsNode(x))
+                    coefficient *= factor;
+                else if (TheTrigonometricPower(factor) is var (isSine, trigonometricArgument, times)
+                    && (argument is null || argument == trigonometricArgument))
+                {
+                    argument = trigonometricArgument;
+                    if (isSine) sines += times; else cosines += times;
+                }
+                else
+                    above = above is null ? factor : above * factor;
+            }
+            if (argument is null || sines + cosines > 8)
+                return null;
+            foreach (var factor in Entity.Mulf.LinearChildren(denominator))
+                if (!factor.ContainsNode(x))
+                    coefficient /= factor;
+                else
+                    below = below is null ? factor : below * factor;
+
+            // sin(u)^k cos(u)^j = (2 i)^(-k) 2^(-j) sum C(k, r) (-1)^(k - r) C(j, t) e^(i (2 r - k + 2 t - j) u).
+            var weights = new SortedDictionary<int, EInteger>();
+            for (var r = 0; r <= sines; r++)
+                for (var t = 0; t <= cosines; t++)
+                {
+                    var q = 2 * r - sines + 2 * t - cosines;
+                    var weight = Binomial(sines, r).EInteger.Multiply(Binomial(cosines, t).EInteger);
+                    if ((sines - r) % 2 != 0)
+                        weight = weight.Negate();
+                    weights[q] = weights.TryGetValue(q, out var already) ? already.Add(weight) : weight;
+                }
+            Entity sum = Entity.Number.Integer.Zero;
+            // The highest frequency first: where the power is whole, the gamma rule declines it at once.
+            foreach (var weight in weights.Reverse())
+            {
+                if (weight.Value.IsZero)
+                    continue;
+                Entity? term;
+                if (weight.Key == 0)
+                    term = TheIntegralOfAPower(above, below, x);
+                else
+                {
+                    var exponential = MathS.Pow(MathS.e, (MathS.i * weight.Key * argument).Expand());
+                    var integrand = above is null ? (below is null ? exponential : exponential / below) : below is null ? above * exponential : above * exponential / below;
+                    term = APowerBesideAnExponentialOfAPower(integrand, x);
+                }
+                if (term is null)
+                    return null;
+                sum += Entity.Number.Integer.Create(weight.Value) * term;
+            }
+            return coefficient / (MathS.Pow(2 * MathS.i, sines) * MathS.Pow(2, cosines)) * sum;
+        }
+
+        /// <summary><paramref name="factor"/> as <c>sin(u)^k</c> or <c>cos(u)^k</c> for a whole <c>k >= 1</c>.</summary>
+        private static (bool IsSine, Entity Argument, int Times)? TheTrigonometricPower(Entity factor) => factor switch
+        {
+            Entity.Sinf(var u) => (true, u, 1),
+            Entity.Cosf(var u) => (false, u, 1),
+            Entity.Powf(Entity.Sinf(var u), Entity.Number.Integer { EInteger: var k }) when k.Sign > 0 && k.CompareTo(EInteger.FromInt32(8)) <= 0
+                => (true, u, k.ToInt32Checked()),
+            Entity.Powf(Entity.Cosf(var u), Entity.Number.Integer { EInteger: var k }) when k.Sign > 0 && k.CompareTo(EInteger.FromInt32(8)) <= 0
+                => (false, u, k.ToInt32Checked()),
+            _ => null
+        };
+
+        /// <summary>
+        /// The integral of a power <c>(d x)^m</c> above or below the bar, or of a power <c>(c + d x)^m</c>, for any <c>m</c> but -1,
+        /// or <see langword="null"/>.
+        /// </summary>
+        private static Entity? TheIntegralOfAPower(Entity? above, Entity? below, Entity.Variable x)
+        {
+            if (above is null && below is null)
+                return x;
+            if (above is not null && below is not null)
+                return null;
+            var power = above ?? below!;
+            Entity @base, m;
+            if (power == x)
+                (@base, m) = (x, Entity.Number.Integer.One);
+            else if (power is Entity.Powf(var written, var exponent) && !exponent.ContainsNode(x))
+                (@base, m) = (written, exponent);
+            else
+                return null;
+            if (!TreeAnalyzer.TryGetPolyLinear(@base, x, out var slope, out _))
+                return null;
+            var mPlusOne = (above is null ? -m + 1 : m + 1).InnerSimplified;
+            if (TreeAnalyzer.IsZero(mPlusOne))
+                return null;
+            return MathS.Pow(@base, mPlusOne) / (slope * mPlusOne);
+        }
+
+        /// <summary>
         /// The gamma function's order <paramref name="s"/>, as the number it is where its symbols cancel: <c>(-1 + n + 1)/n</c>
         /// is 1, which inner simplification leaves as written, and <c>(p x)^(n - 1) e^(x^n)</c>, whose integral is
         /// <c>e^(x^n)/n</c>, was answered as <c>gamma((-1 + n + 1)/n, -x^n)</c>.
@@ -801,6 +915,10 @@ namespace AngouriMath.Functions.Algebra
             // And a power beside an exponential of a power, where that is a gamma function and
             // neither elementary nor an error function. https://github.com/asc-community/AngouriMath/issues/2075
             _ when APowerBesideAnExponentialOfAPower(expr, x) is { } gammaForm => gammaForm,
+
+            // And beside a power of a sine and a cosine, as the exponentials Euler's formula writes them.
+            // https://github.com/asc-community/AngouriMath/issues/2075
+            _ when APowerBesideATrigonometricFunction(expr, x) is { } trigonometricGammaForm => trigonometricGammaForm,
 
             Entity.Absf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) => // ∫ |ax + b| dx = sgn(ax + b) * (ax + b)^2 / (2a)
