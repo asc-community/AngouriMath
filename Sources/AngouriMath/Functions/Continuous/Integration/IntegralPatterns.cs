@@ -543,10 +543,15 @@ namespace AngouriMath.Functions.Algebra
                     return sum;
                 }
 
-            // A power of a linear with an offset, beside an exponential of a linear.
+            // A power of a linear with an offset, beside an exponential of a linear -- or a power of a power of one,
+            // ((c + d x)^n)^m, which stands as written where (c + d x)^(n m) would: its logarithmic derivative is
+            // n m d/(c + d x) on every branch, and that is all the answer asks of it.
             if (factorsInX != 1 || !degree.Equals(Entity.Number.Integer.One)
-                || single is not Entity.Powf(var linear, var exponentOfLinear) || exponentOfLinear.ContainsNode(x)
-                || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out var offset)
+                || single is not Entity.Powf(var linear, var exponentOfLinear) || exponentOfLinear.ContainsNode(x))
+                return null;
+            while (linear is Entity.Powf(var innerLinear, var innerExponent) && !innerExponent.ContainsNode(x))
+                (linear, exponentOfLinear) = (innerLinear, (innerExponent * exponentOfLinear).InnerSimplified);
+            if (!TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out var offset)
                 || !TreeAnalyzer.TryGetPolyLinear(term, x, out var rate, out _))
                 return null;
             var exponentOfPower = singleBelow ? (-exponentOfLinear).InnerSimplified : exponentOfLinear;
