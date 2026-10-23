@@ -194,6 +194,16 @@ namespace AngouriMath.Tests.Calculus
         public void AnExponentWrittenOtherwise(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// An exponent written expanded that is a power of one shifted linear and a constant, written so first:
+        /// <c>a^3 + 3 a^2 b x + 3 a b^2 x^2 + b^3 x^3</c> is <c>(a + b x)^3</c>. Rubi's 2.3.
+        /// </summary>
+        [Theory]
+        [InlineData("e^(a^3 + 3*a^2*b*x + 3*a*b^2*x^2 + b^3*x^3)*x")]
+        [InlineData("f^(c + d^3 + 3*d^2*x + 3*d*x^2 + x^3)")]
+        [InlineData("x^2*e^(b*(1 + 4*x + 6*x^2 + 4*x^3 + x^4))")]
+        public void AnExponentThatIsAPowerOfAShiftedLinearWrittenExpanded(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// Not where the integral is elementary, an exponential integral or an error function: those keep the form
         /// they had.
         /// </summary>

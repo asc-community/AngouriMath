@@ -18149,6 +18149,66 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An exponential of a polynomial of degree 3 to 12 written expanded where it is a multiple of a power of one shifted
+        /// linear and a constant, written so: <c>a^3 + 3 a^2 b x + 3 a b^2 x^2 + b^3 x^3</c> is <c>b^3 (x + a/b)^3</c>. With
+        /// <c>p</c> the leading coefficient and <c>s = p_(n - 1)/(n p)</c>, the polynomial less <c>p (x + s)^n</c> is a constant
+        /// exactly where each lower coefficient is <c>p C(n, j) s^(n - j)</c>, and the integrand with the exponent written so
+        /// is the rule's below for a polynomial beside a function of a shifted linear. Rubi's 2.3.
+        /// https://github.com/asc-community/AngouriMath/issues/2075
+        /// </summary>
+        internal static Entity? SolveByWritingAnExponentAsAPowerOfAShiftedLinear(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            foreach (var node in expr.Nodes)
+            {
+                // Written expanded: a power of a sum in x is already written as one, and its expansion would be read again.
+                if (node is not Powf(var @base, var exponent) || @base.ContainsNode(x)
+                    || !exponent.Nodes.Any(inner => inner is Sumf or Minusf && inner.ContainsNode(x))
+                    || exponent.Nodes.Any(inner => inner is Powf(Sumf or Minusf, _) && inner.ContainsNode(x))
+                    || !TreeAnalyzer.TryGetPolynomial(exponent, x, out var monomials) || monomials is null || monomials.Keys.Any(degree => degree.Sign < 0))
+                    continue;
+                var n = monomials.Keys.Max()!;
+                if (n.CompareTo(EInteger.FromInt32(3)) < 0 || n.CompareTo(EInteger.FromInt32(12)) > 0
+                    || !monomials.TryGetValue(n.Subtract(EInteger.One), out var next) || VanishesIdentically(next))
+                    continue;
+                var degree = n.ToInt32Checked();
+                // Both small, and simplified so that the answer reads them: 3 a b^2/(3 b^3) is a/b. The condition that comes
+                // with it, that the leading coefficient is not 0, is the reading's own: the polynomial is of degree n.
+                var leading = monomials[n].InnerSimplified;
+                var shift = (next / (degree * leading)).Simplify();
+                while (shift is Providedf(var unconditional, _))
+                    shift = unconditional;
+                var isAShiftedPower = true;
+                for (var j = 1; j <= degree - 2 && isAShiftedPower; j++)
+                {
+                    var coefficient = monomials.TryGetValue(EInteger.FromInt32(j), out var written) ? written : Number.Integer.Zero;
+                    isAShiftedPower = VanishesIdentically(coefficient - leading * Number.Integer.Create(Choose(degree, j)) * MathS.Pow(shift, degree - j));
+                }
+                if (!isAShiftedPower)
+                    continue;
+                var constant = monomials.TryGetValue(EInteger.Zero, out var free) ? free : Number.Integer.Zero;
+                var left = (constant - leading * MathS.Pow(shift, degree)).Simplify();
+                while (left is Providedf(var unconditional, _))
+                    left = unconditional;
+                var asAPower = VanishesIdentically(left) ? leading * MathS.Pow(x + shift, degree) : leading * MathS.Pow(x + shift, degree) + left;
+                // The same question, respelled: asked at this depth, so that the rules scoped to the question asked or one
+                // below still read it.
+                var rewritten = expr.Replace(inner => inner == node ? MathS.Pow(@base, asAPower) : inner);
+                return Integration.ComputeAsTheSameQuestion(rewritten, x, integrateByParts);
+            }
+            return null;
+
+            static EInteger Choose(int whole, int chosen)
+            {
+                var result = EInteger.One;
+                for (var i = 1; i <= chosen; i++)
+                    result = result.Multiply(EInteger.FromInt32(whole - chosen + i)).Divide(EInteger.FromInt32(i));
+                return result;
+            }
+        }
+
+        /// <summary>
         /// A polynomial beside a function of one shifted linear <c>a + b x</c> that parts cannot reach, written in
         /// <c>u = a + b x</c>: a power that is not whole of something holding a logarithm of it, <c>x (a + b ln(c (d + e x)))^p</c>,
         /// or an exponential of a function of it that is not linear, <c>x^2 f^(c (a + b x)^3)</c>. In u the polynomial is one
