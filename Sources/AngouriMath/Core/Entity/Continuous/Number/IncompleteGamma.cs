@@ -28,10 +28,11 @@ namespace AngouriMath
             /// algorithm. Near the negative real axis at a moderate <c>|z|</c> it stops short of the value.
             /// </para>
             /// <para>
-            /// Short of that it is <c>Gamma(a) - gamma(a, z)</c>, the lower one summed as
-            /// <c>z^a e^(-z) sum_k z^k / (a (a + 1) ... (a + k))</c> (DLMF 8.7.1). The terms are about <c>e^|z|</c> and the
-            /// value can be as small as <c>e^(-|z|)</c>, so twice <c>|z|/ln 10</c> digits are carried as guard digits,
-            /// and the sum is taken again with more where the difference shows it cancelled more.
+            /// Short of that it is <c>Gamma(a) - gamma(a, z)</c>, the lower one summed in the right half-plane as
+            /// <c>z^a e^(-z) sum_k z^k / (a (a + 1) ... (a + k))</c> (DLMF 8.7.1), whose terms there are about <c>e^|z|</c>
+            /// and of one sign on the positive axis, with twice <c>|z|/ln 10</c> guard digits; and in the left half-plane as
+            /// <c>z^a sum_k (-z)^k / (k! (a + k))</c> (DLMF 8.7.3), whose terms are of one sign on the negative axis, with
+            /// <c>(|z| + Re z)/ln 10</c>. Each is taken again with more where the difference shows it cancelled more.
             /// </para>
             /// <para>
             /// At a whole <c>a = -n &lt;= 0</c>, where <c>Gamma(a)</c> has a pole, it is
@@ -76,6 +77,23 @@ namespace AngouriMath
                 var (re, im) = useTheFraction
                     ? ByContinuedFraction((ar, ai), (zr, zi), Working(context, 10))
                     : BySeries((ar, ai), (zr, zi), modulus, context, turn);
+                // On the cut, for a real a, the fraction's coefficients are real and it converges to e^(i pi a) times a real
+                // function, the mean of the value from above and its conjugate from below, short of the value from above by
+                // -i e^(i pi a) sin(pi a) Gamma(a). That is below the precision of a value e^|z| in size, but not of a part it
+                // is the whole of: Gamma(a) at a half-whole a, the real part of Gamma(1/2, -300), which is sqrt(pi), and
+                // -i (-1)^n pi/n! at a = -n, the imaginary part of Gamma(-3, -300), pi/6. Without it, both are 0.
+                if (useTheFraction && turn is null && ai.IsZero && zi.IsZero && zr.Sign < 0)
+                {
+                    var work = Working(context, 10);
+                    if (!ar.IsInteger() && ar.Multiply(EDecimal.FromInt32(2)).IsInteger())
+                        re = re.Add(GammaOf((ar, ai), work).Re, work);
+                    else if (ar.IsInteger() && ar.Sign <= 0)
+                    {
+                        var n = ar.ToEInteger().Negate();
+                        var piOverFactorial = InternalAMExtensions.ConstantCache.Lookup(work).Pi.Divide(EDecimal.FromEInteger(Factorial(n.ToInt32Checked())), work);
+                        im = n.IsEven ? im.Subtract(piOverFactorial, work) : im.Add(piOverFactorial, work);
+                    }
+                }
                 // The continued fraction is used on the negative axis only past (P + 5) ln 10, where the value is e^|z| in
                 // size and (1 - rho) Gamma(a) + rho times the principal value cancels nothing.
                 if (turn is { } fractionsTurn && useTheFraction)
@@ -149,13 +167,21 @@ namespace AngouriMath
             private static (EDecimal Re, EDecimal Im) BySeries((EDecimal Re, EDecimal Im) a, (EDecimal Re, EDecimal Im) z, double modulus, EContext context,
                 (EInteger Turns, EInteger Q)? turn)
             {
-                var guard = (int)Math.Ceiling(2 * modulus / Math.Log(10)) + 10;
+                // In the left half-plane the lower function is summed as z^a sum_k (-z)^k/(k! (a + k)), as E_1 is, whose terms
+                // of size e^|z| sum to e^(-Re z): it loses (|z| + Re z)/ln 10 digits, none on the negative axis, where z^a
+                // e^(-z) sum_k z^k/(a)_(k + 1) has terms of alternating sign that sum to e^(-|z|) and lost twice |z|/ln 10.
+                // Carrying those digits asked Gamma(a) at a precision of its own, where it is not remembered: Gamma(1/3, -143)
+                // took 9.6 seconds, and Gamma(-5/2, -60) 2.4.
+                var leftHalf = z.Re.Sign < 0;
+                var guard = leftHalf
+                    ? (int)Math.Ceiling(Math.Max(0, modulus + z.Re.ToDouble()) / Math.Log(10)) + 12
+                    : (int)Math.Ceiling(2 * modulus / Math.Log(10)) + 10;
                 for (var attempt = 0; ; attempt++)
                 {
                     var work = Working(context, guard);
                     var (value, scale) = a.Im.IsZero && a.Re.IsInteger() && a.Re.Sign <= 0
                         ? AtANonPositiveWholeOrder(a.Re.ToEInteger().Negate().ToInt32Checked(), z, work)
-                        : AsGammaLessTheLower(a, z, work, turn);
+                        : AsGammaLessTheLower(a, z, leftHalf, work, turn);
                     // How many digits the value lost to the cancellation, against the largest thing that cancelled.
                     var size = Magnitude(value);
                     var lost = size.IsZero ? guard : DecimalOrder(scale) - DecimalOrder(size) + 1;
@@ -166,13 +192,16 @@ namespace AngouriMath
             }
 
             /// <summary>
-            /// <c>Gamma(a) - z^a e^(-z) sum_k z^k / (a)_(k + 1)</c>, and the size of the larger of the two terms.
+            /// <c>Gamma(a) - z^a e^(-z) sum_k z^k / (a)_(k + 1)</c>, or with <paramref name="leftHalf"/>
+            /// <c>Gamma(a) - z^a sum_k (-z)^k / (k! (a + k))</c>, and the size of the larger of the two terms.
             /// </summary>
-            private static ((EDecimal Re, EDecimal Im) Value, EDecimal Scale) AsGammaLessTheLower((EDecimal Re, EDecimal Im) a, (EDecimal Re, EDecimal Im) z, EContext work,
-                (EInteger Turns, EInteger Q)? turn)
+            private static ((EDecimal Re, EDecimal Im) Value, EDecimal Scale) AsGammaLessTheLower((EDecimal Re, EDecimal Im) a, (EDecimal Re, EDecimal Im) z, bool leftHalf,
+                EContext work, (EInteger Turns, EInteger Q)? turn)
             {
                 var epsilon = EDecimal.Create(EInteger.One, EInteger.FromInt32(-work.Precision.ToInt32Checked()));
-                // term_k = z^k / (a (a + 1) ... (a + k)), starting at 1/a
+                // term_k = z^k / (a (a + 1) ... (a + k)), or (-z)^k / (k! (a + k)), each starting at 1/a, and each term the
+                // last times z/(a + k), or times -z (a + k - 1)/(k (a + k))
+                var minusZ = (Re: z.Re.Negate(), Im: z.Im.Negate());
                 (EDecimal Re, EDecimal Im) sum;
                 EDecimal peak;
                 if (a.Im.IsZero && z.Im.IsZero)
@@ -185,8 +214,11 @@ namespace AngouriMath
                     var aPlusK = a.Re;
                     for (var k = 1; ; k++)
                     {
+                        var previous = aPlusK;
                         aPlusK = aPlusK.Add(EDecimal.One, work);
-                        term = term.Multiply(z.Re, work).Divide(aPlusK, work);
+                        term = leftHalf
+                            ? term.Multiply(minusZ.Re, work).Multiply(previous, work).Divide(aPlusK.Multiply(k, work), work)
+                            : term.Multiply(z.Re, work).Divide(aPlusK, work);
                         real = real.Add(term, work);
                         var size = term.Abs();
                         if (size.CompareTo(peak) > 0)
@@ -204,8 +236,11 @@ namespace AngouriMath
                     var aPlusK = a;
                     for (var k = 1; ; k++)
                     {
+                        var previous = aPlusK;
                         aPlusK = (aPlusK.Re.Add(EDecimal.One, work), aPlusK.Im);
-                        term = Multiply(Multiply(term, z, work), Reciprocal(aPlusK, work), work);
+                        term = leftHalf
+                            ? Multiply(Multiply(term, minusZ, work), Multiply(previous, Reciprocal((aPlusK.Re.Multiply(k, work), aPlusK.Im.Multiply(k, work)), work), work), work)
+                            : Multiply(Multiply(term, z, work), Reciprocal(aPlusK, work), work);
                         sum = (sum.Re.Add(term.Re, work), sum.Im.Add(term.Im, work));
                         var size = Magnitude(term);
                         if (size.CompareTo(peak) > 0)
@@ -217,7 +252,7 @@ namespace AngouriMath
                 var power = ComplexPower(z, a, work);
                 if (turn is { } realRoot)
                     power = Multiply(Turned(realRoot, work), power, work);
-                var prefactor = Multiply(power, ComplexExp((z.Re.Negate(), z.Im.Negate()), work), work);
+                var prefactor = leftHalf ? power : Multiply(power, ComplexExp(minusZ, work), work);
                 var lower = Multiply(prefactor, sum, work);
                 var gamma = GammaOf(a, work);
                 var scale = EDecimal.Max(Magnitude(gamma), Magnitude(prefactor).Multiply(peak, work));
@@ -328,7 +363,37 @@ namespace AngouriMath
 
             /// <summary><c>z^a = e^(a ln z)</c>, principal.</summary>
             private static (EDecimal Re, EDecimal Im) ComplexPower((EDecimal Re, EDecimal Im) z, (EDecimal Re, EDecimal Im) a, EContext work)
-                => ComplexExp(Multiply(a, ComplexLn(z, work), work), work);
+            {
+                // On the cut, for a real a, |z|^a (cos pi a + i sin pi a) with each part accurate to its own size. From pi/2
+                // rounded to W digits, cos(pi/2) is 10^(-W) where it is 0, and times the lower function's e^143 that was the
+                // real part of Gamma(1/2, -143), which is sqrt(pi).
+                if (z.Im.IsZero && z.Re.Sign < 0 && a.Im.IsZero)
+                {
+                    var modulus = z.Re.Negate().Log(work).Multiply(a.Re, work).Exponential(work);
+                    var (cos, sin) = CosAndSinOfPiTimes(a.Re, work);
+                    return (modulus.Multiply(cos, work), modulus.Multiply(sin, work));
+                }
+                return ComplexExp(Multiply(a, ComplexLn(z, work), work), work);
+            }
+
+            /// <summary>
+            /// <c>(cos pi t, sin pi t)</c>, each accurate to its own size: with <c>n</c> the whole number nearest <c>t</c> and
+            /// <c>s = 1/2 - |t - n|</c>, both exact, they are <c>(-1)^n sin pi s</c> and <c>(-1)^n sgn(t - n) cos pi s</c>, and
+            /// <c>cos pi t</c> is exactly 0 at a half-whole <c>t</c>.
+            /// </summary>
+            private static (EDecimal Cos, EDecimal Sin) CosAndSinOfPiTimes(EDecimal t, EContext work)
+            {
+                var n = t.RoundToExponent(EInteger.Zero, ERounding.HalfEven);
+                var offset = t.Subtract(n);
+                var s = EDecimal.Create(5, -1).Subtract(offset.Abs());
+                var sign = n.ToEInteger().IsEven ? EDecimal.One : EDecimal.One.Negate();
+                if (s.IsZero)
+                    return (EDecimal.Zero, offset.Sign > 0 ? sign : sign.Negate());
+                var angle = InternalAMExtensions.ConstantCache.Lookup(work).Pi.Multiply(s, work);
+                var cos = angle.Sin(work).Multiply(sign, work);
+                var sin = offset.IsZero ? EDecimal.Zero : angle.Cos(work).Multiply(offset.Sign > 0 ? sign : sign.Negate(), work);
+                return (cos, sin);
+            }
         }
     }
 }
