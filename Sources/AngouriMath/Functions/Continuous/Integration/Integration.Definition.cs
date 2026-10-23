@@ -935,6 +935,8 @@ namespace AngouriMath.Functions.Algebra
             // A polynomial beside error functions of one shifted linear, written in it: by parts in
             // x leaves a Gaussian of the shifted linear beside a polynomial, which nothing reads.
             if ((answer = IndefiniteIntegralSolver.SolveAPolynomialBesideErrorFunctionsOfAShiftedLinear(expr, x, integrateByParts)) is { }) return answer;
+            // And beside a symbolic power of a logarithm of one, or an exponential of a power of one, the same way.
+            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialBesideATranscendentalPowerOfAShiftedLinear(expr, x, integrateByParts)) is { }) return answer;
             // A half-odd power of a ± a sin(y) beside powers of other linears in the sine, by the half
             // angle, before the polynomial term: beneath it the substitution search ran out of time.
             if ((answer = IndefiniteIntegralSolver.SolveAHalfOddPowerOfOnePlusMinusASineBesidePowersOfLinearsInIt(expr, x, integrateByParts)) is { }) return answer;

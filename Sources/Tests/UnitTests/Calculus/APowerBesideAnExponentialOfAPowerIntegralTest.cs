@@ -86,6 +86,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("integral(e^(-x^3), x, 0, 1)", 0.807511182139671)]
         // 3^(-2/3) on both half-lines, which is not a number but one constant.
         [InlineData("integral(x^(1/3)*e^(-(1 + 3*x^2)), x, 0, 1)", 0.1169389395696306439)]
+        [InlineData("integral(x*(1/3 + 2*ln(3/2*(1 + 2*x)))^(5/2), x, 1, 2)", 47.01873105138465896167)]
         public void ADefiniteIntegralFromZero(string integral, double value)
         {
             var result = integral.ToEntity().Simplify().EvalNumerical();
@@ -122,6 +123,18 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x^m*sinh(a + b/x)")]
         [InlineData("x^m*e^(-(a + b*x^2))")]
         public void AHyperbolicFunctionOfAPowerOfX(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// A polynomial beside a symbolic power of a logarithm of one shifted linear, or an exponential of a power of one,
+        /// written in <c>u = a + b x</c>, where each term is a gamma function. The constant in front comes along. Rubi's 3.3,
+        /// 3.4 and 2.3.
+        /// </summary>
+        [Theory]
+        [InlineData("2*x*(a + b*ln(c*(d + f*x)))^n")]
+        [InlineData("x*(a + b*ln(c*(d + f*sqrt(x))))^n")]
+        [InlineData("x^2*f^(c*(a + b*x)^3)")]
+        [InlineData("(a + b*x)^2*e^(-c*(d + f*x)^3)")]
+        public void APolynomialBesideAFunctionOfAShiftedLinear(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
         /// Not where the integral is elementary, an exponential integral or an error function: those keep the form
