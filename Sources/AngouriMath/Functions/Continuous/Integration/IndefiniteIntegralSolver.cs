@@ -46,6 +46,9 @@ namespace AngouriMath.Functions.Algebra
                 if (asWritten.Count >= 2 && asWritten.All(term => term.Complexity <= LargestTermTakenAsWritten)
                     && Integrated(asWritten) is { } termByTerm)
                     return termByTerm;
+                // As written, where a power of a linear is not yet expanded into a polynomial; it asks nothing.
+                if (asWritten.Count >= 2 && AsTheDerivativeOfALowerPowerOfALinearBesideAFunction(asWritten, x) is { } writtenAsADerivative)
+                    return writtenAsADerivative;
             }
             // A sum above the bar that is the derivative of a factor below it is not expanded:
             // `(e^x + e^-x)/(e^x - e^-x)^4` -- `cosh/sinh^4` as the library writes it -- is
@@ -94,6 +97,9 @@ namespace AngouriMath.Functions.Algebra
             }).ToList();
             if (Integrated(cancelledTerms) is { } termByExpandedTerm)
                 return termByExpandedTerm;
+            // Asks nothing, so at any depth.
+            if (AsTheDerivativeOfALowerPowerOfALinearBesideAFunction(splitted, x) is { } exactDerivative)
+                return exactDerivative;
             // The expanded terms gathered again by what is not polynomial in them, and each
             // group asked as one term: Hearn's
             // `(-2 sqrt(1 + x^3) + 5x^4 sqrt(1 + x^3) - 3x^2 sqrt(1 - 2x + x^5))/(2 sqrt(1 + x^3) sqrt(1 - 2x + x^5))`
@@ -203,6 +209,150 @@ namespace AngouriMath.Functions.Algebra
             finally
             {
                 integratingASumByParts = false;
+            }
+        }
+
+        /// <summary>
+        /// A sum whose terms are not elementary apart, integrated by parts the other way in some of the terms that are a
+        /// power <c>L^(-k)</c>, <c>k &gt;= 2</c>, of one linear <c>L</c> beside a function <c>F</c> with <paramref name="x"/>
+        /// only inside transcendental functions -- the power integrated, <c>Q = L^(1 - k)/((1 - k) L')</c>, and <c>F</c>
+        /// differentiated -- where what that leaves, <c>-Q F'</c>, cancels against the other terms: then the sum is
+        /// <c>(Q F)'</c> summed over those terms. <c>psi_1(a + b x)/x^2 - b psi_2(a + b x)/x</c> is
+        /// <c>(-psi_1(a + b x)/x)'</c>, Rubi's 8.6, and neither of its terms is elementary.
+        /// https://github.com/asc-community/AngouriMath/issues/2075
+        /// </summary>
+        /// <remarks>
+        /// Some, not all: in <c>psi_1(x)/(2 + 3 x)^3 - psi_2(x)/(6 (2 + 3 x)^2)</c> the second term has a power of -2 as well,
+        /// and is what the first leaves. So each set of them is tried, the smallest first, and rejected at a point by adding
+        /// numbers before anything is simplified. Nothing is asked, so a remainder that does not cancel declines rather than
+        /// becoming a question: lowering the power toward <c>L^(-1)</c> raises the order of <c>F</c>, and a remainder in
+        /// <c>F'</c> is no nearer an answer.
+        /// </remarks>
+        private static Entity? AsTheDerivativeOfALowerPowerOfALinearBesideAFunction(IReadOnlyList<Entity> terms, Entity.Variable x)
+        {
+            // Each such term with what parts the other way makes of it: Q F, and the -Q F' it leaves.
+            var steps = new List<(int Term, Entity Parts, Entity Leaves)>();
+            for (var i = 0; i < terms.Count; i++)
+            {
+                Entity coefficient = Number.Integer.One;
+                Entity function = Number.Integer.One;
+                Entity? linear = null;
+                var power = EInteger.Zero;
+                var read = true;
+                foreach (var (factor, underneath) in FactorsOfTheIntegrand(terms[i]))
+                {
+                    if (!factor.ContainsNode(x))
+                    {
+                        coefficient = underneath ? coefficient / factor : coefficient * factor;
+                        continue;
+                    }
+                    var (@base, exponent) = factor is Powf(var b, Number.Integer n) ? (b, n.EInteger) : (factor, EInteger.One);
+                    if (TreeAnalyzer.TryGetPolyLinear(@base, x, out var slopeOfIt, out _) && !TreeAnalyzer.IsZero(slopeOfIt))
+                    {
+                        if (linear is not null && linear != @base)
+                        {
+                            read = false;
+                            break;
+                        }
+                        linear = @base;
+                        power = underneath ? power.Subtract(exponent) : power.Add(exponent);
+                    }
+                    else if (OnlyInsideTranscendentalFunctions(factor, x))
+                        function = underneath ? function / factor : function * factor;
+                    else
+                    {
+                        read = false;
+                        break;
+                    }
+                }
+                if (!read || linear is null || power.CompareTo(EInteger.FromInt32(-2)) > 0 || !function.ContainsNode(x)
+                    || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out _))
+                    continue;
+                // Four at most: fifteen sets.
+                if (steps.Count == 4)
+                    return null;
+                // Q F = -c F/((k - 1) L' L^(k - 1)), with no negative power to write, and -Q F' = c F'/((k - 1) L' L^(k - 1)).
+                var lowered = power.Negate().Subtract(EInteger.One);
+                var below = (Number.Integer.Create(lowered) * slope).InnerSimplified
+                    * (lowered.Equals(EInteger.One) ? linear : MathS.Pow(linear, Number.Integer.Create(lowered)));
+                var derivative = function.Differentiate(x);
+                if (derivative is Providedf(var bare, _))
+                    derivative = bare;
+                steps.Add((i, -(coefficient * function) / below, coefficient * derivative / below));
+            }
+            if (steps.Count == 0)
+                return null;
+
+            // Every piece at one point, the same for all: a value each term has, and each step leaves.
+            var symbols = terms.SelectMany(term => term.Vars).Concat(steps.SelectMany(step => step.Leaves.Vars)).Distinct().ToList();
+            var values = new[] { 1.37, 0.61, 2.23, 1.91, 0.83, 1.13 };
+            System.Numerics.Complex? AtAPoint(Entity piece)
+            {
+                var pinned = piece;
+                for (var k = 0; k < symbols.Count; k++)
+                    pinned = pinned.Substitute(symbols[k], values[k % values.Length]);
+                if (pinned.Evaled is not Number.Complex { IsNaN: false } value)
+                    return null;
+                var number = new System.Numerics.Complex(value.RealPart.EDecimal.ToDouble(), value.ImaginaryPart.EDecimal.ToDouble());
+                return double.IsInfinity(number.Real) || double.IsInfinity(number.Imaginary) || double.IsNaN(number.Real) || double.IsNaN(number.Imaginary)
+                    ? null : number;
+            }
+            var termsAtAPoint = terms.Select(AtAPoint).ToList();
+            var leavesAtAPoint = steps.Select(step => AtAPoint(step.Leaves)).ToList();
+            foreach (var set in Enumerable.Range(1, (1 << steps.Count) - 1).OrderBy(set => Enumerable.Range(0, steps.Count).Count(k => (set >> k & 1) == 1)))
+            {
+                var taken = new HashSet<int>(Enumerable.Range(0, steps.Count).Where(k => (set >> k & 1) == 1).Select(k => steps[k].Term));
+                var atAPoint = System.Numerics.Complex.Zero;
+                var scale = 0.0;
+                var known = true;
+                for (var i = 0; i < terms.Count && known; i++)
+                    if (!taken.Contains(i))
+                        known = Add(termsAtAPoint[i]);
+                for (var k = 0; k < steps.Count && known; k++)
+                    if ((set >> k & 1) == 1)
+                        known = Add(leavesAtAPoint[k]);
+                if (known && atAPoint.Magnitude > 1e-12 * (1 + scale))
+                    continue;
+                Entity left = Number.Integer.Zero;
+                Entity? parts = null;
+                for (var i = 0; i < terms.Count; i++)
+                    if (!taken.Contains(i))
+                        left += terms[i];
+                for (var k = 0; k < steps.Count; k++)
+                    if ((set >> k & 1) == 1)
+                    {
+                        left += steps[k].Leaves;
+                        parts = parts is null ? steps[k].Parts : parts + steps[k].Parts;
+                    }
+                if (parts is not null && CancelsIdentically(left))
+                    return parts.InnerSimplified;
+
+                bool Add(System.Numerics.Complex? value)
+                {
+                    if (value is not { } number)
+                        return false;
+                    atAPoint += number;
+                    scale = System.Math.Max(scale, number.Magnitude);
+                    return true;
+                }
+            }
+            return null;
+
+            // InnerSimplified leaves psi_2 b/x - b psi_2/x as two terms, and expanded they cancel.
+            static bool CancelsIdentically(Entity remainder)
+            {
+                var inner = remainder.InnerSimplified;
+                if (TreeAnalyzer.IsZero(inner))
+                    return true;
+                var expanded = inner.Expand().InnerSimplified;
+                if (expanded is Providedf(var bareExpanded, _))
+                    expanded = bareExpanded;
+                if (TreeAnalyzer.IsZero(expanded))
+                    return true;
+                var simplified = inner.Simplify();
+                if (simplified is Providedf(var bareSimplified, _))
+                    simplified = bareSimplified;
+                return TreeAnalyzer.IsZero(simplified);
             }
         }
 
