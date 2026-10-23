@@ -1838,6 +1838,10 @@ namespace AngouriMath.Functions.Algebra
             // And a product of powers that is the derivative of one with symbolic exponents, its
             // constant read at a point where the quotient of the brackets does not simplify free of x.
             if ((answer = IndefiniteIntegralSolver.SolveAsTheDerivativeOfAProductOfPowersReadAtAPoint(expr, x, integrateByParts)) is { }) return answer;
+            // A power of a logarithm beside a linear in another as two powers of the first, after the product of powers read
+            // as a derivative: p x^m ln(x)^n ((m + 1) ln(x) + n + 1) is p x^(m + 1) ln(x)^(n + 1) there, and a sum of gamma
+            // functions here. https://github.com/asc-community/AngouriMath/issues/2075
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOfALogarithmBesideALinearInALogarithm(expr, x, integrateByParts)) is { }) return answer;
             // An arcoth of a linear as its artanh plus a constant, last of all, so that every arcoth
             // answered as written keeps that answer: `acoth(x)^2/(1 - x^2)^2` is
             // `(atanh(x) + K)^2/(1 - x^2)^2` with `K = acoth(x) - atanh(x)`, constant where it is
