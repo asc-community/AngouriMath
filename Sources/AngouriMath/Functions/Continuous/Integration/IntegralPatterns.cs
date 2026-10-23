@@ -435,7 +435,19 @@ namespace AngouriMath.Functions.Algebra
                     degree = read;
                 }
                 else
-                    return null;
+                {
+                    term = null;
+                    break;
+                }
+            // Or a linear written otherwise, as the negation -(a + b x) is, which is how gamma(2, a + b x) is
+            // elementary: e^(-(a + b x)) (1 + a + b x). https://github.com/asc-community/AngouriMath/issues/2075
+            if (term is null && TreeAnalyzer.TryGetPolyLinear(exponent, x, out var slopeOfTheExponent, out var offsetOfTheExponent)
+                && !TreeAnalyzer.IsZero(slopeOfTheExponent))
+            {
+                constant = offsetOfTheExponent;
+                term = (slopeOfTheExponent * x).InnerSimplified;
+                degree = Entity.Number.Integer.One;
+            }
             if (term is null || degree is null || TreeAnalyzer.IsZero(degree))
                 return null;
 

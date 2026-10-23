@@ -69,6 +69,10 @@ namespace AngouriMath.Tests.Calculus
 
         [Theory]
         [InlineData("(c + d*x)^m*e^(a + b*x)")]
+        // A linear exponent written as a negation, which is how gamma(2, a + b x) is elementary.
+        [InlineData("x^(1/3)*e^(-(a + b*x))")]
+        [InlineData("x^(1/3)*gamma(2, a + b*x)")]
+        [InlineData("gamma(2, a + b*x)/x^(4/3)")]
         [InlineData("(c + d*x)^(1/3)*f^(a + b*x)")]
         [InlineData("e^(a + b*x)/(c + d*x)^(4/3)")]
         public void APowerOfALinearBesideAnExponentialOfAnother(string integrand) => DifferentiatesBack(integrand);
