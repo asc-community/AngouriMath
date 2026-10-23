@@ -375,6 +375,16 @@ namespace AngouriMath.Numerics
             }
         }
 
+        /// <summary>
+        /// The numerator of <paramref name="exponent"/> where it is an exact fraction of odd denominator below 10, to which
+        /// <c>Number.Pow</c> raises a negative real as its real root; <see langword="null"/> otherwise.
+        /// </summary>
+        internal static EInteger? TheRealRootIsTaken(Entity exponent)
+            => exponent is Number.Rational { ERational: var exact } and not Number.Integer
+                && exact.Denominator.Abs() is var q && !q.IsEven && q.CompareTo(EInteger.FromInt32(10)) < 0
+                ? (exact.Denominator.Sign < 0 ? exact.Numerator.Negate() : exact.Numerator)
+                : null;
+
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private static ComplexInterval EvaluateOtherThanArithmetic(Entity expr)
         {
@@ -387,9 +397,21 @@ namespace AngouriMath.Numerics
                 case Variable variable when variable == MathS.e:
                     return ComplexInterval.Real(Interval.Around(Math.E));
                 case Powf(var @base, var exponent):
+                {
                     if (@base == MathS.e)
                         return Evaluate(exponent).Exp();
-                    return Evaluate(@base).Pow(Evaluate(exponent));
+                    var evaluatedBase = Evaluate(@base);
+                    // The real root where the library's power takes it: a negative real base and an exact exponent of
+                    // odd denominator below 10, as (-8)^(1/3) is -2. Principal there, the derivative of (-x^3)^(1/3)
+                    // was -e^(-2 i pi/3) at x > 0 where it is -1, and the check turned the right answer away.
+                    // https://github.com/asc-community/AngouriMath/issues/2089
+                    if (TheRealRootIsTaken(exponent) is { } numerator && evaluatedBase.IsReal && evaluatedBase.Re.High < 0)
+                    {
+                        var modulus = ComplexInterval.Real(-evaluatedBase.Re).Pow(Evaluate(exponent));
+                        return numerator.IsEven ? modulus : -modulus;
+                    }
+                    return evaluatedBase.Pow(Evaluate(exponent));
+                }
                 case Sinf(var argument):
                     return Evaluate(argument).Sin();
                 case Cosf(var argument):

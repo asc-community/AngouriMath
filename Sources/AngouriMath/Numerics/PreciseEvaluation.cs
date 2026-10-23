@@ -456,7 +456,19 @@ namespace AngouriMath.Numerics
                 case Variable variable when variable == MathS.e:
                     return Real(E());
                 case Powf(var @base, var exponent):
-                    return @base == MathS.e ? Exp(Evaluate(exponent)) : Pow(Evaluate(@base), Evaluate(exponent));
+                {
+                    if (@base == MathS.e)
+                        return Exp(Evaluate(exponent));
+                    var evaluatedBase = Evaluate(@base);
+                    // The real root where the library's power takes it, as in the doubles.
+                    // https://github.com/asc-community/AngouriMath/issues/2089
+                    if (IntervalEvaluation.TheRealRootIsTaken(exponent) is { } numerator && evaluatedBase.IsReal && evaluatedBase.Re.High.Sign < 0)
+                    {
+                        var modulus = Pow(Real(evaluatedBase.Re.Negate()), Evaluate(exponent));
+                        return numerator.IsEven ? modulus : Negate(modulus);
+                    }
+                    return Pow(evaluatedBase, Evaluate(exponent));
+                }
                 case Sinf(var argument):
                     return Sin(Evaluate(argument));
                 case Cosf(var argument):
