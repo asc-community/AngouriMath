@@ -174,6 +174,26 @@ namespace AngouriMath.Tests.Calculus
         public void APowerOfALogarithmBesideALinearInALogarithm(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// An exponent written otherwise: two terms of one degree, two exponentials of other bases, and a whole order
+        /// that by parts does not reach, answered last as the gamma function it is. And a polynomial beside a power of a
+        /// linear, written in powers of the linear, as by parts leaves it of a gamma function of whole order. Rubi's 2.3
+        /// and 8.6.
+        /// </summary>
+        [Theory]
+        [InlineData("e^(a + c + b*x^n + d*x^n)")]
+        [InlineData("f^(a + b*x^3)*c^(d + a*x^3)")]
+        [InlineData("x^m*f^(a + b*x^n)/c^(d + a*x^n)")]
+        [InlineData("(d + f*x)^(-1 - 4*n)*c^(a + b*(d + f*x)^n)")]
+        [InlineData("(d + f*x)^m*(a + b*x)*c^(a + b*x)")]
+        [InlineData("(d + f*x)^m*gamma(2, a + b*x)")]
+        [InlineData("(d + f*x)^m*gamma(3, c + x)")]
+        // By parts leaves e^u e^(-u)/u beside Shi(u)^2, whose exponentials cancel: not a gamma function of order 0 at 0,
+        // which was NaN.
+        [InlineData("Shi(a + b*x)^2")]
+        [InlineData("Chi(a + b*x)^2")]
+        public void AnExponentWrittenOtherwise(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// Not where the integral is elementary, an exponential integral or an error function: those keep the form
         /// they had.
         /// </summary>
