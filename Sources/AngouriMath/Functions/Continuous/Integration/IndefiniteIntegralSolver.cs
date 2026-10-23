@@ -18149,6 +18149,96 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A polynomial beside a function of one shifted linear <c>a + b x</c> that parts cannot reach, written in
+        /// <c>u = a + b x</c>: a power that is not whole of something holding a logarithm of it, <c>x (a + b ln(c (d + e x)))^p</c>,
+        /// or an exponential of a function of it that is not linear, <c>x^2 f^(c (a + b x)^3)</c>. In u the polynomial is one
+        /// in u, and each of its terms beside the function is answered in the gamma function: <c>u (a + b ln(c u))^p</c> and
+        /// <c>u^2 f^(c u^3)</c>. Only where the offset is not zero, since in u it is, and this declines there. Rubi's 3.3, 3.4
+        /// and 2.3. https://github.com/asc-community/AngouriMath/issues/2075
+        /// </summary>
+        internal static Entity? SolveAPolynomialBesideATranscendentalPowerOfAShiftedLinear(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow || expr is not (Mulf or Divf))
+                return null;
+            // The function first, by its shape, before any factor is read as a polynomial: that expands it, and asked of
+            // every product an algebraic integrand is, it was five per cent of the corpus's time.
+            Entity? transcendental = null;
+            foreach (var factor in Mulf.LinearChildren(expr))
+                if (factor.ContainsNode(x) && IsATranscendentalPowerOfSomethingInX(factor, x))
+                {
+                    if (transcendental is not null)
+                        return null;
+                    transcendental = factor;
+                }
+            if (transcendental is null)
+                return null;
+            Entity? polynomial = null;
+            foreach (var factor in Mulf.LinearChildren(expr))
+            {
+                if (!factor.ContainsNode(x) || ReferenceEquals(factor, transcendental))
+                    continue;
+                if (ThePolynomialIn(factor, x) is not null)
+                    polynomial = polynomial is null ? factor : polynomial * factor;
+                else
+                    return null;
+            }
+            if (transcendental is null || polynomial is null
+                || TheOneLinearIn(transcendental, x) is not { } linear
+                || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out var offset)
+                || slope.ContainsNode(x) || offset.ContainsNode(x) || TreeAnalyzer.IsZero(slope) || VanishesIdentically(offset))
+                return null;
+            // x = (u - a)/b, so that the function is of u, and dx = du/b: the whole integrand, its constants with it.
+            var u = Variable.CreateUnique(expr, "u_linear");
+            if (transcendental.Replace(node => node == linear ? u : node).ContainsNode(x))
+                return null;
+            var inU = expr.Replace(node => node == linear ? u : node).Substitute(x, (u - offset) / slope);
+            if (inU.ContainsNode(x)
+                || Integration.ComputeAsAQuestionOfItsOwn((inU / slope).InnerSimplified, u, integrateByParts) is not { } answer)
+                return null;
+            var back = answer.Substitute(u, linear);
+            return back.Nodes.Any(node => node == MathS.NaN) ? null : back;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="factor"/> is a power that is not whole of something holding a logarithm of something in
+        /// <paramref name="x"/>, or an exponential of something in <paramref name="x"/> that is not linear in it.
+        /// </summary>
+        private static bool IsATranscendentalPowerOfSomethingInX(Entity factor, Entity.Variable x) => factor switch
+        {
+            // An exponential whose exponent holds a sum in x, c (a + b x)^3 or c/(a + b x), read as not linear only then.
+            Powf(var @base, var exponent) when !@base.ContainsNode(x) && exponent.ContainsNode(x)
+                => exponent.Nodes.Any(node => node is Sumf or Minusf && node.ContainsNode(x))
+                    && !TreeAnalyzer.TryGetPolyLinear(exponent, x, out _, out _),
+            Powf(var @base, var exponent) when !exponent.ContainsNode(x) && exponent is not Number.Integer
+                => @base.Nodes.Any(node => node is Logf(_, var antilogarithm) && antilogarithm.ContainsNode(x)),
+            _ => false
+        };
+
+        /// <summary>
+        /// The one sum linear in <paramref name="x"/> that every <paramref name="x"/> in <paramref name="expr"/> stands in,
+        /// outermost, or <see langword="null"/>.
+        /// </summary>
+        private static Entity? TheOneLinearIn(Entity expr, Entity.Variable x)
+        {
+            Entity? found = null;
+            bool Read(Entity node)
+            {
+                if (!node.ContainsNode(x))
+                    return true;
+                if (node is Sumf or Minusf && TreeAnalyzer.TryGetPolyLinear(node, x, out var slope, out _) && !slope.ContainsNode(x))
+                {
+                    if (found is null)
+                        found = node;
+                    return node == found;
+                }
+                if (node == x)
+                    return false;
+                return node.DirectChildren.All(Read);
+            }
+            return Read(expr) ? found : null;
+        }
+
+        /// <summary>
         /// A sine or a cosecant of twice an argument beside functions of the argument, written as the
         /// product it is: <c>sin(2A) = 2 sin(A) cos(A)</c>, so that every trigonometric function is of
         /// <c>A</c>. <c>csc(a + b x)^3 sin(2a + 2b x)^7</c> is <c>2^7 sin(a + b x)^4 cos(a + b x)^7</c>,
