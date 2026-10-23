@@ -40,6 +40,8 @@ namespace AngouriMath.Tests.Core
         [InlineData("arcsec(3)")]
         [InlineData("arccsc(-2)")]
         [InlineData("(2/3)^(1/3)")]
+        [InlineData("(-8)^(1/3) + (-2)^(2/5)")]
+        [InlineData("(-3/2)^(-4/7) + (-5)^(1/2)")]
         [InlineData("(1 + 2i)^3")]
         [InlineData("1/(3 + 4i)")]
         [InlineData("e^(i * pi/4)")]
@@ -182,6 +184,7 @@ namespace AngouriMath.Tests.Core
         [InlineData("sin(1 + i) * cos(2 - 3i)")]
         [InlineData("ln(-2 + i) + arctan(2) - arcsin(1/3)")]
         [InlineData("(2/3)^(1/3) + sec(1) + csc(2)")]
+        [InlineData("(-8)^(1/3) + (-2)^(2/5) + (-3/2)^(-4/7) + (-5)^(1/2)")]
         [InlineData("arccot(-2) + arcsec(3) + arccsc(-2) + arccot(0)")]
         [InlineData("sin(10^6) + cos(10^6)")]
         [InlineData("sqrt(2) provided 1 < 2")]
@@ -263,6 +266,21 @@ namespace AngouriMath.Tests.Core
             var derivative = antiderivative.ToEntity().Differentiate(x);
             Assert.True(Functions.PartialFractions.HoldsAtSampledPoints(derivative, integrand.ToEntity(), x));
             Assert.False(Functions.PartialFractions.HoldsAtSampledPoints(derivative, (integrand + " + 1/1000").ToEntity(), x));
+        }
+
+        /// <summary>
+        /// The real root where the library's power takes it, as <c>(-8)^(1/3)</c> is <c>-2</c>: the derivative of
+        /// <c>(-x^3)^(1/3)</c>, <c>-x^2 (-x^3)^(-2/3)</c>, is <c>-1</c>, and at the points right of 0 the check read it on
+        /// the principal branch, <c>-e^(-2 i pi/3)</c>, and said it was not.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/2089">#2089</a>
+        /// </summary>
+        [Fact]
+        public void TheRealRootIsTheOneThePowerTakes()
+        {
+            var x = MathS.Var("x");
+            var derivative = "(-x^3)^(1/3)".ToEntity().Differentiate(x);
+            Assert.True(Functions.PartialFractions.HoldsAtSampledPoints(derivative, "-1".ToEntity(), x));
+            Assert.False(Functions.PartialFractions.HoldsAtSampledPoints(derivative, "-1 + 1/1000".ToEntity(), x));
         }
 
         [Fact]
