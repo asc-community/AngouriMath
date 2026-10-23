@@ -18215,6 +18215,145 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of x or of a linear that is not a polynomial, beside a rational function of one exponential of a linear
+        /// <c>e^B</c> that is a Laurent polynomial in it: <c>tanh(u)</c> is <c>(e^(2u) - 1)/(e^(2u) + 1)</c> here, so
+        /// <c>1/(a + a tanh(u))</c> is <c>(1 + e^(-2u))/(2a)</c>, and <c>tan(u)</c> and <c>cot(u)</c> are written in
+        /// <c>e^(2 i u)</c> first: <c>1/(1 + i tan(u))</c> is <c>(1 + e^(-2 i u))/2</c>. Each term is then the power beside
+        /// an exponential of a linear, a gamma function. And beside any power of x, or none, a Laurent polynomial in an
+        /// exponential of something in x that is not linear: <c>x sinh(a + b x^n)^2</c>. The exponentials are whole
+        /// multiples of one, and the quotient in <c>w = e^B</c> has a power of w below the bar, or this declines. Rubi's
+        /// 6.3.1, 6.4.1, 4.3.10, 4.4.10, 6.1.3 and 6.2.3.
+        /// https://github.com/asc-community/AngouriMath/issues/2075
+        /// </summary>
+        internal static Entity? SolveAPowerBesideALaurentPolynomialInAnExponential(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow || expr is not (Mulf or Divf or Powf))
+                return null;
+            // The sine, cosine, tangent and cotangent of a linear A in E = e^(i A): sin(A) = (E - 1/E)/(2 i), cos(A) =
+            // (E + 1/E)/2, tan(A) = (E^2 - 1)/(i (E^2 + 1)) and cot(A) = i (E^2 + 1)/(E^2 - 1).
+            var written = expr.Replace(node =>
+            {
+                if (node is not (Sinf or Cosf or Tanf or Cotanf))
+                    return node;
+                var argument = node.DirectChildren.First();
+                if (!argument.ContainsNode(x) || !TreeAnalyzer.TryGetPolyLinear(argument, x, out _, out _))
+                    return node;
+                var exponential = MathS.Pow(MathS.e, MathS.i * argument);
+                return node switch
+                {
+                    Sinf => (exponential - 1 / exponential) / (2 * MathS.i),
+                    Cosf => (exponential + 1 / exponential) / 2,
+                    Tanf => (MathS.Sqr(exponential) - 1) / (MathS.i * (MathS.Sqr(exponential) + 1)),
+                    _ => MathS.i * (MathS.Sqr(exponential) + 1) / (MathS.Sqr(exponential) - 1),
+                };
+            });
+            if (written.Nodes.Any(node => node is TrigonometricFunction && node.ContainsNode(x)))
+                return null;
+            // A power of an exponential, (F^E)^n, is F^(n E) times K = (F^E)^n F^(-n E), which is constant between the
+            // cuts, its derivative being 0: carried through as a constant and written back in the answer.
+            var constantsBetweenTheCuts = new List<(Variable Name, Entity Value)>();
+            written = written.Replace(node =>
+            {
+                if (node is not Powf(Powf(var @base, var exponent) power, var outer) || @base.ContainsNode(x) || !exponent.ContainsNode(x)
+                    || outer.ContainsNode(x) || outer is Number.Integer)
+                    return node;
+                var name = Variable.CreateUnique(expr, "k_cut" + constantsBetweenTheCuts.Count);
+                constantsBetweenTheCuts.Add((name, node * MathS.Pow(@base, -(outer * exponent))));
+                return name * MathS.Pow(@base, outer * exponent);
+            });
+            // The factors holding an exponential of x, and the rest, which must be a power that is not a polynomial.
+            var (numerator, denominator) = written is Divf(var above, var below) ? (above, below) : (written, (Entity)Number.Integer.One);
+            Entity function = Number.Integer.One;
+            Entity beside = Number.Integer.One;
+            for (var side = 0; side < 2; side++)
+                foreach (var factor in Mulf.LinearChildren(side == 0 ? numerator : denominator))
+                {
+                    var holdsAnExponential = factor.Nodes.Any(node => node is Powf(var @base, var power) && !@base.ContainsNode(x) && power.ContainsNode(x));
+                    if (holdsAnExponential)
+                        function = side == 0 ? function * factor : function / factor;
+                    else
+                        beside = side == 0 ? beside * factor : beside / factor;
+                }
+            if (!function.ContainsNode(x))
+                return null;
+            // Every exponential a whole multiple of the first: e^(k B) is w^k.
+            Entity? unit = null;
+            foreach (var node in function.Nodes)
+                if (node is Powf(var @base, var power) && !@base.ContainsNode(x) && power.ContainsNode(x))
+                {
+                    unit = @base == MathS.e ? power : MathS.Ln(@base) * power;
+                    break;
+                }
+            if (unit is null)
+                return null;
+            // Beside it only constants and powers of x or of one linear, whose terms the gamma rule reads. Beside an
+            // exponential of a linear, at least one power that is not whole: whole powers are elementary, or the sine and
+            // cosine integrals, sin(x)/x is Si(x), and are answered as such. Beside one of something else, powers of x
+            // alone: sinh(a + b x^n)^2 x^k is (e^(2 a + 2 b x^n) - 2 + e^(-2 a - 2 b x^n)) x^k/4, where sin(c + d/x)/(e + f x)
+            // and (a + b x^n)^p sin(c + d x) are not the gamma rule's, and asking it of each term was a slow decline.
+            Entity? linearBase = null;
+            var notWhole = false;
+            var (besideAbove, besideBelow) = beside is Divf(var besideNumerator, var besideDenominator) ? (besideNumerator, besideDenominator) : (beside, (Entity)Number.Integer.One);
+            for (var side = 0; side < 2; side++)
+                foreach (var factor in Mulf.LinearChildren(side == 0 ? besideAbove : besideBelow))
+                {
+                    if (!factor.ContainsNode(x))
+                        continue;
+                    var (powered, exponentOfIt) = factor is Powf(var b, var e) && !e.ContainsNode(x) ? (b, e) : (factor, (Entity)Number.Integer.One);
+                    if (!TreeAnalyzer.TryGetPolyLinear(powered, x, out _, out _) || linearBase is not null && powered != linearBase)
+                        return null;
+                    linearBase = powered;
+                    notWhole |= exponentOfIt is not Number.Integer;
+                }
+            if (TreeAnalyzer.TryGetPolyLinear(unit, x, out _, out _) ? !notWhole : linearBase is not null && linearBase != x)
+                return null;
+            var w = Variable.CreateUnique(expr, "w_exp");
+            var failed = false;
+            var inW = function.Replace(node =>
+            {
+                if (node is not Powf(var @base, var power) || @base.ContainsNode(x) || !power.ContainsNode(x))
+                    return node;
+                var natural = @base == MathS.e ? power : MathS.Ln(@base) * power;
+                // The ratio comes with the condition that the unit is not 0, which it is not as a function of x.
+                var ratio = (natural / unit).Simplify();
+                while (ratio is Providedf(var unconditional, _))
+                    ratio = unconditional;
+                if (ratio is Number.Integer multiple && multiple.EInteger.Abs().CompareTo(EInteger.FromInt32(12)) <= 0)
+                    return MathS.Pow(w, multiple);
+                failed = true;
+                return node;
+            });
+            if (failed || inW.ContainsNode(x))
+                return null;
+            var (top, bottom) = Functions.SingleQuotient.Of(inW);
+            if (!TreeAnalyzer.TryGetPolynomial(bottom.Expand(), w, out var belowInW) || belowInW.Count != 1
+                || !TreeAnalyzer.TryGetPolynomial(top.Expand(), w, out var aboveInW) || aboveInW.Keys.Any(power => power.Sign < 0 || power.CompareTo(EInteger.FromInt32(12)) > 0))
+                return null;
+            // One term is the question again, respelled: x e^(sin(x)) is x w. Not where a power of an exponential was
+            // written as one.
+            if (constantsBetweenTheCuts.Count == 0 && aboveInW.Count(term => !TreeAnalyzer.IsZero(term.Value)) < 2)
+                return null;
+            var only = belowInW.Single();
+            var (lowest, scale) = (only.Key, only.Value);
+            Entity? answer = null;
+            foreach (var entry in aboveInW)
+            {
+                var (power, coefficient) = (entry.Key, entry.Value);
+                if (TreeAnalyzer.IsZero(coefficient))
+                    continue;
+                var shift = power.Subtract(lowest);
+                var term = shift.IsZero ? coefficient / scale * beside
+                    : coefficient / scale * beside * MathS.Pow(MathS.e, (Number.Integer.Create(shift) * unit).InnerSimplified);
+                if (Integration.ComputeAsAQuestionOfItsOwn(term.InnerSimplified, x, integrateByParts) is not { } integrated)
+                    return null;
+                answer = answer is null ? integrated : answer + integrated;
+            }
+            foreach (var (name, value) in constantsBetweenTheCuts)
+                answer = answer?.Substitute(name, value);
+            return answer;
+        }
+
+        /// <summary>
         /// A polynomial beside a function of one shifted linear <c>a + b x</c> that parts cannot reach, written in
         /// <c>u = a + b x</c>: a power that is not whole of something holding a logarithm of it, <c>x (a + b ln(c (d + e x)))^p</c>,
         /// or an exponential of a function of it that is not linear, <c>x^2 f^(c (a + b x)^3)</c>. In u the polynomial is one
