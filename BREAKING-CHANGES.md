@@ -161,6 +161,7 @@ as `a - b = 0`, as a statement's own solve reads it: `"x + 1 = 3".Solve("x")` wa
 | `"x^m*gamma(n, b*x)".ToEntity().Integrate("x")` | a `FunctionArgumentCountException` | `(x ^ (m + 1) * gamma(n, b * x) - x ^ m * (b * x) ^ (-m) * gamma(n + m + 1, b * x) / b) / (m + 1) + C` |
 | `"gamma(0, a + b*x)/(c + d*x)^2".ToEntity().Integrate("x")` | a `FunctionArgumentCountException` | `-gamma(0, a + b x)/(d (c + d x))` and two exponential integrals, of `a + b x` and of `b (c + d x)/d` |
 | `"x^(1/3)*e^(-x)".ToEntity().Integrate("x")` | `integral(x ^ (1/3) * e ^ (-x), x)` | `-gamma(4/3, x) + C` |
+| `"x^(1/3)*gamma(2, a + b*x)".ToEntity().Integrate("x")` | a `FunctionArgumentCountException` | `-b * e ^ (-a) * x ^ (7/3) * (b * x) ^ (-7/3) * gamma(7/3, b * x) + -(1 + a) * e ^ (-a) * x ^ (4/3) * (b * x) ^ (-4/3) * gamma(4/3, b * x) + C` |
 | `"(c + d*x)^m*e^(a + b*x)".ToEntity().Integrate("x")` | `integral((c + d * x) ^ m * e ^ (a + b * x), x)` | `e ^ (a - b * c / d) * (c + d * x) ^ m * (-b * (c + d * x) / d) ^ (-m) * gamma(m + 1, -b * (c + d * x) / d) / b + C` |
 | `"x^31*e^(-x)".ToEntity().Integrate("x")` | a sum of 32 terms, 6,172 characters | `-gamma(32, x) + C` |
 | `"integral(e^(x^3), x, 0, 1)".ToEntity().Simplify()` | `integral(e ^ x ^ 3, x, 0, 1)` | `(gamma(1/3, -1) - (-2/3)!) / 3`, which is `1.3419044179774…` |
