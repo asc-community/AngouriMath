@@ -200,6 +200,10 @@ namespace AngouriMath.Tests.Core
         [InlineData("Shi(3/2) + Chi(-1) + Chi(1 + 2i)")]
         [InlineData("e^(-2) * Ei(sqrt(3)) + Si(pi/4)^2")]
         [InlineData("iverson(pi > 3) * sqrt(2) + iverson(e < 2)")]
+        [InlineData("gamma(5/2, 3/2) + gamma(-3, 7/10)")]
+        [InlineData("gamma(1/2 + i, 2 - i)")]
+        [InlineData("gamma(3/2, -2) + gamma(4, -1)")]
+        [InlineData("gamma(1/3, 2) + gamma(2/7 + i/3, 1/2 + i)")]
         public void ThePreciseIntervalHoldsTheValue(string expression)
         {
             var expr = expression.ToEntity();
@@ -247,7 +251,9 @@ namespace AngouriMath.Tests.Core
         /// <c>x erf(x)</c> differentiates to <c>erf(x)</c> and more -- is checked, where reading
         /// none of them left no point to compare at and the answer was turned away. On the real
         /// line left of 0 the values are the ones on the cut: <c>Chi(-0.61)</c> is
-        /// <c>Chi(0.61) + i pi</c>, and <c>li(-0.61)</c> is complex.
+        /// <c>Chi(0.61) + i pi</c>, and <c>li(-0.61)</c> is complex. The incomplete gamma function was
+        /// not read, and every answer holding one was turned away by the routes that check theirs:
+        /// Rubi's <c>x arsinh(a x)^n/sqrt(1 + a^2 x^2)</c> among them.
         /// </summary>
         [Theory]
         [InlineData("x * erf(x) + e^(-x^2)/sqrt(pi)", "erf(x)")]
@@ -257,6 +263,8 @@ namespace AngouriMath.Tests.Core
         [InlineData("x * Ei(x) - e^x", "Ei(x)")]
         [InlineData("x * Chi(x) - sinh(x)", "Chi(x)")]
         [InlineData("x * li(x) - Ei(2 * ln(x))", "li(x)")]
+        [InlineData("x * gamma(5/2, x) - gamma(7/2, x)", "gamma(5/2, x)")]
+        [InlineData("x * gamma(n, x) - gamma(n + 1, x)", "gamma(n, x)")]
         public void ADerivativeKeepingASpecialFunctionIsChecked(string antiderivative, string integrand)
         {
             var x = MathS.Var("x");
