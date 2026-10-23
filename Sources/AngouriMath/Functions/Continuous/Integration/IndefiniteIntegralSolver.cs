@@ -12882,9 +12882,15 @@ namespace AngouriMath.Functions.Algebra
             // leaves `x^2 arccsc(x)/sqrt(x^2 - 1)` and stalls, where under `x = csc(u)` it is
             // `-u^2 csc(u)^4 cot(u)`, two steps of parts against a power of the cosecant.
             // Or of a function of it alone -- `(a + b arcsin(c x))^2` -- which is a power of
-            // u after the substitution.
+            // u after the substitution. Or, of an inverse sine or cosine, a power that is not whole,
+            // which parts cannot lower: `x^2 arcsin(a x)^n` under the sine is
+            // `u^n sin(u)^2 cos(u)/a^3`, Euler's formula's exponentials of `i u` beside a power of u,
+            // each a gamma function. Not of the others: `1/((c + a^2 c x^2) sqrt(arctan(a x)))` is
+            // a derivative of the inverse's root, answered in 0.7 s elsewhere and in 5 s under the
+            // tangent.
             var powerOfTheInverse = expr.Nodes.Any(node =>
-                node is Powf(var @base, Number.Integer power) && power.EInteger.CompareTo(EInteger.One) > 0
+                node is Powf(var @base, var power)
+                    && (power is Number.Integer whole ? whole.EInteger.CompareTo(EInteger.One) > 0 : inverse is Arcsinf or Arccosf && !power.ContainsNode(x))
                     && @base.ContainsNode(inverse) && !@base.Substitute(inverse, u).ContainsNode(x));
             // Or, asked for the sine and cosine integrals, the inverse function below the bar, or
             // a function of it alone there: `x^m/(a + b arcsin(c x))^n` is a polynomial in the

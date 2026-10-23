@@ -206,6 +206,19 @@ namespace AngouriMath.Tests.Calculus
         public void AnExponentThatIsAPowerOfAShiftedLinearWrittenExpanded(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// A power that is not whole of an inverse sine or cosine, which the substitution that undoes it writes as a power of
+        /// u beside a polynomial in the sine and cosine of u, Euler's formula's exponentials of <c>i u</c>, each a gamma
+        /// function. Parts cannot lower such a power, and the substitution was taken only for a whole one. Rubi's 5.1.2,
+        /// 5.2.2 and 5.1.5.
+        /// </summary>
+        [Theory]
+        [InlineData("asin(a*x)^n")]
+        [InlineData("x*acos(a*x)^n")]
+        [InlineData("x^2*(d + f*asin(a*x))^n")]
+        [InlineData("(c + a*asin(d - a*x))^n")]
+        public void ASymbolicPowerOfAnInverseSineOrCosine(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// Not where the integral is elementary, an exponential integral or an error function: those keep the form
         /// they had.
         /// </summary>
