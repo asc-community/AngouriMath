@@ -1858,6 +1858,10 @@ namespace AngouriMath.Functions.Algebra
             // power times a rational function of x and the exponential, last: by parts and the split leave
             // terms that are not elementary apart.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfAFunctionOfAnExponentialBesideXByAnAnsatz(expr, x)) is { }) return answer;
+            // Last, a gamma function at a whole or half-whole order, which the routes above answer as an elementary
+            // function, an exponential integral or an error function where they can: by parts reaches
+            // (c + d x)^(-1 - 3 n) F^(a + b (c + d x)^n) and not -1 - 4 n. https://github.com/asc-community/AngouriMath/issues/2075
+            if ((answer = IntegralPatterns.APowerBesideAnExponentialOfAPowerAtAnyOrder(expr, x)) is { }) return answer;
             return null;
         }
         /// <summary>
