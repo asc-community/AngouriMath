@@ -126,9 +126,9 @@ namespace AngouriMath.Tests.Calculus
 
         /// <summary>
         /// A polynomial beside a symbolic power of a logarithm of one shifted linear, or an exponential of a power of one,
-        /// written in <c>u = a + b x</c>, where each term is a gamma function. The constant in front comes along. And beside
-        /// a sine or a cosine of a power of one, which in u is Euler's formula's exponentials of a power of u. Rubi's 3.3,
-        /// 3.4, 2.3 and 4.1.12.
+        /// written in <c>u = a + b x</c>, where each term is a gamma function. The constant in front comes along, and a power
+        /// of a multiple of the linear below the bar, which in u is a power of u. And beside a sine or a cosine of a power of
+        /// one, which in u is Euler's formula's exponentials of a power of u. Rubi's 3.3, 3.4, 2.3 and 4.1.12.
         /// </summary>
         [Theory]
         [InlineData("2*x*(a + b*ln(c*(d + f*x)))^n")]
@@ -139,6 +139,8 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x*sin(a + b*(c + d*x)^n)")]
         [InlineData("x^2*cos(a + b/(c + d*x)^3)")]
         [InlineData("x*(a + b*sin(c + d*(f + x)^n))^2")]
+        [InlineData("(a + b*x)^2*(f + ln(c + d*x))^n/(a*c + a*d*x)")]
+        [InlineData("x*(f + ln(c*(c + d*x)))^n/(c + d*x)^2")]
         public void APolynomialBesideAFunctionOfAShiftedLinear(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
