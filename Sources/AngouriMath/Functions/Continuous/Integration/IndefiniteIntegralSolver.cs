@@ -18385,7 +18385,8 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// Whether <paramref name="factor"/> is a power that is not whole of something holding a logarithm of something in
-        /// <paramref name="x"/>, or an exponential of something in <paramref name="x"/> that is not linear in it.
+        /// <paramref name="x"/>, an exponential of something in <paramref name="x"/> that is not linear in it, or holds a
+        /// sine or a cosine of one.
         /// </summary>
         private static bool IsATranscendentalPowerOfSomethingInX(Entity factor, Entity.Variable x) => factor switch
         {
@@ -18394,8 +18395,13 @@ namespace AngouriMath.Functions.Algebra
                 => exponent.Nodes.Any(node => node is Sumf or Minusf && node.ContainsNode(x))
                     && !TreeAnalyzer.TryGetPolyLinear(exponent, x, out _, out _),
             Powf(var @base, var exponent) when !exponent.ContainsNode(x) && exponent is not Number.Integer
-                => @base.Nodes.Any(node => node is Logf(_, var antilogarithm) && antilogarithm.ContainsNode(x)),
-            _ => false
+                && @base.Nodes.Any(node => node is Logf(_, var antilogarithm) && antilogarithm.ContainsNode(x)) => true,
+            // A sine or a cosine of a sum in x that is not linear, in whatever holds it: x sin(a + b (c + d x)^3), and
+            // x (a + b sin(c + d (f + g x)^n))^2, which in u are powers of u beside the sine of a power of u, Euler's
+            // formula's exponentials. Rubi's 4.1.12.
+            _ => factor.Nodes.Any(node => node is Sinf or Cosf && node.DirectChildren.First() is var argument && argument.ContainsNode(x)
+                && argument.Nodes.Any(inner => inner is Sumf or Minusf && inner.ContainsNode(x))
+                && !TreeAnalyzer.TryGetPolyLinear(argument, x, out _, out _))
         };
 
         /// <summary>
