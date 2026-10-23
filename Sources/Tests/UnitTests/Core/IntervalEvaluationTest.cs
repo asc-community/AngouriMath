@@ -207,6 +207,7 @@ namespace AngouriMath.Tests.Core
         [InlineData("gamma(1/2 + i, 2 - i)")]
         [InlineData("gamma(3/2, -2) + gamma(4, -1)")]
         [InlineData("gamma(1/3, 2) + gamma(2/7 + i/3, 1/2 + i)")]
+        [InlineData("gamma(1/3, -2) + gamma(2/5, -17/15)")]
         public void ThePreciseIntervalHoldsTheValue(string expression)
         {
             var expr = expression.ToEntity();

@@ -559,9 +559,9 @@ namespace AngouriMath.Numerics
                     return BySlope(Evaluate(argument), Number.Chi, z => Divide(Half(Add(Exp(z), Exp(Negate(z)))), z), cutEnd: EDecimal.Zero);
                 // The upper incomplete gamma function of a constant order, through its derivative in z,
                 // -z^(a - 1) e^(-z), jumping across the negative real axis but at a whole order a >= 1. The
-                // power is the principal one, as this evaluation's powers are. An order known only to its
-                // last place, as 1/3 is, is taken at both ends, and the value is the hull of the two: across
-                // an interval that narrow the function is linear in its order.
+                // power's branch is the one this evaluation's powers take. Any other order known only to its
+                // last place is taken at both ends, and the value is the hull of the two: across an interval
+                // that narrow the function is linear in its order.
                 // https://github.com/asc-community/AngouriMath/issues/2075
                 case IncompleteGammaf(var parameter, var lowerLimit):
                 {
@@ -569,6 +569,15 @@ namespace AngouriMath.Numerics
                     if (!order.IsFinite)
                         return undefined;
                     var z = Evaluate(lowerLimit);
+                    // An exact order of odd denominator below 10 is handed to the function as it is written, which then takes
+                    // the power's real root on the negative axis, as the powers here do: as a decimal it was the principal
+                    // branch there, and gamma(1/3, -2), which is 10.21, came out complex.
+                    // https://github.com/asc-community/AngouriMath/issues/2089
+                    if (IntervalEvaluation.TheRealRootIsTaken(parameter) is not null && parameter is Number.Rational exactOrder)
+                    {
+                        var exactLessOne = Subtract(order, Real(PreciseInterval.Exactly(EDecimal.One)));
+                        return BySlope(z, w => Number.IncompleteGamma(exactOrder, w), w => Negate(Multiply(Pow(w, exactLessOne), Exp(Negate(w)))), cutEnd: EDecimal.Zero);
+                    }
                     var entire = order.IsReal && order.Re.Low.CompareTo(order.Re.High) == 0 && order.Re.Low.IsInteger() && order.Re.Low.Sign > 0;
                     PreciseComplexInterval AtTheOrder(EDecimal re, EDecimal im)
                     {
