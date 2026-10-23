@@ -148,6 +148,16 @@ namespace AngouriMath.Tests.Calculus
         public void ASymbolicPowerOfAnInverseHyperbolicFunction(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// A power <c>x^k</c> beside a power of a logarithm of one binomial <c>d + f x^q</c>, where <c>(k + 1)/q</c> is a whole
+        /// number, written in <c>t = d + f x^q</c>: a polynomial in t beside the logarithm's power. Rubi's 3.4.
+        /// </summary>
+        [Theory]
+        [InlineData("(a - b*ln(c*(d + f/sqrt(x))))^n/x^2")]
+        [InlineData("x^3*(a - b*ln(c*(d + f*x^(2/3))))^n")]
+        [InlineData("(a - b*ln(c*(d + f/x^(1/3))^2))^n/x^2")]
+        public void APowerOfXBesideAFunctionOfABinomial(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// Not where the integral is elementary, an exponential integral or an error function: those keep the form
         /// they had.
         /// </summary>

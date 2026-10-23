@@ -18200,6 +18200,121 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power <c>x^k</c> beside a power of a logarithm of one binomial <c>a + b x^q</c>, written in
+        /// <c>t = a + b x^q</c>, where <c>N = (k + 1)/q</c> is a whole number above 0. Then <c>x^k dx</c> is
+        /// <c>(t - a)^(N - 1) dt/(q b^N)</c> on every branch, since <c>x^(k + 1) = (x^q)^N</c> and
+        /// <c>x^(k + 1 - q) = (x^q)^(N - 1)</c> are whole powers of <c>x^q</c>, and what is left is a polynomial in t beside
+        /// the function of t: <c>(a + b ln(c (d + e/sqrt(x))))^p/x^2</c> is <c>-2/e^2</c> times the integral of
+        /// <c>(t - d) (a + b ln(c t))^p</c>. A linear <c>a + b x</c> is the rule above's. Rubi's 3.4.
+        /// https://github.com/asc-community/AngouriMath/issues/2075
+        /// </summary>
+        internal static Entity? SolveAPowerOfXBesideATranscendentalPowerOfABinomial(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow || expr is not (Mulf or Divf))
+                return null;
+            var (numerator, denominator) = expr is Divf(var above, var below) ? (above, below) : (expr, (Entity)Number.Integer.One);
+            Entity? transcendental = null;
+            // A power that is not whole of something holding a logarithm: an exponential of a binomial is the exponential
+            // rules', which write it in its own base, f^(a + b/x).
+            foreach (var factor in Mulf.LinearChildren(numerator))
+                if (factor is Powf(var @base, var exponent) && !exponent.ContainsNode(x) && exponent is not Number.Integer
+                    && @base.Nodes.Any(node => node is Logf(_, var antilogarithm) && antilogarithm.ContainsNode(x)))
+                {
+                    if (transcendental is not null)
+                        return null;
+                    transcendental = factor;
+                }
+            if (transcendental is null || TheOneBinomialIn(transcendental, x) is not var (binomial, offset, scale, q)
+                || q == Number.Integer.One || VanishesIdentically(offset))
+                return null;
+            // Beside it, constants and powers of x, whose exponents sum to k.
+            Entity constant = Number.Integer.One;
+            Entity k = Number.Integer.Zero;
+            for (var side = 0; side < 2; side++)
+                foreach (var factor in Mulf.LinearChildren(side == 0 ? numerator : denominator))
+                {
+                    if (ReferenceEquals(factor, transcendental))
+                        continue;
+                    if (!factor.ContainsNode(x))
+                        constant = side == 0 ? constant * factor : constant / factor;
+                    else if (ThePowerOfXItIs(factor, x) is { } power)
+                        k = side == 0 ? k + power : k - power;
+                    else
+                        return null;
+                }
+            if (((k + 1) / q).InnerSimplified is not Number.Integer { EInteger: var whole } || whole.Sign <= 0 || whole.CompareTo(EInteger.FromInt32(30)) > 0)
+                return null;
+            var t = Variable.CreateUnique(expr, "t_binomial");
+            var inT = transcendental.Replace(node => node == binomial ? t : node);
+            if (inT.ContainsNode(x))
+                return null;
+            var integrand = constant * MathS.Pow(t - offset, Number.Integer.Create(whole.Subtract(EInteger.One))) * inT / (q * MathS.Pow(scale, Number.Integer.Create(whole)));
+            if (Integration.ComputeAsAQuestionOfItsOwn(integrand.InnerSimplified, t, integrateByParts) is not { } answer)
+                return null;
+            var back = answer.Substitute(t, binomial);
+            return back.Nodes.Any(node => node == MathS.NaN) ? null : back;
+        }
+
+        /// <summary>The exponent of <paramref name="factor"/> as a power of <paramref name="x"/>, free of it, or <see langword="null"/>.</summary>
+        private static Entity? ThePowerOfXItIs(Entity factor, Entity.Variable x) => factor switch
+        {
+            _ when factor == x => Number.Integer.One,
+            Powf(var @base, var exponent) when @base == x && !exponent.ContainsNode(x) => exponent,
+            _ => null
+        };
+
+        /// <summary>
+        /// The one binomial <c>a + b x^q</c> that every <paramref name="x"/> in <paramref name="expr"/> stands in, with
+        /// <c>a</c>, <c>b</c> and <c>q</c> free of x and <c>q</c> a number, read as a sum of terms free of x and one term
+        /// <c>b x^q</c>, or <see langword="null"/>.
+        /// </summary>
+        private static (Entity Binomial, Entity Offset, Entity Scale, Entity Exponent)? TheOneBinomialIn(Entity expr, Entity.Variable x)
+        {
+            (Entity Binomial, Entity Offset, Entity Scale, Entity Exponent)? found = null;
+            bool Read(Entity node)
+            {
+                if (!node.ContainsNode(x))
+                    return true;
+                if (node is Sumf or Minusf && ABinomial(node, x) is { } read)
+                {
+                    found ??= read;
+                    return node == found.Value.Binomial;
+                }
+                if (node == x)
+                    return false;
+                return node.DirectChildren.All(Read);
+            }
+            return Read(expr) ? found : null;
+        }
+
+        private static (Entity Binomial, Entity Offset, Entity Scale, Entity Exponent)? ABinomial(Entity sum, Entity.Variable x)
+        {
+            Entity offset = Number.Integer.Zero;
+            Entity? term = null;
+            foreach (var summand in Sumf.LinearChildren(sum is Minusf(var left, var right) ? left + -right : sum))
+                if (!summand.ContainsNode(x))
+                    offset += summand;
+                else if (term is null)
+                    term = summand;
+                else
+                    return null;
+            if (term is null)
+                return null;
+            var (above, below) = term is Divf(var n, var d) ? (n, d) : (term, (Entity)Number.Integer.One);
+            Entity scale = Number.Integer.One;
+            Entity? exponent = null;
+            for (var side = 0; side < 2; side++)
+                foreach (var factor in Mulf.LinearChildren(side == 0 ? above : below))
+                    if (!factor.ContainsNode(x))
+                        scale = side == 0 ? scale * factor : scale / factor;
+                    else if (exponent is null && ThePowerOfXItIs(factor, x) is Number.Rational power && !power.IsZero)
+                        exponent = side == 0 ? power : -power;
+                    else
+                        return null;
+            return exponent is null ? null : (sum, offset, scale, exponent.InnerSimplified);
+        }
+
+        /// <summary>
         /// Whether <paramref name="factor"/> is a power that is not whole of something holding a logarithm of something in
         /// <paramref name="x"/>, or an exponential of something in <paramref name="x"/> that is not linear in it.
         /// </summary>
