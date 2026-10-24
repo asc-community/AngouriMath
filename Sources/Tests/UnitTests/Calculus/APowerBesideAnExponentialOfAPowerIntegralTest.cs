@@ -206,6 +206,16 @@ namespace AngouriMath.Tests.Calculus
         public void AnExponentThatIsAPowerOfAShiftedLinearWrittenExpanded(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// A power of a power of a linear, <c>((d + f x)^n)^m</c>, which is not <c>(d + f x)^(n m)</c> off the right half-line
+        /// but has its logarithmic derivative, and stands as written in the answer where that power would. Rubi's 2.1.
+        /// </summary>
+        [Theory]
+        [InlineData("c^(a + b*x)*((d + f*x)^n)^m")]
+        [InlineData("e^(b*x)/((d + f*x)^n)^m")]
+        [InlineData("e^(-x)*((x + d)^2)^m")]
+        public void APowerOfAPowerOfALinear(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// A power that is not whole of an inverse sine or cosine, which the substitution that undoes it writes as a power of
         /// u beside a polynomial in the sine and cosine of u, Euler's formula's exponentials of <c>i u</c>, each a gamma
         /// function. Parts cannot lower such a power, and the substitution was taken only for a whole one. Rubi's 5.1.2,
