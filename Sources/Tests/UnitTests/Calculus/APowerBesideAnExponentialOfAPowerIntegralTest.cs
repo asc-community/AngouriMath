@@ -219,6 +219,24 @@ namespace AngouriMath.Tests.Calculus
         public void ASymbolicPowerOfAnInverseSineOrCosine(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// A power of a linear beside a rational function of a hyperbolic or circular tangent that is a Laurent polynomial
+        /// in an exponential: <c>1/(a + a tanh(u))</c> is <c>(1 + e^(-2u))/(2a)</c>. And a power of x beside a square of a
+        /// hyperbolic function of a power of x, and powers of an exponential, <c>(F^E)^n</c>, which are <c>F^(n E)</c> times a
+        /// constant between the cuts. Rubi's 6.3.1, 6.4.1, 4.3.10, 4.4.10, 6.1.3, 6.2.3, 2.2 and 2.1.
+        /// </summary>
+        [Theory]
+        [InlineData("(d + f*x)^m/(a + a*tanh(c + b*x))")]
+        [InlineData("(d + f*x)^m/(a + a*coth(c + b*x))^2")]
+        [InlineData("(d + f*x)^m/(a + i*a*tan(c + b*x))")]
+        [InlineData("(d + f*x)^m/(a + i*a*cot(c + b*x))^3")]
+        [InlineData("x*sinh(a + b*x^n)^2")]
+        [InlineData("cosh(a + b*x^3)^2")]
+        [InlineData("sinh(a + b*x^n)^2/x^2")]
+        [InlineData("(a + b*(c^(d + f*x))^n)^2*(d + f*x)^m")]
+        [InlineData("(c^(a + b*x))^n*(d + f*x)^(4/3)")]
+        public void APowerBesideALaurentPolynomialInAnExponential(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// Not where the integral is elementary, an exponential integral or an error function: those keep the form
         /// they had.
         /// </summary>

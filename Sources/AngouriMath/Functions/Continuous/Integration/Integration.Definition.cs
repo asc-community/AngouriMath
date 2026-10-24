@@ -982,6 +982,7 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAnExponentAsAPowerOfAShiftedLinear(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveAPolynomialBesideATranscendentalPowerOfAShiftedLinear(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveAPowerOfXBesideATranscendentalPowerOfABinomial(expr, x, integrateByParts)) is { }) return answer;
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerBesideALaurentPolynomialInAnExponential(expr, x, integrateByParts)) is { }) return answer;
             // A half-odd power of a ± a sin(y) beside powers of other linears in the sine, by the half
             // angle, before the polynomial term: beneath it the substitution search ran out of time.
             if ((answer = IndefiniteIntegralSolver.SolveAHalfOddPowerOfOnePlusMinusASineBesidePowersOfLinearsInIt(expr, x, integrateByParts)) is { }) return answer;
