@@ -213,6 +213,12 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// The largest remainder <see cref="AsTheDerivativeOfALowerPowerOfALinearBesideAFunction"/> expands and simplifies
+        /// where the point gave it no value to check first.
+        /// </summary>
+        private const int LargestRemainderExpandedUnseen = 120;
+
+        /// <summary>
         /// A sum whose terms are not elementary apart, integrated by parts the other way in some of the terms that are a
         /// power <c>L^(-k)</c>, <c>k &gt;= 2</c>, of one linear <c>L</c> beside a function <c>F</c> with <paramref name="x"/>
         /// only inside transcendental functions -- the power integrated, <c>Q = L^(1 - k)/((1 - k) L')</c>, and <c>F</c>
@@ -265,7 +271,10 @@ namespace AngouriMath.Functions.Algebra
                         break;
                     }
                 }
+                // And a function differentiable where it is defined: (Q F)' is Q' F + Q F' only there, and across the jump of
+                // a sign it is not, as the arcsecant's antiderivative, sgn(c x) ln(c x + sqrt(c^2 x^2 - 1)), has.
                 if (!read || linear is null || power.CompareTo(EInteger.FromInt32(-2)) > 0 || !function.ContainsNode(x)
+                    || function.Nodes.Any(node => node is Signumf or Absf or Piecewise or Providedf)
                     || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out _))
                     continue;
                 // Four at most: fifteen sets.
@@ -324,7 +333,7 @@ namespace AngouriMath.Functions.Algebra
                         left += steps[k].Leaves;
                         parts = parts is null ? steps[k].Parts : parts + steps[k].Parts;
                     }
-                if (parts is not null && CancelsIdentically(left))
+                if (parts is not null && CancelsIdentically(left, known))
                     return parts.InnerSimplified;
 
                 bool Add(System.Numerics.Complex? value)
@@ -338,12 +347,17 @@ namespace AngouriMath.Functions.Algebra
             }
             return null;
 
-            // InnerSimplified leaves psi_2 b/x - b psi_2/x as two terms, and expanded they cancel.
-            static bool CancelsIdentically(Entity remainder)
+            // InnerSimplified leaves psi_2 b/x - b psi_2/x as two terms, and expanded they cancel. Where the point gave no
+            // value -- a function of a symbolic order, as polygamma(n, a + b x) is -- only a small remainder is expanded and
+            // simplified: doing so to what the arcsecant's integral leaves took eight seconds a time, and the integral
+            // timed out.
+            static bool CancelsIdentically(Entity remainder, bool numericallyZero)
             {
                 var inner = remainder.InnerSimplified;
                 if (TreeAnalyzer.IsZero(inner))
                     return true;
+                if (!numericallyZero && inner.Complexity > LargestRemainderExpandedUnseen)
+                    return false;
                 var expanded = inner.Expand().InnerSimplified;
                 if (expanded is Providedf(var bareExpanded, _))
                     expanded = bareExpanded;
