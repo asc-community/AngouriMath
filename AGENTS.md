@@ -809,6 +809,7 @@ are short, and a stale one is worse than none — if you change what a file desc
 | [`Docs/Usage/Exceptions.md`](Sources/AngouriMath/Docs/Usage/Exceptions.md) | the exception hierarchy under `AngouriMathBaseException` |
 | [`Docs/Usage/Comparison.md`](Sources/AngouriMath/Docs/Usage/Comparison.md) | how we measure against Math.NET Symbolics, Symbolism and SymPy, with the versions and what each comparison does not establish |
 | [`Docs/References.md`](Sources/AngouriMath/Docs/References.md) | the books, papers, corpora and reference works the code and its tests draw on, with the link and what each is used for. Add a work there when it is first cited |
+| [`Docs/Acknowledgements.md`](Sources/AngouriMath/Docs/Acknowledgements.md) and [`Docs/Articles.md`](Sources/AngouriMath/Docs/Articles.md) | the projects AngouriMath is built with, and the maintainers' articles about it, moved from the archived AngouriMathLab |
 | [`Docs/Contributing/`](Sources/AngouriMath/Docs/Contributing/README.md) | the index of the contributor docs |
 | [`Contributing/General.md`](Sources/AngouriMath/Docs/Contributing/General.md) | the `Entity` hierarchy, in a paragraph |
 | [`Contributing/AddingNode.cs`](Sources/AngouriMath/Docs/Contributing/AddingNode.cs) | every place a new node has to be taught about. Read it *before* adding one |
