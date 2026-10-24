@@ -146,7 +146,8 @@ See its [source folder](./Sources/Terminal).
 
 ### More
 
-Read more about using AngouriMath for research on [the website](https://am.angouri.org/research).
+Read more about using AngouriMath for research on [the website](https://am.angouri.org/research),
+and in [the maintainers' articles](./Sources/AngouriMath/Docs/Articles.md).
 
 
   
@@ -546,4 +547,6 @@ to the project. Aside from volunteer donations, you can help developing the proj
 
 The project is open source, but can be used in closed commercial projects. There is no restriction on it
 with the only requirement to keep the MIT license with all distributives of AngouriMath.
+
+The projects AngouriMath is built with are thanked in [Acknowledgements](./Sources/AngouriMath/Docs/Acknowledgements.md).
 
