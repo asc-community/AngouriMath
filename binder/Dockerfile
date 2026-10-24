@@ -1,6 +1,7 @@
 # The image mybinder.org builds for the README's "Try" button: Jupyter with the .NET Interactive
-# kernels, and the sample notebooks from Sources/Samples. The notebooks install AngouriMath.Interactive
-# from NuGet themselves. https://github.com/asc-community/AngouriMath/issues/1689
+# kernels, and the sample notebooks from Sources/Samples. The notebooks install their package from NuGet
+# themselves: AngouriMath.Interactive for F#, AngouriMath for C#.
+# https://github.com/asc-community/AngouriMath/issues/1689
 FROM quay.io/jupyter/base-notebook:2026-10-05
 
 USER root
