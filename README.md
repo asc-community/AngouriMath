@@ -138,7 +138,7 @@ cd AngouriMath/Sources/Terminal/AngouriMath.Terminal
 dotnet run -c Release
 ```
 
-See the online [Jupyter notebook](https://mybinder.org/v2/gh/asc-community/AngouriMathLab/try?filepath=HelloBook.AngouriMath.Interactive.ipynb) on
+See the [Jupyter notebook](./Sources/Samples/Interactive.Sample.ipynb) on
 how to use the F# API of AngouriMath. Note, that the C# API is still available
 via `open AngouriMath` command, then you can call the main library's methods.
 
