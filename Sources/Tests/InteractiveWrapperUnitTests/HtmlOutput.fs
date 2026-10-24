@@ -18,7 +18,6 @@ let ``Latex with magic ILatexizeable html`` () =
     let entity = parsed "x / 2"
     let html = entity.ToDisplayString("text/html")
     Assert.Equal(@"
-<script src='https://polyfill.io/v3/polyfill.min.js?features=es6'></script>
 <script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script>
 \[\frac{x}{2}\]", html)
 
@@ -29,7 +28,6 @@ let ``Latex with magic ERational for html`` () =
     let entity = (("2 / 3" |> asNumber) :?> Entity.Number.Rational).ERational
     let html = entity.ToDisplayString("text/html")
     Assert.Equal(@"
-<script src='https://polyfill.io/v3/polyfill.min.js?features=es6'></script>
 <script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script>
 \[\frac{2}{3}\]", html)
 
@@ -40,7 +38,6 @@ let ``Latex with magic ERational multi-char for html`` () =
     let entity = (("23 / 36" |> asNumber) :?> Entity.Number.Rational).ERational
     let html = entity.ToDisplayString("text/html")
     Assert.Equal(@"
-<script src='https://polyfill.io/v3/polyfill.min.js?features=es6'></script>
 <script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script>
 \[\frac{23}{36}\]", html)
 

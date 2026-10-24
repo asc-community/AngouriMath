@@ -1,36 +1,36 @@
 #!csharp
 
-using AngouriMath;
-using AngouriMath.Extensions;
-using Microsoft.DotNet.Interactive;
+// The LaTeX formatters, registered by reflection rather than against AngouriMath's types: an F# notebook loads
+// this script into the C# kernel, which has no reference to AngouriMath, and `using AngouriMath;` there was a
+// compile error at the top of every F# notebook. https://github.com/asc-community/AngouriMath/issues/2109
+using System;
+using System.Linq;
 using Microsoft.DotNet.Interactive.Formatting;
 
-static void RegisterLatex<T>(Func<T, string> latexer)
+static Type FindType(string assembly, string name)
+    => AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == assembly)?.GetType(name);
+
+static void RegisterLatex(Type type, Func<object, string> latexer)
 {
-    Formatter.Register<T>(
-        t => $"$${latexer(t)}$$", 
-        "text/latex");
-
-    Formatter.Register<T>(
-        t => $@"
-<script src='https://polyfill.io/v3/polyfill.min.js?features=es6'></script>
+    Formatter.Register(type, (o, writer) => writer.Write($"$${latexer(o)}$$"), "text/latex");
+    Formatter.Register(type, (o, writer) => writer.Write($@"
 <script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script>
-\[{latexer(t)}\]",
-        "text/html"
-    );
-
-    Formatter.SetPreferredMimeTypesFor(typeof(T), "text/latex");
+\[{latexer(o)}\]"), "text/html");
+    Formatter.SetPreferredMimeTypesFor(type, "text/latex");
 }
 
-Formatter.SetPreferredMimeTypesFor(typeof(PeterO.Numbers.EDecimal), "text/plain");
-Formatter.Register<PeterO.Numbers.EDecimal>(o => o.ToString(), "text/plain");
+foreach (var name in new[] { "PeterO.Numbers.EDecimal", "PeterO.Numbers.EInteger" })
+    if (FindType("Numbers", name) is { } plain)
+    {
+        Formatter.SetPreferredMimeTypesFor(plain, "text/plain");
+        Formatter.Register(plain, (o, writer) => writer.Write(o.ToString()), "text/plain");
+    }
 
-Formatter.SetPreferredMimeTypesFor(typeof(PeterO.Numbers.EInteger), "text/plain");
-Formatter.Register<PeterO.Numbers.EInteger>(o => o.ToString(), "text/plain");
+if (FindType("AngouriMath", "AngouriMath.Core.ILatexizeable") is { } latexizeable
+    && latexizeable.GetMethod("Latexize", Type.EmptyTypes) is { } latexize)
+    RegisterLatex(latexizeable, o => (string)latexize.Invoke(o, null));
 
-RegisterLatex<AngouriMath.Core.ILatexizeable>(o => o.Latexize());
-
-RegisterLatex<PeterO.Numbers.ERational>(o => $@"\frac{{{o.Numerator}}}{{{o.Denominator}}}");
+if (FindType("Numbers", "PeterO.Numbers.ERational") is { } rational)
+    RegisterLatex(rational, o => $@"\frac{{{rational.GetProperty("Numerator").GetValue(o)}}}{{{rational.GetProperty("Denominator").GetValue(o)}}}");
 
 "Extensions for LaTeX loaded!"
-
